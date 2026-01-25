@@ -31,11 +31,10 @@ jobs:
           sudo apt-get install -y \
             curl wget git cmake make pkgconf \
             flex bison gettext \
-            zlib1g-dev libfreetype6-dev libfontconfig1-dev \
-            libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
+            zlib1g-dev libfreetype6-dev libfreetype6-dev:i386 \
+            libfontconfig1-dev libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             build-essential gcc-multilib g++-multilib \
-            clang lld \
-            libc6-dev-i386 lib32stdc++6
+            clang lld libc6-dev-i386 lib32stdc++6
 
       - name: Setup LLVM MinGW
         if: steps.cache.outputs.cache-hit != 'true'
@@ -70,7 +69,6 @@ jobs:
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
-          # Сразу конфигурируем wine64 (ARM64EC)
           ../wine-src/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine64 \
@@ -80,6 +78,10 @@ jobs:
             --disable-tests \
             --enable-archs=arm64ec \
             --without-x \
+            --without-gnutls \
+            --without-usb \
+            --without-v4l2 \
+            --without-gphoto2 \
             --with-vulkan
 
           make -j$(nproc)
