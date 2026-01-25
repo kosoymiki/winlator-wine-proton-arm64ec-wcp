@@ -23,45 +23,29 @@ jobs:
           key: llvm-mingw-20251118
           restore-keys: llvm-mingw-
 
-      - name: Install Host Build Dependencies (x86_64 + i386)
+      - name: Install Host Build Dependencies
         run: |
           set -euo pipefail
-          echo "=== Adding architectures and updating repositories ==="
           sudo dpkg --add-architecture i386
           sudo apt-get update -y
-          
-          echo "=== Installing 64-bit libraries ==="
           sudo apt-get install -y \
             curl wget git cmake make pkgconf \
             flex bison gettext \
             zlib1g-dev libfreetype6-dev libfontconfig1-dev \
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             build-essential gcc-multilib g++-multilib \
-            clang lld
+            clang lld \
+            libc6-dev-i386 lib32stdc++6
 
-          echo "=== Installing 32-bit libraries ==="
-          sudo apt-get install -y \
-            libc6-dev-i386 lib32stdc++6 \
-            libfreetype6-dev:i386 libfontconfig1-dev:i386 \
-            libx11-dev:i386 libxext-dev:i386 libxrender-dev:i386 \
-            libssl-dev:i386
-
-      - name: Setup LLVM MinGW for ARM64EC
+      - name: Setup LLVM MinGW
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          echo "=== Downloading LLVM‑MinGW 20251118 ==="
           wget "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
           mv llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64 llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: Cache Wine-tools
-        uses: actions/cache@v3
-        with:
-          path: wine-tools-build/install
-          key: wine-tools-11.1
-
-      - name: Clone Wine 11 Source
+      - name: Clone Wine Source
         run: git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine-src
 
       - name: Build Wine Tools (Host x86_64)
@@ -72,7 +56,7 @@ jobs:
           make -j$(nproc) tools
           echo "WINE_TOOLS=$PWD/install/bin" >> $GITHUB_ENV
 
-      - name: Configure Wine Cross‑Compile ARM64EC
+      - name: Configure & Build Wine ARM64EC
         run: |
           mkdir -p wine-build
           cd wine-build
@@ -86,10 +70,10 @@ jobs:
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
+          # Сразу конфигурируем wine64 (ARM64EC)
           ../wine-src/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine64 \
-            --without-wine \
             --with-wine-tools=$WINE_TOOLS \
             --with-mingw=clang \
             --prefix=/opt/wine-arm64ec \
@@ -98,15 +82,13 @@ jobs:
             --without-x \
             --with-vulkan
 
-      - name: Build Wine ARM64EC
-        working-directory: wine-build
-        run: make -j$(nproc)
+          make -j$(nproc)
 
-      - name: Install Wine ARM64EC Staging
+      - name: Install Wine ARM64EC
         working-directory: wine-build
         run: make DESTDIR=$PWD/../image install
 
-      - name: Package Wine as .wcp for Winlator
+      - name: Package Wine as .wcp
         run: |
           mkdir -p image/opt
           mv image/opt/wine-arm64ec Wine-11.1-ARM64EC
