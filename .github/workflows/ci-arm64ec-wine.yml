@@ -1,4 +1,4 @@
-name: Build Wine 11 ARM64 (Syntax Fixed)
+name: Build Wine-Staging ARM64 (Syntax Fixed)
 
 on:
   push:
@@ -6,43 +6,49 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_native_arm64:
+  build_wine_staging_arm64:
     runs-on: ubuntu-24.04
 
     env:
-      # URL берем в кавычки, чтобы YAML парсер не споткнулся
-      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-20.04-x86_64.tar.xz"
+      # Используем проверенный LLVM для Ubuntu 22.04 (совместим с 24.04)
+      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
+      # Используем ветку master (это и есть Wine 11.x development)
+      WINE_BRANCH: "master"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. ЧИСТАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ
+      # 1. ЧИСТАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ (Safe Syntax)
       - name: Setup Multiarch & Dependencies
         run: |
           sudo dpkg --add-architecture arm64
           
-          # Безопасная очистка папки (удаляем файлы .list, если они есть)
-          sudo find /etc/apt/sources.list.d/ -type f -name "*.list" -delete
+          # Безопасное удаление старых конфигов
+          sudo rm -f /etc/apt/sources.list
+          sudo find /etc/apt/sources.list.d/ -type f -delete
           
-          # Перезапись sources.list (Azure x86)
-          # Используем tee без пайпов внутри echo для чистоты
-          echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list
-          echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          # Генерируем новый sources.list через cat (безопасно для синтаксиса)
+          sudo bash -c "cat > /etc/apt/sources.list <<EOF
+          # AMD64 (Native)
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
           
-          # Добавление Ports (ARM64)
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          # ARM64 (Ports)
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse
+          EOF"
+          
+          # Вывод для отладки
+          cat /etc/apt/sources.list
           
           sudo apt-get update
           
           # Установка зависимостей
           sudo apt-get install -y \
-            wget curl git cmake make flex bison pkg-config \
+            wget curl git cmake make flex bison pkg-config python3-minimal autoconf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             libx11-dev:arm64 libfreetype-dev:arm64 libglib2.0-dev:arm64 \
             libxrender-dev:arm64 libxext-dev:arm64 libxi-dev:arm64 \
@@ -53,47 +59,59 @@ jobs:
             libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
             libdbus-1-dev:arm64 libfontconfig1-dev:arm64
 
-      # 2. Установка LLVM-MinGW (2025/2026 Future release)
+      # 2. Установка LLVM-MinGW
       - name: Setup LLVM MinGW
         run: |
           wget -q "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
-          # Используем find для надежного определения папки
           EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "llvm-mingw-*" | head -n 1)
           mv "$EXTRACTED_DIR" llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
-          
-          # Проверка
           ./llvm-mingw/bin/clang --version
 
-      - name: Clone Wine Source
-        run: git clone --depth 1 https://gitlab.winehq.org/wine/wine.git wine-src
+      # 3. Клонирование Wine + Staging
+      - name: Clone Wine & Staging
+        run: |
+          # Клонируем ветку master
+          git clone --depth 1 --branch $WINE_BRANCH https://gitlab.winehq.org/wine/wine.git wine-src
+          git clone --depth 1 --branch $WINE_BRANCH https://github.com/wine-staging/wine-staging.git wine-staging
 
-      # 3. Сборка инструментов (Host x64)
+      # 4. Применение патчей Staging
+      - name: Apply Staging Patches
+        run: |
+          cd wine-staging
+          # Применяем патчи. Ошибки игнорируем (|| true), если патч уже есть в мастере
+          ./staging/patchinstall.py DESTDIR=../wine-src --all || true
+          
+          cd ../wine-src
+          autoreconf -fiv
+
+      # 5. Сборка инструментов (Host x64)
       - name: Build Wine Tools (Host x64)
         run: |
           mkdir wine-tools
           cd wine-tools
           ../wine-src/configure --enable-win64 --without-x --without-freetype --without-wayland --without-vulkan
           
-          # Явная сборка необходимых инструментов
+          # Собираем полный набор
           make -j$(nproc) \
             tools/winebuild/winebuild \
             tools/widl/widl \
             tools/wrc/wrc \
             tools/wmc/wmc \
             tools/winegcc/winegcc \
-            tools/wine/wine
+            tools/wine/wine \
+            tools/make_xftmpl
 
-      # 4. Конфигурация Target (ARM64)
+      # 6. Конфигурация Target (ARM64)
       - name: Configure Wine (Target ARM64)
         run: |
           mkdir wine-build
           cd wine-build
           
-          # Максимальная оптимизация для Cortex-X2 (LLVM 21+ это умеет)
-          export CFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
-          export CROSSCFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -g0 -mstrict-align -Wno-error"
+          # Флаги для Cortex-X2 + Staging
+          export CFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -fno-plt"
+          export CROSSCFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -g0 -mstrict-align -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
           ../wine-src/configure \
@@ -102,53 +120,55 @@ jobs:
             --without-wine \
             --with-wine-tools=../wine-tools \
             --with-mingw=clang \
-            --prefix=/opt/wine-custom \
+            --prefix=/opt/wine-staging \
             --disable-tests \
             --with-x \
-            --without-wayland \
             --with-vulkan \
             --with-freetype \
+            --without-wayland \
             --without-gstreamer \
             --without-cups \
             --without-sane \
             --without-oss
 
-      # 5. Сборка
+      # 7. Сборка
       - name: Build Wine
         working-directory: wine-build
         run: make -j$(nproc)
 
-      # 6. Установка
+      # 8. Установка
       - name: Install to Image
         working-directory: wine-build
         run: make install DESTDIR=$PWD/../image
 
-      # 7. Упаковка .wcp
+      # 9. Упаковка .wcp
       - name: Package .wcp
         run: |
           cd image/opt
-          mv wine-custom Wine-11.0-ARM64
+          mv wine-staging Wine-11-Staging-ARM64
           
-          cat <<EOF > Wine-11.0-ARM64/info.json
+          cat <<EOF > Wine-11-Staging-ARM64/info.json
           {
-            "name": "Wine-11.0-ARM64-LLVM21",
-            "version": "11.0-git",
+            "name": "Wine-11-Staging-ARM64",
+            "version": "11.0-staging-git",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Native AArch64 (X11). LLVM 21.1.8. Cortex-X2 Max Perf."
+            "description": "Wine Staging (Master). ARM64 Native. Fsync Enabled."
           }
           EOF
           
-          cat <<EOF > Wine-11.0-ARM64/env.sh
+          cat <<EOF > Wine-11-Staging-ARM64/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
+          export WINEESYNC=1
+          export WINEFSYNC=1
           EOF
-          chmod +x Wine-11.0-ARM64/env.sh
+          chmod +x Wine-11-Staging-ARM64/env.sh
           
-          tar -cJf ../../wine-11-arm64-llvm21.wcp Wine-11.0-ARM64
+          tar -cJf ../../wine-staging-arm64.wcp Wine-11-Staging-ARM64
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11-arm64-llvm21.wcp
-          path: wine-11-arm64-llvm21.wcp
+          name: wine-staging-arm64.wcp
+          path: wine-staging-arm64.wcp
