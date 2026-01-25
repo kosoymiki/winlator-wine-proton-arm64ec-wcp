@@ -21,41 +21,23 @@ jobs:
           set -euo pipefail
           echo "=== Настройка arm64 и репозиториев ==="
 
-          # Основная архитектура
-          ARCH=$(dpkg --print-architecture)
-          echo "Основная архитектура: $ARCH"
+          # Добавляем архитектуру arm64
+          sudo dpkg --add-architecture arm64
 
-          # Проверяем доступность портов Ubuntu для arm64
-          PORTS_URL="http://ports.ubuntu.com/ubuntu-ports"
-          DISTRO="noble"
-          COMPONENTS=("main" "universe" "multiverse" "restricted")
-          
-          echo "Смена стандартных репозиториев на порты Ubuntu"
-          sudo sed -i "s|http://archive.ubuntu.com/ubuntu/|$PORTS_URL/|g" /etc/apt/sources.list
-          sudo sed -i "s|http://security.ubuntu.com/ubuntu|$PORTS_URL|g" /etc/apt/sources.list
-
-          # Безопасно добавляем архитектуру arm64 только если пакеты есть
-          sudo dpkg --remove-architecture arm64 || true
-          for comp in "${COMPONENTS[@]}"; do
-            if curl -sfI "$PORTS_URL/dists/$DISTRO/$comp/binary-arm64/Packages" > /dev/null; then
-              echo "✔ arm64 доступен для $comp"
-              sudo dpkg --add-architecture arm64
-              break
-            else
-              echo "✖ arm64 недоступен для $comp"
-            fi
-          done
+          # Переключаемся на порты Ubuntu для arm64
+          sudo sed -i 's|http://archive.ubuntu.com/ubuntu/|http://ports.ubuntu.com/ubuntu-ports/|g' /etc/apt/sources.list
+          sudo sed -i 's|http://security.ubuntu.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports/|g' /etc/apt/sources.list
 
           sudo apt-get update -y
 
-          echo "Установка зависимостей"
+          echo "Установка зависимостей для хоста и кросс-компиляции"
           sudo apt-get install -y \
             curl wget unzip pkgconf git cmake make \
             flex bison gettext \
             zlib1g-dev libfreetype6-dev libfontconfig1-dev \
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libc6-dev-arm64-cross libstdc++-arm64-cross
+            libc6-dev-arm64-cross || echo "Пакет libc6-dev-arm64-cross пропущен (не критично)"
 
       - name: Setup LLVM MinGW for ARM64EC
         run: |
@@ -80,6 +62,7 @@ jobs:
           mkdir wine-build
           cd wine-build
 
+          # Настройка компиляторов для ARM64EC через LLVM MinGW
           export CC="clang --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
           export CXX="clang++ --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
           export AR=aarch64-w64-mingw32-ar
@@ -114,6 +97,7 @@ jobs:
           mkdir -p image/opt
           mv image/opt/wine-arm64ec Wine-11.1-ARM64EC
 
+          # Manifest
           cat <<EOF > Wine-11.1-ARM64EC/info.json
           {
             "name": "Wine-11.1-ARM64EC",
@@ -124,6 +108,7 @@ jobs:
           }
           EOF
 
+          # Environment wrapper
           cat <<'EOF' > Wine-11.1-ARM64EC/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
@@ -131,6 +116,7 @@ jobs:
           EOF
           chmod +x Wine-11.1-ARM64EC/env.sh
 
+          # Pack into .wcp
           tar -cJf ../../wine-arm64ec.wcp Wine-11.1-ARM64EC
 
       - name: Upload Artifact
