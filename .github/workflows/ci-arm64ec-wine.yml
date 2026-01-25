@@ -49,13 +49,15 @@ jobs:
         run: |
           git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
 
-      - name: Build Wine tools for cross-compilation
+      - name: Build Wine tools natively (x86_64)
         working-directory: wine-src
         run: |
-          mkdir -p wine-tools-build
-          make tools DESTDIR=$PWD/wine-tools-build -j$(nproc)
+          # Собираем Wine-tools для хоста (нужно для cross build)
+          make tools -j$(nproc)
+          # Проверяем наличие утилит
+          ls -l wine-tools
 
-      - name: Configure Wine cross-build
+      - name: Configure Wine cross-build for ARM64EC
         working-directory: wine-src
         run: |
           export CC="clang --target=aarch64-w64-mingw32 --sysroot=$LLVM_MINGW"
@@ -74,17 +76,17 @@ jobs:
             --disable-tests \
             --without-x \
             --prefix=/usr \
-            --with-wine-tools=$PWD/wine-tools-build/usr/bin
+            --with-wine-tools=$PWD/wine-tools
 
-      - name: Build Wine
+      - name: Build Wine ARM64EC
         working-directory: wine-src
         run: make -j$(nproc)
 
-      - name: Install Wine
+      - name: Install Wine to artifact
         working-directory: wine-src
         run: make DESTDIR=$PWD/artifact install
 
-      - name: Package .wcp
+      - name: Package Wine ARM64EC into .wcp
         run: |
           mkdir -p wine-arm64ec-wcp/arch/arm64ec/{bin,lib,etc}
           cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
