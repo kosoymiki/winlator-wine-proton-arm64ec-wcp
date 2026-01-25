@@ -52,9 +52,19 @@ jobs:
       - name: Build Wine tools natively (x86_64)
         working-directory: wine-src
         run: |
-          # Собираем Wine-tools для хоста (нужно для cross build)
+          # Создаём каталог wine-tools для host binaries
+          mkdir -p wine-tools
+
+          # Собираем инструменты для x86_64 (нужно для cross build)
           make tools -j$(nproc)
-          # Проверяем наличие утилит
+
+          # Копируем необходимые бинарники в wine-tools
+          cp -a winebuild wine-tools/
+          cp -a winegcc wine-tools/
+          cp -a wineserver wine-tools/
+          cp -a winefile wine-tools/
+          
+          # Проверяем содержимое
           ls -l wine-tools
 
       - name: Configure Wine cross-build for ARM64EC
