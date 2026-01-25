@@ -22,36 +22,56 @@ jobs:
           echo "=== Installing host build dependencies ==="
           sudo dpkg --add-architecture i386
           sudo apt-get update -y
-
           sudo apt-get install -y \
             curl wget git cmake make pkgconf \
             flex bison gettext \
             zlib1g-dev libfreetype6-dev libfontconfig1-dev \
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             build-essential gcc-multilib g++-multilib \
-            libc6-dev:i386 libstdc++-dev:i386 \
             clang lld \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libc6-dev:arm64 libstdc++-dev:arm64
+            libc6-dev-i386 lib32stdc++6
+
+      - name: Cache LLVM MinGW
+        uses: actions/cache@v3
+        id: llvm_cache
+        with:
+          path: llvm-mingw
+          key: llvm-mingw-${{ env.LLVM_MINGW_URL }}-v1
+          restore-keys: |
+            llvm-mingw-
 
       - name: Setup LLVM MinGW for ARM64EC
+        if: steps.llvm_cache.outputs.cache-hit != 'true'
         run: |
           echo "=== Downloading LLVM‑MinGW 20251118 ==="
           wget "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
           mv llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64 llvm-mingw
-          echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
+      - name: Add LLVM MinGW to PATH
+        run: echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
       - name: Clone Wine 11 Source
         run: git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine-src
 
+      - name: Cache Wine Tools
+        uses: actions/cache@v3
+        id: wine_tools_cache
+        with:
+          path: wine-tools-build/install
+          key: wine-tools-${{ hashFiles('wine-src/**') }}-v1
+          restore-keys: |
+            wine-tools-
+
       - name: Build Wine Tools (Host x86_64)
+        if: steps.wine_tools_cache.outputs.cache-hit != 'true'
         run: |
-          mkdir wine-tools-build
+          mkdir -p wine-tools-build
           cd wine-tools-build
           ../wine-src/configure --disable-tests --without-x --prefix=$PWD/install
           make -j$(nproc) tools
-          echo "WINE_TOOLS=$PWD/install/bin" >> $GITHUB_ENV
+      - name: Export Wine Tools path
+        run: echo "WINE_TOOLS=$PWD/wine-tools-build/install/bin" >> $GITHUB_ENV
 
       - name: Configure Wine Cross‑Compile ARM64EC
         run: |
