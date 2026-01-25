@@ -1,4 +1,4 @@
-name: Build Native Wine 11 ARM64 for Winlator
+name: Build Wine 11 ARM64EC for Winlator Ludashi
 
 on:
   push:
@@ -6,116 +6,112 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_arm64:
+  build_wine_arm64ec:
     runs-on: ubuntu-24.04
-    # Используем контейнер с поддержкой multiarch, чтобы не мучиться с dpkg в runner
-    # Но для GitHub actions проще настроить runner.
 
     env:
-      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-aarch64-linux-gnu.tar.xz
-      # Внимание: берем llvm-mingw, который запускается на x86_64, но таргетит aarch64
+      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Multiarch and Dependencies (Host & Target)
+      - name: Install Host & Cross Dependencies
         run: |
           sudo dpkg --add-architecture arm64
           sudo apt-get update
-          # Устанавливаем кросс-компилятор GCC (для Linux-части) и нативные тулзы
           sudo apt-get install -y \
+            curl wget unzip pkgconf git cmake make \
+            flex bison gettext \
+            zlib1g-dev libfreetype6-dev libfontconfig1-dev \
+            libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            flex bison git cmake ninja-build \
-            gcc make gcc-multilib \
-            libx11-dev:arm64 libfreetype-dev:arm64 libwayland-dev:arm64 \
-            libxrender-dev:arm64 libxext-dev:arm64 libxi-dev:arm64 \
-            libglib2.0-dev:arm64 libgstreamer1.0-dev:arm64 \
-            libudev-dev:arm64 libsdl2-dev:arm64 libvulkan-dev:arm64
+            libc6-dev-arm64-cross libstdc++-arm64-cross
 
-      - name: Setup LLVM MinGW (PE Compiler)
+      - name: Setup LLVM MinGW for ARM64EC
         run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz -O llvm-mingw.tar.xz
+          wget $LLVM_MINGW_URL -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
           mv llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64 llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: Clone Wine Source
-        run: |
-          # Берем master для последних фич ARM64
-          git clone --depth 1 https://gitlab.winehq.org/wine/wine.git wine-src
+      - name: Clone Wine 11 Source
+        run: git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine-src
 
-      - name: Build Wine Tools (x86_64 Native)
+      - name: Build Wine Tools (Host x86_64)
         run: |
-          mkdir wine-tools
-          cd wine-tools
-          ../wine-src/configure --enable-win64
-          make -j$(nproc) tools \
-            include/x11drv_idl.h include/waylanddrv_client_protocol.h
-          # Сборка минимально необходимых заголовков
+          mkdir wine-tools-build
+          cd wine-tools-build
+          ../wine-src/configure --disable-tests --without-x --prefix=$PWD/install
+          make -j$(nproc) tools
+          ls -l install/bin
+          echo "WINE_TOOLS=$PWD/install/bin" >> $GITHUB_ENV
 
-      - name: Apply Patches (Fsync/Optimization)
-        working-directory: wine-src
-        run: |
-          # Пример: берем staging патчи (опционально, нужно следить за версиями)
-          # wget https://raw.githubusercontent.com/wine-staging/wine-staging/master/patches/ntdll-Junction_Points/0001-ntdll-Implement-reparse-point-support-for-Junctions.patch
-          # git apply ...
-          echo "Skipping patches for pure master build"
-
-      - name: Configure Wine (Cross-Compile ARM64)
+      - name: Configure Wine Cross-Compile ARM64EC
         run: |
           mkdir wine-build
           cd wine-build
           
-          # Флаги для Snapdragon 8+ Gen 1
-          export CFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
-          export CROSSCFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -g0" 
-          # g0 убирает дебаг инфо из DLL, сильно уменьшая размер
-          
-          # Указываем pkg-config для ARM64
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-          
+          # Оптимизация под Snapdragon 8+ Gen1
+          export CC="clang --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
+          export CXX="clang++ --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
+          export AR=aarch64-w64-mingw32-ar
+          export LD=aarch64-w64-mingw32-llvm-ld
+          export RANLIB=aarch64-w64-mingw32-ranlib
+          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -fno-plt"
+          export CXXFLAGS="$CFLAGS"
+          export LDFLAGS="-fuse-ld=lld"
+
+          # Configure cross build
           ../wine-src/configure \
-            --host=aarch64-linux-gnu \
+            --host=aarch64-w64-mingw32 \
             --with-wine64 \
             --without-wine \
-            --with-wine-tools=../wine-tools \
+            --with-wine-tools=$WINE_TOOLS \
             --with-mingw=clang \
-            --prefix=/opt/wine-custom \
+            --prefix=/opt/wine-arm64ec \
             --disable-tests \
-            --with-x \
-            --with-wayland \
+            --enable-archs=arm64ec \
+            --without-x \
             --with-vulkan
 
-      - name: Build Wine
+      - name: Build Wine ARM64EC
         working-directory: wine-build
         run: make -j$(nproc)
 
-      - name: Install to Staging
+      - name: Install Wine ARM64EC
         working-directory: wine-build
-        run: make install DESTDIR=$PWD/../image
+        run: make DESTDIR=$PWD/../image install
 
-      - name: Package .wcp
+      - name: Package Wine as .wcp for Winlator
         run: |
-          cd image/opt
-          mv wine-custom Wine-11.0-ARM64
-          
-          # Генерация info.json
-          cat <<EOF > Wine-11.0-ARM64/info.json
+          mkdir -p image/opt
+          mv image/opt/wine-arm64ec Wine-11.1-ARM64EC
+
+          # Manifest
+          cat <<EOF > Wine-11.1-ARM64EC/info.json
           {
-            "name": "Wine-11.0-ARM64-Native",
-            "version": "11.0-git",
-            "arch": "arm64",
-            "author": "CI-Bot",
-            "description": "Native AArch64 build for Winlator (No Box64 needed)"
+            "name": "Wine-11.1-ARM64EC",
+            "version": "11.1-git",
+            "arch": "arm64ec",
+            "runtime": "winlator-ludashi",
+            "description": "Native ARM64EC build for Winlator (No Box64/Box86 needed)"
           }
           EOF
-          
-          # Упаковка в .tar.xz (Winlator воспринимает это как wcp)
-          tar -cJf ../../wine-arm64-native.wcp Wine-11.0-ARM64
-          
+
+          # Environment wrapper
+          cat <<'EOF' > Wine-11.1-ARM64EC/env.sh
+          #!/bin/sh
+          export WINEDEBUG="-all"
+          export WINE_ENABLE_ARM64EC=1
+          EOF
+          chmod +x Wine-11.1-ARM64EC/env.sh
+
+          # Pack into .wcp
+          tar -cJf ../../wine-arm64ec.wcp Wine-11.1-ARM64EC
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-arm64-native.wcp
-          path: wine-arm64-native.wcp
+          name: wine-arm64ec.wcp
+          path: wine-arm64ec.wcp
