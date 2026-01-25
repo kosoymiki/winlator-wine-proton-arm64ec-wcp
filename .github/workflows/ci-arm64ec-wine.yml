@@ -1,4 +1,4 @@
-name: Build Wine 11 ARM64 (Wayland Fix)
+name: Build Wine 11 ARM64 (Wayland Final Fix)
 
 on:
   push:
@@ -35,9 +35,7 @@ jobs:
           
           sudo apt-get update
           
-          # Устанавливаем зависимости
-          # Добавлен wayland-protocols (архитектура all/amd64 - это XML файлы)
-          # Добавлен libwayland-bin (для wayland-scanner на x86)
+          # wayland-protocols - важно!
           sudo apt-get install -y \
             wget curl git cmake make flex bison \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
@@ -70,7 +68,7 @@ jobs:
           ../wine-src/configure --enable-win64 --without-x --without-freetype --without-wayland --without-vulkan
           make -j$(nproc) tools
 
-      # 4. Конфигурация Target (ARM64) с исправлением Wayland
+      # 4. Конфигурация Target (ARM64) с исправлением Wayland Paths
       - name: Configure Wine (Target ARM64)
         run: |
           mkdir wine-build
@@ -78,15 +76,13 @@ jobs:
           
           export CFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
           export CROSSCFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -g0 -mstrict-align -Wno-error"
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
-          # ЯВНО ЗАДАЕМ ПУТИ ДЛЯ WAYLAND
-          # wayland-scanner должен быть запускаемым (x86_64)
+          # ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавляем /usr/share/pkgconfig в путь поиска
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+          
+          # Явно задаем сканер и путь к протоколам (на всякий случай)
           export WAYLAND_SCANNER=$(which wayland-scanner)
-          # Протоколы лежат в стандартном месте (они архитектурно-независимы)
-          export WAYLAND_PROTOCOLS_DIR=/usr/share/wayland-protocols
-          
-          echo "Using wayland-scanner: $WAYLAND_SCANNER"
+          export WAYLAND_PROTOCOLS_DATADIR=/usr/share/wayland-protocols
           
           ../wine-src/configure \
             --host=aarch64-linux-gnu \
