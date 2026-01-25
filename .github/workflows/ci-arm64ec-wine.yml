@@ -1,4 +1,4 @@
-name: Build Wine 11 ARM64 (LLVM 21.1.8 Next-Gen)
+name: Build Wine 11 ARM64 (Syntax Fixed)
 
 on:
   push:
@@ -10,33 +10,37 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      # [...](asc_slot://start-slot-7)Обновляем тулчейн до LLVM 21.1.8 (Release 20251216)
-      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-20.04-x86_64.tar.xz
+      # URL берем в кавычки, чтобы YAML парсер не споткнулся
+      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-20.04-x86_64.tar.xz"
 
     steps:
-      - [...](asc_slot://start-slot-9)name: Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. [...](asc_slot://start-slot-11)НАСТРОЙКА РЕПОЗИТОРИЕВ (Nuclear Option)
-      - [...](asc_slot://start-slot-13)name: Setup Multiarch & Dependencies
+      # 1. ЧИСТАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ
+      - name: Setup Multiarch & Dependencies
         run: |
           sudo dpkg --add-architecture arm64
-          sudo rm -rf /etc/apt/sources.list.d/*
           
-          # [...](asc_slot://start-slot-15)Разделение источников: Azure (x86) / Ports (ARM64)
+          # Безопасная очистка папки (удаляем файлы .list, если они есть)
+          sudo find /etc/apt/sources.list.d/ -type f -name "*.list" -delete
+          
+          # Перезапись sources.list (Azure x86)
+          # Используем tee без пайпов внутри echo для чистоты
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           
-          [...](asc_slot://start-slot-17)echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          # Добавление Ports (ARM64)
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           
-          [...](asc_slot://start-slot-19)sudo apt-get update
+          sudo apt-get update
           
-          # [...](asc_slot://start-slot-21)Устанавливаем зависимости
+          # Установка зависимостей
           sudo apt-get install -y \
             wget curl git cmake make flex bison pkg-config \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
@@ -49,30 +53,30 @@ jobs:
             libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
             libdbus-1-dev:arm64 libfontconfig1-dev:arm64
 
-      # 2. [...](asc_slot://start-slot-23)Установка LLVM-MinGW (LLVM 21.1.8)
-      - [...](asc_slot://start-slot-25)name: Setup LLVM MinGW
+      # 2. Установка LLVM-MinGW (2025/2026 Future release)
+      - name: Setup LLVM MinGW
         run: |
-          echo "Downloading LLVM 21.1.8..."
           wget -q "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
-          EXTRACTED_DIR=$(tar -tf llvm-mingw.tar.xz | head -1 | cut -f1 -d"/")
+          # Используем find для надежного определения папки
+          EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "llvm-mingw-*" | head -n 1)
           mv "$EXTRACTED_DIR" llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
           
-          # [...](asc_slot://start-slot-27)Проверка версии компилятора
+          # Проверка
           ./llvm-mingw/bin/clang --version
 
-      - [...](asc_slot://start-slot-29)name: Clone Wine Source
+      - name: Clone Wine Source
         run: git clone --depth 1 https://gitlab.winehq.org/wine/wine.git wine-src
 
-      # 3. [...](asc_slot://start-slot-31)Сборка инструментов (Host x64)
-      - [...](asc_slot://start-slot-33)name: Build Wine Tools (Host x64)
+      # 3. Сборка инструментов (Host x64)
+      - name: Build Wine Tools (Host x64)
         run: |
           mkdir wine-tools
           cd wine-tools
           ../wine-src/configure --enable-win64 --without-x --without-freetype --without-wayland --without-vulkan
           
-          # [...](asc_slot://start-slot-35)Явная сборка нужных инструментов
+          # Явная сборка необходимых инструментов
           make -j$(nproc) \
             tools/winebuild/winebuild \
             tools/widl/widl \
@@ -81,19 +85,18 @@ jobs:
             tools/winegcc/winegcc \
             tools/wine/wine
 
-      # 4. [...](asc_slot://start-slot-37)Конфигурация Target (ARM64)
-      - [...](asc_slot://start-slot-39)name: Configure Wine (Target ARM64)
+      # 4. Конфигурация Target (ARM64)
+      - name: Configure Wine (Target ARM64)
         run: |
           mkdir wine-build
           cd wine-build
           
-          # ВОЗВРАЩАЕМ МАКСИМАЛЬНУЮ ПРОИЗВОДИТЕЛЬНОСТЬ
-          # [...](asc_slot://start-slot-41)LLVM 21+ стабилен на Cortex-X2 с -O3
+          # Максимальная оптимизация для Cortex-X2 (LLVM 21+ это умеет)
           export CFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
           export CROSSCFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -g0 -mstrict-align -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
-          [...](asc_slot://start-slot-43)../wine-src/configure \
+          ../wine-src/configure \
             --host=aarch64-linux-gnu \
             --enable-win64 \
             --without-wine \
@@ -111,40 +114,40 @@ jobs:
             --without-oss
 
       # 5. Сборка
-      - [...](asc_slot://start-slot-45)name: Build Wine
+      - name: Build Wine
         working-directory: wine-build
         run: make -j$(nproc)
 
       # 6. Установка
-      - [...](asc_slot://start-slot-47)name: Install to Image
+      - name: Install to Image
         working-directory: wine-build
         run: make install DESTDIR=$PWD/../image
 
       # 7. Упаковка .wcp
-      - [...](asc_slot://start-slot-49)name: Package .wcp
+      - name: Package .wcp
         run: |
           cd image/opt
           mv wine-custom Wine-11.0-ARM64
           
-          [...](asc_slot://start-slot-51)cat <<EOF > Wine-11.0-ARM64/info.json
+          cat <<EOF > Wine-11.0-ARM64/info.json
           {
             "name": "Wine-11.0-ARM64-LLVM21",
             "version": "11.0-git",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Native AArch64 (X11). [...](asc_slot://start-slot-53)LLVM 21.1.8. [...](asc_slot://start-slot-54)Cortex-X2 Max Perf."
+            "description": "Native AArch64 (X11). LLVM 21.1.8. Cortex-X2 Max Perf."
           }
           EOF
           
-          [...](asc_slot://start-slot-56)cat <<EOF > Wine-11.0-ARM64/env.sh
+          cat <<EOF > Wine-11.0-ARM64/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
           EOF
           chmod +x Wine-11.0-ARM64/env.sh
           
-          [...](asc_slot://start-slot-58)tar -cJf ../../wine-11-arm64-llvm21.wcp Wine-11.0-ARM64
+          tar -cJf ../../wine-11-arm64-llvm21.wcp Wine-11.0-ARM64
 
-      - [...](asc_slot://start-slot-60)name: Upload Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: wine-11-arm64-llvm21.wcp
