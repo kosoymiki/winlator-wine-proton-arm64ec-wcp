@@ -29,7 +29,6 @@ jobs:
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
             build-essential gcc-multilib g++-multilib \
             clang lld \
-            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             libc6-dev-i386 lib32stdc++6
 
       - name: Cache LLVM MinGW
@@ -69,7 +68,7 @@ jobs:
           mkdir -p wine-tools-build
           cd wine-tools-build
           ../wine-src/configure --disable-tests --without-x --prefix=$PWD/install
-          make -j$(nproc) tools
+          make -j$(nproc)
       - name: Export Wine Tools path
         run: echo "WINE_TOOLS=$PWD/wine-tools-build/install/bin" >> $GITHUB_ENV
 
