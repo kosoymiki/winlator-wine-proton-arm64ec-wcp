@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20240218/llvm-mingw-20240218-ucrt-ubuntu-24.04-x86_64.tar.xz
+      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20251118/llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64.tar.xz
 
     steps:
       - name: Checkout Repository
@@ -19,9 +19,8 @@ jobs:
       - name: Install Host Build Dependencies
         run: |
           set -euo pipefail
-          # Поддержка 32-bit и ARM64 cross
+          echo "=== Installing host build dependencies ==="
           sudo dpkg --add-architecture i386
-          sudo dpkg --add-architecture arm64
           sudo apt-get update -y
 
           sudo apt-get install -y \
@@ -29,17 +28,18 @@ jobs:
             flex bison gettext \
             zlib1g-dev libfreetype6-dev libfontconfig1-dev \
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev \
-            build-essential \
+            build-essential gcc-multilib g++-multilib \
             libc6-dev:i386 libstdc++-dev:i386 \
+            clang lld \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libc6-dev:arm64 libstdc++-dev:arm64 \
-            clang lld
+            libc6-dev:arm64 libstdc++-dev:arm64
 
       - name: Setup LLVM MinGW for ARM64EC
         run: |
-          wget $LLVM_MINGW_URL -O llvm-mingw.tar.xz
+          echo "=== Downloading LLVM‑MinGW 20251118 ==="
+          wget "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
-          mv llvm-mingw-20240218-ucrt-ubuntu-24.04-x86_64 llvm-mingw
+          mv llvm-mingw-20251118-ucrt-ubuntu-22.04-x86_64 llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
       - name: Clone Wine 11 Source
@@ -53,7 +53,7 @@ jobs:
           make -j$(nproc) tools
           echo "WINE_TOOLS=$PWD/install/bin" >> $GITHUB_ENV
 
-      - name: Configure Wine Cross-Compile ARM64EC
+      - name: Configure Wine Cross‑Compile ARM64EC
         run: |
           mkdir wine-build
           cd wine-build
@@ -92,7 +92,6 @@ jobs:
           mkdir -p image/opt
           mv image/opt/wine-arm64ec Wine-11.1-ARM64EC
 
-          # Manifest
           cat <<EOF > Wine-11.1-ARM64EC/info.json
           {
             "name": "Wine-11.1-ARM64EC",
@@ -103,15 +102,13 @@ jobs:
           }
           EOF
 
-          # Environment wrapper
-          cat <<'EOF' > Wine-11.1-ARM64EC/env.sh
+          cat << 'EOF' > Wine-11.1-ARM64EC/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
           export WINE_ENABLE_ARM64EC=1
           EOF
           chmod +x Wine-11.1-ARM64EC/env.sh
 
-          # Pack into .wcp
           tar -cJf ../../wine-arm64ec.wcp Wine-11.1-ARM64EC
 
       - name: Upload Artifact
