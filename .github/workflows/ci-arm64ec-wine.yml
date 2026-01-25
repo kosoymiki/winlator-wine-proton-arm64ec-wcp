@@ -1,4 +1,4 @@
-name: CI ARM64EC Wine Build
+name: Build ARM64EC Wine and Package .wcp
 
 on:
   push:
@@ -8,28 +8,19 @@ on:
 
 jobs:
   build_arm64ec_wine:
-    name: Build ARM64EC Wine + Package .wcp
     runs-on: ubuntu-latest
 
-    services:
-      qemu-user:
-        image: multiarch/qemu-user-static:latest
-        options: --privileged
-
-    env:
-      WINE_VERSION: "wine-11.1"
-      WCP_OUT: "wine-arm64ec-wcp"
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup QEMU for aarch64
+      - name: Setup QEMU user emulation
         uses: docker/setup-qemu-action@v2
         with:
           platforms: aarch64
 
-      - name: Install required packages
+      - name: Install dependencies
         run: |
           sudo dpkg --add-architecture arm64
           sudo apt update
@@ -41,7 +32,7 @@ jobs:
 
       - name: Clone Wine source
         run: |
-          git clone --depth 1 --branch "${WINE_VERSION}" \
+          git clone --depth 1 --branch "wine-11.1" \
             https://gitlab.winehq.org/wine/wine.git wine-src
 
       - name: Configure Wine build
@@ -63,45 +54,46 @@ jobs:
             --disable-tests \
             --prefix=/usr
 
-      - name: Compile Wine
+      - name: Build Wine
         working-directory: wine-src
         run: |
           make -j$(nproc)
 
-      - name: Install Wine to artifact dir
+      - name: Install Wine into artifact directory
         working-directory: wine-src
         run: |
           make DESTDIR=$PWD/artifact install
 
-      - name: Prepare .wcp structure
+      - name: Create .wcp structure
         run: |
-          mkdir -p ${{ env.WCP_OUT }}/arch/arm64ec/bin
-          mkdir -p ${{ env.WCP_OUT }}/arch/arm64ec/lib
-          mkdir -p ${{ env.WCP_OUT }}/arch/arm64ec/etc
+          mkdir -p wine-arm64ec-wcp/arch/arm64ec/bin
+          mkdir -p wine-arm64ec-wcp/arch/arm64ec/lib
+          mkdir -p wine-arm64ec-wcp/arch/arm64ec/etc
 
-          cp -a wine-src/artifact/usr/bin/* ${{ env.WCP_OUT }}/arch/arm64ec/bin/
-          cp -a wine-src/artifact/usr/lib/* ${{ env.WCP_OUT }}/arch/arm64ec/lib/
+          cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
+          cp -a wine-src/artifact/usr/lib/* wine-arm64ec-wcp/arch/arm64ec/lib/
 
-          cat > ${{ env.WCP_OUT }}/manifest.json <<EOF
+          cat << 'EOF' > wine-arm64ec-wcp/manifest.json
 {
   "name": "Wine11-ARM64EC",
-  "version": "${{ env.WINE_VERSION }}",
+  "version": "wine-11.1",
   "arch": "arm64ec",
   "runtime": "winlator-ludashi"
 }
 EOF
-          echo "${{ env.WINE_VERSION }}" > ${{ env.WCP_OUT }}/version.txt
 
-          cat > ${{ env.WCP_OUT }}/arch/arm64ec/etc/env.sh <<EOF
+          echo "wine-11.1" > wine-arm64ec-wcp/version.txt
+
+          cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 #!/bin/sh
 export WINEDEBUG="-all"
 export WINE_ENABLE_ARM64EC=1
 EOF
 
-          chmod +x ${{ env.WCP_OUT }}/arch/arm64ec/etc/env.sh
+          chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
       - name: Upload .wcp artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wine-arm64ec-wcp
-          path: ${{ env.WCP_OUT }}
+          path: wine-arm64ec-wcp
