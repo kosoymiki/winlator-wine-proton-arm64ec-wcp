@@ -11,40 +11,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup QEMU
+      - name: Setup QEMU user emulation
         uses: docker/setup-qemu-action@v2
         with:
           platforms: aarch64
 
-      - name: Install deps
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang llvm lld pkgconf git \
+          sudo apt-get install -y \
+            build-essential clang llvm lld pkgconf git \
             autoconf automake libtool flex bison gettext unzip \
             libsdl2-dev libvulkan-dev libx11-dev libxext-dev \
             libxrandr-dev libxrender-dev libxcursor-dev libxi-dev \
-            libfontconfig-dev libdbus-1-dev libudev-dev libasound2-dev \
-            libcapi20-dev libusb-1.0-0-dev libgnutls28-dev libpulse-dev \
-            libsqlite3-dev libosmesa6-dev libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev libunwind-dev
+            libfreetype6-dev libfontconfig-dev libdbus-1-dev \
+            libudev-dev libasound2-dev libcapi20-dev libusb-1.0-0-dev \
+            libgnutls28-dev libpulse-dev libsqlite3-dev libosmesa6-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libunwind-dev curl jq
 
-      - name: Install llvm-mingw
+      - name: Download latest llvm-mingw cross-toolchain
         run: |
-          TAG="20251216"
-          PKG="ucrt"
-          DIST="ubuntu-22.04-x86_64"
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${TAG}/llvm-mingw-${TAG}-${PKG}-${DIST}.tar.xz
-          tar xf llvm-mingw-${TAG}-${PKG}-${DIST}.tar.xz
-          sudo mv llvm-mingw-${TAG}-${PKG}-${DIST} /opt/llvm-mingw
+          # Get latest tag from GitHub API
+          TAG=$(curl -s https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest | jq -r .tag_name)
+          CRTPKG="ucrt"
+          DISTRO="ubuntu-22.04-x86_64"
+
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${TAG}/llvm-mingw-${TAG}-${CRTPKG}-${DISTRO}.tar.xz
+          tar xf llvm-mingw-${TAG}-${CRTPKG}-${DISTRO}.tar.xz
+
+          sudo mv llvm-mingw-${TAG}-${CRTPKG}-${DISTRO} /opt/llvm-mingw
           echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: Clone wine
-        run: git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
+      - name: Clone Wine source
+        run: |
+          git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
 
-      - name: Configure Wine
+      - name: Configure Wine build
         working-directory: wine-src
         run: |
           export PATH="/opt/llvm-mingw/bin:$PATH"
@@ -55,34 +61,40 @@ jobs:
           export LD=aarch64-w64-mingw32-llvm-ld
           export RANLIB=aarch64-w64-mingw32-llvm-ranlib
           export STRIP=aarch64-w64-mingw32-llvm-strip
+          export CPP=aarch64-w64-mingw32-clang -E
 
+          # IMPORTANT: enable FP explicitly for AArch64
           export CFLAGS="-O2 -march=armv8-a+fp+simd"
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
           ./configure \
-            --enable-archs=arm64ec,aarch64 \
-            --host=arm64ec-w64-mingw32 \
+            --build=x86_64-pc-linux-gnu \
+            --host=aarch64-w64-mingw32 \
+            --enable-archs=arm64ec \
             --with-mingw=clang \
-            --disable-tests \
             --without-x \
+            --disable-tests \
             --prefix=/usr
 
       - name: Build Wine
         working-directory: wine-src
-        run: make -j$(nproc)
+        run: |
+          make -j$(nproc)
 
-      - name: Install Wine
+      - name: Install Wine into artifact directory
         working-directory: wine-src
-        run: make DESTDIR=$PWD/artifact install
+        run: |
+          make DESTDIR=$PWD/artifact install
 
-      - name: Package .wcp
+      - name: Create .wcp structure
         run: |
           mkdir -p wine-arm64ec-wcp/arch/arm64ec/{bin,lib,etc}
+
           cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
           cp -a wine-src/artifact/usr/lib/* wine-arm64ec-wcp/arch/arm64ec/lib/
 
-          cat >wine-arm64ec-wcp/manifest.json <<EOF
+          cat << 'EOF' > wine-arm64ec-wcp/manifest.json
           {
             "name": "Wine11-ARM64EC",
             "version": "wine-11.1",
@@ -93,14 +105,15 @@ jobs:
 
           echo "wine-11.1" > wine-arm64ec-wcp/version.txt
 
-          cat >wine-arm64ec-wcp/arch/arm64ec/etc/env.sh <<EOF
+          cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
           export WINE_ENABLE_ARM64EC=1
           EOF
+
           chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
-      - name: Upload artifact
+      - name: Upload .wcp artifact
         uses: actions/upload-artifact@v4
         with:
           name: wine-arm64ec-wcp
