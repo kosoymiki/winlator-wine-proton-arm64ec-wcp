@@ -1,4 +1,4 @@
-name: Build Wine 11 ARM64 (Fixed Make Rules)
+name: Build Wine 11 ARM64 (Wayland Force)
 
 on:
   push:
@@ -9,7 +9,6 @@ jobs:
   build_wine_native_arm64:
     runs-on: ubuntu-24.04
 
-    # Используем проверенный релиз LLVM-MinGW (Pinning version)
     env:
       LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz
 
@@ -17,15 +16,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. ЧИСТАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ (Nuclear Option)
+      # 1. ЧИСТАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ
       - name: Setup Multiarch & Dependencies
         run: |
           sudo dpkg --add-architecture arm64
-          
-          # Удаляем конфликтующие репозитории
           sudo rm -rf /etc/apt/sources.list.d/*
           
-          # Перезаписываем sources.list: Azure (x86) + Ports (ARM64)
+          # Перезапись sources.list (Azure x86 + Ports ARM64)
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=amd64] http://azure.archive.ubuntu.com/ubuntu noble-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
@@ -38,17 +35,19 @@ jobs:
           
           sudo apt-get update
           
-          # Устанавливаем ВСЕ необходимые зависимости
+          # Устанавливаем зависимости (Добавлен libxcomposite-dev)
           sudo apt-get install -y \
-            wget curl git cmake make flex bison \
+            wget curl git cmake make flex bison pkg-config \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            wayland-protocols libwayland-bin \
             libx11-dev:arm64 libfreetype-dev:arm64 libglib2.0-dev:arm64 \
             libxrender-dev:arm64 libxext-dev:arm64 libxi-dev:arm64 \
             libxrandr-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
             libvulkan-dev:arm64 libwayland-dev:arm64 libxkbcommon-dev:arm64 \
             libsdl2-dev:arm64 libudev-dev:arm64 libgstreamer1.0-dev:arm64 \
             libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
-            libdbus-1-dev:arm64 libfontconfig1-dev:arm64
+            libdbus-1-dev:arm64 libfontconfig1-dev:arm64 \
+            libxcomposite-dev:arm64
 
       # 2. Установка LLVM-MinGW
       - name: Setup LLVM MinGW
@@ -62,22 +61,15 @@ jobs:
       - name: Clone Wine Source
         run: git clone --depth 1 https://gitlab.winehq.org/wine/wine.git wine-src
 
-      # 3. Сборка инструментов (Host x64) — ИСПРАВЛЕНО
-      # Мы собираем только 'tools' и базовые 'include'. Не требуем x11drv_idl.h явно.
+      # 3. Сборка инструментов (Host x64)
       - name: Build Wine Tools (Host x64)
         run: |
           mkdir wine-tools
           cd wine-tools
-          
-          # Конфигурируем минимальный билд. --without-x здесь НОРМАЛЬНО, так как это тулзы.
           ../wine-src/configure --enable-win64 --without-x --without-freetype --without-wayland --without-vulkan
-          
-          # Собираем только инструменты (widl, wrc, make_xftmpl и т.д.)
           make -j$(nproc) tools
-          
-          # Этого достаточно, чтобы основной билд мог генерировать свои заголовки
 
-      # 4. Конфигурация Target (ARM64)
+      # 4. Конфигурация Target (ARM64) с FIX WAYLAND
       - name: Configure Wine (Target ARM64)
         run: |
           mkdir wine-build
@@ -85,10 +77,21 @@ jobs:
           
           export CFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
           export CROSSCFLAGS="-O3 -mcpu=cortex-x2 -mtune=cortex-x2 -g0 -mstrict-align -Wno-error"
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
-          # ВАЖНО: Здесь мы ВКЛЮЧАЕМ (--with) все графические подсистемы
+          # pkg-config хак для библиотек
+          export PKG_CONFIG_LIBDIR="/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig"
+          export PKG_CONFIG_SYSROOT_DIR="/"
+          
+          # === FORCE VARIABLES ===
+          # Мы передаем эти переменные ПРЯМО В КОМАНДНУЮ СТРОКУ configure.
+          # Это переопределяет любые попытки автодетекта.
+          export WAYLAND_SCANNER=$(which wayland-scanner)
+          export WAYLAND_PROTOCOLS_DATADIR=/usr/share/wayland-protocols
+          
+          echo "Forcing WAYLAND_PROTOCOLS_DATADIR to $WAYLAND_PROTOCOLS_DATADIR"
+          
           ../wine-src/configure \
+            WAYLAND_PROTOCOLS_DATADIR=$WAYLAND_PROTOCOLS_DATADIR \
             --host=aarch64-linux-gnu \
             --enable-win64 \
             --without-wine \
@@ -123,11 +126,11 @@ jobs:
           
           cat <<EOF > Wine-11.0-ARM64/info.json
           {
-            "name": "Wine-11.0-ARM64-Stable",
+            "name": "Wine-11.0-ARM64-Wayland",
             "version": "11.0-git",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Native AArch64 build. Correctly linked with X11/Wayland/Vulkan."
+            "description": "Native AArch64. Wayland & XComposite Supported."
           }
           EOF
           
