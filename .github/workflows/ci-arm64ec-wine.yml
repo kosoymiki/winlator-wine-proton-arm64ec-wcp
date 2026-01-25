@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup QEMU user emulation
@@ -22,8 +22,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq build-essential clang llvm lld pkgconf git \
-            autoconf automake libtool flex bison gettext unzip \
+          sudo apt-get install -y curl jq build-essential clang llvm lld \
+            pkgconf git autoconf automake libtool flex bison gettext unzip \
             libsdl2-dev libvulkan-dev libx11-dev libxext-dev \
             libxrandr-dev libxrender-dev libxcursor-dev libxi-dev \
             libfreetype6-dev libfontconfig-dev libdbus-1-dev \
@@ -43,10 +43,22 @@ jobs:
           echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
 
       - name: Clone Wine source
-        run: |
-          git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
+        run: git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
 
-      - name: Configure Wine build
+      - name: Build Wine tools (host)
+        working-directory: wine-src
+        run: |
+          # Configure and build only tools for host system
+          ./configure \
+            --build=x86_64-pc-linux-gnu \
+            --enable-archs=arm64ec \
+            --disable-tests \
+            --without-x
+          make tools
+          mkdir -p ../wine-tools
+          cp -a tools ../wine-tools/tools
+
+      - name: Configure Wine cross build
         working-directory: wine-src
         run: |
           export PATH="/opt/llvm-mingw/bin:$PATH"
@@ -57,32 +69,30 @@ jobs:
           export LD=aarch64-w64-mingw32-llvm-ld
           export RANLIB=aarch64-w64-mingw32-llvm-ranlib
           export STRIP=aarch64-w64-mingw32-llvm-strip
-
           export CPP="aarch64-w64-mingw32-clang -E"
 
-          # Force hardware floating-point explicitly for AArch64
-          export CFLAGS="-O2 -march=armv8-a+fp+simd -fno-plt"
+          export CFLAGS="-O2 -march=armv8-a+fp+simd"
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
+          # Use wine tools built in previous step
           ./configure \
             --build=x86_64-pc-linux-gnu \
             --host=aarch64-w64-mingw32 \
             --enable-archs=arm64ec \
             --with-mingw=clang \
+            --with-wine-tools=../wine-tools \
             --disable-tests \
             --without-x \
             --prefix=/usr
 
       - name: Build Wine
         working-directory: wine-src
-        run: |
-          make -j$(nproc)
+        run: make -j$(nproc)
 
       - name: Install Wine into artifact directory
         working-directory: wine-src
-        run: |
-          make DESTDIR=$PWD/artifact install
+        run: make DESTDIR=$PWD/artifact install
 
       - name: Create .wcp structure
         run: |
