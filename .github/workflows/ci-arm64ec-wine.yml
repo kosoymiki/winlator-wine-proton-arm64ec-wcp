@@ -35,9 +35,13 @@ jobs:
 
       - name: Install llvm-mingw cross toolchain
         run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
-          tar xf llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+          # Скачиваем подходящий LLVM-MinGW архив (для Ubuntu CI, x86_64 host)
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip
+          # Распаковываем
+          unzip llvm-mingw-20251216-ucrt-x86_64.zip
+          # Перемещаем toolchain
           sudo mv llvm-mingw-20251216-ucrt /opt/llvm-mingw
+          # Добавляем в PATH
           echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
 
       - run: |
@@ -84,27 +88,4 @@ jobs:
           cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
           cp -a wine-src/artifact/usr/lib/* wine-arm64ec-wcp/arch/arm64ec/lib/
 
-          cat << 'EOF' > wine-arm64ec-wcp/manifest.json
-          {
-          "name": "Wine11-ARM64EC",
-          "version": "wine-11.1",
-          "arch": "arm64ec",
-          "runtime": "winlator-ludashi"
-          }
-          EOF
-
-          echo "wine-11.1" > wine-arm64ec-wcp/version.txt
-
-          cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
-          #!/bin/sh
-          export WINEDEBUG="-all"
-          export WINE_ENABLE_ARM64EC=1
-          EOF
-
-          chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
-
-      - name: Upload .wcp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wine-arm64ec-wcp
-          path: wine-arm64ec-wcp
+          cat << 'EOF' > wine-arm6
