@@ -80,15 +80,15 @@ jobs:
           "arch": "arm64ec",
           "runtime": "winlator-ludashi"
           }
-             EOF
+          EOF
 
           echo "wine-11.1" > wine-arm64ec-wcp/version.txt
 
           cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
-#!/bin/sh
-export WINEDEBUG="-all"
-export WINE_ENABLE_ARM64EC=1
-EOF
+          #!/bin/sh
+          export WINEDEBUG="-all"
+          export WINE_ENABLE_ARM64EC=1
+          EOF
 
           chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
