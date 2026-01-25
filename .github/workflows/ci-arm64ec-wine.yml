@@ -11,15 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
+      # Шаг 1: Проверка репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Шаг 2: Настройка QEMU для эмуляции
       - name: Setup QEMU user emulation
         uses: docker/setup-qemu-action@v2
         with:
           platforms: aarch64
 
+      # Шаг 3: Скачивание и извлечение MSYS2 для ARM64EC
       - name: Download and extract MSYS2 ARM64EC sysroot
         run: |
           # Скачиваем MSYS2 для ARM64EC
@@ -27,19 +29,22 @@ jobs:
           mkdir -p /opt/msys2-arm64ec
           tar -xf /tmp/msys2-arm64ec.tar.xz -C /opt/msys2-arm64ec
 
+      # Шаг 4: Установка переменных окружения для sysroot и pkg-config
       - name: Set environment variables for sysroot and pkg-config
         run: |
-          # Устанавливаем переменные для pkg-config и CFLAGS/LDFLAGS
           export PKG_CONFIG_PATH=/opt/msys2-arm64ec/lib/pkgconfig
           export PKG_CONFIG_LIBDIR=$PKG_CONFIG_PATH
           export CFLAGS+=" --sysroot=/opt/msys2-arm64ec"
           export LDFLAGS+=" --sysroot=/opt/msys2-arm64ec"
+          echo "Environment variables set for sysroot and pkg-config"
 
+      # Шаг 5: Клонирование репозитория Wine
       - name: Clone Wine repository
         run: |
           git clone --depth 1 --branch "wine-11.1" \
             https://gitlab.winehq.org/wine/wine.git wine-src
-
+          
+      # Шаг 6: Конфигурация сборки Wine
       - name: Configure Wine build
         working-directory: wine-src
         run: |
@@ -66,16 +71,19 @@ jobs:
             --without-xinerama \
             --prefix=/usr
 
+      # Шаг 7: Сборка Wine
       - name: Build Wine
         working-directory: wine-src
         run: |
           make -j$(nproc)
 
+      # Шаг 8: Установка Wine в каталог артефактов
       - name: Install Wine into artifact directory
         working-directory: wine-src
         run: |
           make DESTDIR=$PWD/artifact install
 
+      # Шаг 9: Создание структуры .wcp
       - name: Create .wcp structure
         run: |
           mkdir -p wine-arm64ec-wcp/arch/arm64ec/bin
@@ -104,6 +112,7 @@ jobs:
 
           chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
+      # Шаг 10: Загрузка артефакта .wcp
       - name: Upload .wcp artifact
         uses: actions/upload-artifact@v4
         with:
