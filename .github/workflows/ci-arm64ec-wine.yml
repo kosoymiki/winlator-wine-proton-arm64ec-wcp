@@ -1,4 +1,4 @@
-name: Build Wine 11 ARM64 (Fix make_xftmpl)
+name: Build Wine 11 ARM64 (Final Victory)
 
 on:
   push:
@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-24.04
 
     env:
-      # Ссылка на релиз 20251216 (Future Tech)
-      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-20.04-x86_64.tar.xz"
+      # Ссылка на версию для Ubuntu 22.04 (будет работать на 24.04)
+      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. ЖЕСТКАЯ НАСТРОЙКА РЕПОЗИТОРИЕВ (Noble Fix)
+      # 1. НАСТРОЙКА РЕПОЗИТОРИЕВ (Noble Clean)
       - name: Setup Multiarch & Dependencies
         run: |
           sudo dpkg --add-architecture arm64
           
-          # Очистка
+          # Удаляем все старые конфиги, чтобы не было конфликтов
           sudo rm -f /etc/apt/sources.list
           sudo rm -rf /etc/apt/sources.list.d/*
           
@@ -51,16 +51,17 @@ jobs:
             libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
             libdbus-1-dev:arm64 libfontconfig1-dev:arm64
 
-      # 2. Установка LLVM-MinGW (20251216)
+      # 2. Установка LLVM-MinGW (Ubuntu 22.04 build)
       - name: Setup LLVM MinGW
         run: |
           wget -q "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
+          # find найдет папку независимо от точного имени внутри архива
           EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "llvm-mingw-*" | head -n 1)
           mv "$EXTRACTED_DIR" llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
           
-          # Проверка (должна показать версию Clang из будущего)
+          # Проверка версии
           ./llvm-mingw/bin/clang --version
 
       - name: Clone Wine Source
@@ -73,8 +74,8 @@ jobs:
           cd wine-tools
           ../wine-src/configure --enable-win64 --without-x --without-freetype --without-wayland --without-vulkan
           
-          # === ИСПРАВЛЕНИЕ ЗДЕСЬ ===
-          # Добавлен tools/make_xftmpl
+          # === FORCE BUILD LIST ===
+          # Добавлен tools/make_xftmpl для исправления последней ошибки
           make -j$(nproc) \
             tools/winebuild/winebuild \
             tools/widl/widl \
@@ -90,9 +91,9 @@ jobs:
           mkdir wine-build
           cd wine-build
           
-          # Флаги -O2 (безопасные для компилятора)
-          export CFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -fno-plt"
-          export CROSSCFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -g0 -mstrict-align -Wno-error"
+          # Флаги -O2 для стабильности
+          export CFLAGS="-O2 -mcpu=cortex-x2 -mtune=cortex-x2 -fno-plt"
+          export CROSSCFLAGS="-O2 -mcpu=cortex-x2 -mtune=cortex-x2 -g0 -mstrict-align -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
           ../wine-src/configure \
@@ -130,11 +131,11 @@ jobs:
           
           cat <<EOF > Wine-11.0-ARM64/info.json
           {
-            "name": "Wine-11.0-ARM64-2025",
+            "name": "Wine-11.0-ARM64-Final",
             "version": "11.0-git",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Native AArch64 (X11). LLVM 20251216."
+            "description": "Native AArch64 (X11). LLVM 21.1.8. Cortex-X2."
           }
           EOF
           
