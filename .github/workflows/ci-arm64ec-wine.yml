@@ -14,31 +14,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup QEMU user emulation
+      - name: Setup QEMU for ARM emulation
         uses: docker/setup-qemu-action@v2
         with:
           platforms: aarch64
 
-      - name: Install Ubuntu dependencies
+      - name: Install host dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl unzip cmake make pkgconf git \
-            autoconf automake libtool flex bison gettext \
+          sudo apt-get install -y \
+            curl wget unzip pkgconf git cmake make \
+            flex bison gettext \
             zlib1g-dev libfreetype6-dev libfontconfig1-dev \
             libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev
 
-      - name: Download LLVM-MinGW aarch64 toolchain
+      - name: Download LLVM MinGW cross-toolchain
         run: |
-          TAG=$(curl -s https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest | \
-               grep -oP '"tag_name":\s*"\K(.*)(?=")')
+          TAG=$(curl -s https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest | jq -r .tag_name)
           echo "Using llvm-mingw tag: $TAG"
 
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${TAG}/llvm-mingw-${TAG}-ucrt-aarch64.zip
-          unzip llvm-mingw-${TAG}-ucrt-aarch64.zip -d llvm-mingw
-          ls llvm-mingw
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${TAG}/llvm-mingw-${TAG}-ucrt-ubuntu-22.04-x86_64.tar.xz -O llvm-mingw.tar.xz
+          tar xf llvm-mingw.tar.xz
+          mv llvm-mingw-${TAG}-ucrt-ubuntu-22.04-x86_64 llvm-mingw
 
-      - name: Export LLVM-MinGW toolchain path
+      - name: Export LLVM MinGW env
         run: |
+          echo "LLVM_MINGW=$(pwd)/llvm-mingw" >> $GITHUB_ENV
           echo "PATH=$(pwd)/llvm-mingw/bin:$PATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$(pwd)/llvm-mingw/aarch64-w64-mingw32/lib/pkgconfig" >> $GITHUB_ENV
           echo "PKG_CONFIG_LIBDIR=$(pwd)/llvm-mingw/aarch64-w64-mingw32/lib/pkgconfig" >> $GITHUB_ENV
@@ -50,8 +51,8 @@ jobs:
       - name: Configure Wine build
         working-directory: wine-src
         run: |
-          export CC=aarch64-w64-mingw32-clang
-          export CXX=aarch64-w64-mingw32-clang++
+          export CC="clang --target=aarch64-w64-mingw32 --sysroot=$LLVM_MINGW"
+          export CXX="clang++ --target=aarch64-w64-mingw32 --sysroot=$LLVM_MINGW"
           export AR=aarch64-w64-mingw32-ar
           export LD=aarch64-w64-mingw32-llvm-ld
           export RANLIB=aarch64-w64-mingw32-ranlib
@@ -82,6 +83,7 @@ jobs:
           mkdir -p wine-arm64ec-wcp/arch/arm64ec/{bin,lib,etc}
           cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
           cp -a wine-src/artifact/usr/lib/* wine-arm64ec-wcp/arch/arm64ec/lib/
+
           cat << 'EOF' > wine-arm64ec-wcp/manifest.json
           {
             "name": "Wine11-ARM64EC",
@@ -90,12 +92,15 @@ jobs:
             "runtime": "winlator-ludashi"
           }
           EOF
+
           echo "wine-11.1" > wine-arm64ec-wcp/version.txt
+
           cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
           export WINE_ENABLE_ARM64EC=1
           EOF
+
           chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
       - name: Upload .wcp artifact
