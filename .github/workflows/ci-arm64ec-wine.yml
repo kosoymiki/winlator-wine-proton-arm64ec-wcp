@@ -26,7 +26,7 @@ jobs:
             pkgconf git autoconf automake libtool flex bison gettext unzip \
             libsdl2-dev libvulkan-dev libx11-dev libxext-dev \
             libxrandr-dev libxrender-dev libxcursor-dev libxi-dev \
-            libfreetype6-dev libfontconfig-dev libdbus-1-dev \
+            libfontconfig-dev libdbus-1-dev \
             libudev-dev libasound2-dev libcapi20-dev libusb-1.0-0-dev \
             libgnutls28-dev libpulse-dev libsqlite3-dev libosmesa6-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
@@ -48,7 +48,6 @@ jobs:
       - name: Build Wine tools (host)
         working-directory: wine-src
         run: |
-          # Configure and build only tools for host system
           ./configure \
             --build=x86_64-pc-linux-gnu \
             --enable-archs=arm64ec \
@@ -75,7 +74,6 @@ jobs:
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
-          # Use wine tools built in previous step
           ./configure \
             --build=x86_64-pc-linux-gnu \
             --host=aarch64-w64-mingw32 \
@@ -84,6 +82,7 @@ jobs:
             --with-wine-tools=../wine-tools \
             --disable-tests \
             --without-x \
+            --without-freetype \
             --prefix=/usr
 
       - name: Build Wine
