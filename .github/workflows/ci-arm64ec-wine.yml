@@ -19,72 +19,52 @@ jobs:
         with:
           platforms: aarch64
 
-      - name: Install dependencies for Wine build
+      - name: Install Ubuntu dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            cmake \
-            libtool \
-            make \
-            wget \
-            curl \
-            pkg-config \
-            zlib1g-dev \
-            libfreetype6-dev \
-            libfontconfig1-dev \
-            libx11-dev \
-            libxext-dev \
-            libxrender-dev \
-            libxml2-dev \
-            libssl-dev \
-            gcc-multilib \
-            g++-multilib
+          sudo apt-get install -y curl unzip cmake make pkgconf git \
+            autoconf automake libtool flex bison gettext \
+            zlib1g-dev libfreetype6-dev libfontconfig1-dev \
+            libx11-dev libxext-dev libxrender-dev libxml2-dev libssl-dev
 
-      - name: Download LLVM MinGW toolchain for ARM64EC
+      - name: Download LLVM-MinGW aarch64 toolchain
         run: |
-          # Скачиваем и распаковываем LLVM MinGW для ARM64EC
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.tar.xz -O /tmp/llvm-mingw.tar.xz
-          mkdir -p /opt/llvm-mingw
-          tar -xf /tmp/llvm-mingw.tar.xz -C /opt/llvm-mingw
+          TAG=$(curl -s https://api.github.com/repos/mstorsjo/llvm-mingw/releases/latest | \
+               grep -oP '"tag_name":\s*"\K(.*)(?=")')
+          echo "Using llvm-mingw tag: $TAG"
 
-      - name: Set environment variables for sysroot and toolchain
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${TAG}/llvm-mingw-${TAG}-ucrt-aarch64.zip
+          unzip llvm-mingw-${TAG}-ucrt-aarch64.zip -d llvm-mingw
+          ls llvm-mingw
+
+      - name: Export LLVM-MinGW toolchain path
         run: |
-          # Устанавливаем переменные для использования LLVM MinGW toolchain
-          export PATH="/opt/llvm-mingw/bin:$PATH"
+          echo "PATH=$(pwd)/llvm-mingw/bin:$PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(pwd)/llvm-mingw/aarch64-w64-mingw32/lib/pkgconfig" >> $GITHUB_ENV
+          echo "PKG_CONFIG_LIBDIR=$(pwd)/llvm-mingw/aarch64-w64-mingw32/lib/pkgconfig" >> $GITHUB_ENV
+
+      - name: Clone Wine source
+        run: |
+          git clone --depth 1 --branch "wine-11.1" https://gitlab.winehq.org/wine/wine.git wine-src
+
+      - name: Configure Wine build
+        working-directory: wine-src
+        run: |
           export CC=aarch64-w64-mingw32-clang
           export CXX=aarch64-w64-mingw32-clang++
           export AR=aarch64-w64-mingw32-ar
           export LD=aarch64-w64-mingw32-llvm-ld
           export RANLIB=aarch64-w64-mingw32-ranlib
-          export PKG_CONFIG_PATH=/opt/llvm-mingw/aarch64-w64-mingw32/lib/pkgconfig
-          export PKG_CONFIG_LIBDIR=$PKG_CONFIG_PATH
-          export CFLAGS+=" --sysroot=/opt/llvm-mingw/aarch64-w64-mingw32"
-          export LDFLAGS+=" --sysroot=/opt/llvm-mingw/aarch64-w64-mingw32"
+          export CFLAGS="-O2 -fno-plt"
+          export CXXFLAGS="$CFLAGS"
+          export LDFLAGS="-fuse-ld=lld"
 
-      - name: Clone Wine repository
-        run: |
-          git clone --depth 1 --branch "wine-11.1" \
-            https://gitlab.winehq.org/wine/wine.git wine-src
-
-      - name: Configure Wine build
-        working-directory: wine-src
-        run: |
-          # Настройка флагов и компилятора
           ./configure \
-            --enable-archs=arm64ec,aarch64 \
-            --host=arm64ec-w64-mingw32 \
+            --host=aarch64-w64-mingw32 \
+            --enable-archs=arm64ec \
             --with-mingw=clang \
+            --disable-tests \
             --without-x \
-            --without-opengl \
-            --without-vulkan \
-            --without-gphoto2 \
-            --without-freetype \
-            --without-fontconfig \
-            --without-alsa \
-            --without-pulse \
-            --without-sdl2 \
-            --without-xinerama \
             --prefix=/usr
 
       - name: Build Wine
@@ -92,20 +72,16 @@ jobs:
         run: |
           make -j$(nproc)
 
-      - name: Install Wine into artifact directory
+      - name: Install Wine
         working-directory: wine-src
         run: |
           make DESTDIR=$PWD/artifact install
 
-      - name: Create .wcp structure
+      - name: Package .wcp
         run: |
-          mkdir -p wine-arm64ec-wcp/arch/arm64ec/bin
-          mkdir -p wine-arm64ec-wcp/arch/arm64ec/lib
-          mkdir -p wine-arm64ec-wcp/arch/arm64ec/etc
-
+          mkdir -p wine-arm64ec-wcp/arch/arm64ec/{bin,lib,etc}
           cp -a wine-src/artifact/usr/bin/* wine-arm64ec-wcp/arch/arm64ec/bin/
           cp -a wine-src/artifact/usr/lib/* wine-arm64ec-wcp/arch/arm64ec/lib/
-
           cat << 'EOF' > wine-arm64ec-wcp/manifest.json
           {
             "name": "Wine11-ARM64EC",
@@ -114,7 +90,16 @@ jobs:
             "runtime": "winlator-ludashi"
           }
           EOF
-
           echo "wine-11.1" > wine-arm64ec-wcp/version.txt
+          cat << 'EOF' > wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
+          #!/bin/sh
+          export WINEDEBUG="-all"
+          export WINE_ENABLE_ARM64EC=1
+          EOF
+          chmod +x wine-arm64ec-wcp/arch/arm64ec/etc/env.sh
 
-          cat << 'EOF' > wine-arm64ec-wcp/arch/arm64
+      - name: Upload .wcp artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-arm64ec-wcp
+          path: wine-arm64ec-wcp
