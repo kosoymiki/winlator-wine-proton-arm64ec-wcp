@@ -19,7 +19,13 @@ jobs:
       - name: Install Host & Cross Dependencies
         run: |
           sudo dpkg --add-architecture arm64
+
+          # Используем порты Ubuntu для ARM64
+          sudo sed -i 's|http://archive.ubuntu.com/ubuntu/|http://ports.ubuntu.com/ubuntu-ports/|g' /etc/apt/sources.list
+          sudo sed -i 's|http://security.ubuntu.com/ubuntu|http://ports.ubuntu.com/ubuntu-ports|g' /etc/apt/sources.list
+
           sudo apt-get update
+
           sudo apt-get install -y \
             curl wget unzip pkgconf git cmake make \
             flex bison gettext \
@@ -44,7 +50,6 @@ jobs:
           cd wine-tools-build
           ../wine-src/configure --disable-tests --without-x --prefix=$PWD/install
           make -j$(nproc) tools
-          ls -l install/bin
           echo "WINE_TOOLS=$PWD/install/bin" >> $GITHUB_ENV
 
       - name: Configure Wine Cross-Compile ARM64EC
@@ -52,7 +57,7 @@ jobs:
           mkdir wine-build
           cd wine-build
           
-          # Оптимизация под Snapdragon 8+ Gen1
+          # Настройка компиляторов для ARM64EC
           export CC="clang --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
           export CXX="clang++ --target=aarch64-w64-mingw32 --sysroot=$PWD/../llvm-mingw"
           export AR=aarch64-w64-mingw32-ar
@@ -62,7 +67,6 @@ jobs:
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
 
-          # Configure cross build
           ../wine-src/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine64 \
