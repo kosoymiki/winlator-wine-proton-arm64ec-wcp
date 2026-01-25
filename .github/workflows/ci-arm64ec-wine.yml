@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -23,22 +22,23 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential clang llvm lld pkgconf git autoconf automake \
-            libtool flex bison gettext \
-            libsdl2-dev libvulkan-dev libx11-dev libxext-dev libxrandr-dev \
-            libxrender-dev libxcursor-dev libxi-dev libfreetype6-dev \
-            libfontconfig-dev libdbus-1-dev libudev-dev libasound2-dev \
-            libcapi20-dev libusb-1.0-0-dev libgnutls28-dev libpulse-dev \
-            libsqlite3-dev libosmesa6-dev libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev libunwind-dev unzip
+          sudo apt-get install -y build-essential clang llvm lld pkgconf git \
+            autoconf automake libtool flex bison gettext unzip \
+            libsdl2-dev libvulkan-dev libx11-dev libxext-dev \
+            libxrandr-dev libxrender-dev libxcursor-dev libxi-dev \
+            libfreetype6-dev libfontconfig-dev libdbus-1-dev \
+            libudev-dev libasound2-dev libcapi20-dev libusb-1.0-0-dev \
+            libgnutls28-dev libpulse-dev libsqlite3-dev libosmesa6-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libunwind-dev
 
-      - name: Install LLVM-MinGW toolchain
+      - name: Install LLVM-MinGW cross toolchain
         run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip
-          unzip llvm-mingw-20251216-ucrt-x86_64.zip
-          TOOLCHAIN_DIR=$(find . -maxdepth 1 -type d -name "llvm-mingw-*-ucrt-x86_64*" | head -n1)
-          sudo mv "$TOOLCHAIN_DIR" /opt/llvm-mingw
+          # Загрузка cross-toolchain tarball (cборщик под Linux)
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+          tar xf llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+          # Перемещаем в /opt
+          sudo mv llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64 /opt/llvm-mingw
           echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
 
       - name: Clone Wine source
@@ -48,21 +48,19 @@ jobs:
       - name: Configure Wine build
         working-directory: wine-src
         run: |
-          # Указываем clang с явным таргетом и sysroot на LLVM-MinGW
-          export CC="clang --target=aarch64-w64-mingw32 --sysroot=/opt/llvm-mingw/aarch64-w64-mingw32"
-          export CXX="clang++ --target=aarch64-w64-mingw32 --sysroot=/opt/llvm-mingw/aarch64-w64-mingw32"
-          export AR=llvm-ar
-          export LD=lld
-          export RANLIB=llvm-ranlib
-          export STRIP=llvm-strip
+          # Используем clang из llvm-mingw
+          export PATH="/opt/llvm-mingw/bin:$PATH"
 
-          export CFLAGS="-march=armv8.2-a+fp16+dotprod -O3 -fno-plt"
+          export CC=aarch64-w64-mingw32-clang
+          export CXX=aarch64-w64-mingw32-clang++
+          export AR=aarch64-w64-mingw32-llvm-ar
+          export LD=aarch64-w64-mingw32-llvm-ld
+          export RANLIB=aarch64-w64-mingw32-llvm-ranlib
+          export STRIP=aarch64-w64-mingw32-llvm-strip
+
+          export CFLAGS="-O2 -fno-plt"
           export CXXFLAGS="$CFLAGS"
           export LDFLAGS="-fuse-ld=lld"
-
-          # Добавляем Mingw-инклуды и либы в путь компилятора
-          export CFLAGS="$CFLAGS -I/opt/llvm-mingw/aarch64-w64-mingw32/include"
-          export LDFLAGS="$LDFLAGS -L/opt/llvm-mingw/aarch64-w64-mingw32/lib"
 
           ./configure \
             --enable-archs=arm64ec,aarch64 \
@@ -93,10 +91,10 @@ jobs:
 
           cat << 'EOF' > wine-arm64ec-wcp/manifest.json
           {
-          "name": "Wine11-ARM64EC",
-          "version": "wine-11.1",
-          "arch": "arm64ec",
-          "runtime": "winlator-ludashi"
+            "name": "Wine11-ARM64EC",
+            "version": "wine-11.1",
+            "arch": "arm64ec",
+            "runtime": "winlator-ludashi"
           }
           EOF
 
@@ -114,4 +112,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wine-arm64ec-wcp
-          path: wine-arm64ec-wcp
+          pat
