@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging (Makefile Fix)
+name: Build Wine 11.1 Staging (Install Tool Fix)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_makefile_fix:
+  build_wine_install_fix:
     runs-on: ubuntu-24.04
 
     env:
@@ -81,12 +81,15 @@ jobs:
           ( ./tools/make_requests ) || true
           exit 0
 
-      # 5. BUILD TOOLS
+      # 5. BUILD TOOLS (Host x64) - ADDED tools/install
       - name: Build Wine Tools (Host x64)
         run: |
           mkdir wine-tools
           cd wine-tools
           ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
+          
+          # === FORCE BUILD LIST (CRITICAL UPDATE) ===
+          # Добавлен tools/install - это решает проблему make install
           make -j$(nproc) \
             tools/winebuild/winebuild \
             tools/widl/widl \
@@ -95,9 +98,10 @@ jobs:
             tools/winegcc/winegcc \
             tools/wine/wine \
             tools/make_xftmpl \
-            tools/sfnt2fon/sfnt2fon
+            tools/sfnt2fon/sfnt2fon \
+            tools/install
 
-      # 6. CONFIGURE TARGET
+      # 6. CONFIGURE TARGET (ARM64)
       - name: Configure Wine (Target ARM64)
         run: |
           mkdir wine-build
@@ -123,7 +127,7 @@ jobs:
             --without-sane \
             --without-oss
 
-      # 7. BUILD & PACKAGE (THE MAKEFILE HACK)
+      # 7. BUILD & PACKAGE
       - name: Build & Package
         run: |
           cd wine-build
@@ -131,24 +135,18 @@ jobs:
           echo ">>> Building..."
           make -j$(nproc)
           
-          echo ">>> Patching Makefile to fix install..."
-          # ЭТО КЛЮЧЕВОЙ МОМЕНТ:
-          # Мы удаляем зависимость от tools/install из главного Makefile.
-          # sed ищет строку "../wine-tools/tools/install" и удаляет её.
-          sed -i 's|../wine-tools/tools/install||g' Makefile
-          
           echo ">>> Installing..."
+          # Теперь install должен пройти, так как tools/install существует
           mkdir -p ../image
           ABS_DESTDIR=$(readlink -f ../image)
-          
-          # Теперь make install не полезет в тулзы
           make install DESTDIR="$ABS_DESTDIR"
           
-          echo ">>> Verifying..."
+          echo ">>> Packaging..."
           cd ../image/opt
           
+          # Проверка
           if [ ! -d "wine-custom" ]; then
-             echo "FATAL: Install failed even with Makefile hack."
+             echo "FATAL: Install failed to create wine-custom."
              ls -R ..
              exit 1
           fi
@@ -161,7 +159,7 @@ jobs:
             "version": "11.1-staging",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Wine 11.1 + Staging. Native ARM64. X11."
+            "description": "Wine 11.1 + Staging + FSR. Native ARM64. Install Fixed."
           }
           EOF
           
