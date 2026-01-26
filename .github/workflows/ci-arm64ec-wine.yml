@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging (Manual Install)
+name: Build Wine 11.1 Staging (Makefile Fix)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_manual_install:
+  build_wine_makefile_fix:
     runs-on: ubuntu-24.04
 
     env:
@@ -123,47 +123,32 @@ jobs:
             --without-sane \
             --without-oss
 
-      # 7. BUILD & PACKAGE (SURGICAL INSTALL)
+      # 7. BUILD & PACKAGE (THE MAKEFILE HACK)
       - name: Build & Package
         run: |
           cd wine-build
           
-          # 1. Build everything first
+          echo ">>> Building..."
           make -j$(nproc)
           
-          echo ">>> Prepare Install Directory"
+          echo ">>> Patching Makefile to fix install..."
+          # ЭТО КЛЮЧЕВОЙ МОМЕНТ:
+          # Мы удаляем зависимость от tools/install из главного Makefile.
+          # sed ищет строку "../wine-tools/tools/install" и удаляет её.
+          sed -i 's|../wine-tools/tools/install||g' Makefile
+          
+          echo ">>> Installing..."
           mkdir -p ../image
           ABS_DESTDIR=$(readlink -f ../image)
           
-          # 2. Surgical Install (Install subcomponents individually)
-          # Это обходит ошибку в корневом Makefile
+          # Теперь make install не полезет в тулзы
+          make install DESTDIR="$ABS_DESTDIR"
           
-          echo ">>> Installing Loader (wine64)..."
-          cd loader && make install DESTDIR="$ABS_DESTDIR" && cd ..
-          
-          echo ">>> Installing Server (wineserver)..."
-          cd server && make install DESTDIR="$ABS_DESTDIR" && cd ..
-          
-          echo ">>> Installing Libraries (DLLs)..."
-          cd dlls && make install DESTDIR="$ABS_DESTDIR" && cd ..
-          
-          echo ">>> Installing Programs (winecfg, etc)..."
-          cd programs && make install DESTDIR="$ABS_DESTDIR" && cd ..
-          
-          echo ">>> Installing Includes..."
-          cd include && make install DESTDIR="$ABS_DESTDIR" && cd ..
-          
-          # Опционально: шрифты (могут упасть, поэтому || true)
-          echo ">>> Installing Fonts..."
-          ( cd fonts && make install DESTDIR="$ABS_DESTDIR" ) || echo "WARN: Fonts install skipped"
-          cd ..
-          
-          # 3. Packaging
-          echo ">>> Verifying & Packaging..."
+          echo ">>> Verifying..."
           cd ../image/opt
           
           if [ ! -d "wine-custom" ]; then
-             echo "FATAL: Install failed. Folder structure:"
+             echo "FATAL: Install failed even with Makefile hack."
              ls -R ..
              exit 1
           fi
@@ -176,7 +161,7 @@ jobs:
             "version": "11.1-staging",
             "arch": "arm64",
             "author": "GitHubCI",
-            "description": "Wine 11.1 + Staging (Surgical Install). Native ARM64."
+            "description": "Wine 11.1 + Staging. Native ARM64. X11."
           }
           EOF
           
