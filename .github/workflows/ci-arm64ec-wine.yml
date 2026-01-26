@@ -1,4 +1,4 @@
-name: Build Wine 11.1 ARM64 for Ludashi CMOD 2.8.1 (S8+G1 Optimized)
+name: Build Wine 11.1 ARM64 for Ludashi CMOD 2.8.1
 
 on:
   push:
@@ -82,12 +82,11 @@ jobs:
           ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
           make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
 
-      - name: Configure Wine ARM64 (S8+G1 Optimized)
+      - name: Configure Wine ARM64
         run: |
           mkdir wine-build && cd wine-build
           
-          # Оптимизация под Snapdragon 8+ Gen 1 (Cortex-X2/A710/A510)
-          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -fno-plt -flto=auto -fuse-linker-plugin"
+          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -fno-plt -flto=auto"
           export CROSSCFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -g0 -mstrict-align -fno-plt -flto=auto"
           export LDFLAGS="-Wl,-O1 -Wl,--as-needed -flto=auto"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
@@ -97,7 +96,7 @@ jobs:
             --enable-win64 \
             --with-wine-tools=../wine-tools \
             --with-mingw=clang \
-            --prefix=/opt/wine \
+            --prefix="" \
             --disable-tests \
             --with-x \
             --without-wayland \
@@ -111,37 +110,43 @@ jobs:
           cd wine-build
           make -j$(nproc)
 
-      - name: Package for Ludashi
+      - name: Package WCP (Winlator Format)
         run: |
           cd wine-build
-          INSTALL_ROOT="$(readlink -f ../ludashi-wine)"
-          mkdir -p "$INSTALL_ROOT"
-          make install DESTDIR="$INSTALL_ROOT" STRIP=true
           
-          cd "$INSTALL_ROOT/opt/wine"
+          WCP_ROOT="$GITHUB_WORKSPACE/wcp-package"
+          mkdir -p "$WCP_ROOT"
           
+          make install DESTDIR="$WCP_ROOT" STRIP=true
+          
+          cd "$WCP_ROOT"
+          
+          # Создаем симлинк wine -> wine64
           cd bin && ln -sf wine64 wine && cd ..
           
+          # Права
           find bin -type f -exec chmod +x {} \;
           find lib -name "*.so*" -exec chmod +x {} \;
           
+          # info.json в КОРНЕ архива
           cat > info.json <<'EOF'
           {
-            "name": "Wine-11.1-S8plusG1-Ludashi",
+            "name": "Wine-11.1-S8G1-Ludashi",
             "version": "11.1",
             "arch": "arm64",
             "type": "wine",
             "variant": "staging",
             "glibc": "2.35",
-            "target": "snapdragon-8plus-gen1",
-            "optimization": "armv8.2-a+fp16+dotprod",
+            "target": "ludashi-cmod-2.8.1",
+            "optimization": "armv8.2-a+fp16+dotprod cortex-a76",
             "author": "GitHub-CI",
-            "description": "Wine 11.1 Staging optimized for Snapdragon 8+ Gen 1 (Ludashi CMOD 2.8.1)",
+            "description": "Wine 11.1 Staging + FSR optimized for Snapdragon 8+ Gen 1",
             "features": ["staging", "fsr", "fsync", "esync", "lto"],
-            "date": "2025-01-26"
+            "build_date": "2025-01-26"
           }
           EOF
           
+          # env.sh опционально
           cat > env.sh <<'EOF'
           #!/bin/sh
           export WINEDEBUG=-all
@@ -149,20 +154,23 @@ jobs:
           export WINEFSYNC=1
           export WINE_FULLSCREEN_FSR=1
           export WINE_CPU_TOPOLOGY=8:0
-          export DXVK_HUD=0
           EOF
           chmod +x env.sh
           
-          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-s8plusg1-ludashi.wcp" \
+          # АРХИВИРУЕМ БЕЗ ВЛОЖЕННЫХ ПАПОК
+          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-s8g1-ludashi.wcp" \
             --transform='s|^\./||' \
-            -C . \
+            -C "$WCP_ROOT" \
             bin lib share info.json env.sh
           
-          echo "=== Archive Contents ==="
-          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-s8plusg1-ludashi.wcp" | head -20
+          echo "=== WCP Structure Verification ==="
+          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-s8g1-ludashi.wcp" | head -25
+          
+          echo "=== File Size ==="
+          ls -lh "$GITHUB_WORKSPACE/wine-11.1-s8g1-ludashi.wcp"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-s8plusg1-ludashi
-          path: wine-11.1-s8plusg1-ludashi.wcp
+          name: wine-11.1-s8g1-ludashi
+          path: wine-11.1-s8g1-ludashi.wcp
