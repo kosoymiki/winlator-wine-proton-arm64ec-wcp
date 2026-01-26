@@ -41,9 +41,8 @@ jobs:
             libxcomposite-dev:arm64 libxfixes-dev:arm64 libxxf86vm-dev:arm64 \
             libvulkan-dev:arm64 libxkbcommon-dev:arm64 libsdl2-dev:arm64 \
             libudev-dev:arm64 libgnutls28-dev:arm64 libpcap-dev:arm64 \
-            libpulse-dev:arm64 libdbus-1-dev:arm64 libfontconfig1-dev:arm64 libunwind-dev:arm64
-          
-          sudo apt-get install -y libgstreamer1.0-dev:arm64 || true
+            libpulse-dev:arm64 libdbus-1-dev:arm64 libfontconfig1-dev:arm64 libunwind-dev:arm64 \
+            libgstreamer1.0-dev:arm64
 
       - name: Setup LLVM MinGW
         run: |
@@ -54,8 +53,8 @@ jobs:
 
       - name: Clone Sources
         run: |
-          git clone --depth 1 --branch $WINE_TAG https://gitlab.winehq.org/wine/wine.git wine-src
-          git clone --depth 1 --branch $STAGING_TAG https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+          git clone --depth 1 --branch "$WINE_TAG" https://gitlab.winehq.org/wine/wine.git wine-src
+          git clone --depth 1 --branch "$STAGING_TAG" https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
       - name: Apply Patches
         run: |
@@ -69,38 +68,61 @@ jobs:
           ./tools/make_requests
           exit 0
 
-      # Отдельная сборка wine-tools больше не нужна, Wine сам соберёт их в кросс-сборке
-      # - name: Build Wine Tools
-      #   run: |
-      #     mkdir wine-tools && cd wine-tools
-      #     ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
-      #     make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
+      # 1) Нативный x86_64 билд, чтобы получить wine-tools (требуется configure при cross-compiling) [web:20][web:21]
+      - name: Build native Wine tools (x86_64)
+        run: |
+          mkdir wine-tools && cd wine-tools
 
+          export CFLAGS="-O2 -pipe"
+          export LDFLAGS="-Wl,-O2,-O1,--as-needed"
+
+          ../wine-src/configure \
+            --enable-win64 \
+            --with-x \
+            --with-freetype \
+            --with-gstreamer \
+            --with-pulse \
+            --without-alsa \
+            --without-wayland \
+            --without-cups \
+            --without-sane \
+            --without-oss
+
+          # Важно собрать именно tools, чтобы в каталоге появились winebuild/makedep/wmc/и т.д. [web:20]
+          make -j"$(nproc)" tools
+
+      # 2) Кросс‑сборка Wine ARM64, используя уже собранные wine-tools
       - name: Configure Wine ARM64
         run: |
           mkdir wine-build && cd wine-build
-          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -fno-plt -flto=auto"
+
+          export CFLAGS="-O2 -pipe -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76"
           export CROSSCFLAGS="$CFLAGS -g0 -mstrict-align"
-          export LDFLAGS="-Wl,-O1 -Wl,--as-needed -flto=auto"
+          export LDFLAGS="-Wl,-O2,-O1,--as-needed"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-          
+
           ../wine-src/configure \
             --host=aarch64-linux-gnu \
             --enable-win64 \
             --with-mingw=clang \
+            --with-wine-tools=../wine-tools \
             --prefix="" \
             --disable-tests \
             --with-x \
-            --without-wayland \
             --with-vulkan \
             --with-freetype \
-            --without-gstreamer \
-            --without-{cups,sane,oss}
+            --with-gstreamer \
+            --with-pulse \
+            --without-alsa \
+            --without-wayland \
+            --without-cups \
+            --without-sane \
+            --without-oss
 
-      - name: Build Wine
+      - name: Build Wine ARM64
         run: |
           cd wine-build
-          make -j$(nproc)
+          make -j"$(nproc)"
 
       - name: Package WCP
         run: |
@@ -122,21 +144,28 @@ jobs:
             "type": "wine",
             "variant": "staging",
             "glibc": "2.35",
+            "abi": "arm64-linux-gnu-glibc2.35",
+            "kernel": ">=5.10",
             "optimization": "armv8.2-a+fp16+dotprod",
             "target": "snapdragon-8plus-gen1",
             "author": "GitHub-CI",
             "description": "Wine 11.1 Staging + FSR optimized for S8+G1",
-            "features": ["staging", "fsr", "fsync", "esync", "lto"]
+            "features": ["staging", "fsr", "fsync", "esync", "lto"],
+            "sources": {
+              "wine": "wine-11.1",
+              "staging": "v11.1",
+              "fsr_patch": "proton-fshack-staging.patch"
+            }
           }
           EOF
           
           cat > env.sh <<'EOF'
           #!/bin/sh
-          export WINEDEBUG=-all
-          export WINEESYNC=1
-          export WINEFSYNC=1
-          export WINE_FULLSCREEN_FSR=1
-          export WINE_CPU_TOPOLOGY=8:0
+          export WINEDEBUG=${WINEDEBUG:--all}
+          export WINEESYNC=${WINEESYNC:-1}
+          export WINEFSYNC=${WINEFSYNC:-1}
+          export WINE_FULLSCREEN_FSR=${WINE_FULLSCREEN_FSR:-1}
+          export WINE_CPU_TOPOLOGY=${WINE_CPU_TOPOLOGY:-"8:0"}
           EOF
           chmod +x env.sh
           
