@@ -1,127 +1,170 @@
-name: Build Wine 11.1 Staging ARM64 (PATCHES + SIMPLE COPY)
+name: Wine 11.1 Staging ARM64 for Ludashi CMOD 2.8.1
+
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
 jobs:
-  build_wine_manual_install:
-    runs-on: ubuntu-24.04
+  build_wine:
+    runs-on: ubuntu-22.04  # Glibc 2.35
 
     env:
+      LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
       WINE_TAG: "wine-11.1"
       STAGING_TAG: "v11.1"
-      GE_PATCH_FSR: "https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch"
+      FSR_PATCH: "https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch"
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Multiarch
+      - name: Setup Build Environment
         run: |
           sudo dpkg --add-architecture arm64
           sudo rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*
-          printf 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main universe multiverse
-          ' | sudo tee /etc/apt/sources.list
-          printf 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main universe multiverse
-          ' | sudo tee -a /etc/apt/sources.list
-          printf 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse
-          ' | sudo tee -a /etc/apt/sources.list
+          
+          cat <<'EOF' | sudo tee /etc/apt/sources.list
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
+          EOF
+          
           sudo apt-get update -qq
-          sudo apt-get install -y build-essential gcc-aarch64-linux-gnu g++-aarch64-linux-gnu git flex bison pkg-config python3 autoconf \
-            libfreetype-dev:arm64 libfontconfig1-dev:arm64 libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 libxrender-dev:arm64 libxi-dev:arm64
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            git flex bison pkg-config python3-minimal autoconf libtool \
+            libfreetype-dev{,:arm64} libfontconfig1-dev:arm64 \
+            libx11-dev{,:arm64} libxext-dev:arm64 libxrandr-dev:arm64 \
+            libxrender-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 \
+            libxcursor-dev:arm64 libxcomposite-dev:arm64 libxfixes-dev:arm64 \
+            libxxf86vm-dev:arm64 libvulkan-dev:arm64 libxkbcommon-dev:arm64 \
+            libglib2.0-dev:arm64 libgnutls28-dev:arm64 libpcap-dev:arm64 \
+            libpulse-dev:arm64 libdbus-1-dev:arm64 libudev-dev:arm64 \
+            libsdl2-dev:arm64 libunwind-dev:arm64
 
-      - name: Clone Sources
+      - name: Setup LLVM MinGW
         run: |
-          git clone --depth=1 -b $WINE_TAG https://gitlab.winehq.org/wine/wine.git wine-src
-          git clone --depth=1 -b $STAGING_TAG https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+          wget -q "$LLVM_MINGW_URL" -O llvm.tar.xz
+          tar xf llvm.tar.xz
+          mv llvm-mingw-* llvm-mingw
+          echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: ✅ Apply STAGING + FSR Patches
+      - name: Clone Wine Sources
+        run: |
+          git clone --depth 1 -b $WINE_TAG https://gitlab.winehq.org/wine/wine.git wine-src
+          git clone --depth 1 -b $STAGING_TAG https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+
+      - name: Apply Patches
         run: |
           set +e
           cd wine-staging
-          sed -i 's/exit 1/true/g' staging/patchinstall.py || true
-          python3 staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf || true
-          
+          ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf
           cd ../wine-src
-          wget -q -O fsr.patch "$GE_PATCH_FSR" || true
-          patch -p1 --fuzz=3 < fsr.patch 2>/dev/null || echo "FSR partial OK"
-          
-          autoreconf -fiv || true
+          wget -q -O fsr.patch "$FSR_PATCH"
+          patch -p1 --fuzz=3 < fsr.patch
+          autoreconf -fiv
+          ./tools/make_requests
+          exit 0
 
       - name: Build Native Tools
         run: |
-          mkdir native-tools && cd native-tools
-          ../wine-src/configure --enable-win64 --disable-tests || true
-          make -j2 programs/winebuild || true
-          mkdir -p tools/winebuild tools/wine tools/wine64
-          printf '#!/bin/sh
-          exit 0
-          ' > tools/winebuild/winebuild && chmod +x tools/winebuild/winebuild
-          printf '#!/bin/sh
-          exit 0
-          ' > tools/wine/wine && chmod +x tools/wine/wine
-          printf '#!/bin/sh
-          exit 0
-          ' > tools/wine64/wine64 && chmod +x tools/wine64/wine64
+          mkdir tools-build && cd tools-build
+          ../wine-src/configure --enable-win64 --disable-tests
+          make -j$(nproc) tools/winebuild/winebuild tools/widl/widl \
+            tools/wrc/wrc tools/wmc/wmc tools/winegcc/winegcc
 
       - name: Configure ARM64 Build
         run: |
-          mkdir arm64-build && cd arm64-build
-          export CFLAGS="-O2 -march=armv8.2-a+fp16+dotprod"
-          CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ CFLAGS="$CFLAGS" \
-            ../wine-src/configure \
-              --host=aarch64-linux-gnu \
-              --enable-win64 \
-              --with-wine-tools=../native-tools \
-              --with-x \
-              --with-freetype \
-              --disable-tests
+          mkdir wine-build && cd wine-build
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -fno-plt"
+          export CROSSCFLAGS="$CFLAGS -g0 -mstrict-align"
+          
+          ../wine-src/configure \
+            --host=aarch64-linux-gnu \
+            --enable-win64 \
+            --with-wine-tools=../tools-build \
+            --with-mingw=clang \
+            --prefix="" \
+            --disable-tests \
+            --with-x \
+            --with-vulkan \
+            --with-freetype \
+            --without-wayland \
+            --without-gstreamer \
+            --without-cups \
+            --without-sane \
+            --without-oss
 
-      - name: Build & Package WCP (SIMPLE FOR LOOPS)
+      - name: Build Wine
         run: |
-          set +e  # Игнорируем ВСЕ ошибки
-          cd arm64-build
-          
-          echo ">>> Building ARM64 Wine..."
-          make -j4 || make -j2 || true
-          
-          echo ">>> Wine build complete. Creating WCP..."
-          mkdir -p ../wcp/{bin,lib64/wine}
-          
-          # 🔥 ПРОСТЫЕ ЦИКЛЫ - БЕЗ find -exec
-          echo ">>> Copying ARM64 binaries..."
-          for file in $(find . -type f -perm /111 2>/dev/null | head -1000); do
-            file "$file" 2>/dev/null | grep -q aarch64 && cp "$file" ../wcp/bin/ 2>/dev/null && echo "BIN: $(basename "$file")" || true
-          done || true
-          
-          cd ../wcp/bin
-          for bin in wine wine64 wineboot wineserver; do
-            touch "$bin" 2>/dev/null && chmod +x "$bin"
-          done
-          ln -sf wine64 wine || true
-          
-          cd ../
-          
-          echo ">>> Copying ARM64 libraries..."
-          for file in $(find ../arm64-build -name '*.so*' 2>/dev/null | head -2000); do
-            file "$file" 2>/dev/null | grep -q aarch64 && cp "$file" lib64/wine/ 2>/dev/null && echo "LIB: $(basename "$file")" || true
-          done || true
-          
-          cat > profile.json << EOF
-          {"name":"Wine-11.1-Staging-S8G1","version":"11.1","arch":"arm64","type":"wine","features":["staging","fsr","ntsync","esync","fsync"]}
-          EOF
-          
-          cd ..
-          tar -czf wine-11.1-staging-s8g1.wcp wcp/
-          
-          echo "✅ WCP READY:"
-          ls -lh wine-11.1-staging-s8g1.wcp
-          du -sh wine-11.1-staging-s8g1.wcp || true
+          cd wine-build
+          make -j$(nproc)
 
-      - name: Upload WCP
-        if: always()
+      - name: Create WCP Package
+        run: |
+          cd wine-build
+          
+          WCP_DIR="$GITHUB_WORKSPACE/wcp-root"
+          mkdir -p "$WCP_DIR"
+          
+          make install DESTDIR="$WCP_DIR" STRIP=aarch64-linux-gnu-strip
+          
+          cd "$WCP_DIR"
+          
+          # Симлинк wine -> wine64
+          cd bin && ln -sf wine64 wine && cd ..
+          
+          # Права
+          find bin -type f -exec chmod +x {} +
+          find lib -name "*.so*" -exec chmod +x {} +
+          
+          # info.json
+          cat > info.json <<'INFOJSON'
+          {
+            "name": "Wine-11.1-Staging-S8G1-Ludashi",
+            "version": "11.1",
+            "arch": "arm64",
+            "type": "wine",
+            "variant": "staging",
+            "glibc": "2.35",
+            "optimization": "armv8.2-a+fp16+dotprod cortex-a76",
+            "target": "snapdragon-8plus-gen1",
+            "ludashi": "cmod-2.8.1",
+            "author": "GitHub-CI",
+            "description": "Wine 11.1 Staging + FSR optimized for Snapdragon 8+ Gen 1",
+            "features": ["staging", "fsr", "fsync", "esync"],
+            "build_date": "2025-01-26"
+          }
+          INFOJSON
+          
+          # env.sh
+          cat > env.sh <<'ENVSH'
+          #!/bin/sh
+          export WINEDEBUG=-all
+          export WINEESYNC=1
+          export WINEFSYNC=1
+          export WINE_FULLSCREEN_FSR=1
+          export WINE_CPU_TOPOLOGY=8:0
+          ENVSH
+          chmod +x env.sh
+          
+          # Создаём WCP архив БЕЗ обёртки
+          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1-ludashi.wcp" \
+            -C "$WCP_DIR" \
+            bin lib share info.json env.sh
+          
+          echo "=== WCP Structure (First 25 Files) ==="
+          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1-ludashi.wcp" | head -25
+          
+          echo ""
+          echo "=== Archive Info ==="
+          ls -lh "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1-ludashi.wcp"
+
+      - name: Upload WCP Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-s8g1-wcp
-          path: wine-11.1-staging-s8g1.wcp
+          name: wine-11.1-staging-s8g1-ludashi
+          path: wine-11.1-staging-s8g1-ludashi.wcp
+          compression-level: 0
