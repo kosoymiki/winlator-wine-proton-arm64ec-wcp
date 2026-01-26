@@ -34,17 +34,16 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential wget curl git cmake flex bison pkg-config python3-minimal autoconf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libfreetype-dev{,:arm64} libx11-dev{,:arm64} \
+            libfreetype-dev libfreetype-dev:arm64 \
+            libx11-dev libx11-dev:arm64 \
             libglib2.0-dev:arm64 libxrender-dev:arm64 libxext-dev:arm64 libxi-dev:arm64 \
             libxrandr-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
             libxcomposite-dev:arm64 libxfixes-dev:arm64 libxxf86vm-dev:arm64 \
             libvulkan-dev:arm64 libxkbcommon-dev:arm64 libsdl2-dev:arm64 \
             libudev-dev:arm64 libgnutls28-dev:arm64 libpcap-dev:arm64 \
             libpulse-dev:arm64 libdbus-1-dev:arm64 libfontconfig1-dev:arm64 libunwind-dev:arm64 \
-            # Полный GStreamer для ARM64
             libgstreamer1.0-dev:arm64 libgstreamer-plugins-base1.0-dev:arm64 \
             libgstreamer-plugins-good1.0-dev:arm64 \
-            # Дополнительно для чистоты configure
             libgl1-mesa-dev:arm64 libglu1-mesa-dev:arm64
 
       - name: Setup LLVM MinGW
@@ -71,7 +70,6 @@ jobs:
           ./tools/make_requests
           exit 0
 
-      # Нативный x86_64 билд для wine-tools
       - name: Build native Wine tools (x86_64)
         run: |
           mkdir wine-tools && cd wine-tools
@@ -81,7 +79,7 @@ jobs:
             --enable-win64 \
             --with-x \
             --with-freetype \
-            --with-gstreamer \
+            --without-gstreamer \
             --without-pulse \
             --without-alsa \
             --without-wayland \
@@ -90,14 +88,13 @@ jobs:
             --without-oss
           make -j"$(nproc)" tools
 
-      # Кросс-сборка Wine ARM64
       - name: Configure Wine ARM64
         run: |
           mkdir wine-build && cd wine-build
           export CFLAGS="-O2 -pipe -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76"
           export CROSSCFLAGS="$CFLAGS -g0 -mstrict-align"
           export LDFLAGS="-Wl,-O2,-O1,--as-needed"
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig
+          export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig"
           
           ../wine-src/configure \
             --host=aarch64-linux-gnu \
@@ -147,7 +144,7 @@ jobs:
             "optimization": "armv8.2-a+fp16+dotprod",
             "target": "snapdragon-8plus-gen1",
             "author": "GitHub-CI",
-            "description": "Wine 11.1 Staging + FSR optimized for S8+G1 (ALSA audio)",
+            "description": "Wine 11.1 Staging + FSR optimized for S8+G1 (ALSA+GStreamer)",
             "features": ["staging", "fsr", "fsync", "esync", "gstreamer"],
             "sources": {
               "wine": "wine-11.1",
