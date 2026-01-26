@@ -1,4 +1,4 @@
-name: Build Wine 11.1 ARM64 for Ludashi CMOD 2.8.1
+name: Build Wine 11.1 ARM64 for Ludashi CMOD 2.8.1 (S8+G1 Optimized)
 
 on:
   push:
@@ -62,14 +62,19 @@ jobs:
 
       - name: Apply Patches
         run: |
+          set +e
+          
           cd wine-staging
-          ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf || true
+          ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf
           
           cd ../wine-src
           wget -q -O fsr.patch "$GE_PATCH_FSR"
-          patch -p1 --fuzz=3 < fsr.patch || echo "FSR patch skipped"
-          autoreconf -fiv || true
-          ./tools/make_requests || true
+          patch -p1 --fuzz=3 < fsr.patch
+          
+          autoreconf -fiv
+          ./tools/make_requests
+          
+          exit 0
 
       - name: Build Wine Tools
         run: |
@@ -77,11 +82,14 @@ jobs:
           ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
           make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
 
-      - name: Configure Wine ARM64
+      - name: Configure Wine ARM64 (S8+G1 Optimized)
         run: |
           mkdir wine-build && cd wine-build
-          export CFLAGS="-O2 -march=armv8-a -mtune=cortex-a76 -fno-plt"
-          export CROSSCFLAGS="$CFLAGS -g0 -mstrict-align"
+          
+          # Оптимизация под Snapdragon 8+ Gen 1 (Cortex-X2/A710/A510)
+          export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -fno-plt -flto=auto -fuse-linker-plugin"
+          export CROSSCFLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76 -g0 -mstrict-align -fno-plt -flto=auto"
+          export LDFLAGS="-Wl,-O1 -Wl,--as-needed -flto=auto"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
           ../wine-src/configure \
@@ -119,16 +127,17 @@ jobs:
           
           cat > info.json <<'EOF'
           {
-            "name": "Wine-11.1-Staging-Ludashi",
+            "name": "Wine-11.1-S8plusG1-Ludashi",
             "version": "11.1",
             "arch": "arm64",
             "type": "wine",
             "variant": "staging",
             "glibc": "2.35",
-            "target": "ludashi-cmod-2.8.1",
+            "target": "snapdragon-8plus-gen1",
+            "optimization": "armv8.2-a+fp16+dotprod",
             "author": "GitHub-CI",
-            "description": "Wine 11.1 Staging + FSR for Ludashi CMOD 2.8.1",
-            "features": ["staging", "fsr", "fsync", "esync"],
+            "description": "Wine 11.1 Staging optimized for Snapdragon 8+ Gen 1 (Ludashi CMOD 2.8.1)",
+            "features": ["staging", "fsr", "fsync", "esync", "lto"],
             "date": "2025-01-26"
           }
           EOF
@@ -139,20 +148,21 @@ jobs:
           export WINEESYNC=1
           export WINEFSYNC=1
           export WINE_FULLSCREEN_FSR=1
+          export WINE_CPU_TOPOLOGY=8:0
           export DXVK_HUD=0
           EOF
           chmod +x env.sh
           
-          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp" \
+          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-s8plusg1-ludashi.wcp" \
             --transform='s|^\./||' \
             -C . \
             bin lib share info.json env.sh
           
           echo "=== Archive Contents ==="
-          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp" | head -20
+          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-s8plusg1-ludashi.wcp" | head -20
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-ludashi-cmod
-          path: wine-11.1-staging-ludashi.wcp
+          name: wine-11.1-s8plusg1-ludashi
+          path: wine-11.1-s8plusg1-ludashi.wcp
