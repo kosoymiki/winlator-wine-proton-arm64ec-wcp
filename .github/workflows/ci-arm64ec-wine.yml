@@ -158,7 +158,7 @@ jobs:
             file "$1" 2>/dev/null | grep -q "aarch64" && 
             cp "$1" lib64/wine/ 2>/dev/null &&
             echo "LIB: $(basename "$1")"
-          ' _ {} ; 2>/dev/null || true
+          ' _ {} \\; 2>/dev/null || true
           
           # Ludashi profile.json
           cat > profile.json << 'EOF'
