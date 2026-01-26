@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Final - Fixed Deps)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Final - Check Build Dir)
 
 on:
   workflow_dispatch:
@@ -112,11 +112,7 @@ jobs:
           OPT="-O3 -march=armv8.2-a+fp16+dotprod"
           export CFLAGS="$OPT -Wno-error"
           export CXXFLAGS="$OPT -Wno-error"
-          # PKG_CONFIG_PATH указывает на *целевые* .pc файлы, которых может не быть
-          # export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
-          # Лучше отключить pkg-config для целевой сборки или указать путь к .pc файлам llvm-mingw, если они есть
-          # Для простоты отключим, указав --without-* для зависимостей
-          export PKG_CONFIG_PATH="" 
+          export PKG_CONFIG_PATH=""
 
           # --- КОНФИГУРАЦИЯ С УЧЁТОМ STAGING, HOST, МИНИМАЛЬНЫЕ ЗАВИСИМОСТИ ---
           ../wine/configure \
@@ -145,18 +141,18 @@ jobs:
             --without-gphoto \
             --without-capi \
             --without-netapi \
-            --without-krb5 \            --without-gssapi \
+            --without-krb5 \
+            --without-gssapi \
             --without-ldap \
             --without-mingw-pthreads \
-            --without-udev \
-            --without-libxml2 \
+            --without-udev \            --without-libxml2 \
             --without-libxslt \
             --without-cms \
             --without-mpg123 \
             --without-openal \
             --without-opencl \
             --without-opengl \
-            --without-vulkan # Отключаем Vulkan здесь, если он будет предоставлен отдельно через DXVK/VKD3D
+            --without-vulkan
 
           # Проверим, был ли создан Makefile ПОСЛЕ configure
           if [ ! -f "Makefile" ]; then
@@ -173,35 +169,32 @@ jobs:
               fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION
+      # PHAT WCP + DXVK + VKD3D INTEGRATION (CHECK FOR BUILD DIR)
       # ============================================================
       - name: Create PHAT WCP
         run: |
           set -e
-          cd build
-          
-          # Проверяем, что make был успешно выполнен (т.е. Makefile есть и make завершился)
-          if [ ! -f "Makefile" ] || [ ! -s "Makefile" ]; then
-              echo "Error: Makefile not found or empty, cannot proceed with make install."
+          # Проверим, существует ли директория build и install
+          if [ ! -d "build" ]; then
+              echo "Error: Directory 'build' does not exist. Previous build step likely failed."
               exit 1
           fi
-
-          # Проверим, были ли созданы какие-либо .o или .so файлы
-          if ! ls */*.o */*.so >/dev/null 2>&1; then
-             echo "Error: No build artifacts found after make, cannot proceed with make install."
-             exit 1
+          
+          cd build
+          
+          # Проверим, существует ли директория install
+          if [ ! -d "install" ]; then
+              echo "Error: Directory 'install' does not exist inside 'build'. Make install likely failed."
+              exit 1
           fi
-
-          echo "Build artifacts detected, proceeding with make install..."
-          DESTDIR=$PWD/install make install
-                    # Переходим в директорию install только если она существует
+          
+          # Переходим в директорию install только если она существует
           cd install
 
           mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
 
           # Копирование основных файлов Wine
-          cp -r usr/bin/* wcp/bin/
-          cd wcp/bin && ln -sf wine64 wine && cd ../.. # Создание симлинка для wine
+          cp -r usr/bin/* wcp/bin/          cd wcp/bin && ln -sf wine64 wine && cd ../.. # Создание симлинка для wine
 
           # Копирование DLL/SO файлов
           find usr/lib -name "*.dll.so" -exec cp {} wcp/lib/wine/aarch64-windows/ \;
@@ -243,14 +236,14 @@ jobs:
           cp -r temp_vkd3d/wcp/* wcp/
           rm -rf temp_vkd3d
 
-          # -------------------------------          # СОЗДАНИЕ env.sh и info.json
+          # -------------------------------
+          # СОЗДАНИЕ env.sh и info.json
           # -------------------------------
           # Команда cat имеет отступ 10 пробелов
           cat > wcp/env.sh << 'EOF'
           #!/bin/sh
           export WINEDEBUG=-all
-          export WINEESYNC=1
-          export WINEFSYNC=1
+          export WINEESYNC=1          export WINEFSYNC=1
           export WINEARCH=win64
           export DXVK_ASYNC=1
           export MESA_LOADER_DRIVER_OVERRIDE=turnip
@@ -267,6 +260,8 @@ jobs:
             "variant": "winlator-ultimate-arm64ec"
           }
           EOF
+          # chmod имеет отступ 10 пробелов
+          chmod +x wcp/info.json
 
           # -------------------------------
           # УПАКОВКА ИТОГОВОГО WCP
