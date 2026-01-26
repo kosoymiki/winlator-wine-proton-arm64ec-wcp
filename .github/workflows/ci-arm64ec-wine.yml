@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Debug Mode - Fixed)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Debug Mode - Fixed 3)
 
 on:
   workflow_dispatch:
@@ -88,7 +88,7 @@ jobs:
           make -j$(nproc) __tooldeps__
 
       # ============================================================
-      # ARM64EC + WOW64 BUILD (CRITICAL STEP - DEBUG MODE - FIXED CONFIGURE)
+      # ARM64EC + WOW64 BUILD (CRITICAL STEP - DEBUG MODE - FIXED CONFIGURE AGAIN)
       # ============================================================
       - name: Build Wine ARM64EC + WoW64
         run: |
@@ -96,7 +96,8 @@ jobs:
           mkdir -p build
           cd build
 
-          # Установка переменных окружения для кросскомпиляции PE с помощью llvm-mingw          export CC=aarch64-w64-mingw32-clang
+          # --- УСТАНОВКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ДО ВЫЗОВА configure ---          # Убедимся, что используем инструменты из llvm-mingw для PE
+          export CC=aarch64-w64-mingw32-clang
           export CXX=aarch64-w64-mingw32-clang++
           export DLLTOOL=aarch64-w64-mingw32-dlltool
           export LD=lld
@@ -110,8 +111,8 @@ jobs:
           export CXXFLAGS="$OPT -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 
-          # Убираем --host=aarch64-linux-gnu, т.к. мы кросскомпилируем PE
-          # ИСПРАВЛЕНО: || true теперь отдельно от аргументов configure
+          # --- ВАЖНО: НЕ ИСПОЛЬЗУЕМ --host=aarch64-linux-gnu ---
+          # Указываем mingw и архитектуры Windows
           ../wine/configure \
             --with-wine-tools=../host \
             --with-mingw=clang \
@@ -125,7 +126,6 @@ jobs:
             --without-gstreamer \
             --without-cups \
             --without-sane
-           # || true убрано, так как теперь configure должна завершиться успешно
 
           # Проверим, был ли создан Makefile ПОСЛЕ configure
           if [ ! -f "Makefile" ]; then
@@ -145,7 +145,7 @@ jobs:
       # PHAT WCP + DXVK + VKD3D INTEGRATION (Debug Mode)
       # ============================================================
       - name: Create PHAT WCP
-        run: | 
+        run: |   
           set -e
           cd build
           
