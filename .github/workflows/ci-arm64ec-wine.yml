@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed X11 Dep)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Final - Fixed Deps)
 
 on:
   workflow_dispatch:
@@ -38,15 +38,16 @@ jobs:
             clang lld llvm \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
             flex bison autoconf automake libtool pkg-config \
-            libx11-dev:arm64 libxrandr-dev:arm64 libxrender-dev:arm64 \
-            libxi-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
-            libxcomposite-dev:arm64 libxfixes-dev:arm64 \
-            libxkbcommon-dev:arm64 \
-            libfreetype-dev:arm64 libfontconfig1-dev:arm64 \
-            libpulse-dev:arm64 libasound2-dev:arm64 \
-            libdbus-1-dev:arm64 libudev-dev:arm64 \
-            libvulkan-dev:arm64 libdrm-dev:arm64 \
-            libglib2.0-dev:arm64 libunwind-dev:arm64
+            # Эти пакеты нужны для хост-инструментов, но не обязательно для целевой сборки
+            # libx11-dev:arm64 libxrandr-dev:arm64 libxrender-dev:arm64 \
+            # libxi-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
+            # libxcomposite-dev:arm64 libxfixes-dev:arm64 \
+            # libxkbcommon-dev:arm64 \
+            # libfreetype-dev:arm64 libfontconfig1-dev:arm64 \
+            # libpulse-dev:arm64 libasound2-dev:arm64 \
+            # libdbus-1-dev:arm64 libudev-dev:arm64 \
+            # libvulkan-dev:arm64 libdrm-dev:arm64 \
+            # libglib2.0-dev:arm64 libunwind-dev:arm64
       # ============================================================
       # LLVM MinGW
       # ============================================================
@@ -57,7 +58,7 @@ jobs:
           echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
       # ============================================================
-      # SOURCES (Allow failures on clone, but fail on checkout later if needed)
+      # SOURCES
       # ============================================================
       - name: Clone Wine + Staging
         run: |
@@ -66,14 +67,16 @@ jobs:
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
       # ============================================================
-      # APPLY STAGING
+      # APPLY STAGING (BEFORE autoreconf, BEFORE configure)
       # ============================================================
       - name: Apply Wine-Staging
         run: |
           set -e
           cd staging
+          # Применяем все патчи staging, но не запускаем autoconf
           ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf
           cd ../wine
+          # Перегенерируем configure после патчей
           autoreconf -fiv
 
       # ============================================================
@@ -84,19 +87,19 @@ jobs:
           set -e
           mkdir -p host
           cd host
+          # Конфигурируем хост-инструменты (для Linux x86_64)
           ../wine/configure --enable-win64 --disable-tests
           make -j$(nproc) __tooldeps__
 
       # ============================================================
-      # ARM64EC + WOW64 BUILD (CRITICAL STEP - FIXED X11 DEP)
+      # ARM64EC + WOW64 BUILD (CRITICAL STEP - WITH STAGING, MINIMAL DEPS)
       # ============================================================
       - name: Build Wine ARM64EC + WoW64
         run: |
-          set -e
-          mkdir -p build
+          set -e          mkdir -p build
           cd build
 
-          # --- УСТАНОВКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ДО ВЫЗОВА configure ---          # Убедимся, что используем инструменты из llvm-mingw для PE
+          # --- УСТАНОВКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ДО ВЫЗОВА configure ---
           export CC=aarch64-w64-mingw32-clang
           export CXX=aarch64-w64-mingw32-clang++
           export DLLTOOL=aarch64-w64-mingw32-dlltool
@@ -109,11 +112,13 @@ jobs:
           OPT="-O3 -march=armv8.2-a+fp16+dotprod"
           export CFLAGS="$OPT -Wno-error"
           export CXXFLAGS="$OPT -Wno-error"
-          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          # PKG_CONFIG_PATH указывает на *целевые* .pc файлы, которых может не быть
+          # export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          # Лучше отключить pkg-config для целевой сборки или указать путь к .pc файлам llvm-mingw, если они есть
+          # Для простоты отключим, указав --without-* для зависимостей
+          export PKG_CONFIG_PATH="" 
 
-          # --- ВАЖНО: ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ --host=aarch64-w64-mingw32 и --without-x ---
-          # Это указывает configure, что целевая архитектура - Windows ARM64 через MinGW
-          # и что X11 разработческие файлы ищем не будем (т.к. собираем под Windows).
+          # --- КОНФИГУРАЦИЯ С УЧЁТОМ STAGING, HOST, МИНИМАЛЬНЫЕ ЗАВИСИМОСТИ ---
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
@@ -122,13 +127,36 @@ jobs:
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64,i386 \
             --disable-tests \
-            --with-vulkan \
             --without-x \
+            --without-glx \
             --without-glu \
             --without-wayland \
             --without-gstreamer \
             --without-cups \
-            --without-sane
+            --without-sane \
+            --without-freetype \
+            --without-fontconfig \
+            --without-hal \
+            --without-oss \
+            --without-alsa \
+            --without-jpeg \
+            --without-tiff \
+            --without-png \
+            --without-gphoto \
+            --without-capi \
+            --without-netapi \
+            --without-krb5 \            --without-gssapi \
+            --without-ldap \
+            --without-mingw-pthreads \
+            --without-udev \
+            --without-libxml2 \
+            --without-libxslt \
+            --without-cms \
+            --without-mpg123 \
+            --without-openal \
+            --without-opencl \
+            --without-opengl \
+            --without-vulkan # Отключаем Vulkan здесь, если он будет предоставлен отдельно через DXVK/VKD3D
 
           # Проверим, был ли создан Makefile ПОСЛЕ configure
           if [ ! -f "Makefile" ]; then
@@ -145,7 +173,8 @@ jobs:
               fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION (Debug Mode)      # ============================================================
+      # PHAT WCP + DXVK + VKD3D INTEGRATION
+      # ============================================================
       - name: Create PHAT WCP
         run: |
           set -e
@@ -165,8 +194,7 @@ jobs:
 
           echo "Build artifacts detected, proceeding with make install..."
           DESTDIR=$PWD/install make install
-          
-          # Переходим в директорию install только если она существует
+                    # Переходим в директорию install только если она существует
           cd install
 
           mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
@@ -194,7 +222,8 @@ jobs:
               echo "Error: DXVK WCP download failed or file not found."
               exit 1
           fi
-          mkdir -p temp_dxvk          tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C temp_dxvk
+          mkdir -p temp_dxvk
+          tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C temp_dxvk
           # Копируем содержимое DXVK внутрь основного wcp
           cp -r temp_dxvk/wcp/* wcp/
           rm -rf temp_dxvk
@@ -214,8 +243,7 @@ jobs:
           cp -r temp_vkd3d/wcp/* wcp/
           rm -rf temp_vkd3d
 
-          # -------------------------------
-          # СОЗДАНИЕ env.sh и info.json
+          # -------------------------------          # СОЗДАНИЕ env.sh и info.json
           # -------------------------------
           # Команда cat имеет отступ 10 пробелов
           cat > wcp/env.sh << 'EOF'
@@ -243,7 +271,8 @@ jobs:
           # -------------------------------
           # УПАКОВКА ИТОГОВОГО WCP
           # -------------------------------
-          echo "Creating final WCP archive..."          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp
+          echo "Creating final WCP archive..."
+          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp
 
           echo "Final WCP created:"
           ls -lh $GITHUB_WORKSPACE/*.wcp
