@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed Path Check)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed Path Correct)
 
 on:
   workflow_dispatch:
@@ -161,10 +161,15 @@ jobs:
               # Run make, and if it fails, the step will terminate with an error
               make -j$(nproc)
               echo "Build (make) successful."
+
+              # Run make install to populate the install directory inside build
+              echo "Running make install..."
+              DESTDIR=$PWD/install make install
+              echo "Make install completed."
           fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION (CHECK FOR BUILD/INSTALL DIR AT CORRECT PATH)
+      # PHAT WCP + DXVK + VKD3D INTEGRATION (CORRECTED PATH TO INSTALL)
       # ============================================================
       - name: Create PHAT WCP
         run: |
@@ -180,7 +185,7 @@ jobs:
               exit 1
           fi
 
-          # Change to the 'build' directory
+          # Change to the 'build' directory first
           cd "$BUILD_DIR"
 
           # Check if the 'install' directory exists inside 'build'
@@ -189,11 +194,11 @@ jobs:
               echo "Contents of build dir: $(ls -la)"
               exit 1
           fi
-
-          # Change to the 'install' directory only if it exists
-          cd "$INSTALL_DIR"
+          # Change to the 'install' directory (now relative to build/)
+          cd install
 
           mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
+
           # Copying core Wine files
           cp -r usr/bin/* wcp/bin/
           cd wcp/bin && ln -sf wine64 wine && cd ../.. # Creating symlink for wine
@@ -238,12 +243,12 @@ jobs:
           cp -r temp_vkd3d/wcp/* wcp/
           rm -rf temp_vkd3d
 
-          # -------------------------------
-          # CREATE env.sh and info.json
+          # -------------------------------          # CREATE env.sh and info.json
           # -------------------------------
           # cat command has 10 space indent
           cat > wcp/env.sh << 'EOF'
-          #!/bin/sh          export WINEDEBUG=-all
+          #!/bin/sh
+          export WINEDEBUG=-all
           export WINEESYNC=1
           export WINEFSYNC=1
           export WINEARCH=win64
