@@ -69,11 +69,12 @@ jobs:
           ./tools/make_requests
           exit 0
 
-      - name: Build Wine Tools
-        run: |
-          mkdir wine-tools && cd wine-tools
-          ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
-          make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
+      # Отдельная сборка wine-tools больше не нужна, Wine сам соберёт их в кросс-сборке
+      # - name: Build Wine Tools
+      #   run: |
+      #     mkdir wine-tools && cd wine-tools
+      #     ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
+      #     make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
 
       - name: Configure Wine ARM64
         run: |
@@ -86,7 +87,6 @@ jobs:
           ../wine-src/configure \
             --host=aarch64-linux-gnu \
             --enable-win64 \
-            --with-wine-tools=../wine-tools \
             --with-mingw=clang \
             --prefix="" \
             --disable-tests \
@@ -111,8 +111,8 @@ jobs:
           
           cd "$WCP_ROOT"
           cd bin && ln -sf wine64 wine && cd ..
-          find bin -type f -exec chmod +x {} \;
-          find lib -name "*.so*" -exec chmod +x {} \;
+          find bin -type f -exec chmod +x {} ;
+          find lib -name "*.so*" -exec chmod +x {} ;
           
           cat > info.json <<'EOF'
           {
