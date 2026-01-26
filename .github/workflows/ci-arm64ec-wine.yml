@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging (Install Tool Fix)
+name: Build Wine 11.1 ARM64 (Ludashi CMOD Standard)
 
 on:
   push:
@@ -6,26 +6,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_install_fix:
+  build_wine_cmod:
     runs-on: ubuntu-24.04
 
     env:
+      # LLVM 20251216 (Ubuntu 22.04 base - самая совместимая версия)
       LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
       WINE_TAG: "wine-11.1"
       STAGING_TAG: "v11.1"
+      # Ссылка на FSR патч (Proton GE)
       GE_PATCH_FSR: "https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. SETUP
+      # 1. ПОДГОТОВКА РЕПОЗИТОРИЕВ (ЧИСТАЯ)
       - name: Setup Multiarch
         run: |
           sudo dpkg --add-architecture arm64
           sudo rm -f /etc/apt/sources.list
           sudo rm -rf /etc/apt/sources.list.d/*
           
+          # Генерируем sources.list для AMD64 и ARM64
           echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list
           echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
@@ -36,6 +39,7 @@ jobs:
           
           sudo apt-get update
           
+          # Устанавливаем зависимости + build-essential
           sudo apt-get install -y \
             build-essential \
             wget curl git cmake make flex bison pkg-config python3-minimal autoconf \
@@ -50,7 +54,7 @@ jobs:
             libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
             libdbus-1-dev:arm64 libfontconfig1-dev:arm64
 
-      # 2. SETUP COMPILER
+      # 2. УСТАНОВКА КОМПИЛЯТОРА
       - name: Setup LLVM MinGW
         run: |
           wget -q "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
@@ -59,37 +63,46 @@ jobs:
           mv "$EXTRACTED_DIR" llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
-      # 3. CLONE
+      # 3. КЛОНИРОВАНИЕ ИСХОДНИКОВ
       - name: Clone Sources
         run: |
           git clone --depth 1 --branch $WINE_TAG https://gitlab.winehq.org/wine/wine.git wine-src
           git clone --depth 1 --branch $STAGING_TAG https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-      # 4. PATCHING
+      # 4. ПАТЧИНГ (С ИГНОРИРОВАНИЕМ ОШИБОК)
       - name: Apply Patches
         shell: bash
         run: |
+          # Включаем режим "продолжать при ошибке" для патчинга
           set +e
           cd wine-staging
+          
+          echo ">>> Applying Staging..."
+          # --no-autoconf важен, чтобы не запускать autoreconf раньше времени
           ( ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf ) || true
           
           cd ../wine-src
+          
+          echo ">>> Applying FSR Patch..."
           wget -q -O fsr.patch "$GE_PATCH_FSR"
           ( patch -p1 --fuzz=3 < fsr.patch ) || echo "WARN: FSR skipped"
           
+          echo ">>> Regenerating Config..."
           ( autoreconf -fiv ) || true
           ( ./tools/make_requests ) || true
+          
+          # Возвращаем успешный код, чтобы CI не упал
           exit 0
 
-      # 5. BUILD TOOLS (Host x64) - ADDED tools/install
-      - name: Build Wine Tools (Host x64)
+      # 5. СБОРКА ИНСТРУМЕНТОВ (HOST X64)
+      - name: Build Wine Tools
         run: |
           mkdir wine-tools
           cd wine-tools
+          # Конфигурируем для хоста
           ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
           
-          # === FORCE BUILD LIST (CRITICAL UPDATE) ===
-          # Добавлен tools/install - это решает проблему make install
+          # Собираем ВСЕ необходимые инструменты, включая install и шрифты
           make -j$(nproc) \
             tools/winebuild/winebuild \
             tools/widl/widl \
@@ -101,11 +114,13 @@ jobs:
             tools/sfnt2fon/sfnt2fon \
             tools/install
 
-      # 6. CONFIGURE TARGET (ARM64)
-      - name: Configure Wine (Target ARM64)
+      # 6. КОНФИГУРАЦИЯ ЦЕЛИ (TARGET ARM64)
+      - name: Configure Wine
         run: |
           mkdir wine-build
           cd wine-build
+          
+          # Используем -O2 для стабильности на Cortex-X2
           export CFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -fno-plt"
           export CROSSCFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -g0 -mstrict-align -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
@@ -127,55 +142,69 @@ jobs:
             --without-sane \
             --without-oss
 
-      # 7. BUILD & PACKAGE
+      # 7. СБОРКА, УСТАНОВКА И УПАКОВКА (CMOD STYLE)
       - name: Build & Package
         run: |
           cd wine-build
           
-          echo ">>> Building..."
+          echo ">>> Building Wine..."
           make -j$(nproc)
           
           echo ">>> Installing..."
-          # Теперь install должен пройти, так как tools/install существует
           mkdir -p ../image
           ABS_DESTDIR=$(readlink -f ../image)
-          make install DESTDIR="$ABS_DESTDIR"
           
-          echo ">>> Packaging..."
+          # STRIP=true - обход ошибки с отсутствующим стриппером
+          make install DESTDIR="$ABS_DESTDIR" STRIP=true
+          
+          echo ">>> Preparing CMOD Package Structure..."
           cd ../image/opt
           
-          # Проверка
+          # Проверка установки
           if [ ! -d "wine-custom" ]; then
-             echo "FATAL: Install failed to create wine-custom."
-             ls -R ..
+             echo "FATAL: Install failed!"
              exit 1
           fi
           
-          mv wine-custom Wine-11.1-Staging-ARM64
+          # Имя папки внутри архива (важно для Ludashi)
+          FOLDER_NAME="Wine-11.1-Staging-ARM64"
+          mv wine-custom "$FOLDER_NAME"
+          cd "$FOLDER_NAME"
           
-          cat <<EOF > Wine-11.1-Staging-ARM64/info.json
+          # === INFO.JSON (KIMCHI/STEVENMXZ STYLE) ===
+          # arch: "x86_64" - Чтобы Winlator видел этот Wine в списке
+          # variant: "staging" - Для группировки
+          cat <<EOF > info.json
           {
-            "name": "Wine-11.1-Staging-FSR",
-            "version": "11.1-staging",
-            "arch": "arm64",
+            "name": "Wine-11.1-Staging-ARM64",
+            "version": "11.1",
+            "arch": "x86_64",
+            "type": "wine",
+            "variant": "staging",
             "author": "GitHubCI",
-            "description": "Wine 11.1 + Staging + FSR. Native ARM64. Install Fixed."
+            "description": "Native ARM64 build. Staging + FSR. Optimized for SD 8+ Gen1."
           }
           EOF
           
-          cat <<EOF > Wine-11.1-Staging-ARM64/env.sh
+          # === ENV.SH (Скрипт окружения) ===
+          cat <<EOF > env.sh
           #!/bin/sh
           export WINEDEBUG="-all"
           export WINEESYNC=1
           export WINEFSYNC=1
           export WINE_FULLSCREEN_FSR=1
+          export WINE_FULLSCREEN_FSR_STRENGTH=2
           EOF
-          chmod +x Wine-11.1-Staging-ARM64/env.sh
+          chmod +x env.sh
           
-          tar -cJf ../../wine-11.1-staging.wcp Wine-11.1-Staging-ARM64
+          echo ">>> Compressing to .wcp..."
+          cd ../..
+          # Упаковываем папку opt/Wine-11.1... так, чтобы в архиве была папка
+          # Winlator ожидает: archive.tar.xz -> Folder -> bin/lib/info.json
+          tar -C opt -cJf wine-11.1-staging-arm64.wcp "$FOLDER_NAME"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging.wcp
-          path: wine-11.1-staging.wcp
+          name: wine-11.1-staging-arm64.wcp
+          path: wine-11.1-staging-arm64.wcp
