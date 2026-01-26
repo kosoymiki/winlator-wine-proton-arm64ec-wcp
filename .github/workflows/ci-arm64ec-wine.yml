@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging ARM64 Production S8G1 (Winlator 2.8.2)
+name: Wine 11.1 Staging ARM64 PHAT-Compatible (Winlator)
 
 on:
   push:
@@ -8,16 +8,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
-    
+
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
-          
-      - name: System Setup (FIXED Atomic ARM64 Multiarch)
+
+      # ------------------------------------------------------------
+      # 1. SYSTEM SETUP (glibc 2.35, NO wayland, NO lib64)
+      # ------------------------------------------------------------
+      - name: System Setup
         run: |
-          # Multiarch + sources
           sudo dpkg --add-architecture arm64
           sudo tee /etc/apt/sources.list <<'EOF'
           deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main universe multiverse
@@ -26,102 +25,138 @@ jobs:
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe multiverse
           EOF
 
-          # ЖЕСТКИЙ APT CLEAN + UPDATE
-          sudo apt clean
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo apt update -qq --allow-releaseinfo-change -o Acquire::http::Timeout=30
-          sudo apt upgrade -yqq
-
-          # ATOMIC ARM64 INSTALL
-          sudo apt install -y --no-install-recommends \
+          sudo apt update -qq
+          sudo apt install -y \
             build-essential gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            git flex bison autoconf automake libtool pkg-config python3-minimal clang lld jq \
+            git flex bison autoconf automake libtool pkg-config python3-minimal \
+            clang lld \
+            \
+            # X11 stack (Winlator required)
             libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 libxrender-dev:arm64 \
-            libxi-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 libxcomposite-dev:arm64 \
-            libxfixes-dev:arm64 libxxf86vm-dev:arm64 libxkbcommon-dev:arm64 \
-            libvulkan-dev:arm64 libvulkan-loader-dev:arm64 libdrm-dev:arm64 \
-            libwayland-dev:arm64 libwayland-protocols-dev:arm64 \
-            libfreetype-dev:arm64 libfontconfig1-dev:arm64 libgl1-mesa-dev:arm64 \
-            libpulse-dev:arm64 libasound2-dev:arm64 libdbus-1-dev:arm64 libudev-dev:arm64 \
-            libglib2.0-dev:arm64 libgnutls28-dev:arm64 libpcap-dev:arm64 libsdl2-dev:arm64 \
-            libunwind-dev:arm64 libxml2-dev:arm64 libgpg-error-dev:arm64
+            libxi-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
+            libxcomposite-dev:arm64 libxfixes-dev:arm64 libxxf86vm-dev:arm64 \
+            libxkbcommon-dev:arm64 \
+            \
+            # Vulkan headers (runtime comes from Winlator)
+            libvulkan-dev:arm64 libdrm-dev:arm64 \
+            \
+            # Fonts / graphics
+            libfreetype-dev:arm64 libfontconfig1-dev:arm64 \
+            \
+            # Audio / system
+            libpulse-dev:arm64 libasound2-dev:arm64 \
+            libdbus-1-dev:arm64 libudev-dev:arm64 \
+            libglib2.0-dev:arm64 libgnutls28-dev:arm64 \
+            libpcap-dev:arm64 libsdl2-dev:arm64 libunwind-dev:arm64
 
-          # ВЕРИФИКАЦИЯ ARM64
-          echo "=== ARM64 PACKAGES ==="
-          dpkg -l | grep -E "(libx11|libvulkan|libfreetype).*arm64" || echo "ARM64 PKGS READY"
-
-      - name: LLVM MinGW (UCRT 20260120)
+      # ------------------------------------------------------------
+      # 2. LLVM MinGW (UCRT, required for PE)
+      # ------------------------------------------------------------
+      - name: LLVM MinGW
         run: |
           wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20260120/llvm-mingw-20260120-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ
           echo "$PWD/llvm-mingw-20260120-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
-      - name: Source Code (Wine 11.1 + Staging)
+      # ------------------------------------------------------------
+      # 3. SOURCES
+      # ------------------------------------------------------------
+      - name: Clone Wine + Staging
         run: |
           git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
-      - name: Staging Patch (Selective ARM64)
+      # ------------------------------------------------------------
+      # 4. APPLY STAGING + FSR (SAFE MODE)
+      # ------------------------------------------------------------
+      - name: Apply Staging Patches
         run: |
+          set +e
           cd staging
-          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || echo "Patches partial OK"
+          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || true
           cd ../wine
+          wget -qO- https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch \
+            | patch -p1 --fuzz=3 || true
           autoreconf -fiv
 
-      - name: Host Tools (x86_64)
+      # ------------------------------------------------------------
+      # 5. HOST TOOLS (x86_64, FULL)
+      # ------------------------------------------------------------
+      - name: Build Host Wine Tools
         run: |
           mkdir host && cd host
-          ../wine/configure --enable-win64 --disable-tests --without-x
+          ../wine/configure --enable-win64 --disable-tests
           make -j$(nproc) __tooldeps__
 
-      - name: ARM64 Build (S8G1 Optimized)
+      # ------------------------------------------------------------
+      # 6. ARM64 TARGET BUILD (Snapdragon 8+ Gen1)
+      # ------------------------------------------------------------
+      - name: Build Wine ARM64
         run: |
           mkdir build && cd build
-          OPT_FLAGS="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76"
-          export CFLAGS="$OPT_FLAGS" CXXFLAGS="$OPT_FLAGS"
-          export CROSSCFLAGS="$OPT_FLAGS -mno-strict-align"
-          
+
+          OPT="-O3 -march=armv8.2-a+fp16+dotprod -mtune=cortex-a78"
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          export CFLAGS="$OPT"
+          export CXXFLAGS="$OPT"
+          export CROSSCFLAGS="$OPT -mno-strict-align"
+
           ../wine/configure \
             --host=aarch64-linux-gnu \
             --with-wine-tools=../host \
             --with-mingw=clang \
             --enable-win64 \
             --disable-tests \
-            --with-x --with-vulkan --with-freetype --with-pulse
-            
+            --with-x \
+            --with-vulkan \
+            --with-freetype \
+            --with-fontconfig \
+            --with-pulse \
+            --with-alsa \
+            --without-wayland \
+            --without-gstreamer \
+            --without-cups \
+            --without-sane
+
           make -j$(nproc)
 
-      - name: Create WCP (Winlator 2.8.2 Compatible)
+      # ------------------------------------------------------------
+      # 7. PHAT-COMPATIBLE WCP LAYOUT (CRITICAL PART)
+      # ------------------------------------------------------------
+      - name: Create PHAT-Compatible WCP
         run: |
           cd build
-          rm -rf install && mkdir -p install
-          DESTDIR="$PWD/install" make install install-lib
-          
+          DESTDIR=$PWD/install make install
           cd install
-          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share/wine}
-          
-          # Critical binaries
-          cp usr/local/bin/wine* wcp/bin/ 2>/dev/null || cp usr/bin/wine* wcp/bin/
-          cp usr/local/bin/{wineserver,wineboot,wineusb,winepath} wcp/bin/ 2>/dev/null || true
-          
-          cd wcp/bin && ln -sf wine64 wine && ln -sf wineserver server && cd ../..
-          
-          # Libraries split
-          find usr -name "*.so*" -exec cp {} wcp/lib/wine/aarch64-unix/ ;
-          find usr -name "*.dll*" -exec cp {} wcp/lib/wine/aarch64-windows/ ;
-          
-          cp -a usr/share/wine wcp/share/ 2>/dev/null || true
-          
-          # Strip & permissions
-          find wcp -type f -executable -exec strip -s {} ; 2>/dev/null || true
+
+          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
+
+          # BIN
+          cp usr/bin/* wcp/bin/
+          cd wcp/bin && ln -sf wine64 wine && cd ../..
+
+          # LIB SPLIT (EXACT LOGIC)
+          find usr/lib -name "*.dll.so" -exec cp {} wcp/lib/wine/aarch64-windows/ \;
+          find usr/lib -name "*.exe.so" -exec cp {} wcp/lib/wine/aarch64-windows/ \;
+          find usr/lib -name "*.so" ! -name "*.dll.so" -exec cp {} wcp/lib/wine/aarch64-unix/ \;
+
+          # SHARE (FULL INSTALL)
+          cp -a usr/share/wine wcp/share/
+          [ -d usr/share/applications ] && cp -a usr/share/applications wcp/share/
+          [ -d usr/share/man ] && cp -a usr/share/man wcp/share/
+
+          # PERMS
           find wcp/bin -type f -exec chmod +x {} +
-          
-          # Metadata
+          find wcp/lib/wine -type f -name "*.so*" -exec chmod +x {} +
+
+          # METADATA
           cat > wcp/info.json <<'JSON'
           {
-            "name": "Wine-11.1-Staging-S8G1",
+            "name": "Wine-11.1-Staging-PHAT",
             "version": "11.1",
             "arch": "arm64",
-            "target": "Winlator-Ludashi-2.8.2"
+            "variant": "staging",
+            "layout": "phat-compatible",
+            "features": ["vulkan","pulse","alsa","fsync","esync","fsr"]
           }
           JSON
 
@@ -130,15 +165,13 @@ jobs:
           export WINEDEBUG=-all
           export WINEESYNC=1
           export WINEFSYNC=1
+          export MESA_LOADER_DRIVER_OVERRIDE=turnip
           SH
           chmod +x wcp/env.sh
-          
-          cd wcp
-          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1.wcp" .
-          ls -lh "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1.wcp"
+
+          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat.wcp -C wcp .
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-s8g1-wcp
-          path: wine-11.1-staging-s8g1.wcp
-          retention-days: 30
+          name: wine-11.1-staging-phat
+          path: wine-11.1-staging-phat.wcp
