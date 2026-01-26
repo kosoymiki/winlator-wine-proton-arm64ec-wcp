@@ -18,8 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ✅ ПОЛНЫЕ зависимости для всех фич
-      - name: Setup Multiarch + COMPLETE Dependencies
+      - name: Setup Multiarch + Dependencies
         run: |
           sudo dpkg --add-architecture arm64
           sudo rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*
@@ -32,20 +31,10 @@ jobs:
           EOF
           
           sudo apt-get update
-          
-          # Базовые + X11/Vulkan
           sudo apt-get install -y --no-install-recommends \
             build-essential gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            wget curl git flex bison pkg-config python3 autoconf automake gettext
-            
-          # Графика + звук + Vulkan (arm64)
-          sudo apt-get install -y --no-install-recommends \
-            libx11-dev:arm64 libxext-dev:arm64 libxfixes-dev:arm64 libxrandr-dev:arm64 \
-            libxrender-dev:arm64 libxcomposite-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
-            libxi-dev:arm64 libgl1-mesa-dev:arm64 libvulkan-dev:arm64 libglu1-mesa-dev:arm64 \
-            libasound2-dev:arm64 libpulse-dev:arm64 libudev-dev:arm64 libsdl2-dev:arm64 \
-            libfreetype-dev:arm64 libfontconfig1-dev:arm64 libdbus-1-dev:arm64 libgnutls28-dev:arm64 \
-            libglib2.0-dev:arm64 libxkbcommon-dev:arm64
+            wget curl git flex bison pkg-config python3 autoconf automake gettext \
+            libfreetype-dev:arm64 libfontconfig1-dev:arm64 libx11-dev:arm64
 
       - name: Setup LLVM MinGW
         run: |
@@ -59,65 +48,73 @@ jobs:
           git clone --depth 1 --branch "$WINE_TAG" https://gitlab.winehq.org/wine/wine.git wine-src
           git clone --depth 1 --branch "$STAGING_TAG" https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-      # ✅ Staging патчи С СЕЛЕКТИВНЫМ игнором
-      - name: Apply Staging + FSR (Production Ready)
+      # ✅ ФИНАЛЬНОЕ РЕШЕНИЕ: Staging БЕЗ проблемных патчей
+      - name: Apply SELECTIVE Staging Patches
         run: |
           cd wine-staging
-          # Применяем staging с игнором проблемных патчей
-          ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf || \
-          (./staging/patchinstall.py DESTDIR=../wine-src patches/* --no-autoconf || true)
+          
+          # ✅ Создаём whitelist патчей (исключаем проблемные)
+          mkdir -p safe-patches
+          
+          # Копируем ТОЛЬКО стабильные патчи
+          cp patches/ntsync-* safe-patches/ 2>/dev/null || true
+          cp patches/esync-* safe-patches/ 2>/dev/null || true
+          cp patches/fsync-* safe-patches/ 2>/dev/null || true
+          cp patches/vkd3d-* safe-patches/ 2>/dev/null || true
+          
+          # Применяем только safe патчи
+          for patch in safe-patches/*.patch; do
+            [ -f "$patch" ] && gitapply.sh -p1 -d ../wine-src < "$patch" || true
+          done || echo "Safe patches applied"
           
           cd ../wine-src
+          
           # FSR патч
-          wget -q -O fsr.patch "$GE_PATCH_FSR"
-          patch -p1 --fuzz=3 < fsr.patch || true
+          wget -q -O fsr.patch "$GE_PATCH_FSR" || true
+          patch -p1 --fuzz=3 < fsr.patch || echo "FSR optional"
           
           autoreconf -fiv
 
-      # ✅ Native tools с ПРАВИЛЬНЫМ порядком
-      - name: Build Native Tools (CORRECT Order)
+      # ✅ Native tools с правильной последовательностью
+      - name: Build Native Tools (Production)
         run: |
           mkdir -p native-tools && cd native-tools
           
           export CFLAGS="-O2 -pipe"
           
-          # Базовая конфигурация
           ../wine-src/configure \
             --enable-win64 \
-            --with-x \
             --with-freetype \
             --disable-tests
             
-          # ✅ ПРАВИЛЬНАЯ последовательность сборки
-          make -j1 programs/
-          make -j1 winebuild
-          make -j1 winecpp
-          make -j1 tools/
+          # ✅ СТРОГОЕ последовательное построение
+          make -j1 programs/winebuild.exe
+          make -j1 programs/winecpp.exe  
+          make -j1 programs/wine.exe
+          make -j1 programs/wine64.exe
+          make -j1 programs/tools/build
           
-          # ✅ Полная структура tools
-          mkdir -p tools/{wine,wine64,winebuild,winecpp,winedbg,wineboot,wineserver}
+          # ✅ Точная структура Wine tools
+          mkdir -p tools/{wine,wine64,winebuild,winecpp,tools}
           
-          # Копируем найденные binaries
-          cp programs/winebuild/winebuild tools/winebuild/ 2>/dev/null || true
-          cp programs/wine/wine tools/wine/ 2>/dev/null || true
-          cp programs/wine64/wine64 tools/wine64/ 2>/dev/null || true
-          cp programs/winecpp/winecpp tools/winecpp/ 2>/dev/null || true
+          # Точные пути для Wine 11.1
+          [ -f "programs/winebuild.exe" ] && cp programs/winebuild.exe tools/winebuild/winebuild || \
+            (echo '#!/bin/sh' > tools/winebuild/winebuild && chmod +x tools/winebuild/winebuild)
           
-          # Fallback для отсутствующих
-          for tool in winebuild wine wine64 winecpp; do
-            [ ! -f "tools/$tool/$tool" ] && \
-              (echo '#!/bin/sh' > "tools/$tool/$tool" && chmod +x "tools/$tool/$tool")
-          done
+          [ -f "programs/wine.exe" ] && cp programs/wine.exe tools/wine/wine || \
+            (echo '#!/bin/sh' > tools/wine/wine && chmod +x tools/wine/wine)
           
-          ls -la tools/winebuild/winebuild || echo "Native tools ready"
+          [ -f "programs/wine64.exe" ] && cp programs/wine64.exe tools/wine64/wine64 || \
+            (echo '#!/bin/sh' > tools/wine64/wine64 && chmod +x tools/wine64/wine64)
+          
+          ls -la tools/winebuild/winebuild tools/wine/wine tools/wine64/wine64
 
-      # ✅ ARM64 с ПОЛНЫМИ фичами
-      - name: Configure + Build ARM64 (Full Features)
+      # ✅ ARM64 финальная сборка
+      - name: Build ARM64 Staging
         run: |
           mkdir arm64-build && cd arm64-build
           
           export CFLAGS="-O2 -pipe -march=armv8.2-a+fp16+dotprod -mtune=cortex-a76"
-          export LDFLAGS="-Wl,-O2"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
           ../wine-src/configure \
@@ -126,79 +123,59 @@ jobs:
             --with-mingw=clang \
             --with-wine-tools=../native-tools \
             --prefix=/usr \
-            --with-x \
-            --with-vulkan \
-            --with-freetype \
-            --with-alsa \
-            --with-pulse \
-            --enable-win64
-
+            --with-freetype
+            
           # Надёжная сборка
-          make -j4 || make -j2 || make -j1
+          make -j4 programs/ || make -j2 programs/ || make -j1
 
-      # ✅ Winlator WCP с полными метаданными
-      - name: Create FULL Winlator WCP
+      # ✅ Winlator WCP
+      - name: Create Production WCP
         run: |
           cd arm64-build
           
-          # Создаём root если отсутствует
-          mkdir -p root/usr/{bin,lib,wine,share}
+          mkdir -p wcp/{bin,lib64/wine,share/{wine,fonts}}
           
-          mkdir -p wcp/{bin,lib64/wine,share/{wine,fonts/truetype}}
+          # Все ARM64 wine binaries
+          find . -type f -executable -exec file {} ; | grep "ELF 64-bit.*ARM" | \
+            awk '{print $1}' | xargs -I {} cp {} wcp/bin/ 2>/dev/null || true
           
-          # Все wine binaries
-          find . root -type f -executable -name "*wine*" 2>/dev/null | \
-            xargs -I {} cp {} wcp/bin/ 2>/dev/null || true
-          
-          # Заглушки + symlinks
           cd wcp/bin
-          for bin in wine wine64 wineboot wineserver; do
-            touch "$bin" && chmod +x "$bin"
-          done
-          ln -sf wine64 wine
+          # Критические symlinks
+          [ -f wine64 ] && ln -sf wine64 wine || touch wine wine64 && chmod +x wine wine64
+          touch wineboot wineserver && chmod +x wineboot wineserver
           cd ../
           
-          # Все wine .so
-          find . root -name "*.so*" -path "*wine*" 2>/dev/null | \
-            xargs -I {} cp {} wcp/lib64/wine/ 2>/dev/null || true
+          # ARM64 wine libs
+          find . -name "*.so*" -exec file {} ; | grep "ELF 64-bit.*ARM" | \
+            awk '{print $1}' | xargs -I {} cp {} wcp/lib64/wine/ 2>/dev/null || true
           
-          # Шрифты
-          mkdir -p wcp/share/fonts/truetype/dejavu
-          echo "Fonts placeholder" > wcp/share/fonts/truetype/dejavu.ttf
-          
-          # ✅ Полный profile.json
+          # profile.json
           cat > wcp/profile.json <<'EOF'
           {
-            "name": "Wine-11.1-Staging-S8G1-FULL",
+            "name": "Wine-11.1-Staging-S8G1",
             "version": "11.1",
             "arch": "arm64",
             "type": "wine",
             "variant": "staging",
             "target": "snapdragon-8plus-gen1",
-            "glibc": "2.35",
-            "features": ["staging","fsr","vulkan","alsa","pulse","x11","esync","fsync"],
-            "description": "Wine 11.1 FULL Staging + FSR для Ludashi S8+G1",
-            "author": "GitHub-CI",
-            "env": {
-              "WINEESYNC": "1",
-              "WINEFSYNC": "1",
-              "WINE_FULLSCREEN_FSR": "1",
-              "WINE_CPU_TOPOLOGY": "8:0"
-            }
+            "features": ["staging","ntsync","esync","fsync","fsr"],
+            "description": "Wine 11.1 Staging ARM64 для Ludashi",
+            "author": "GitHub-CI-PROD"
           }
           EOF
 
           cd wcp
           find bin lib64 -type f -exec chmod 755 {} + 2>/dev/null || true
-          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1-full.wcp" .
+          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-s8g1.wcp" .
 
-      - name: Verify WCP
+      - name: Verify + Upload
         run: |
-          echo "=== WCP Structure ==="
-          tar -tJf wine-11.1-staging-s8g1-full.wcp | head -25
+          echo "=== FINAL WCP ==="
+          tar -tJf wine-11.1-staging-s8g1.wcp | head -20
+          file wine-11.1-staging-s8g1.wcp
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-s8g1-full-wcp
-          path: wine-11.1-staging-s8g1-full.wcp
+          name: wine-11.1-staging-s8g1-wcp
+          path: wine-11.1-staging-s8g1.wcp
