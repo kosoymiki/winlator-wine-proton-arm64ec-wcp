@@ -1,4 +1,4 @@
-name: Build Wine 11.1 ARM64 (Artifact Fix)
+name: Build Wine 11.1 ARM64 for Ludashi CMOD 2.8.1
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_wine_artifact_fix:
-    runs-on: ubuntu-24.04
+  build_wine_ludashi:
+    runs-on: ubuntu-22.04
 
     env:
       LLVM_MINGW_URL: "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
@@ -16,189 +16,143 @@ jobs:
       GE_PATCH_FSR: "https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch"
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. SETUP REPOS
-      - name: Setup Multiarch
+      - name: Setup Multiarch for Glibc 2.35
         run: |
           sudo dpkg --add-architecture arm64
-          sudo rm -f /etc/apt/sources.list
-          sudo rm -rf /etc/apt/sources.list.d/*
+          sudo rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*
           
-          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list
-          echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          # Ubuntu 22.04 = Glibc 2.35 (совместимость с Ludashi CMOD 2.8.1)
+          cat <<EOF | sudo tee /etc/apt/sources.list
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
+          EOF
           
           sudo apt-get update
-          
-          sudo apt-get install -y \
-            build-essential \
-            wget curl git cmake make flex bison pkg-config python3-minimal autoconf \
+          sudo apt-get install -y --no-install-recommends \
+            build-essential wget curl git cmake flex bison pkg-config python3-minimal autoconf \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            libfreetype-dev libfreetype-dev:arm64 \
-            libx11-dev libx11-dev:arm64 \
+            libfreetype-dev{,:arm64} libx11-dev{,:arm64} \
             libglib2.0-dev:arm64 libxrender-dev:arm64 libxext-dev:arm64 libxi-dev:arm64 \
             libxrandr-dev:arm64 libxinerama-dev:arm64 libxcursor-dev:arm64 \
             libxcomposite-dev:arm64 libxfixes-dev:arm64 libxxf86vm-dev:arm64 \
-            libvulkan-dev:arm64 libxkbcommon-dev:arm64 \
-            libsdl2-dev:arm64 libudev-dev:arm64 libgstreamer1.0-dev:arm64 \
-            libgnutls28-dev:arm64 libpcap-dev:arm64 libpulse-dev:arm64 \
-            libdbus-1-dev:arm64 libfontconfig1-dev:arm64
+            libvulkan-dev:arm64 libxkbcommon-dev:arm64 libsdl2-dev:arm64 \
+            libudev-dev:arm64 libgstreamer1.0-dev:arm64 libgnutls28-dev:arm64 \
+            libpcap-dev:arm64 libpulse-dev:arm64 libdbus-1-dev:arm64 libfontconfig1-dev:arm64
 
-      # 2. SETUP COMPILER
       - name: Setup LLVM MinGW
         run: |
           wget -q "$LLVM_MINGW_URL" -O llvm-mingw.tar.xz
           tar xf llvm-mingw.tar.xz
-          EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "llvm-mingw-*" | head -n 1)
-          mv "$EXTRACTED_DIR" llvm-mingw
+          mv llvm-mingw-* llvm-mingw
           echo "$PWD/llvm-mingw/bin" >> $GITHUB_PATH
 
-      # 3. CLONE
       - name: Clone Sources
         run: |
           git clone --depth 1 --branch $WINE_TAG https://gitlab.winehq.org/wine/wine.git wine-src
           git clone --depth 1 --branch $STAGING_TAG https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-      # 4. PATCHING
       - name: Apply Patches
-        shell: bash
         run: |
-          set +e
           cd wine-staging
-          ( ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf ) || true
+          ./staging/patchinstall.py DESTDIR=../wine-src --all --no-autoconf || true
           
           cd ../wine-src
           wget -q -O fsr.patch "$GE_PATCH_FSR"
-          ( patch -p1 --fuzz=3 < fsr.patch ) || echo "WARN: FSR skipped"
-          
-          ( autoreconf -fiv ) || true
-          ( ./tools/make_requests ) || true
-          exit 0
+          patch -p1 --fuzz=3 < fsr.patch || echo "FSR patch skipped"
+          autoreconf -fiv || true
+          ./tools/make_requests || true
 
-      # 5. BUILD TOOLS
-      - name: Build Wine Tools (Host x64)
+      - name: Build Wine Tools (Host)
         run: |
-          mkdir wine-tools
-          cd wine-tools
+          mkdir wine-tools && cd wine-tools
           ../wine-src/configure --enable-win64 --with-freetype --without-wayland --without-vulkan
-          make -j$(nproc) \
-            tools/winebuild/winebuild \
-            tools/widl/widl \
-            tools/wrc/wrc \
-            tools/wmc/wmc \
-            tools/winegcc/winegcc \
-            tools/wine/wine \
-            tools/make_xftmpl \
-            tools/sfnt2fon/sfnt2fon \
-            tools/install
+          make -j$(nproc) tools/{winebuild,widl,wrc,wmc,winegcc,sfnt2fon}/
 
-      # 6. CONFIGURE TARGET
-      - name: Configure Wine (Target ARM64)
+      - name: Configure Wine ARM64
         run: |
-          mkdir wine-build
-          cd wine-build
-          export CFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -fno-plt"
-          export CROSSCFLAGS="-O2 -march=armv8.2-a+fp16+dotprod -g0 -mstrict-align -Wno-error"
+          mkdir wine-build && cd wine-build
+          export CFLAGS="-O2 -march=armv8-a -mtune=cortex-a76 -fno-plt"
+          export CROSSCFLAGS="$CFLAGS -g0 -mstrict-align"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
           
           ../wine-src/configure \
             --host=aarch64-linux-gnu \
             --enable-win64 \
-            --without-wine \
             --with-wine-tools=../wine-tools \
             --with-mingw=clang \
-            --prefix=/opt/wine-custom \
+            --prefix=/opt/wine \
             --disable-tests \
             --with-x \
             --without-wayland \
             --with-vulkan \
             --with-freetype \
             --without-gstreamer \
-            --without-cups \
-            --without-sane \
-            --without-oss
+            --without-{cups,sane,oss}
 
-      # 7. BUILD & PACKAGE (PERMISSIONS FIX)
-      - name: Build & Package
+      - name: Build & Package for Ludashi
         run: |
           cd wine-build
           make -j$(nproc)
           
-          echo ">>> Installing..."
-          mkdir -p ../image
-          ABS_DESTDIR=$(readlink -f ../image)
+          INSTALL_ROOT="$(readlink -f ../ludashi-wine)"
+          mkdir -p "$INSTALL_ROOT"
+          make install DESTDIR="$INSTALL_ROOT" STRIP=true
           
-          # STRIP=true обходит ошибку стриппера
-          make install DESTDIR="$ABS_DESTDIR" STRIP=true
+          cd "$INSTALL_ROOT/opt/wine"
           
-          echo ">>> Post-Install Fixes..."
-          cd ../image/opt/wine-custom
+          # Симлинк wine -> wine64
+          cd bin && ln -sf wine64 wine && cd ..
           
-          # === FIX 1: Создаем симлинк wine -> wine64 ===
-          cd bin
-          ln -sf wine64 wine
-          cd ..
-          
-          # === FIX 2: Умная настройка прав (Smart Chmod) ===
-          echo ">>> Setting executable permissions..."
-          # Ищем ТОЛЬКО файлы (-type f) в папке bin и даем им +x.
-          # Это игнорирует битые симлинки и не валит билд.
+          # Права
           find bin -type f -exec chmod +x {} \;
+          find lib -name "*.so*" -exec chmod +x {} \;
           
-          # Также даем права библиотекам (на всякий случай)
-          find lib -name "*.so" -exec chmod +x {} \;
-          
-          echo ">>> Packaging..."
-          cd ..
-          # Переименовываем для красоты
-          FOLDER_NAME="Wine-11.1-Staging-ARM64"
-          mv wine-custom "$FOLDER_NAME"
-          cd "$FOLDER_NAME"
-          
-          # === INFO.JSON (Ludashi Compat) ===
-          cat <<EOF > info.json
+          # info.json для Ludashi
+          cat > info.json <<'EOF'
           {
-            "name": "Wine-11.1-Staging-ARM64",
+            "name": "Wine-11.1-Staging-Ludashi",
             "version": "11.1",
-            "arch": "x86_64",
+            "arch": "arm64",
             "type": "wine",
             "variant": "staging",
-            "category": "wine",
-            "author": "GitHubCI",
-            "description": "Native ARM64 build. Staging + FSR + Fsync. Fixed Permissions."
+            "glibc": "2.35",
+            "target": "ludashi-cmod-2.8.1",
+            "author": "GitHub-CI",
+            "description": "Wine 11.1 Staging + FSR for Ludashi CMOD 2.8.1 (Glibc 2.35)",
+            "features": ["staging", "fsr", "fsync", "esync"],
+            "date": "2025-01-26"
           }
           EOF
           
-          # === ENV.SH ===
-          cat <<EOF > env.sh
+          # env.sh
+          cat > env.sh <<'EOF'
           #!/bin/sh
-          export WINEDEBUG="-all"
+          export WINEDEBUG=-all
           export WINEESYNC=1
           export WINEFSYNC=1
           export WINE_FULLSCREEN_FSR=1
+          export DXVK_HUD=0
           EOF
           chmod +x env.sh
           
-          echo ">>> Compressing..."
-          # Выходим в папку image/opt
-          cd ..
+          # Создаем .wcp архив БЕЗ вложенной папки
+          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp" \
+            --transform='s|^\./||' \
+            -C . \
+            bin lib share info.json env.sh
           
-          # Создаем архив в корне рабочей директории ($GITHUB_WORKSPACE)
-          # Чтобы шаг Upload Artifact точно его нашел
-          tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp" "$FOLDER_NAME"
-          
-          echo ">>> Artifact Ready:"
-          ls -lh "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp"
+          echo "=== WCP Structure Check ==="
+          tar -tJf "$GITHUB_WORKSPACE/wine-11.1-staging-ludashi.wcp" | head -15
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-ludashi.wcp
-          # Указываем точный путь к файлу, который мы создали
-          path: ${{ github.workspace }}/wine-11.1-staging-ludashi.wcp
+          name: wine-11.1-staging-ludashi-cmod
+          path: wine-11.1-staging-ludashi.wcp
