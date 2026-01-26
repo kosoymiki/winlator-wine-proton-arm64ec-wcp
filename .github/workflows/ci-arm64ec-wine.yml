@@ -47,7 +47,8 @@ jobs:
     # LLVM MinGW
     # ============================================================
     - name: LLVM MinGW
-      run: |        set +e
+      run: |     
+        set +e
         wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ || true
         echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
