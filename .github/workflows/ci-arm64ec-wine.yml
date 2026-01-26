@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed Host Spec)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed X11 Dep)
 
 on:
   workflow_dispatch:
@@ -88,7 +88,7 @@ jobs:
           make -j$(nproc) __tooldeps__
 
       # ============================================================
-      # ARM64EC + WOW64 BUILD (CRITICAL STEP - FIXED HOST SPEC)
+      # ARM64EC + WOW64 BUILD (CRITICAL STEP - FIXED X11 DEP)
       # ============================================================
       - name: Build Wine ARM64EC + WoW64
         run: |
@@ -111,8 +111,9 @@ jobs:
           export CXXFLAGS="$OPT -Wno-error"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 
-          # --- ВАЖНО: ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ --host=aarch64-w64-mingw32 для кросскомпиляции PE ---
+          # --- ВАЖНО: ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ --host=aarch64-w64-mingw32 и --without-x ---
           # Это указывает configure, что целевая архитектура - Windows ARM64 через MinGW
+          # и что X11 разработческие файлы ищем не будем (т.к. собираем под Windows).
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
@@ -121,8 +122,9 @@ jobs:
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64,i386 \
             --disable-tests \
-            --with-x \
             --with-vulkan \
+            --without-x \
+            --without-glu \
             --without-wayland \
             --without-gstreamer \
             --without-cups \
@@ -143,9 +145,8 @@ jobs:
               fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION (Debug Mode)
-      # ============================================================
-      - name: Create PHAT WCP     
+      # PHAT WCP + DXVK + VKD3D INTEGRATION (Debug Mode)      # ============================================================
+      - name: Create PHAT WCP
         run: |
           set -e
           cd build
@@ -193,9 +194,9 @@ jobs:
               echo "Error: DXVK WCP download failed or file not found."
               exit 1
           fi
-          mkdir -p temp_dxvk
-          tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C temp_dxvk
-          # Копируем содержимое DXVK внутрь основного wcp          cp -r temp_dxvk/wcp/* wcp/
+          mkdir -p temp_dxvk          tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C temp_dxvk
+          # Копируем содержимое DXVK внутрь основного wcp
+          cp -r temp_dxvk/wcp/* wcp/
           rm -rf temp_dxvk
 
           # -------------------------------
@@ -242,8 +243,8 @@ jobs:
           # -------------------------------
           # УПАКОВКА ИТОГОВОГО WCP
           # -------------------------------
-          echo "Creating final WCP archive..."
-          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp
+          echo "Creating final WCP archive..."          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp
+
           echo "Final WCP created:"
           ls -lh $GITHUB_WORKSPACE/*.wcp
 
