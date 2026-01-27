@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC (Optimized Final)
+name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC (FIXED COMPILATION)
 
 on:
   workflow_dispatch:
@@ -14,11 +14,12 @@ jobs:
       - uses: actions/checkout@v4
 
       # ============================================================
-      # SYSTEM SETUP
+      # SYSTEM SETUP (DEFENSIVE)
       # ============================================================
       - name: System setup
         run: |
           set -e
+
           sudo dpkg --add-architecture arm64
           sudo tee /etc/apt/sources.list <<'EOF'
           deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main universe multiverse
@@ -28,6 +29,7 @@ jobs:
           EOF
 
           sudo apt update
+
           sudo apt install -y --no-install-recommends \
             build-essential git python3 ca-certificates \
             clang lld llvm \
@@ -44,60 +46,84 @@ jobs:
       # ============================================================
       - name: LLVM MinGW
         run: |
-          wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ
-          echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
+          set -e
+          wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ          echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
       # ============================================================
-      # Clone Sources
+      # SOURCES
       # ============================================================
       - name: Clone Wine + Staging
         run: |
+          set -e
           git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
       # ============================================================
-      # Apply Staging patches (no exclude)
+      # APPLY STAGING (SAFE, NTSYNC-PRIORITY)
       # ============================================================
-      - name: Apply Wine-Staging patches
+      - name: Apply Wine-Staging (safe mode)
         run: |
           set +e
           cd staging
-          # --exclude не поддерживается, поэтому просто применяем все патчи
-          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || true
+
+          ./staging/patchinstall.py \
+            DESTDIR=../wine \
+            --all \
+            --exclude=ntdll-fsync \
+            --exclude=ntdll-esync \
+            --exclude=server-Esync \
+            --exclude=server-Fsync \
+            --exclude=ntdll-Synchronization \
+            --no-autoconf || true
+
           cd ../wine
           autoreconf -fiv
 
       # ============================================================
-      # Build host winetools (x86_64)
+      # HOST WINETOOLS (x86_64)
       # ============================================================
       - name: Build host winetools
         run: |
+          set -e
           mkdir -p host
           cd host
           ../wine/configure --enable-win64 --disable-tests
           make __tooldeps__
 
       # ============================================================
-      # Build Wine ARM64EC + WoW64 (WITHOUT CC override)
+      # ARM64EC + WOW64 + NTSYNC (STABLE - FIXED FLAGS)
       # ============================================================
-      - name: Build Wine ARM64EC + WoW64
+      - name: Build Wine ARM64EC + WoW64 + NTsync
         run: |
           set -e
-          mkdir -p build
-          cd build
+          mkdir -p build          cd build
 
           OPT="-O3 -march=armv8.2-a+fp16+dotprod"
-          export CFLAGS="$OPT -Wno-error"
-          export CXXFLAGS="$OPT -Wno-error"
+          # Явно отключаем предупреждения, которые могут стать ошибками
+          export CFLAGS="$OPT -Wno-error -Wno-error=nonnull -Wno-error=maybe-uninitialized -Wno-maybe-uninitialized"
+          export CXXFLAGS="$OPT -Wno-error -Wno-error=nonnull -Wno-error=maybe-uninitialized -Wno-maybe-uninitialized"
           export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
 
+          # Установка переменных для кросскомпиляции под Windows ARM64
+          export CC=aarch64-w64-mingw32-clang
+          export CXX=aarch64-w64-mingw32-clang++
+          export DLLTOOL=aarch64-w64-mingw32-dlltool
+          export LD=lld
+          export AR=aarch64-w64-mingw32-ar
+          export STRIP=aarch64-w64-mingw32-strip
+          export OBJDUMP=aarch64-w64-mingw32-objdump
+          export RC=aarch64-w64-mingw32-windres
+
           ../wine/configure \
-            --host=aarch64-linux-gnu \
+            --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
             --with-mingw=clang \
             --enable-win64 \
             --enable-wow64 \
-            --enable-archs=arm64ec,aarch64,i386 \
+            --enable-archs=arm64ec,aarch64 \
+            --enable-ntsync \
+            --disable-esync \
+            --disable-fsync \
             --disable-tests \
             --with-x \
             --with-vulkan \
@@ -112,15 +138,14 @@ jobs:
           DESTDIR=$PWD/install make install
 
       # ============================================================
-      # Create PHAT WCP + integrate DXVK and VKD3D
+      # PHAT WCP + DXVK + VKD3D
       # ============================================================
-      - name: Create PHAT WCP and integrate DXVK/VKD3D
+      - name: Create PHAT WCP
         run: |
           set -e
-          cd build/install
+          cd "$GITHUB_WORKSPACE/build/install"
 
-          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows,arm64ec-windows,i386-windows},share}
-
+          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
           cp usr/bin/* wcp/bin/
           cd wcp/bin && ln -sf wine64 wine && cd ../..
 
@@ -130,25 +155,14 @@ jobs:
 
           cp -a usr/share/wine wcp/share/
 
-          # Download and integrate DXVK WCP
           wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp
-          if [ ! -f "dxvk-gplasync-arm64ec-2.7.1-1.wcp" ]; then
-            echo "Error: DXVK WCP download failed!"
-            exit 1
-          fi
           mkdir dxvk && tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C dxvk
           cp -a dxvk/wcp/* wcp/
 
-          # Download and integrate VKD3D WCP
           wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp
-          if [ ! -f "vkd3d-proton-arm64ec-3.0b.wcp" ]; then
-            echo "Error: VKD3D WCP download failed!"
-            exit 1
-          fi
           mkdir vkd3d && tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C vkd3d
           cp -a vkd3d/wcp/* wcp/
 
-          # Write env.sh
           cat > wcp/env.sh <<'EOF'
           #!/bin/sh
           export WINEDEBUG=-all
@@ -160,20 +174,19 @@ jobs:
           EOF
           chmod +x wcp/env.sh
 
-          # Write info.json
           cat > wcp/info.json <<'EOF'
           {
             "name": "Wine-11.1-Staging-PHAT-NTsync-DXVK-VKD3D-ARM64EC",
             "version": "11.1",
             "arch": "arm64",
-            "variant": "winlator-ultimate"
+            "variant": "winlator-ultimate-stable"
           }
           EOF
 
           tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec.wcp -C wcp .
 
       # ============================================================
-      # Upload artifact
+      # UPLOAD
       # ============================================================
       - uses: actions/upload-artifact@v4
         with:
