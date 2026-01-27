@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Final Fixed Paths)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Fixed Paths Robust - Reverted)
 
 on:
   workflow_dispatch:
@@ -169,11 +169,14 @@ jobs:
           fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION (CORRECTED PATH TO INSTALL)
+      # PHAT WCP + DXVK + VKD3D INTEGRATION (ROBUST PATH HANDLING)
       # ============================================================
       - name: Create PHAT WCP
         run: |
           set -e
+          # Явно перейти в корневую рабочую директорию
+          cd "$GITHUB_WORKSPACE"
+
           BUILD_DIR="$GITHUB_WORKSPACE/build"
           INSTALL_DIR="$BUILD_DIR/install"
 
@@ -181,21 +184,21 @@ jobs:
           if [ ! -d "$BUILD_DIR" ]; then
               echo "Error: Directory '$BUILD_DIR' does not exist. Previous build step likely failed."
               echo "Current working directory: $(pwd)"
-              echo "Contents of workspace: $(ls -la $GITHUB_WORKSPACE)"
+              echo "Contents of workspace: $(ls -la)"
               exit 1
           fi
 
-          # Change to the 'build' directory first
+          # Change to the 'build' directory
           cd "$BUILD_DIR"
 
           # Check if the 'install' directory exists inside 'build'
           if [ ! -d "$INSTALL_DIR" ]; then
               echo "Error: Directory '$INSTALL_DIR' does not exist inside '$BUILD_DIR'. Make install likely failed."
-              echo "Contents of build dir: $(ls -la)"
-              exit 1
+              echo "Contents of build dir: $(ls -la)"              exit 1
           fi
-          # Change to the 'install' directory (now relative to build/)
-          cd install
+
+          # Change to the 'install' directory
+          cd "$INSTALL_DIR"
 
           mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
 
@@ -240,10 +243,10 @@ jobs:
           mkdir -p temp_vkd3d
           tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C temp_vkd3d
           # Copy VKD3D contents into the main wcp
-          cp -r temp_vkd3d/wcp/* wcp/
-          rm -rf temp_vkd3d
+          cp -r temp_vkd3d/wcp/* wcp/          rm -rf temp_vkd3d
 
-          # -------------------------------          # CREATE env.sh and info.json
+          # -------------------------------
+          # CREATE env.sh and info.json
           # -------------------------------
           # cat command has 10 space indent
           cat > wcp/env.sh << 'EOF'
