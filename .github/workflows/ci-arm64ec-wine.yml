@@ -104,9 +104,10 @@ jobs:
       # ============================================================
       # ARM64EC + WOW64 BUILD
       # ============================================================
-      - name: Build Wine ARM64EC
+      - name: Configure Wine (ARM64EC + WoW64, with libraries)
         run: |
           mkdir build && cd build
+
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
@@ -114,27 +115,22 @@ jobs:
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64 \
             --disable-tests \
-            --without-x \
-            --without-wayland \
-            --without-vulkan \
-            --without-opengl \
-            --without-glx \
-            --without-egl \
-            --without-freetype \
-            --without-fontconfig \
-            --without-gstreamer \
-            --without-pulse \
-            --without-alsa \
-            --without-cups \
-            --without-sane \
-            --without-usb \
-            --without-v4l2 \
-            --without-gphoto \
-            --without-krb5 \
-            --without-gssapi \
-            --without-ldap \
-            --without-netapi \
-            --without-capi
+            \
+            # Поддержка основных библиотек (по dev‑пакетам, которые мы устанавливаем)
+            --with-pulse \
+            --with-alsa \
+            --with-freetype \
+            --with-fontconfig \
+            --with-sdl2 \
+            --with-gnutls \
+            --with-db \
+            --with-inotify \
+            --with‑pcap \
+            --with‑ffmpeg
+
+          # Примечание: флаги выше включают поддержку соответствующих компонентов,
+          # если установленные пакеты dev‑зависимостей доступны в CI.
+
 
       # ============================================================
       # Download and apply additional packages for Wine
