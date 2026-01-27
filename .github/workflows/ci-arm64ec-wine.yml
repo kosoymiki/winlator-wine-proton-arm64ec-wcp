@@ -145,7 +145,8 @@ jobs:
           fi
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION      # ============================================================
+      # PHAT WCP + DXVK + VKD3D INTEGRATION  
+      # ============================================================
       - name: Create PHAT WCP
         run: |
           set -e
@@ -243,6 +244,7 @@ jobs:
       # UPLOAD ARTIFACT
       # ============================================================
       - name: Upload WCP Artifact
-        uses: actions/upload-artifact@v4        with:
+        uses: actions/upload-artifact@v4
+        with:
           name: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec
           path: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp
