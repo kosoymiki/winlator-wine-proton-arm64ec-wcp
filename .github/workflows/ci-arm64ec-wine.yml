@@ -68,24 +68,41 @@ jobs:
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
       # ============================================================
-      # APPLY STAGING (SAFE, NTSYNC-PRIORITY)
+      # APPLY STAGING (SAFE, NTSYNC-PRIORITY - EXCLUDE FSYNC/ESYNC/SYNC MANUALLY)
       # ============================================================
-      - name: Apply Wine-Staging (safe mode)
+      - name: Apply Wine-Staging (safe mode, exclude fsync/esync/sync manually)
         run: |
           set +e
           cd staging
 
+          # Применяем все патчи. Это может включить fsync/esync/sync.
           ./staging/patchinstall.py \
             DESTDIR=../wine \
             --all \
-            --exclude=ntdll-fsync \
-            --exclude=ntdll-esync \
-            --exclude=server-Esync \
-            --exclude=server-Fsync \
-            --exclude=ntdll-Synchronization \
             --no-autoconf || true
 
           cd ../wine
+
+          # Пытаемся откатить патчи, связанные с fsync, esync и общей синхронизацией, которые конфликтуют с NTsync.
+          # Имена файлов патчей определяются автоматически внутри папок.
+          # git apply -R откатывает патч. Если патч не был применён, будет ошибка, которую мы игнорируем.
+
+          # Откатываем fsync-related патчи
+          git apply -R staging/patches/ntdll-fsync/ || echo "No patches from ntdll-fsync were applied or already reverted."
+          git apply -R staging/patches/server-Fsync/ || echo "No patches from server-Fsync were applied or already reverted."
+
+          # Откатываем esync-related патчи
+          git apply -R staging/patches/ntdll-esync/ || echo "No patches from ntdll-esync were applied or already reverted."
+          git apply -R staging/patches/server-Esync/ || echo "No patches from server-Esync were applied or already reverted."
+
+          # Откатываем ntdll-Synchronization related патчи (если они мешают NTsync)
+          git apply -R staging/patches/ntdll-Synchronization/ || echo "No patches from ntdll-Synchronization were applied or already reverted."
+
+          # Проверим статус git для диагностики
+          echo "Git status after reverting sync patches:"
+          git status
+
+          # Перегенерируем configure
           autoreconf -fiv
 
       # ============================================================
