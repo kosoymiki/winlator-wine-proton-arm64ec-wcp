@@ -21,17 +21,15 @@ jobs:
 
          sudo dpkg --add-architecture arm64
 
-         sudo tee /etc/apt/sources.l > /dev/null <<'EOF'
-         deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main universe multiverse
-         deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main universe multiverse
-         deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main universe multiverse
-
+         # Добавляем ТОЛЬКО ports для arm64
+         sudo tee /etc/apt/sources.list.d/arm64-ports.list > /dev/null <<'EOF'
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe multiverse
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe multiverse
          EOF
 
          sudo apt update
+
 
          sudo apt install -y --no-install-recommends \
          build-essential git python3 ca-certificates \
