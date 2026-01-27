@@ -19,21 +19,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # ============================================================
+        
+        # ============================================================
       # SYSTEM SETUP (STABLE, JAMMY, ARM64EC-SAFE)
       # ============================================================
       - name: System setup (stable, no apt hacks)
         run: |
           set -e
-          sudo apt update
           
-          # Активируем необходимые репозитории
+          # Обновляем списки репозиториев
+          sudo apt update
+
+          # Активируем репозитории universe и multiverse
           sudo add-apt-repository universe
           sudo add-apt-repository multiverse
+          
+          # Обновляем индексы пакетов после активации репозиториев
           sudo apt update
           
-          # Установка всех зависимостей
+          # Устанавливаем необходимые зависимости
           sudo apt install -y --no-install-recommends \
             build-essential git python3 ca-certificates \
             clang lld llvm \
@@ -47,6 +51,7 @@ jobs:
             libpcap-dev libgnutls-dev libinotify-dev \
             libsdl2-dev gettext libudev-dev \
             ffmpeg libpcsclite-dev
+
 
       # ============================================================
       # LLVM MinGW
