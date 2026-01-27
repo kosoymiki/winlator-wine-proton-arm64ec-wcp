@@ -21,7 +21,7 @@ jobs:
 
          sudo dpkg --add-architecture arm64
 
-         sudo tee /etc/apt/sources.list > /dev/null <<'EOF'
+         sudo tee /etc/apt/sources.l > /dev/null <<'EOF'
          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main universe multiverse
          deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main universe multiverse
          deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main universe multiverse
@@ -38,6 +38,24 @@ jobs:
          clang lld llvm \
          gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
          flex bison autoconf automake libtool pkg-config \
+         \
+         # X11 / graphics (host)
+         libx11-dev libxext-dev libxrandr-dev libxrender-dev \
+         libxi-dev libxinerama-dev libxcursor-dev \
+         libxcomposite-dev libxfixes-dev libxkbcommon-dev \
+         libdrm-dev libvulkan-dev \
+         \
+         # Fonts / text (host)
+         libfreetype-dev libfontconfig1-dev \
+         \
+         # Audio / misc (host, optional but safe)
+         libpulse-dev libasound2-dev libdbus-1-dev \
+         \
+         # ARM64 unix-side (WOW64 runtime)
+         libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 \
+         libxrender-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 \
+         libxcursor-dev:arm64 libxcomposite-dev:arm64 libxfixes-dev:arm64 \
+         libxkbcommon-dev:arm64 libdrm-dev:arm64 libvulkan-dev:arm64 \
          libfreetype-dev:arm64 libfontconfig1-dev:arm64
 
 
