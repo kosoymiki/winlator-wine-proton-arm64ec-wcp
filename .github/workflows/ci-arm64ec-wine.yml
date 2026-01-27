@@ -44,10 +44,10 @@ jobs:
           set -e
           wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ
           echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
-
       # ============================================================
       # SOURCES
       # ============================================================      - name: Clone Wine + Staging
+      - name: Sources
         run: |
           set -e
           git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
