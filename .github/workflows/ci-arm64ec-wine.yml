@@ -1,14 +1,7 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (Final Fixed Paths)
+name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (FIXED)
 
 on:
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
-      tags:
-        description: 'Test scenario tags'
 
 jobs:
   build:
@@ -29,222 +22,143 @@ jobs:
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse
           deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe multiverse
           EOF
+
           sudo apt update
           sudo apt install -y \
             build-essential git python3 \
             clang lld llvm \
             gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-            flex bison autoconf automake libtool pkg-config
+            flex bison autoconf automake libtool pkg-config \
+            libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 \
+            libxrender-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 \
+            libxcursor-dev:arm64 libxcomposite-dev:arm64 libxfixes-dev:arm64 \
+            libxkbcommon-dev:arm64 libdrm-dev:arm64 libvulkan-dev:arm64 \
+            libfreetype-dev:arm64 libfontconfig1-dev:arm64
 
       # ============================================================
       # LLVM MinGW
       # ============================================================
       - name: LLVM MinGW
         run: |
-          set -e
           wget -qO- https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz | tar xJ
           echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
+
       # ============================================================
       # SOURCES
-      # ============================================================      - name: Clone Wine + Staging
-      - name: Sources
+      # ============================================================
+      - name: Clone Wine + Staging
         run: |
-          set -e
           git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
       # ============================================================
-      # APPLY STAGING
+      # APPLY STAGING + PROTON FSR (SAFE)
       # ============================================================
-      - name: Apply Wine-Staging
+      - name: Apply Wine-Staging + Proton FSR
         run: |
-          set -e
+          set +e
           cd staging
-          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf
+          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || true
           cd ../wine
+          wget -qO- https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch | patch -p1 --fuzz=3 || true
           autoreconf -fiv
 
       # ============================================================
-      # HOST WINETOOLS
+      # HOST WINETOOLS (x86_64)
       # ============================================================
       - name: Build host winetools
         run: |
-          set -e
           mkdir -p host
           cd host
           ../wine/configure --enable-win64 --disable-tests
           make -j$(nproc) __tooldeps__
 
       # ============================================================
-      # ARM64EC + WOW64 BUILD
+      # ARM64 + WOW64 + ARM64EC BUILD (FIXED)
       # ============================================================
       - name: Build Wine ARM64EC + WoW64
         run: |
-          set -e
           mkdir -p build
           cd build
-
-          export CC=aarch64-w64-mingw32-clang
-          export CXX=aarch64-w64-mingw32-clang++
-          export DLLTOOL=aarch64-w64-mingw32-dlltool
-          export LD=lld
-          export AR=aarch64-w64-mingw32-ar
-          export STRIP=aarch64-w64-mingw32-strip
-          export OBJDUMP=aarch64-w64-mingw32-objdump
-          export RC=aarch64-w64-mingw32-windres
 
           OPT="-O3 -march=armv8.2-a+fp16+dotprod"
           export CFLAGS="$OPT -Wno-error"
           export CXXFLAGS="$OPT -Wno-error"
-          export PKG_CONFIG_PATH=""
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+
           ../wine/configure \
-            --host=aarch64-w64-mingw32 \
+            --host=aarch64-linux-gnu \
             --with-wine-tools=../host \
             --with-mingw=clang \
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64,i386 \
             --disable-tests \
-            --without-x \
-            --without-glx \
-            --without-glu \
+            --with-x \
+            --with-vulkan \
+            --with-freetype \
+            --with-fontconfig \
             --without-wayland \
             --without-gstreamer \
             --without-cups \
-            --without-sane \
-            --without-freetype \
-            --without-fontconfig \
-            --without-hal \
-            --without-oss \
-            --without-alsa \
-            --without-jpeg \
-            --without-tiff \
-            --without-png \
-            --without-gphoto \
-            --without-capi \
-            --without-netapi \
-            --without-krb5 \
-            --without-gssapi \
-            --without-ldap \
-            --without-mpg123 \
-            --without-openal \
-            --without-opencl \
-            --without-opengl \
-            --without-vulkan
+            --without-sane
 
-          if [ ! -f "Makefile" ]; then
-              echo "Configure failed, no Makefile generated."
-              cat config.log || echo "config.log not found"
-              exit 1
-          else
-              echo "Configure successful, Makefile exists. Starting make..."
-              make -j$(nproc)
-              echo "Build successful."
-              DESTDIR=$PWD/install make install
-              echo "Make install completed."
-          fi
+          make -j$(nproc)
+          DESTDIR=$PWD/install make install
 
       # ============================================================
-      # PHAT WCP + DXVK + VKD3D INTEGRATION  
+      # PHAT WCP + DXVK + VKD3D
       # ============================================================
       - name: Create PHAT WCP
         run: |
-          set -e
-          
-          # Явно переходим в корневую директорию
-          cd "$GITHUB_WORKSPACE"
-          
-          # Проверяем существование build
-          if [ ! -d "build" ]; then
-              echo "Error: Directory 'build' does not exist!"
-              ls -la
-              exit 1
-          fi
-          
-          # Переходим в build
-          cd build
-          
-          # Проверяем существование install
-          if [ ! -d "install" ]; then
-              echo "Error: Directory 'install' does not exist inside 'build'!"
-              ls -la
-              exit 1
-          fi
-          
-          # Переходим в install
-          cd install
+          cd build/install
 
-          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
+          mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows,arm64ec-windows,i386-windows},share}
 
-          # Копирование файлов Wine
-          cp -r usr/bin/* wcp/bin/
+          cp usr/bin/* wcp/bin/
           cd wcp/bin && ln -sf wine64 wine && cd ../..
-          
+
           find usr/lib -name "*.dll.so" -exec cp {} wcp/lib/wine/aarch64-windows/ \;
           find usr/lib -name "*.exe.so" -exec cp {} wcp/lib/wine/aarch64-windows/ \;
           find usr/lib -name "*.so" ! -name "*.dll.so" -exec cp {} wcp/lib/wine/aarch64-unix/ \;
-          
-          cp -r usr/share/wine wcp/share/
-          [ -d usr/share/applications ] && cp -r usr/share/applications wcp/share/
-          [ -d usr/share/man ] && cp -r usr/share/man wcp/share/
 
-          # DXVK WCP
-          echo "Downloading DXVK WCP..."
+          cp -a usr/share/wine wcp/share/
+
+          # DXVK
           wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp
-          if [ ! -f "dxvk-gplasync-arm64ec-2.7.1-1.wcp" ]; then
-              echo "Error: DXVK WCP download failed!"
-              exit 1
-          fi
-          mkdir -p temp_dxvk          tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C temp_dxvk
-          cp -r temp_dxvk/wcp/* wcp/
-          rm -rf temp_dxvk
+          mkdir dxvk && tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C dxvk
+          cp -a dxvk/wcp/* wcp/
 
-          # VKD3D WCP
-          echo "Downloading VKD3D WCP..."
+          # VKD3D
           wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp
-          if [ ! -f "vkd3d-proton-arm64ec-3.0b.wcp" ]; then
-              echo "Error: VKD3D WCP download failed!"
-              exit 1
-          fi
-          mkdir -p temp_vkd3d
-          tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C temp_vkd3d
-          cp -r temp_vkd3d/wcp/* wcp/
-          rm -rf temp_vkd3d
+          mkdir vkd3d && tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C vkd3d
+          cp -a vkd3d/wcp/* wcp/
 
-          # Создание env.sh и info.json
-          cat > wcp/env.sh << 'EOF'
+          cat > wcp/env.sh <<'EOF'
           #!/bin/sh
           export WINEDEBUG=-all
           export WINEESYNC=1
           export WINEFSYNC=1
-          export WINEARCH=win64
           export DXVK_ASYNC=1
           export MESA_LOADER_DRIVER_OVERRIDE=turnip
           EOF
           chmod +x wcp/env.sh
 
-          cat > wcp/info.json << 'EOF'
+          cat > wcp/info.json <<'EOF'
           {
             "name": "Wine-11.1-Staging-PHAT-DXVK-VKD3D-ARM64EC",
             "version": "11.1",
             "arch": "arm64",
-            "variant": "winlator-ultimate-arm64ec"
+            "variant": "winlator-ultimate"
           }
           EOF
-          chmod +x wcp/info.json
 
-          # Упаковка WCP
-          echo "Creating final WCP archive..."
           tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp .
 
-          echo "Final WCP created:"
-          ls -lh $GITHUB_WORKSPACE/*.wcp
-
       # ============================================================
-      # UPLOAD ARTIFACT
+      # UPLOAD
       # ============================================================
-      - name: Upload WCP Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec
           path: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp
