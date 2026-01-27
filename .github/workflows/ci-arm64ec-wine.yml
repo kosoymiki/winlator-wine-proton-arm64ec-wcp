@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC (FIXED LLVM PATH)
+name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC (FIXED CONFIGURE)
 
 on:
   workflow_dispatch:
@@ -93,13 +93,16 @@ jobs:
           make __tooldeps__
 
       # ============================================================
-      # ARM64EC + WOW64 + NTSYNC (STABLE - FIXED FLAGS)
+      # ARM64EC + WOW64 + NTSYNC (STABLE - FIXED CONFIGURE)
       # ============================================================
       - name: Build Wine ARM64EC + WoW64 + NTsync
         run: |     
           set -e
           mkdir -p build
           cd build
+
+          # Убедиться, что инструменты llvm-mingw доступны
+          which aarch64-w64-mingw32-clang
 
           OPT="-O3 -march=armv8.2-a+fp16+dotprod"
           # Явно отключаем предупреждения, которые могут стать ошибками
@@ -117,10 +120,11 @@ jobs:
           export OBJDUMP=aarch64-w64-mingw32-objdump
           export RC=aarch64-w64-mingw32-windres
 
+          # Убираем --with-mingw=clang, так как мы устанавливаем переменные окружения
+          # Это может помочь избежать конфликта
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
-            --with-mingw=clang \
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64 \
@@ -142,11 +146,11 @@ jobs:
 
       # ============================================================
       # PHAT WCP + DXVK + VKD3D
-      # ============================================================
-      - name: Create PHAT WCP
+      # ============================================================      - name: Create PHAT WCP
         run: |
           set -e
           cd "$GITHUB_WORKSPACE/build/install"
+
           mkdir -p wcp/{bin,lib/wine/{aarch64-unix,aarch64-windows},share}
 
           cp usr/bin/* wcp/bin/
@@ -191,7 +195,6 @@ jobs:
       # ============================================================
       # UPLOAD
       # ============================================================
-      - uses: actions/upload-artifact@v4
-        with:
+      - uses: actions/upload-artifact@v4        with:
           name: wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec
           path: wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec.wcp
