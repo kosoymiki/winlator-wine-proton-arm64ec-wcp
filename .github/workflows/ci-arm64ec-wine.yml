@@ -79,36 +79,34 @@ jobs:
         run: |
           mkdir build && cd build
 
+          # Установим переменные окружения для кросс-компиляции
           export CC=aarch64-w64-mingw32-clang
           export CXX=aarch64-w64-mingw32-clang++
           export OPT="-O3 -march=armv8.2-a+fp16+dotprod"
           export CFLAGS="$OPT -Wno-error"
           export CXXFLAGS="$OPT -Wno-error"
 
+          # Создание каталога для сборки
+          mkdir build && cd build
+
+          # Настройка конфигурации сборки с исправленными флагами и без неподдерживаемых опций
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
-            \
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64 \
-            \
-            --enable-ntsync \
             --disable-esync \
             --disable-fsync \
-            \
             --disable-tests \
-            \
             --without-x \
             --without-wayland \
             --without-vulkan \
             --without-opengl \
             --without-glx \
             --without-egl \
-            \
             --without-freetype \
             --without-fontconfig \
-            \
             --without-gstreamer \
             --without-pulse \
             --without-alsa \
@@ -117,16 +115,18 @@ jobs:
             --without-usb \
             --without-v4l2 \
             --without-gphoto \
-            \
             --without-krb5 \
             --without-gssapi \
             --without-ldap \
             --without-netapi \
             --without-capi
 
-
+          # Компиляция Wine
           make
+         
+          # Установка Wine в текущий каталог
           DESTDIR=$PWD/install make install
+
 
       # ============================================================
       # PHAT WCP
