@@ -21,14 +21,21 @@ jobs:
 
          sudo dpkg --add-architecture arm64
 
-         # Добавляем ТОЛЬКО ports для arm64
-         sudo tee /etc/apt/sources.list.d/arm64-ports.list > /dev/null <<'EOF'
+         sudo tee /etc/apt/preferences.d/no-security-arm64 <<'EOF'
+         Package: *
+         Pin: origin security.ubuntu.com
+         Pin-Priority: -1
+         EOF
+
+
+         sudo tee /etc/apt/sources.list.d/arm64-ports.list <<'EOF'
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe multiverse
          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main universe multiverse
          EOF
 
          sudo apt update
+
 
 
          sudo apt install -y --no-install-recommends \
