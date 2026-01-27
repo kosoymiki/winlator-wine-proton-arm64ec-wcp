@@ -2,6 +2,12 @@ name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC (FINAL)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -11,29 +17,26 @@ jobs:
       MAKEFLAGS: -j$(nproc)
 
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       # ============================================================
       # SYSTEM SETUP (STABLE, JAMMY, ARM64EC-SAFE)
       # ============================================================
       - name: System setup (stable, no apt hacks)
         run: |
-                 set -e
-
-                 sudo apt update
-
-                 sudo apt install -y --no-install-recommends \
-                 build-essential git python3 ca-certificates \
-                 clang lld llvm \
-                 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-                 flex bison autoconf automake libtool pkg-config \
-                 \
-                 libx11-dev libxext-dev libxrandr-dev libxrender-dev \
-                 libxi-dev libxinerama-dev libxcursor-dev \
-                 libxcomposite-dev libxfixes-dev libxkbcommon-dev \
-                 libdrm-dev libvulkan-dev \
-                 libfreetype-dev libfontconfig1-dev \
-                 libpulse-dev libasound2-dev libdbus-1-dev
+          set -e
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            build-essential git python3 ca-certificates \
+            clang lld llvm \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            flex bison autoconf automake libtool pkg-config \
+            libx11-dev libxext-dev libxrandr-dev libxrender-dev \
+            libxi-dev libxinerama-dev libxcursor-dev \
+            libxcomposite-dev libxfixes-dev libxkbcommon-dev \
+            libdrm-dev libvulkan-dev libfreetype-dev libfontconfig1-dev \
+            libpulse-dev libasound2-dev libdbus-1-dev
 
       # ============================================================
       # LLVM MinGW
@@ -46,7 +49,7 @@ jobs:
           echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
       # ============================================================
-      # SOURCES
+      # SOURCES (Wine, Staging, and Dependencies)
       # ============================================================
       - name: Clone Wine + Staging
         run: |
@@ -78,18 +81,6 @@ jobs:
       - name: Build Wine ARM64EC
         run: |
           mkdir build && cd build
-
-          # Установим переменные окружения для кросс-компиляции
-          export CC=aarch64-w64-mingw32-clang
-          export CXX=aarch64-w64-mingw32-clang++
-          export OPT="-O3 -march=armv8.2-a+fp16+dotprod"
-          export CFLAGS="$OPT -Wno-error"
-          export CXXFLAGS="$OPT -Wno-error"
-
-          # Создание каталога для сборки
-          mkdir build && cd build
-
-          # Настройка конфигурации сборки с исправленными флагами и без неподдерживаемых опций
           ../wine/configure \
             --host=aarch64-w64-mingw32 \
             --with-wine-tools=../host \
@@ -121,12 +112,23 @@ jobs:
             --without-netapi \
             --without-capi
 
-          # Компиляция Wine
-          make
-         
-          # Установка Wine в текущий каталог
-          DESTDIR=$PWD/install make install
+      # ============================================================
+      # Download and apply additional packages for Wine
+      # ============================================================
+      - name: Download and extract additional dependencies
+        run: |
+          # Download necessary packages
+          wget -q https://github.com/StevenMXZ/freedreno_turnip-CI/releases/download/v23/Turnip_Gen8_V23.zip -O Turnip_Gen8_V23.zip
+          unzip Turnip_Gen8_V23.zip -d Turnip
 
+          wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp -O dxvk.wcp
+          wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp -O FEXCore.wcp
+          wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/WOWBOX64-NIGHTLY/wowbox64-0.4.1-260127-627b857.wcp -O wowbox64.wcp
+          wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp -O vkd3d.wcp
+
+          # Apply these additional WCP files to the build
+          mkdir -p build/install/wine
+          mv *.wcp build/install/wine/
 
       # ============================================================
       # PHAT WCP
@@ -155,7 +157,8 @@ jobs:
       # ============================================================
       # UPLOAD
       # ============================================================
-      - uses: actions/upload-artifact@v4
+      - name: Upload Wine build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: wine-11.1-staging-phat-ntsync-arm64ec
-          path: wine-11.1-staging-phat-ntsync-arm64ec.wcp
+          path: ./install/wine-11.1-staging-phat-ntsync-arm64ec.wcp
