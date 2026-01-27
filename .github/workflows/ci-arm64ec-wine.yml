@@ -1,4 +1,4 @@
-name: Wine 11.1 Staging PHAT + DXVK + VKD3D ARM64EC (FIXED)
+name: Wine 11.1 Staging PHAT + NTsync + DXVK + VKD3D ARM64EC
 
 on:
   workflow_dispatch:
@@ -32,8 +32,7 @@ jobs:
             libx11-dev:arm64 libxext-dev:arm64 libxrandr-dev:arm64 \
             libxrender-dev:arm64 libxi-dev:arm64 libxinerama-dev:arm64 \
             libxcursor-dev:arm64 libxcomposite-dev:arm64 libxfixes-dev:arm64 \
-            libxkbcommon-dev:arm64 libdrm-dev:arm64 libvulkan-dev:arm64 \
-            libfreetype-dev:arm64 libfontconfig1-dev:arm64
+            libxkbcommon-dev:arm64 libdrm-dev:arm64 libvulkan-dev:arm64
 
       # ============================================================
       # LLVM MinGW
@@ -52,19 +51,29 @@ jobs:
           git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
       # ============================================================
-      # APPLY STAGING + PROTON FSR (SAFE)
+      # APPLY STAGING (SAFE MODE)
       # ============================================================
-      - name: Apply Wine-Staging + Proton FSR
+      - name: Apply Wine-Staging (without sync hacks)
         run: |
           set +e
           cd staging
-          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || true
+
+          # Применяем ВСЁ, КРОМЕ sync/ntdll/fsync/esync
+          ./staging/patchinstall.py \
+            DESTDIR=../wine \
+            --all \
+            --exclude=ntdll-fsync \
+            --exclude=ntdll-esync \
+            --exclude=server-Esync \
+            --exclude=server-Fsync \
+            --exclude=ntdll-Synchronization \
+            --no-autoconf || true
+
           cd ../wine
-          wget -qO- https://raw.githubusercontent.com/GloriousEggroll/proton-ge-custom/master/patches/wine-hotfixes/staging/proton-fshack-staging.patch | patch -p1 --fuzz=3 || true
           autoreconf -fiv
 
       # ============================================================
-      # HOST WINETOOLS (x86_64)
+      # HOST WINETOOLS
       # ============================================================
       - name: Build host winetools
         run: |
@@ -74,9 +83,9 @@ jobs:
           make -j$(nproc) __tooldeps__
 
       # ============================================================
-      # ARM64 + WOW64 + ARM64EC BUILD (FIXED)
+      # ARM64EC + WOW64 + NTSYNC
       # ============================================================
-      - name: Build Wine ARM64EC + WoW64
+      - name: Build Wine ARM64EC + WoW64 + NTsync
         run: |
           mkdir -p build
           cd build
@@ -93,6 +102,9 @@ jobs:
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64,i386 \
+            --enable-ntsync \
+            --disable-esync \
+            --disable-fsync \
             --disable-tests \
             --with-x \
             --with-vulkan \
@@ -137,8 +149,9 @@ jobs:
           cat > wcp/env.sh <<'EOF'
           #!/bin/sh
           export WINEDEBUG=-all
-          export WINEESYNC=1
-          export WINEFSYNC=1
+          export WINEESYNC=0
+          export WINEFSYNC=0
+          export WINE_NTSYNC=1
           export DXVK_ASYNC=1
           export MESA_LOADER_DRIVER_OVERRIDE=turnip
           EOF
@@ -146,19 +159,19 @@ jobs:
 
           cat > wcp/info.json <<'EOF'
           {
-            "name": "Wine-11.1-Staging-PHAT-DXVK-VKD3D-ARM64EC",
+            "name": "Wine-11.1-Staging-PHAT-NTsync-DXVK-VKD3D-ARM64EC",
             "version": "11.1",
             "arch": "arm64",
-            "variant": "winlator-ultimate"
+            "variant": "winlator-ultimate-ntsync"
           }
           EOF
 
-          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp -C wcp .
+          tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec.wcp -C wcp .
 
       # ============================================================
       # UPLOAD
       # ============================================================
       - uses: actions/upload-artifact@v4
         with:
-          name: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec
-          path: wine-11.1-staging-phat-dxvk-vkd3d-arm64ec.wcp
+          name: wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec
+          path: wine-11.1-staging-phat-ntsync-dxvk-vkd3d-arm64ec.wcp
