@@ -28,57 +28,38 @@ jobs:
     # SYSTEM SETUP
     # (install dependencies, pkg-config, freetype, etc.)
     # ---------------------------------------
-    - name: System setup
+    - name: System setup (stable, jammy, ARM64EC)
       run: |
-        set -euxo pipefail
+         set -euxo pipefail
 
-        # enable 32-bit
-        sudo dpkg --add-architecture i386 || true
-        sudo apt-get update
+         sudo dpkg --add-architecture i386 || true
+         sudo apt-get update
 
-        # pkg-config (as pkgconf)
-        sudo apt-get install -y --no-install-recommends \
-          pkgconf pkg-config
+         # В Ubuntu Jammy pkgconf уже установлен, конфликтует с pkg-config
+         # Устанавливаем только pkgconf
+         sudo apt-get install -y --no-install-recommends pkgconf
 
-        # core build deps
-        sudo apt-get install -y --no-install-recommends \
-          build-essential git python3 ca-certificates \
-          clang lld llvm \
-          gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-          flex bison autoconf automake libtool
+         # Остальные dev зависимости...
+         sudo apt-get install -y --no-install-recommends \
+         build-essential git python3 ca-certificates \
+         clang lld llvm \
+         gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+         flex bison autoconf automake libtool \
+         libx11-dev libxext-dev libxrandr-dev libxrender-dev \
+         libxi-dev libxinerama-dev libxcursor-dev \
+         libxcomposite-dev libxfixes-dev libxkbcommon-dev \
+         libdrm-dev libvulkan-dev \
+         libpulse-dev libasound2-dev \
+         libdbus-1-dev libpcap-dev \
+         libsdl2-dev \
+         libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
+         inotify-tools libinotifytools0-dev \
+         libpcsclite-dev gettext \
+         libfreetype6-dev libfreetype6-dev:i386
 
-        # X11/Vulkan/DRM dev
-        sudo apt-get install -y --no-install-recommends \
-          libx11-dev libxext-dev libxrandr-dev libxrender-dev \
-          libxi-dev libxinerama-dev libxcursor-dev \
-          libxcomposite-dev libxfixes-dev libxkbcommon-dev \
-          libdrm-dev libvulkan-dev
+         sudo ln -sf /usr/include/freetype2 /usr/include/freetype
 
-        # sound / dbus / pcap / SDL2
-        sudo apt-get install -y --no-install-recommends \
-          libpulse-dev libasound2-dev \
-          libdbus-1-dev libpcap-dev \
-          libsdl2-dev
 
-        # FFmpeg bits
-        sudo apt-get install -y --no-install-recommends \
-          libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
-
-        # Misc
-        sudo apt-get install -y --no-install-recommends \
-          inotify-tools libinotifytools0-dev \
-          libpcsclite-dev \
-          gettext
-
-        # FreeType dev for amd64 + i386
-        sudo apt-get install -y --no-install-recommends \
-          libfreetype6-dev \
-          libfreetype6-dev:i386
-
-        # Make FreeType headers discoverable
-        sudo ln -sf /usr/include/freetype2 /usr/include/freetype
-
-        sudo apt-get update
 
     # ---------------------------------------
     # LLVM MinGW (prebuilt toolchain)
