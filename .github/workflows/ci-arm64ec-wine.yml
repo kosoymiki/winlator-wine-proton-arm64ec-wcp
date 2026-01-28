@@ -17,18 +17,20 @@ jobs:
       SYSROOT: /usr/aarch64-linux-gnu
 
     steps:
+
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: System setup
+    # -------------------------
+    # System setup (cross dev + pkgconf)
+    # -------------------------
+    - name: System setup (cross dev)
       run: |
         set -euxo pipefail
 
-        # Добавляем multi-arch arm64
-        sudo dpkg --add-architecture arm64
         sudo apt-get update
 
-        # Базовые инструменты сборки
+        # Базовые сборочные инструменты и кросс gcc
         sudo apt-get install -y --no-install-recommends \
           build-essential \
           gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
@@ -36,39 +38,43 @@ jobs:
           git ca-certificates python3 gettext \
           pkgconf
 
-        # Системные заголовки glibc для arm64 (нужны для inotify и пр.)
+        # libc6 cross headers (glibc sysroot includes; inotify etc.)
         sudo apt-get install -y --no-install-recommends \
-          libc6-dev:arm64 \
-          linux-libc-dev:arm64
+          libc6-dev-arm64-cross
 
-        # Dev-зависимости для Wine (arm64)
+        # Cross‑dev пакеты для обязательных библиотек (freetype, fontconfig, SDL2, pulse/alsa, dbus, ffmpeg)
         sudo apt-get install -y --no-install-recommends \
-          libfreetype6-dev:arm64 \
-          libfontconfig1-dev:arm64 \
-          libsdl2-dev:arm64 \
-          libpulse-dev:arm64 \
-          libasound2-dev:arm64 \
-          libdbus-1-dev:arm64 \
-          libdb-dev:arm64 \
-          libavcodec-dev:arm64 \
-          libavformat-dev:arm64 \
-          libavutil-dev:arm64 \
-          libswscale-dev:arm64
+          libfreetype6-dev-arm64-cross \
+          libfontconfig1-dev-arm64-cross \
+          libsdl2-dev-arm64-cross \
+          libpulse-dev-arm64-cross \
+          libasound2-dev-arm64-cross \
+          libdbus-1-dev-arm64-cross \
+          libdb-dev-arm64-cross \
+          libavcodec-dev-arm64-cross \
+          libavformat-dev-arm64-cross \
+          libavutil-dev-arm64-cross \
+          libswscale-dev-arm64-cross
 
-        # Симлинк pkgconf → pkg-config (потому что pkgconf конфликтует с pkg-config)
+        # Используем pkgconf как pkg-config (pkg-config конфликтует с pkgconf в Jammy)
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-        sudo apt-get update
-
-
-    - name: LLVM MinGW (needed for Windows PE tools)
+    # -------------------------
+    # LLVM MinGW (PE aarch64ec target tools)
+    # -------------------------
+    - name: LLVM MinGW
       run: |
         set -euxo pipefail
-        wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
-        tar -xf llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+        wget -qO llvm-mingw.tar.xz \
+          https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+        tar -xf llvm-mingw.tar.xz
+        # добавляем llvm‑mingw в PATH для mingw‑toolchain
         echo "$PWD/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
-    - name: Clone Wine + Wine‑Staging
+    # -------------------------
+    # Clone Wine + Staging
+    # -------------------------
+    - name: Clone Wine + Wine-Staging
       run: |
         set -euxo pipefail
         git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
@@ -76,13 +82,22 @@ jobs:
         cd staging
         ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf
 
+    # -------------------------
+    # Build host winetools
+    # -------------------------
     - name: Build host winetools
       run: |
         set -euxo pipefail
         mkdir -p wine/host && cd wine/host
-        ../wine/configure --disable-tests --without-x --without-wayland
+        ../wine/configure \
+          --disable-tests \
+          --without-x \
+          --without-wayland
         make
 
+    # -------------------------
+    # Configure & Build Wine
+    # -------------------------
     - name: Configure & Build Wine
       run: |
         set -euxo pipefail
@@ -92,7 +107,12 @@ jobs:
         cd build
 
         export PKG_CONFIG=pkgconf
-        export CPPFLAGS="-I${SYSROOT}/include -I${SYSROOT}/include/aarch64-linux-gnu -I/usr/include/freetype2 -I/usr/include/SDL2"
+        export CPPFLAGS="
+          -I${SYSROOT}/include
+          -I${SYSROOT}/include/aarch64-linux-gnu
+          -I/usr/include/freetype2
+          -I/usr/include/SDL2
+        "
         export LDFLAGS="-L${SYSROOT}/lib"
 
         ../configure \
@@ -115,25 +135,32 @@ jobs:
         make
         DESTDIR=$PWD/install make install
 
+    # -------------------------
+    # Assemble PHAT
+    # -------------------------
     - name: Assemble PHAT
       run: |
         set -euxo pipefail
+
         ROOT=$PWD
-        INSTALL=$PWD/build/install/usr
+        INSTALL=$PWD/wine/build/install/usr
         PHAT=$PWD/wcp
 
-        mkdir -p $PHAT/bin $PHAT/lib/wine/aarch64-unix \
+        # каноническая PHAT‑структура
+        mkdir -p $PHAT/bin \
+                 $PHAT/lib/wine/aarch64-unix \
                  $PHAT/lib/wine/aarch64-windows \
                  $PHAT/lib/wine/arm64ec-windows \
                  $PHAT/share/wine
 
-        cp $INSTALL/bin/wine* $PHAT/bin/
-        cp $INSTALL/lib/wine/aarch64-unix/*so $PHAT/lib/wine/aarch64-unix/
-        cp $INSTALL/lib/wine/aarch64-windows/*so $PHAT/lib/wine/aarch64-windows/
-        cp $INSTALL/lib/wine/arm64ec-windows/*so $PHAT/lib/wine/arm64ec-windows/
+        cp -a $INSTALL/bin/wine* $PHAT/bin/
+        cp -a $INSTALL/lib/wine/aarch64-unix/*so $PHAT/lib/wine/aarch64-unix/
+        cp -a $INSTALL/lib/wine/aarch64-windows/*so $PHAT/lib/wine/aarch64-windows/
+        cp -a $INSTALL/lib/wine/arm64ec-windows/*so $PHAT/lib/wine/arm64ec-windows/
         cp -a $INSTALL/share/wine/* $PHAT/share/wine/
 
-        cat > $PHAT/env.sh <<'EOF'
+        # env.sh
+        cat > $PHAT/env.sh << 'EOF'
         #!/usr/bin/env bash
         export PATH="$(dirname "$0")/bin:$PATH"
         export WINEDLLPATH="$(dirname "$0")/lib/wine"
@@ -142,15 +169,19 @@ jobs:
         EOF
         chmod +x $PHAT/env.sh
 
-        cat > $PHAT/info.json <<'EOF'
+        # info.json
+        cat > $PHAT/info.json << 'EOF'
         {
-          "layout": "phat",
+          "layout":"phat",
           "archs":["aarch64-unix","aarch64-windows","arm64ec-windows"],
-          "components": {"wine":true}
+          "components":{"wine":true}
         }
         EOF
 
-    - name: Pack artifact
+    # -------------------------
+    # Upload results
+    # -------------------------
+    - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: wine-11.1-arm64ec-phat
