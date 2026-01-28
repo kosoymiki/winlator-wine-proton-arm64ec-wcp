@@ -122,8 +122,9 @@ jobs:
 
           test -f "$WINEDIR/configure"
           "$WINEDIR/configure" --help | head -n 30
+          
 
-      - name: Build Wine (current hypothesis: mingw host)
+      - name: Build Wine (current hypothesis mingw host)
         run: |
           set -euxo pipefail
           export PATH="$LLVM_MINGW_DIR/bin:$PATH"
