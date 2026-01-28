@@ -38,65 +38,59 @@ jobs:
           libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
           libudev-dev ca-certificates patchutils bison flex
 
-        # Ensure pkgconf → pkg-config
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    - name: Setup LLVM-Mingw ARM64EC
+    - name: Setup LLVM‑Mingw ARM64EC toolchain
       run: |
         mkdir -p "$LLVM_MINGW_DIR"
         wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz" \
-          -O llvm-mingw-${LLVM_MINGW_VERSION}-aarch64.tar.xz
-
-        tar -xJf llvm-mingw-${LLVM_MINGW_VERSION}-aarch64.tar.xz \
-          -C "$LLVM_MINGW_DIR" --strip-components=1
-        rm llvm-mingw-${LLVM_MINGW_VERSION}-aarch64.tar.xz
-
+          -O llvm-mingw.tar.xz
+        tar -xJf llvm-mingw.tar.xz -C "$LLVM_MINGW_DIR" --strip-components=1
+        rm llvm-mingw.tar.xz
         echo "$LLVM_MINGW_DIR/bin" >> "$GITHUB_PATH"
 
-    - name: Verify LLVM-Mingw
+    - name: Verify LLVM‑Mingw toolchain
       run: |
         set -eux
         which aarch64-w64-mingw32-clang
         aarch64-w64-mingw32-clang --version
         aarch64-w64-mingw32-clang++ --version
-        echo "int main(){return 0;}" > /tmp/test.c
-        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 \
-          -o /tmp/test.exe /tmp/test.c -Wl,--no-undefined
-        file /tmp/test.exe
+        echo 'int main(){return 0;}' > /tmp/t.c
+        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/t.exe /tmp/t.c -Wl,--no-undefined
+        file /tmp/t.exe
 
-    - name: Clone Wine & staging
+    - name: Clone Wine & Wine‑Staging
       run: |
         mkdir -p "$WORKDIR/src"
         cd "$WORKDIR/src"
 
-        # Wine 11.1 (upstream)
+        # upstream Wine 11.1
         git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
 
-        # Wine‑Staging for Wine 11.1
+        # Wine‑Staging 11.1
         git clone --depth 1 --branch v11.1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-        ls -1 wine-staging/staging/patches | head -n 30
+        # confirm staging patches are present
+        ls -l wine-staging/patches | head -n 10
 
     - name: Apply Wine‑Staging patches
       run: |
         set -eux
         cd "$STAGINGDIR"
-
-        # Apply all staging patches into Wine src
+        # patchinstall.py automatically computes patchdir = stagingdir + '/../patches'
         ./staging/patchinstall.py DESTDIR="$SRCDIR" --all --no-autoconf
 
-        # Regenerate configure scripts
+        # re‑generate configure scripts after staging
         cd "$SRCDIR"
         autoreconf -fiv
 
-        test -f configure
-
-    - name: Show configure help
+    - name: Verify configure ready
       run: |
         cd "$SRCDIR"
+        test -f configure
         ./configure --help | head -n 20
 
-    - name: Build Wine core
+    - name: Build Wine (ARM64EC)
       run: |
         mkdir -p "$BUILDDIR"
         cd "$BUILDDIR"
@@ -105,6 +99,7 @@ jobs:
         export PKG_CONFIG=pkg-config
         export PKG_CONFIG_PATH="/usr/lib/aarch64/pkgconfig:${PKG_CONFIG_PATH:-}"
 
+        # configure upstream with staging included
         "$SRCDIR/configure" \
           --host=aarch64-w64-mingw32 \
           --enable-win64 \
@@ -116,7 +111,7 @@ jobs:
         make -j$(nproc)
         DESTDIR="$BUILDDIR/install" make install
 
-    - name: Build mesa/turnip Vulkan
+    - name: Build Mesa/Turnip Vulkan
       run: |
         git clone https://github.com/whitebelyash/mesa-tu8 meson-mesa
         mkdir meson-mesa-build
