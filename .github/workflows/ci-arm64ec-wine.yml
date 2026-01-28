@@ -51,11 +51,43 @@ jobs:
         echo 'int main(){return 0;}' > /tmp/check.c
         aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/check.exe /tmp/check.c -Wl,--no-undefined
         file /tmp/check.exe
-
-    - name: Clone Wine and Wine‑Staging
+    
+    - name: Fetch Wine 11.1 source
       run: |
-        git clone https://gitlab.winehq.org/wine/wine.git wine
-        git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        set -eux
+
+        # Удаляем возможные остатки
+        rm -rf wine
+
+        # Загружаем исходники Wine 11.1
+        wget -q https://dl.winehq.org/wine/source/11.x/wine-11.1.tar.xz
+        mkdir wine
+        tar -xJf wine-11.1.tar.xz -C wine --strip-components=1
+        rm wine-11.1.tar.xz
+
+        # Проверим, что configure есть
+        if [ ! -f wine/configure ]; then
+          echo "ERROR: wine/configure not found"
+          exit 1
+        fi
+
+    - name: Clone Wine‑Staging patches
+      run: |
+        set -eux
+
+        # Удаляем возможные остатки staging
+        rm -rf staging
+
+        # Клонируем wine‑staging
+        git clone --depth 1 https://github.com/wine-staging/wine-staging.git staging
+
+        # Если требуется конкретная ветка/тег, можно указать явно:
+        # git clone --branch wine-11.1-staging https://github.com/wine-staging/wine-staging.git staging
+
+        # Переместим патчи в структуру expected staging/scripts
+        mkdir -p wine/staging
+        rsync -a staging/patches wine/staging/ || true
+
 
     - name: Apply staging patches and generate configure
       run: |
