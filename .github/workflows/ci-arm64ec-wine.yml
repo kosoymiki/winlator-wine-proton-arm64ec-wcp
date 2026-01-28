@@ -22,11 +22,9 @@ jobs:
 
     steps:
 
-    # 1. Checkout repository
     - uses: actions/checkout@v4
 
-    # 2. Install base dependencies
-    - name: Install base deps
+    - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y --no-install-recommends \
@@ -39,78 +37,55 @@ jobs:
           libudev-dev ca-certificates patchutils bison flex
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    # 3. Setup LLVM-Mingw ARM64
     - name: Setup LLVM-Mingw ARM64
       run: |
         mkdir -p "$LLVM_MINGW_DIR"
         wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         tar -xJf llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz \
           -C "$LLVM_MINGW_DIR" --strip-components=1
-        rm llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz
         echo "$LLVM_MINGW_DIR/bin" >> "$GITHUB_PATH"
 
-    # 4. Cross-compiler test & diagnostics
     - name: Cross-compiler test & diagnostics
       run: |
         set -eux
-        echo "=== LLVM-Mingw Contents ==="
-        ls -1 "$LLVM_MINGW_DIR/bin"
-        echo "=== Tools versions ==="
         aarch64-w64-mingw32-clang --version
-        aarch64-w64-mingw32-clang++ --version
-        aarch64-w64-mingw32-dlltool --version || true
-        lld --version || true
-        echo "=== Cross-compile test ==="
-        cat << 'EOF' > /tmp/conftest.c
-        int main(void){return 0;}
-        EOF
-        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 \
-          -o /tmp/conftest.exe /tmp/conftest.c -Wl,--no-undefined
-        file /tmp/conftest.exe
+        echo 'int main(){return 0;}' > /tmp/conftest.c
+        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/x.exe /tmp/conftest.c -Wl,--no-undefined
+        file /tmp/x.exe
 
-    # 5. Clone Wine + Wine-Staging
-    - name: Clone Wine & Wine‑Staging
+    - name: Clone Wine & Wine-Staging
       run: |
         mkdir -p "$WORKDIR/src"
         cd "$WORKDIR/src"
-        git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
-        git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        git clone --depth 1 -b wine-11.1 https://github.com/wine-mirror/wine.git wine
+        git clone --depth 1 -b master https://github.com/wine-staging/wine-staging.git wine-staging
 
-    # 6. Apply staging patches correctly
-    - name: Apply Staging (exclude fsync/esync)
+    - name: Apply staging patches
       run: |
         set -eux
         cd "$STAGINGDIR"
         ./staging/patchinstall.py DESTDIR="$SRCDIR" --all --no-autoconf
 
-        # Ensure some patches applied (example: check a file that typically gets patched)
-        test -d "$SRCDIR/staging/patches" || echo "Staging patches directory present"
-
-        # 6.1 Remove problematic sync patches
+        # Remove sync patches that conflict with NTsync if present
         for p in \
-          "$SRCDIR/staging/patches/ntdll-fsync/0001*.patch" \
-          "$SRCDIR/staging/patches/server-Fsync/0001*.patch" \
-          "$SRCDIR/staging/patches/ntdll-esync/0001*.patch" \
-          "$SRCDIR/staging/patches/server-Esync/0001*.patch" \
-          "$SRCDIR/staging/patches/ntdll-Synchronization/0001*.patch"; do
-          if [ -f $p ]; then
-            git apply -R "$p" || true
-          fi
+          "$SRCDIR/staging/patches/ntdll-fsync/"* \
+          "$SRCDIR/staging/patches/server-Fsync/"* \
+          "$SRCDIR/staging/patches/ntdll-esync/"* \
+          "$SRCDIR/staging/patches/server-Esync/"* \
+          "$SRCDIR/staging/patches/ntdll-Synchronization/"*; do
+          [ -f "$p" ] && git -C "$SRCDIR" apply -R "$p" || true
         done
 
-        # 6.2 Regenerate configure after staging
         cd "$SRCDIR"
         autoreconf -fiv
 
-    # 7. Validate configure existence and check options
     - name: Validate configure
       run: |
         cd "$SRCDIR"
         test -f configure
         ./configure --help | head -n 20
 
-    # 8. Build Wine
-    - name: Build Wine with Wow64
+    - name: Build Wine
       run: |
         mkdir -p "$BUILDDIR"
         cd "$BUILDDIR"
@@ -129,20 +104,19 @@ jobs:
         make -j1
         DESTDIR="$BUILDDIR/install" make install
 
-    # 9. Build Turnip Vulkan (Mesa)
     - name: Build Turnip Vulkan (Mesa)
       run: |
-        git clone https://gitlab.freedesktop.org/mesa/mesa.git meson-mesa
+        git clone --depth 1 https://github.com/whitebelyash/mesa-tu8 meson-mesa
         mkdir meson-mesa-build
         cd meson-mesa-build
         meson setup . ../meson-mesa \
-          -Dgallium-vulkan=enabled -Dvulkan-drivers=turnip \
-          -Dplatforms=x11,drm \
+          -Dvulkan-drivers=turnip \
+          -Dgallium-drivers= \
+          -Dplatforms=none \
           -Dbuildtype=release
         ninja -v
         ninja install --destdir="$EXTERNALDIR/mesa"
 
-    # 10. Integrate DXVK/VKD3D
     - name: Integrate DXVK/VKD3D
       run: |
         mkdir -p "$EXTERNALDIR/dxvk" "$EXTERNALDIR/vkd3d"
@@ -151,14 +125,12 @@ jobs:
         wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp"
         tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C "$EXTERNALDIR/vkd3d"
 
-    # 11. Unpack FEXCore
     - name: Unpack FEXCore
       run: |
         mkdir -p "$WCP_DIR/lib/wine/arm64ec-windows"
         wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O FEXCore.wcp
         tar -xJf FEXCore.wcp -C "$WCP_DIR/lib/wine/arm64ec-windows"
 
-    # 12. Prepare PHAT .wcp
     - name: Prepare PHAT .wcp
       run: |
         rm -rf "$WCP_DIR"
@@ -175,6 +147,12 @@ jobs:
 
         printf "export WINEPREFIX=~/.wine\nexport WINEARCH=win64\n" > "$WCP_DIR/env.sh"
         printf '{ "version":"%s","arch":"arm64ec","type":"phat" }' "$WINE_VERSION" > "$WCP_DIR/info.json"
+
+    - name: Upload .wcp
+      uses: actions/upload-artifact@v4
+      with:
+        name: wine-arm64ec-phat
+        path: "$WCP_DIR"
 
     # 13. Upload the Wine .wcp artifact
     - name: Upload Wine .wcp
