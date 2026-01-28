@@ -110,6 +110,12 @@ jobs:
           mkdir -p "$BUILD_DIR/external/mesa"
           tar -xJf mesa-turnip-arm64ec.wcp -C "$BUILD_DIR/external/mesa"
 
+      - name: Download & unpack FEXCore-2601 .wcp
+        run: |
+          mkdir -p "$WCP_DIR/lib/wine/arm64ec-windows"
+          wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O FEXCore-2601.wcp
+          tar -xJf FEXCore-2601.wcp -C "$WCP_DIR/lib/wine/arm64ec-windows"
+
       - name: Prepare PHAT .wcp tree
         run: |
           rm -rf "$WCP_DIR"
@@ -127,7 +133,7 @@ jobs:
           cp -v "$BUILD_DIR/install/bin/wineboot" "$WCP_DIR/bin/"
           cp -rv "$BUILD_DIR/install/lib/"* "$WCP_DIR/lib/wine/aarch64-unix/"
           cp -rv "$BUILD_DIR/install/lib/"* "$WCP_DIR/lib/wine/aarch64-windows/"
-          cp -rv "$BUILD_DIR/install/lib/"* "$WCP_DIR/lib/wine/arm64ec-windows/"
+          cp -rv "$WCP_DIR/lib/wine/arm64ec-windows/"* "$WCP_DIR/lib/wine/arm64ec-windows/"
           cp -rv "$BUILD_DIR/external/dxvk/"* "$WCP_DIR/dxvk/arm64ec/"
           cp -rv "$BUILD_DIR/external/vkd3d/"* "$WCP_DIR/vkd3d/arm64ec/"
           cp -rv "$BUILD_DIR/external/mesa/"* "$WCP_DIR/mesa/turnip/"
