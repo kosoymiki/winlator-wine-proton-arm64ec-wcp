@@ -1,12 +1,10 @@
-name: Build Wine 11.1 Staging for ARM64EC with PHAT Structure
+name: Build Wine 11.1 Staging for ARM64EC (PHAT .wcp)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -23,30 +21,37 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup multi-arch apt repositories
+    - name: Enable multi‑arch and jammy update/security repos
       run: |
-        sudo sed -i '/^# deb .*ports.ubuntu.com/ s/^# //' /etc/apt/sources.list || true
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse restricted" | sudo tee /etc/apt/sources.list.d/ports.list
-        sudo apt-get update
+        sudo dpkg --add‑architecture arm64
+        # Ensure jammy, jammy‑updates and jammy‑security are enabled
+        sudo sed -i '/^# jammy main/ s/^# //' /etc/apt/sources.list || true
+        sudo sed -i '/^# jammy‑updates/ s/^# //' /etc/apt/sources.list || true
+        sudo sed -i '/^# jammy‑security/ s/^# //' /etc/apt/sources.list || true
+        # Add ports for arm64
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu‑ports jammy main universe multiverse restricted" | sudo tee /etc/apt/sources.list.d/ports.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu‑ports jammy‑updates main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list.d/ports.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu‑ports jammy‑security main universe multiverse restricted" | sudo tee -a /etc/apt/sources.list.d/ports.list
+        sudo apt update
 
-    - name: Install build essentials & dependencies
+    - name: Install cross‑compile dependencies (arm64)
       run: |
-        sudo apt-get install -y --no-install-recommends \
+        sudo apt install -y --no-install-recommends \
           build-essential wget ca-certificates git python3 gettext \
           pkgconf cmake ninja-build autoconf automake libtool \
           libc6-dev:arm64 linux-libc-dev:arm64 \
-          libfreetype6-dev:arm64 libfontconfig1-dev:arm64 \
+          libfreetype-dev:arm64 libfontconfig-dev:arm64 \
           libsdl2-dev:arm64 libpulse-dev:arm64 libasound2-dev:arm64 \
           libdbus-1-dev:arm64 libdb-dev:arm64 \
           libavcodec-dev:arm64 libavformat-dev:arm64 libavutil-dev:arm64 libswscale-dev:arm64 \
-          libinotifytools0-dev:arm64
-        sudo apt-get clean
+          libudev-dev:arm64
+        sudo apt clean
 
     - name: Symlink pkgconf → pkg-config
       run: |
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    - name: Download & unpack llvm-mingw cross toolchain
+    - name: Download & unpack LLVM‑Mingw cross toolchain
       run: |
         mkdir -p $HOME/llvm-mingw
         wget -q https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz
@@ -54,14 +59,9 @@ jobs:
         rm llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz
       shell: bash
 
-    - name: Add llvm-mingw to PATH
+    - name: Add llvm‑mingw to PATH
       run: |
         echo "${LLVM_MINGW_DIR}/bin" >> $GITHUB_PATH
-
-    - name: Verify cross compiler availability
-      run: |
-        aarch64-w64-mingw32-clang --version
-        aarch64-w64-mingw32-clang++ --version
 
     - name: Prepare Wine sources
       run: |
@@ -75,17 +75,14 @@ jobs:
 
     - name: Apply Staging patches
       run: |
-        # Клонируем репозиторий Wine-Staging
         git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
         cd wine-staging/patches
-        # Применяем патчи
         git apply ../*.patch
 
-    - name: Configure & Build Wine (ARM64EC with Wow64)
+    - name: Configure & Build Wine with Wow64
       run: |
         mkdir -p $BUILD_DIR
         cd $BUILD_DIR
-
         export PKG_CONFIG=pkg-config
         export PKG_CONFIG_PATH="/usr/lib/arm64/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
         export CC=aarch64-w64-mingw32-clang
@@ -93,9 +90,6 @@ jobs:
         export AR=aarch64-w64-mingw32-ar
         export RANLIB=aarch64-w64-mingw32-ranlib
         export STRIP=aarch64-w64-mingw32-strip
-        export CPPFLAGS="-I/usr/include/freetype2 ${CPPFLAGS:-}"
-
-        # Configure Wine
         ../wine/configure \
           --host=aarch64-w64-mingw32 \
           --with-wine-tools=../host \
@@ -103,67 +97,46 @@ jobs:
           --enable-wow64 \
           --enable-archs=arm64ec,aarch64 \
           --disable-tests \
-          --with-freetype \
-          --with-fontconfig \
-          --with-sdl2 \
-          --with-alsa \
-          --with-pulse \
-          --with-db \
-          --with-inotify \
-          --without-pcap \
-          --with-ffmpeg \
           --enable-ntsync \
           --without-x \
           --without-vulkan
-
-        make -j$(nproc)
+        make -j1
         DESTDIR=$PWD/install make install
 
-    - name: Download and integrate DXVK ARM64EC and VKD3D-Proton
+    - name: Integrate DXVK, VKD3D & Turnip
       run: |
-        # Download and extract DXVK ARM64EC
         wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp
-        mkdir -p $BUILD_DIR/dxvk
-        tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C $BUILD_DIR/dxvk
-
-        # Download and extract VKD3D-Proton ARM64EC
+        mkdir -p $BUILD_DIR/external/dxvk
+        tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C $BUILD_DIR/external/dxvk
         wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp
-        mkdir -p $BUILD_DIR/vkd3d
-        tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C $BUILD_DIR/vkd3d
+        mkdir -p $BUILD_DIR/external/vkd3d
+        tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C $BUILD_DIR/external/vkd3d
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/MESA-TURNIP-ARM64EC/mesa-turnip-arm64ec.wcp
+        mkdir -p $BUILD_DIR/external/mesa
+        tar -xJf mesa-turnip-arm64ec.wcp -C $BUILD_DIR/external/mesa
 
-    - name: Create PHAT .wcp archive with correct structure
+    - name: Prepare PHAT .wcp tree
       run: |
-        mkdir -p $WCP_DIR/bin
-        mkdir -p $WCP_DIR/lib/wine/aarch64-unix
-        mkdir -p $WCP_DIR/lib/wine/aarch64-windows
-        mkdir -p $WCP_DIR/lib/wine/arm64ec-windows
-        mkdir -p $WCP_DIR/share/wine
-        mkdir -p $WCP_DIR/dxvk/arm64ec
-        mkdir -p $WCP_DIR/vkd3d/arm64ec
-        mkdir -p $WCP_DIR/mesa/turnip
+        rm -rf $WCP_DIR
+        mkdir -p $WCP_DIR/bin \
+                 $WCP_DIR/lib/wine/aarch64-unix \
+                 $WCP_DIR/lib/wine/aarch64-windows \
+                 $WCP_DIR/lib/wine/arm64ec-windows \
+                 $WCP_DIR/share/wine \
+                 $WCP_DIR/dxvk/arm64ec \
+                 $WCP_DIR/vkd3d/arm64ec \
+                 $WCP_DIR/mesa/turnip
 
-        # Move Wine binaries to the bin folder
-        cp -r $BUILD_DIR/install/bin/* $WCP_DIR/bin/
+        cp -v $BUILD_DIR/install/bin/{wine,wine64,wineserver,wineboot} $WCP_DIR/bin/
+        cp -rv $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-unix/
+        cp -rv $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-windows/
+        cp -rv $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/arm64ec-windows/
+        cp -rv $BUILD_DIR/external/dxvk/* $WCP_DIR/dxvk/arm64ec/
+        cp -rv $BUILD_DIR/external/vkd3d/* $WCP_DIR/vkd3d/arm64ec/
+        cp -rv $BUILD_DIR/external/mesa/* $WCP_DIR/mesa/turnip/
 
-        # Move libraries for different architectures
-        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-unix/
-        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-windows/
-        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/arm64ec-windows/
-
-        # Move dxvk and vkd3d to respective folders
-        cp -r $BUILD_DIR/dxvk/* $WCP_DIR/dxvk/arm64ec/
-        cp -r $BUILD_DIR/vkd3d/* $WCP_DIR/vkd3d/arm64ec/
-
-        # Move Turnip for Vulkan
-        cp -r $BUILD_DIR/mesa/* $WCP_DIR/mesa/turnip/
-
-        # Create env.sh file
-        echo 'export WINEPREFIX=$HOME/.wine' > $WCP_DIR/env.sh
-        echo 'export WINEARCH=win64' >> $WCP_DIR/env.sh
-        echo 'export WINEDEBUG=-all' >> $WCP_DIR/env.sh
-
-        # Create info.json file
-        echo '{ "version": "11.1", "architecture": "arm64ec", "vulkan": "enabled" }' > $WCP_DIR/info.json
+        printf "export WINEPREFIX=~/.wine\nexport WINEARCH=win64\n" > $WCP_DIR/env.sh
+        jq -n --arg v "$WINE_VERSION" --arg arch "arm64ec" '{version:$v,architecture:$arch,"type":"phat"}' > $WCP_DIR/info.json
 
     - name: Upload PHAT .wcp archive
       uses: actions/upload-artifact@v4
@@ -173,4 +146,4 @@ jobs:
 
     - name: Summary
       run: |
-        echo "PHAT .wcp archive with Wine ARM64EC build and dependencies uploaded."
+        echo "PHAT .wcp build completed; artifacts uploaded."
