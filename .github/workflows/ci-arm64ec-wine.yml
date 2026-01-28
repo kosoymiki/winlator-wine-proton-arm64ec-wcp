@@ -38,7 +38,7 @@ jobs:
             -C "$HOME/llvm-mingw" --strip-components=1
           rm llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
           echo "$HOME/llvm-mingw/bin" >> "$GITHUB_PATH"
-
+          
       - name: Prepare Wine sources and Staging
         run: |
           git submodule update --init --recursive
@@ -50,16 +50,17 @@ jobs:
             tar -xJf wine-11.1.tar.xz -C wine --strip-components=1
           fi
 
-          # Clone Wine‑Staging and checkout the correct version
+          # Clone Wine‑Staging, checkout correct staging for 11.1
           git clone --depth 1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
           cd wine-staging
           git fetch --tags
-          git checkout v11.1 || true
+          git checkout v11.1 || git checkout origin/staging
           cd ..
 
-          # Apply all staging patches in the correct order
+          # Apply all staging patches correctly
           cd wine
           ../wine-staging/staging/patchinstall.py --all
+
 
 
       - name: Build Wine with Wow64
