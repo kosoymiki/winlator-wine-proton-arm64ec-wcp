@@ -30,6 +30,35 @@ jobs:
 
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
+      - name: Setup cross‑compiler tools & verify
+        run: |
+          set -eux
+
+          # Install additional required cross‑compiler tools
+          sudo apt update
+
+          sudo apt install -y --no-install-recommends \
+            clang llvm lld \
+            binutils-aarch64-w64-mingw32 \
+            llvm-dlltool
+
+          # Show versions for diagnostics
+          echo "=== Cross‑compiler versions ==="
+          aarch64-w64-mingw32-clang --version
+          aarch64-w64-mingw32-clang++ --version
+          llvm-dlltool --version || true
+          lld --version || true
+          ld.lld --version || true
+
+          # Test basic cross compile of trivial C file
+          echo "int main(void) { return 0; }" > /tmp/conftest.c
+          aarch64-w64-mingw32-clang -o /tmp/conftest.exe /tmp/conftest.c \
+            --target=aarch64-w64-mingw32 -Wl,--no-undefined
+
+          file /tmp/conftest.exe
+
+          
+
       - name: Setup llvm-mingw
         run: |
           mkdir -p "$HOME/llvm-mingw"
