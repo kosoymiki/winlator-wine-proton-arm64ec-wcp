@@ -44,13 +44,24 @@ jobs:
             libdrm-dev libvulkan-dev \
             libfontconfig1-dev \
             libpulse-dev libasound2-dev \
-            libdbus-1-dev \
-            libpcap-dev \
+            libdbus-1-dev libpcap-dev \
             libsdl2-dev \
             libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
             inotify-tools libinotifytools0-dev \
             libpcsclite-dev \
             gettext
+
+         
+
+
+          # Установка FreeType dev для amd64 и i386
+          sudo apt install -y \
+            libfreetype6-dev \
+            libfreetype6-dev:i386
+
+          # Симлинк для заголовков, чтобы configure их увидел
+          sudo ln -sf /usr/include/freetype2 /usr/include/freetype
+
 
           # Устанавливаем FreeType dev для обоих архитектур
           sudo apt install -y \
