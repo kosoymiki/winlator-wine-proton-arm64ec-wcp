@@ -25,7 +25,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install base dependencies
+    - name: Install system dependencies
       run: |
         sudo apt update
         sudo apt install -y --no-install-recommends \
@@ -37,10 +37,9 @@ jobs:
           libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
           libudev-dev ca-certificates patchutils bison flex
 
-        # Symlink pkgconf → pkg-config
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    - name: Setup LLVM‑Mingw ARM64 Cross‑Toolchain
+    - name: Setup LLVM‑Mingw ARM64
       run: |
         mkdir -p "$LLVM_MINGW_DIR"
         wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
@@ -49,43 +48,54 @@ jobs:
         rm "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         echo "$LLVM_MINGW_DIR/bin" >> "$GITHUB_PATH"
 
-    - name: Cross‑compiler smoke test
+    - name: Cross‑compiler basic test
       run: |
         set -eux
         aarch64-w64-mingw32-clang --version
-        echo 'int main(){return 0;}' > /tmp/check.c
-        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/check.exe /tmp/check.c -Wl,--no-undefined
-        file /tmp/check.exe
+        echo 'int main(){return 0;}' > /tmp/test.c
+        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/test.exe /tmp/test.c -Wl,--no-undefined
+        file /tmp/test.exe
 
-    - name: Create source directories
+    - name: Create source directories & download Wine
       run: |
         mkdir -p "$WORKDIR/src"
         cd "$WORKDIR/src"
-        git clone --depth 1 https://gitlab.winehq.org/wine/wine.git wine
+
+        # Wine sources
+        wget -q https://dl.winehq.org/wine/source/11.x/wine-11.1.tar.xz
+        mkdir -p wine
+        tar -xJf wine-11.1.tar.xz -C wine --strip-components=1
+        rm wine-11.1.tar.xz
+
+        # Wine‑Staging
         git clone --depth 1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-    - name: Apply staging patches & generate configure
+    - name: Apply staging patches and generate configure
       run: |
         set -eux
+
+        # 1) Ensure in SRCDIR
         cd "$SRCDIR"
-        # Ensure autotools generated files
+
+        # 2) Initial autoreconf
         autoreconf -fiv
 
-        # Apply staging patches in correct order
+        # 3) Apply staging patches
         cd "$STAGINGDIR"
         ./staging/patchinstall.py DESTDIR="$SRCDIR" --all --no-autoconf || true
 
+        # 4) Back in SRCDIR, regenerate configure
         cd "$SRCDIR"
-        # Regenerate configure after staging
         autoreconf -fiv
 
-        # Validate configure exists
-        test -f configure
-        echo "CONFIGURE EXISTS:"
-        ls -l configure
-        ./configure --help | head -n 40
+        # 5) Validate configure existence
+        if [ ! -f configure ]; then
+          echo "ERROR: configure not found"
+          exit 1
+        fi
+        ./configure --help | head -n 20
 
-    - name: Configure and build Wine
+    - name: Configure & build Wine
       run: |
         mkdir -p "$BUILDDIR"
         cd "$BUILDDIR"
@@ -98,7 +108,6 @@ jobs:
         export RANLIB=aarch64-w64-mingw32-ranlib
         export STRIP=aarch64-w64-mingw32-strip
 
-        # configure Wine
         "$SRCDIR/configure" \
           --host=aarch64-w64-mingw32 \
           --with-wine-tools="$SRCDIR/host" \
@@ -110,7 +119,7 @@ jobs:
         make -j1
         DESTDIR="$BUILDDIR/install" make install
 
-    - name: Build Turnip Vulkan Driver (Mesa TU8)
+    - name: Build Turnip Vulkan (Mesa TU8)
       run: |
         mkdir -p "$EXTERNALDIR/mesa"
         git clone --depth 1 https://github.com/whitebelyash/mesa-tu8 mesa-tu8-source
