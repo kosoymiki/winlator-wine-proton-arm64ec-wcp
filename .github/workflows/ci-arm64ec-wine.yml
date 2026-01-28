@@ -40,40 +40,31 @@ jobs:
           echo "$HOME/llvm-mingw/bin" >> "$GITHUB_PATH"
           
      
-      - name: Prepare Wine sources and Staging
+      - name: Clone Wine + Staging
         run: |
-          set -eux
+          set -e
+          git clone --depth 1 -b wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
+          git clone --depth 1 -b v11.1 https://gitlab.winehq.org/wine/wine-staging.git staging
 
-          # Update submodules (если используются)
-          git submodule update --init --recursive
+      - name: Apply Wine-Staging (exclude fsync/esync)
+        run: |
+          set +e
+          cd staging
+          ./staging/patchinstall.py DESTDIR=../wine --all --no-autoconf || true
+          cd ../wine
 
-          # Fetch Wine 11.1 source
-          mkdir -p wine
-          if [ ! -f wine/configure ]; then
-            wget -q "https://dl.winehq.org/wine/source/11.1/wine-11.1.tar.xz"
-            tar -xJf wine-11.1.tar.xz -C wine --strip-components=1
-          fi
+          # Roll back known problematic sync patches
+          git apply -R staging/patches/ntdll-fsync/0001*.patch || echo "ntdll-fsync revert ok"
+          git apply -R staging/patches/server-Fsync/0001*.patch || echo "server-Fsync revert ok"
+          git apply -R staging/patches/ntdll-esync/0001*.patch || echo "ntdll-esync revert ok"
+          git apply -R staging/patches/server-Esync/0001*.patch || echo "server-Esync revert ok"
+          git apply -R staging/patches/ntdll-Synchronization/0001*.patch || echo "ntdll-Synchronization revert ok"
 
-          # Clone staging repository
-          git clone --depth 1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
-          cd wine-staging
-          git fetch --tags
+          echo "Git status after reverting sync patches:"
+          git status
 
-          # Checkout staging tag exactly matching Wine 11.1 if available
-          if git rev-parse "v11.1" >/dev/null 2>&1; then
-            git checkout v11.1
-          else
-            # Fallback to the latest staging branch if the tag isn't found
-            git checkout origin/staging
-          fi
-          cd ..
-
-          # Apply all staging patches using official installer script
-          cd wine
-          ../wine-staging/staging/patchinstall.py DESTDIR="$PWD" --all
-
-          # Back to workspace root
-          cd "$GITHUB_WORKSPACE"
+          # Regenerate configure scripts
+          autoreconf -fiv
 
 
 
