@@ -1,139 +1,176 @@
-name: Build Wine ARM64EC (cross LLVM‑Mingw)
+name: Build Wine 11.1 Staging for ARM64EC with PHAT Structure
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     env:
-      MAKEFLAGS: -j$(nproc)
+      WINE_VERSION: "11.1"
+      LLVM_MINGW_VERSION: "20251216"
+      LLVM_MINGW_DIR: "$HOME/llvm-mingw"
+      BUILD_DIR: "$GITHUB_WORKSPACE/build"
+      WCP_DIR: "$GITHUB_WORKSPACE/wcp"
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup multiarch and apt sources
-        run: |
-          set -eux
-          sudo dpkg --add-architecture arm64
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install build dependencies
-        run: |
-          set -eux
-          sudo apt-get install -y --no-install-recommends \
-            build-essential autoconf automake libtool pkgconf \
-            git python3 gettext bash-completion cmake ninja-build
+    - name: Setup multi-arch apt repositories
+      run: |
+        sudo sed -i '/^# deb .*ports.ubuntu.com/ s/^# //' /etc/apt/sources.list || true
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe multiverse restricted" | sudo tee /etc/apt/sources.list.d/ports.list
+        sudo apt-get update
 
-          sudo apt-get install -y --no-install-recommends \
-            libc6-dev:aarch64 libc6-dev:arm64 libc6-dev:i386 \
-            linux-libc-dev:arm64 \
-            libfreetype6-dev libfontconfig1-dev \
-            libsdl2-dev libpulse-dev libasound2-dev \
-            libdbus-1-dev libdb-dev \
-            libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
-            libx11-dev libxrandr-dev libxrender-dev \
-            libxi-dev libxinerama-dev libxfixes-dev \
-            libxcomposite-dev libxdamage-dev
+    - name: Install build essentials & dependencies
+      run: |
+        sudo apt-get install -y --no-install-recommends \
+          build-essential wget ca-certificates git python3 gettext \
+          pkgconf cmake ninja-build autoconf automake libtool \
+          libc6-dev:arm64 linux-libc-dev:arm64 \
+          libfreetype6-dev:arm64 libfontconfig1-dev:arm64 \
+          libsdl2-dev:arm64 libpulse-dev:arm64 libasound2-dev:arm64 \
+          libdbus-1-dev:arm64 libdb-dev:arm64 \
+          libavcodec-dev:arm64 libavformat-dev:arm64 libavutil-dev:arm64 libswscale-dev:arm64 \
+          libinotifytools0-dev:arm64
+        sudo apt-get clean
 
-      - name: Download latest llvm‑mingw toolchain
-        run: |
-          set -eux
-          # Latest release from mstorsjo/llvm-mingw
-          LLVM_VER="20251118"
-          LLVM_FILE="llvm-mingw-${LLVM_VER}-ucrt-ubuntu-22.04-x86_64.tar.xz"
-          LLVM_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_VER}/${LLVM_FILE}"
+    - name: Symlink pkgconf → pkg-config
+      run: |
+        sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-          curl -L --retry 5 -o "$LLVM_FILE" "$LLVM_URL"
-          mkdir -p llvm-mingw
-          tar -xJf "$LLVM_FILE" -C llvm-mingw --strip-components=1
-          echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
+    - name: Download & unpack llvm-mingw cross toolchain
+      run: |
+        mkdir -p $HOME/llvm-mingw
+        wget -q https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz
+        tar -xJf llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz -C $HOME/llvm-mingw --strip-components=1
+        rm llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-x86_64.tar.xz
+      shell: bash
 
-      - name: Build host Wine tools (native)
-        run: |
-          set -eux
-          mkdir -p host
-          cd host
-          ../wine/configure \
-            --disable-tests \
-            --without-x \
-            --without-wayland
-          make -j$(nproc)
+    - name: Add llvm-mingw to PATH
+      run: |
+        echo "${LLVM_MINGW_DIR}/bin" >> $GITHUB_PATH
 
-      - name: Configure and build Wine
-        run: |
-          set -eux
-          mkdir -p build
-          cd build
+    - name: Verify cross compiler availability
+      run: |
+        aarch64-w64-mingw32-clang --version
+        aarch64-w64-mingw32-clang++ --version
 
-          export PKG_CONFIG=pkgconf
-          export CC="clang"
-          export CXX="clang++"
-          export AR="llvm-ar"
-          export LD="lld"
-          export NM="llvm-nm"
-          export RANLIB="llvm-ranlib"
-          export CPPFLAGS="-I/usr/include/freetype2 ${CPPFLAGS:-}"
+    - name: Prepare Wine sources
+      run: |
+        git submodule update --init --recursive
+        mkdir -p wine
+        if [ ! -f wine/configure ]; then
+          wget -q https://dl.winehq.org/wine/source/11.1/wine-11.1.tar.xz
+          tar -xJf wine-11.1.tar.xz -C wine --strip-components=1
+          rm wine-11.1.tar.xz
+        fi
 
-          ../wine/configure \
-            --build=$(../wine/config.guess) \
-            --host=aarch64-w64-mingw32 \
-            --with-wine-tools=../host \
-            --enable-win64 \
-            --enable-wow64 \
-            --enable-archs=arm64ec,aarch64,i386 \
-            --disable-tests \
-            --with-freetype \
-            --with-fontconfig \
-            --with-sdl2 \
-            --with-alsa \
-            --with-pulse \
-            --with-db \
-            --with-inotify \
-            --without-pcap \
-            --with-ffmpeg \
-            --with-x
+    - name: Apply Staging patches
+      run: |
+        # Клонируем репозиторий Wine-Staging
+        git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        cd wine-staging/patches
+        # Применяем патчи
+        git apply ../*.patch
 
-          make -j$(nproc)
-          DESTDIR=$PWD/install make install
+    - name: Configure & Build Wine (ARM64EC with Wow64)
+      run: |
+        mkdir -p $BUILD_DIR
+        cd $BUILD_DIR
 
-      - name: Package PHAT layout
-        run: |
-          set -eux
-          rm -rf wcp
-          mkdir -p wcp/bin wcp/lib/wine/aarch64-unix wcp/lib/wine/aarch64-windows wcp/lib/wine/arm64ec-windows wcp/share/wine
+        export PKG_CONFIG=pkg-config
+        export PKG_CONFIG_PATH="/usr/lib/arm64/pkgconfig:/usr/lib/aarch64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
+        export CC=aarch64-w64-mingw32-clang
+        export CXX=aarch64-w64-mingw32-clang++
+        export AR=aarch64-w64-mingw32-ar
+        export RANLIB=aarch64-w64-mingw32-ranlib
+        export STRIP=aarch64-w64-mingw32-strip
+        export CPPFLAGS="-I/usr/include/freetype2 ${CPPFLAGS:-}"
 
-          PREFIX="build/install/usr/local"
-          cp -a "$PREFIX/bin/"* wcp/bin/
-          cp -a "$PREFIX/share/wine/"* wcp/share/wine/ || true
-          cp -a "$PREFIX/lib/wine/"* wcp/lib/wine/
+        # Configure Wine
+        ../wine/configure \
+          --host=aarch64-w64-mingw32 \
+          --with-wine-tools=../host \
+          --enable-win64 \
+          --enable-wow64 \
+          --enable-archs=arm64ec,aarch64 \
+          --disable-tests \
+          --with-freetype \
+          --with-fontconfig \
+          --with-sdl2 \
+          --with-alsa \
+          --with-pulse \
+          --with-db \
+          --with-inotify \
+          --without-pcap \
+          --with-ffmpeg \
+          --enable-ntsync \
+          --without-x \
+          --without-vulkan
 
-          cat > wcp/env.sh <<EOF
-          #!/usr/bin/env sh
-          HERE="\$(cd "\$(dirname "\$0")" && pwd)"
-          export PATH="\$HERE/bin:\$PATH"
-          EOF
-          chmod +x wcp/env.sh
+        make -j$(nproc)
+        DESTDIR=$PWD/install make install
 
-          cat > wcp/info.json <<EOF
-          {
-            "name": "wine-11.1-arm64ec-phat",
-            "archs": ["aarch64-unix","aarch64-windows","arm64ec-windows","i386-windows"]
-          }
-          EOF
+    - name: Download and integrate DXVK ARM64EC and VKD3D-Proton
+      run: |
+        # Download and extract DXVK ARM64EC
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp
+        mkdir -p $BUILD_DIR/dxvk
+        tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C $BUILD_DIR/dxvk
 
-          tar -cJf wine-11.1-arm64ec-phat.tar.xz wcp
-          ls -lh wine-11.1-arm64ec-phat.tar.xz
+        # Download and extract VKD3D-Proton ARM64EC
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp
+        mkdir -p $BUILD_DIR/vkd3d
+        tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C $BUILD_DIR/vkd3d
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wine-arm64ec-phat
-          path: wine-11.1-arm64ec-phat.tar.xz
+    - name: Create PHAT .wcp archive with correct structure
+      run: |
+        mkdir -p $WCP_DIR/bin
+        mkdir -p $WCP_DIR/lib/wine/aarch64-unix
+        mkdir -p $WCP_DIR/lib/wine/aarch64-windows
+        mkdir -p $WCP_DIR/lib/wine/arm64ec-windows
+        mkdir -p $WCP_DIR/share/wine
+        mkdir -p $WCP_DIR/dxvk/arm64ec
+        mkdir -p $WCP_DIR/vkd3d/arm64ec
+        mkdir -p $WCP_DIR/mesa/turnip
+
+        # Move Wine binaries to the bin folder
+        cp -r $BUILD_DIR/install/bin/* $WCP_DIR/bin/
+
+        # Move libraries for different architectures
+        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-unix/
+        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/aarch64-windows/
+        cp -r $BUILD_DIR/install/lib/* $WCP_DIR/lib/wine/arm64ec-windows/
+
+        # Move dxvk and vkd3d to respective folders
+        cp -r $BUILD_DIR/dxvk/* $WCP_DIR/dxvk/arm64ec/
+        cp -r $BUILD_DIR/vkd3d/* $WCP_DIR/vkd3d/arm64ec/
+
+        # Move Turnip for Vulkan
+        cp -r $BUILD_DIR/mesa/* $WCP_DIR/mesa/turnip/
+
+        # Create env.sh file
+        echo 'export WINEPREFIX=$HOME/.wine' > $WCP_DIR/env.sh
+        echo 'export WINEARCH=win64' >> $WCP_DIR/env.sh
+        echo 'export WINEDEBUG=-all' >> $WCP_DIR/env.sh
+
+        # Create info.json file
+        echo '{ "version": "11.1", "architecture": "arm64ec", "vulkan": "enabled" }' > $WCP_DIR/info.json
+
+    - name: Upload PHAT .wcp archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: wine-arm64ec-phat
+        path: $WCP_DIR
+
+    - name: Summary
+      run: |
+        echo "PHAT .wcp archive with Wine ARM64EC build and dependencies uploaded."
