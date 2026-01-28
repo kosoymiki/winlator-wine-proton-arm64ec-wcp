@@ -117,31 +117,40 @@ jobs:
     # -----------------------------
     - name: Configure & Build Wine
       run: |
-        mkdir -p build
-        cd build
+          set -euxo pipefail
 
-        export PKG_CONFIG=pkgconf
-        export CPPFLAGS="-I/usr/include/freetype2 ${CPPFLAGS:-}"
+          mkdir -p build
+          cd build
 
-        ../wine/configure \
-          --host=aarch64-w64-mingw32 \
-          --with-wine-tools=../host \
-          --enable-win64 \
-          --enable-wow64 \
-          --enable-archs=arm64ec,aarch64 \
-          --disable-tests \
-          --with-freetype \
-          --with-fontconfig \
-          --with-sdl2 \
-          --with-alsa \
-          --with-pulse \
-          --with-db \
-          --with-inotify \
-          --without-pcap \
-          --with-ffmpeg
+          # Пути к Linux‑sysroot (для заголовков glibc aarch64‑linux)
+          export SYSROOT="/usr/aarch64-linux-gnu"
+          export HOST_TRIPLET="aarch64-w64-mingw32"
 
-        make -j$(nproc)
-        DESTDIR=$PWD/install make install
+          # Пробрасываем include/lib пути для sys/inotify.h и других glibc API
+          export CPPFLAGS="-I${SYSROOT}/include -I/usr/include/freetype2 ${CPPFLAGS:-}"
+          export LDFLAGS="-L${SYSROOT}/lib ${LDFLAGS:-}"
+          export PKG_CONFIG=pkgconf
+
+          ../wine/configure \
+            --host=${HOST_TRIPLET} \
+            --with-wine-tools=../host \
+            --enable-win64 \
+            --enable-wow64 \
+            --enable-archs=arm64ec,aarch64 \
+            --disable-tests \
+            --with-freetype \
+            --with-fontconfig \
+            --with-sdl2 \
+            --with-alsa \
+            --with-pulse \
+            --with-db \
+            --with-inotify \
+            --without-pcap \
+            --with-ffmpeg
+
+          make -j$(nproc)
+          DESTDIR=$PWD/install make install
+
 
     # -----------------------------
     # Create PHAT WCP structure
