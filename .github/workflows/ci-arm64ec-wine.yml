@@ -42,37 +42,33 @@ jobs:
           rm llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
           echo "$HOME/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-      - name: Setup cross‑compiler tools & verify
+      - name: Verify llvm‑mingw cross‑toolchain functionality
         run: |
           set -eux
 
-          # Ensure host LLVM tools available (optional but useful diagnostics)
-          sudo apt update
-          sudo apt install -y --no-install-recommends \
-            clang llvm lld
+          echo "=== PATH ==="
+          echo "$PATH"
 
-          # Verify LLVM‑Mingw cross toolchain unpacked earlier
-          echo "=== LLVM‑Mingw toolchain contents ==="
-          ls -1 "$HOME/llvm-mingw/bin"
-
-          # Diagnostics: versions
-          echo "=== Cross‑compiler versions ==="
+          echo "=== Check tools from llvm‑mingw ==="
           "$HOME/llvm-mingw/bin/aarch64-w64-mingw32-clang" --version
           "$HOME/llvm-mingw/bin/aarch64-w64-mingw32-clang++" --version
           "$HOME/llvm-mingw/bin/aarch64-w64-mingw32-dlltool" --version || true
           "$HOME/llvm-mingw/bin/lld" --version || true
 
-          # Test basic cross compile of trivial C file
-          echo 'int main(void) { return 0; }' > /tmp/conftest.c
+          echo "=== Cross test compile with llvm‑mingw ==="
+          cat > /tmp/test.c << 'EOF'
+          int main(void) { return 0; }
+          EOF
+
           "$HOME/llvm-mingw/bin/aarch64-w64-mingw32-clang" \
             --target=aarch64-w64-mingw32 \
-            -o /tmp/conftest.exe /tmp/conftest.c \
+            -o /tmp/test.exe /tmp/test.c \
             -Wl,--no-undefined
 
-          file /tmp/conftest.exe || true
+          echo "--- file /tmp/test.exe ---"
+          file /tmp/test.exe || true
 
-          
-     
+
       - name: Clone Wine + Staging
         run: |
           set -e
