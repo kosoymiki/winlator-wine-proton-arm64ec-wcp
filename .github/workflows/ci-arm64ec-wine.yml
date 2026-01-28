@@ -36,10 +36,11 @@ jobs:
       - name: Setup llvm-mingw
         run: |
           mkdir -p "$HOME/llvm-mingw"
-          wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz"
-          tar -xJf llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz \
+          wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-aarch64.tar.xz"
+          tar -xJf llvm-mingw-20251216-ucrt-ubuntu-22.04-aarch64.tar.xz -C "$HOME/llvm-mingw" --strip-components=1
+
             -C "$HOME/llvm-mingw" --strip-components=1
-          rm llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz
+          rm llvm-mingw-20251216-ucrt-ubuntu-22.04-aarch64.tar.xz
           echo "$HOME/llvm-mingw/bin" >> "$GITHUB_PATH"
 
       - name: Verify llvm‑mingw cross‑toolchain functionality
