@@ -40,13 +40,15 @@ jobs:
         # ensure pkgconf → pkg-config
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    - name: Setup LLVM-Mingw ARM64 toolchain
+    - name: Clone Wine & Wine Staging
       run: |
-        mkdir -p "$LLVM_MINGW_DIR"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        tar -xJf "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz" \
-          -C "$LLVM_MINGW_DIR" --strip-components=1
-        echo "$LLVM_MINGW_DIR/bin" >> "$GITHUB_PATH"
+        mkdir -p "$WORKDIR/src"
+        cd "$WORKDIR/src"
+        git clone --depth 1 --branch wine-11.1 \
+        https://gitlab.winehq.org/wine/wine.git wine
+        git clone --depth 1 --branch v11.1 \
+        https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        ls -1 wine-staging/staging/patches | head -n 10
 
     - name: Cross compiler diagnostics
       run: |
