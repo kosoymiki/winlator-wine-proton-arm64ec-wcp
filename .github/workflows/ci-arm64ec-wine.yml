@@ -24,33 +24,42 @@ jobs:
       run: |
         set -euxo pipefail
 
-        # enable target multi‑arch
-        sudo dpkg --add‑architecture arm64
+        # Добавляем multi-arch arm64
+        sudo dpkg --add-architecture arm64
         sudo apt-get update
 
-        # base build tools and cross gcc
+        # Базовые инструменты сборки
         sudo apt-get install -y --no-install-recommends \
           build-essential \
           gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
           autotools-dev autoconf automake libtool \
-          pkgconf ca-certificates git python3 gettext
+          git ca-certificates python3 gettext \
+          pkgconf
 
-        # glibc dev headers for aarch64 (inotify etc.)
+        # Системные заголовки glibc для arm64 (нужны для inotify и пр.)
         sudo apt-get install -y --no-install-recommends \
-          libc6-dev:arm64 linux-libc-dev:arm64
+          libc6-dev:arm64 \
+          linux-libc-dev:arm64
 
-        # Required target dev packages for Wine
+        # Dev-зависимости для Wine (arm64)
         sudo apt-get install -y --no-install-recommends \
-          libfreetype6-dev:arm64 libfontconfig1-dev:arm64 \
-          libsdl2-dev:arm64 libpulse-dev:arm64 \
-          libasound2-dev:arm64 libdbus-1-dev:arm64 \
-          libdb-dev:arm64 libavcodec-dev:arm64 \
-          libavformat-dev:arm64 libavutil-dev:arm64 \
+          libfreetype6-dev:arm64 \
+          libfontconfig1-dev:arm64 \
+          libsdl2-dev:arm64 \
+          libpulse-dev:arm64 \
+          libasound2-dev:arm64 \
+          libdbus-1-dev:arm64 \
+          libdb-dev:arm64 \
+          libavcodec-dev:arm64 \
+          libavformat-dev:arm64 \
+          libavutil-dev:arm64 \
           libswscale-dev:arm64
 
-        # pkgconf will serve as pkg-config
-        sudo apt-get install -y --no-install-recommends pkgconf
+        # Симлинк pkgconf → pkg-config (потому что pkgconf конфликтует с pkg-config)
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
+
+        sudo apt-get update
+
 
     - name: LLVM MinGW (needed for Windows PE tools)
       run: |
