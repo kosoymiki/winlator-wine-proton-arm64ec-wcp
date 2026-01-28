@@ -97,16 +97,11 @@ jobs:
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64 \
-            --disable-tests \            --without-x \
+            --disable-tests \
             --without-vulkan \
-            --without-freetype \
-            --without-fontconfig \
-            --without-wayland \
-            --without-gstreamer \
-            --without-cups \
-            --without-sane
+            
 
-          make -j1
+          make -j2
           DESTDIR="$BUILDDIR/install" make install
 
       - name: Build Turnip Vulkan
