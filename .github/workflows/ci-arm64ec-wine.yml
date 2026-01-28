@@ -12,19 +12,19 @@ jobs:
 
     env:
       WORKDIR: $GITHUB_WORKSPACE
-      SRCDIR: $WORKDIR/src/wine
+      WINEDIR: $WORKDIR/src/wine
       STAGINGDIR: $WORKDIR/src/wine-staging
       BUILDDIR: $WORKDIR/build/wine
       EXTERNALDIR: $WORKDIR/build/external
       WCP_DIR: $WORKDIR/wcp
-      LLVM_MINGW_VERSION: 20251216
+      LLVM_MINGW_VERSION: "20251216"
       LLVM_MINGW_DIR: $HOME/llvm-mingw
       WINE_VERSION: "11.1"
 
     steps:
-
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # ensure full history for tag + commit checkout
 
     - name: Install build dependencies
       run: |
@@ -39,45 +39,70 @@ jobs:
           libudev-dev ca-certificates patchutils bison flex
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config
 
-    - name: Setup LLVM-Mingw ARM64
+    - name: Setup LLVM‑Mingw ARM64EC
       run: |
         mkdir -p "$LLVM_MINGW_DIR"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        tar -xJf llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz \
-          -C "$LLVM_MINGW_DIR" --strip-components=1
+        wget -q \
+"https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz" \
+          -O llvm-mingw.tar.xz
+        tar -xJf llvm-mingw.tar.xz -C "$LLVM_MINGW_DIR" --strip-components=1
+        rm llvm-mingw.tar.xz
         echo "$LLVM_MINGW_DIR/bin" >> "$GITHUB_PATH"
 
-    - name: Cross-compiler test
+    - name: Verify cross‑compiler
       run: |
         set -eux
+        which aarch64-w64-mingw32-clang
         aarch64-w64-mingw32-clang --version
-        echo 'int main(){return 0;}' > /tmp/test.c
-        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 -o /tmp/x.exe /tmp/test.c -Wl,--no-undefined
-        file /tmp/x.exe
+        echo 'int main(){return 0;}' > /tmp/t.c
+        aarch64-w64-mingw32-clang --target=aarch64-w64-mingw32 \
+          -o /tmp/t.exe /tmp/t.c -Wl,--no-undefined
+        file /tmp/t.exe
 
-    - name: Clone Wine + Wine-Staging
+    - name: Clone Wine & Wine‑Staging with tags
       run: |
         mkdir -p "$WORKDIR/src"
         cd "$WORKDIR/src"
-        git clone --depth 1 --branch wine-11.1 https://github.com/wine-mirror/wine.git wine
-        git clone --depth 1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-    - name: Apply Wine-Staging patches
+        git clone https://gitlab.winehq.org/wine/wine.git wine
+        cd wine
+        git fetch --tags
+        git checkout "v$WINE_VERSION"
+
+        cd "$WORKDIR/src"
+        git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        cd wine-staging
+        git fetch --tags
+        git checkout "v$WINE_VERSION"
+
+    - name: Determine staging upstream commit
+      id: upstream
+      run: |
+        cd "$STAGINGDIR/staging"
+        UPSTREAM=$(./patchinstall.py --upstream-commit)
+        echo "upstream_commit=$UPSTREAM" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout Wine‑src at staging upstream commit
+      run: |
+        cd "$WINEDIR"
+        git fetch origin
+        git checkout ${{ steps.upstream.outputs.upstream_commit }}
+
+    - name: Apply staging patches
       run: |
         set -eux
-        cd "$STAGINGDIR"
-        python3 patchinstall.py DESTDIR="$SRCDIR" --all --no-autoconf
-
-        cd "$SRCDIR"
+        cd "$STAGINGDIR/staging"
+        python3 patchinstall.py DESTDIR="$WINEDIR" --all --no-autoconf
+        cd "$WINEDIR"
         autoreconf -fiv
 
-    - name: Validate configure exists
+    - name: Verify configure script
       run: |
-        cd "$SRCDIR"
+        cd "$WINEDIR"
         test -f configure
         ./configure --help | head -n 20
 
-    - name: Build Wine ARM64EC
+    - name: Build Wine
       run: |
         mkdir -p "$BUILDDIR"
         cd "$BUILDDIR"
@@ -86,7 +111,7 @@ jobs:
         export PKG_CONFIG=pkg-config
         export PKG_CONFIG_PATH=""
 
-        "$SRCDIR/configure" \
+        "$WINEDIR/configure" \
           --host=aarch64-w64-mingw32 \
           --enable-win64 \
           --enable-wow64 \
@@ -94,18 +119,16 @@ jobs:
           --disable-tests \
           --without-vulkan
 
-        make -j2
+        make -j$(nproc)
         DESTDIR="$BUILDDIR/install" make install
 
-
-    - name: Build Mesa/Turnip Vulkan
+    - name: Build Mesa Turnip Vulkan driver
       run: |
         git clone https://github.com/whitebelyash/mesa-tu8 meson-mesa
         mkdir meson-mesa-build
         cd meson-mesa-build
         meson setup . ../meson-mesa \
           -Dvulkan-drivers=turnip \
-          -Dgallium-drivers= \
           -Dplatforms=none \
           -Dbuildtype=release
         ninja
@@ -114,18 +137,15 @@ jobs:
     - name: Integrate DXVK/VKD3D
       run: |
         mkdir -p "$EXTERNALDIR/dxvk" "$EXTERNALDIR/vkd3d"
-        wget -q \
-          "https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp"
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp"
         tar -xJf dxvk-gplasync-arm64ec-2.7.1-1.wcp -C "$EXTERNALDIR/dxvk"
-        wget -q \
-          "https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp"
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp"
         tar -xJf vkd3d-proton-arm64ec-3.0b.wcp -C "$EXTERNALDIR/vkd3d"
 
     - name: Unpack FEXCore
       run: |
         mkdir -p "$WCP_DIR/lib/wine/arm64ec-windows"
-        wget -q \
-          "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O FEXCore.wcp
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O FEXCore.wcp
         tar -xJf FEXCore.wcp -C "$WCP_DIR/lib/wine/arm64ec-windows"
 
     - name: Prepare PHAT .wcp
@@ -135,20 +155,14 @@ jobs:
         mkdir -p "$WCP_DIR/lib/wine"/{aarch64-unix,aarch64-windows,arm64ec-windows}
 
         cp "$BUILDDIR/install/bin/"{wine,wine64,wineboot,wineserver} "$WCP_DIR/bin/"
-        cp -rv "$BUILDDIR/install/lib/"*.so "$WCP_DIR/lib/wine/aarch64-unix/"       2>/dev/null || true
+        cp -rv "$BUILDDIR/install/lib/"*.so   "$WCP_DIR/lib/wine/aarch64-unix/"      2>/dev/null || true
         cp -rv "$BUILDDIR/install/lib/"*.dll.so "$WCP_DIR/lib/wine/aarch64-windows/" 2>/dev/null || true
         cp -rv "$WCP_DIR/lib/wine/arm64ec-windows/"* "$WCP_DIR/lib/wine/arm64ec-windows/" 2>/dev/null || true
-        cp -rv "$EXTERNALDIR/dxvk/"* "$WCP_DIR/dxvk/arm64ec/"
-        cp -rv "$EXTERNALDIR/vkd3d/"* "$WCP_DIR/vkd3d/arm64ec/"
-        cp -rv "$EXTERNALDIR/mesa/"* "$WCP_DIR/mesa/turnip/"
+        cp -rv "$EXTERNALDIR/dxvk/"*   "$WCP_DIR/dxvk/arm64ec/"
+        cp -rv "$EXTERNALDIR/vkd3d/"*  "$WCP_DIR/vkd3d/arm64ec/"
+        cp -rv "$EXTERNALDIR/mesa/"*   "$WCP_DIR/mesa/turnip/"
 
         cat > "$WCP_DIR/env.sh" << 'EOF'
-        export WINEDEBUG=-all
-        export WINEESYNC=0
-        export WINEFSYNC=0
-        export WINE_NTSYNC=1
-        export DXVK_ASYNC=1
-        export MESA_LOADER_DRIVER_OVERRIDE=turnip
         export WINEPREFIX=~/.wine
         export WINEARCH=win64
         EOF
@@ -156,7 +170,7 @@ jobs:
 
         cat > "$WCP_DIR/info.json" <<EOF
         {
-          "name": "Wine-11.1-Staging-PHAT-ARM64EC",
+          "name": "Wine-11.1-Staging-ARM64EC",
           "version": "$WINE_VERSION",
           "arch": "arm64ec",
           "type": "phat"
