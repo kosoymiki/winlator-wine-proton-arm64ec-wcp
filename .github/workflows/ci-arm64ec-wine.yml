@@ -122,8 +122,37 @@ jobs:
 
           test -f "$WINEDIR/configure"
           "$WINEDIR/configure" --help | head -n 20 || true
-          
 
+
+      - name: Build wine tools natively for ARM64
+        run: |
+            set -euxo pipefail
+
+            # Перейдем в исходники Wine
+            cd "$WINEDIR"
+
+            # Очистим возможные старые настройки и артефакты
+            rm -rf build-tools
+            mkdir -p build-tools
+            ls -l .
+
+            # Нативная конфигурация: только для сборки инструментов
+            ./configure \
+            --prefix="$WINEDIR/build-tools" \
+            --disable-tests \
+            --without-vulkan
+
+            # Собираем только инструменты
+            make -j$(nproc) tools
+
+            # Устанавливаем собранные инструменты в специальную директорию
+            make -C tools DESTDIR="$WINEDIR/build-tools" install
+
+            # Проверка
+            echo "Wine tools installed to:"
+            ls -l "$WINEDIR/build-tools/usr/local/bin" || true
+
+          
       - name: Build Wine (current hypothesis mingw host)
         run: |
           set -euxo pipefail
