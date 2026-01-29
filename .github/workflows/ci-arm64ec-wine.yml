@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04-arm64
+    runs-on: ubuntu-24.04-arm
 
     env:
       MAKEFLAGS: -j$(nproc)
@@ -51,9 +51,6 @@ jobs:
 
           # inotify — это sys/inotify.h из glibc headers; гарантируем, что headers стоят
           sudo apt-get install -y --no-install-recommends linux-libc-dev
-
-          # x86_64 mingw toolchain часто нужен в WoW64/ARM64EC сценариях как "вспомогательная" сборка
-          sudo apt-get install -y --no-install-recommends gcc-mingw-w64-x86-64
 
       - name: Fetch llvm-mingw (your pinned release)
         run: |
