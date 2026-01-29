@@ -47,31 +47,33 @@ jobs:
     - name: Setup llvm-mingw (prebuilt Linux cross)
       run: |
         set -euxo pipefail
+
         ROOT="$(pwd)"
         LLVM_MINGW_VERSION="20251216"
         ASSET="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${ASSET}"
 
+        # Очистить старую директорию
         rm -rf "$ROOT/llvm-mingw"
         mkdir -p "$ROOT/llvm-mingw"
 
         echo "Downloading llvm-mingw from: $URL"
         wget -q "$URL" -O "$ROOT/$ASSET"
 
+        # Распаковать в корень llvm-mingw
         tar -xJf "$ROOT/$ASSET" -C "$ROOT/llvm-mingw" --strip-components=1
         rm -f "$ROOT/$ASSET"
 
-        # Add to PATH for cross toolchain
+        # Добавить в PATH
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-        # Sanity check: clang must be ELF ARM64
+        # Проверка llvm-mingw bin (clang должен быть ELF ARM64)
+        echo "Sanity check: llvm-mingw/bin contents"
         file -L "$ROOT/llvm-mingw/bin/clang" || true
 
-        # List llvm-mingw/bin without broken pipe failure
-        # First list all files, then head — without pipefail impact
-        echo "Contents of llvm-mingw/bin:"
-        ls -1 "$ROOT/llvm-mingw/bin" >/tmp/llvm_mingw_bin_list.txt
-        head -n 60 /tmp/llvm_mingw_bin_list.txt
+        # Список первых файлов без падения из‑за pipefail
+        ls -1 "$ROOT/llvm-mingw/bin" > "$RUNNER_TEMP/llvm_mingw_bin_list.txt"
+        head -n 60 "$RUNNER_TEMP/llvm_mingw_bin_list.txt"
         
     - name: Verify llvm-mingw cross toolchain
       run: |
