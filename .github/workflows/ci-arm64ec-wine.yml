@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install build dependencies
+      - name: Install base dependencies
         run: |
           set -euxo pipefail
           sudo apt update
@@ -31,17 +31,18 @@ jobs:
             autoconf automake libtool \
             patchutils bison flex \
             libc6-dev libfreetype-dev libfontconfig-dev \
-            libx11-dev libxext-dev libxrender-dev libxrandr-dev libxinerama-dev \
-            libxcursor-dev libxi-dev libxfixes-dev libxcomposite-dev \
+            libx11-dev libxext-dev libxrender-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev \
+            libxi-dev libxfixes-dev libxcomposite-dev \
             libsdl2-dev libpulse-dev libasound2-dev \
-            libdbus-1-dev libudev-dev \
-            libgl-dev rsync file zip xz-utils
+            libdbus-1-dev libudev-dev libgl-dev \
+            rsync file zip xz-utils
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
 
-      - name: Setup llvm-mingw (ARM64)
+      - name: Setup llvm-mingw
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
+          ROOT="$(pwd)"
           LLVM_MINGW_VERSION="20251216"
           rm -rf "$ROOT/llvm-mingw"
           mkdir -p "$ROOT/llvm-mingw"
@@ -49,7 +50,6 @@ jobs:
           tar -xJf "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz" -C "$ROOT/llvm-mingw" --strip-components=1
           rm -f "llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
           echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
-          ls -la "$ROOT/llvm-mingw/bin"
 
       - name: Verify cross compiler
         run: |
@@ -60,7 +60,7 @@ jobs:
           aarch64-w64-mingw32-clang -o /tmp/test.exe /tmp/test.c -Wl,--no-undefined
           file /tmp/test.exe
 
-      - name: Clone Wine and Wine-Staging
+      - name: Clone Wine & Wine‑Staging
         run: |
           set -euxo pipefail
           rm -rf wine wine-staging
@@ -70,50 +70,75 @@ jobs:
       - name: Apply staging patches
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
+          ROOT="$(pwd)"
           python3 wine-staging/staging/patchinstall.py -d "$ROOT/wine" -a --no-autoconf
           cd "$ROOT/wine"
           autoreconf -fiv
           ./tools/make_requests
 
-      - name: Build wine-tools (native build-tree)
+      # --- BUILD WINE TOOLS AS PART OF WINE SOURCE (BUILD‑TREE) ---
+      - name: Build wine tools
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
-          rm -rf "$ROOT/wine-tools"
-          mkdir -p "$ROOT/wine-tools"
-          cd "$ROOT/wine-tools"
-          "$ROOT/wine/configure" \
+          ROOT="$(pwd)"
+
+          # 1) Create a build tree for tools
+          rm -rf "$ROOT/wine/tools-build"
+          mkdir -p "$ROOT/wine/tools-build"
+          cd "$ROOT/wine/tools-build"
+
+          # 2) Configure ONLY necessary tools (no cross flags here)
+          ../configure \
             --disable-tests \
             --disable-win16 \
-            --without-vulkan \
-            --without-x \
-            --without-sdl2 \
-            --without-pulse \
-            --without-alsa \
-            --without-dbus \
-            --without-wayland
-          make -j"$(nproc)" tools
-          test -x "$ROOT/wine-tools/tools/winebuild/winebuild"
-          test -x "$ROOT/wine-tools/tools/widl/widl"
-          test -x "$ROOT/wine-tools/tools/wrc/wrc"
-          test -e "$ROOT/wine-tools/tools/makedep"
-          test -x "$ROOT/wine-tools/tools/winegcc/winegcc"
-          ls -l "$ROOT/wine-tools/tools"
+            --enable-tools \
+            --with-freetype \
+            --with-fontconfig
 
-      - name: Configure Wine (cross)
+          # 3) Build tools
+          make -j"$(nproc)" \
+            tools/winebuild/winebuild \
+            tools/widl/widl \
+            tools/wrc/wrc \
+            tools/makedep \
+            tools/winegcc/winegcc \
+            tools/wmc/wmc
+
+          # 4) Install tools into a predictable directory
+          rm -rf "$ROOT/wine-tools"
+          mkdir -p "$ROOT/wine-tools/tools"
+          cp -v tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild"
+          cp -v tools/widl/widl           "$ROOT/wine-tools/tools/widl"
+          cp -v tools/wrc/wrc             "$ROOT/wine-tools/tools/wrc"
+          cp -v tools/makedep             "$ROOT/wine-tools/tools/makedep"
+          cp -v tools/winegcc/winegcc     "$ROOT/wine-tools/tools/winegcc"
+          cp -v tools/wmc/wmc             "$ROOT/wine-tools/tools/wmc"
+
+          # 5) Validate
+          ls -l "$ROOT/wine-tools/tools"
+          test -x "$ROOT/wine-tools/tools/winebuild"
+          test -x "$ROOT/wine-tools/tools/widl"
+          test -x "$ROOT/wine-tools/tools/wrc"
+          test -x "$ROOT/wine-tools/tools/makedep"
+          test -x "$ROOT/wine-tools/tools/winegcc"
+
+      # --- CROSS CONFIGURE & BUILD ---
+      - name: Configure Wine cross
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
+          ROOT="$(pwd)"
           export PATH="$ROOT/llvm-mingw/bin:$PATH"
+
           rm -rf "$ROOT/wine-build"
           mkdir -p "$ROOT/wine-build"
           cd "$ROOT/wine-build"
+
           export CC=aarch64-w64-mingw32-clang
           export CXX=aarch64-w64-mingw32-clang++
           export AR=aarch64-w64-mingw32-ar
           export RANLIB=aarch64-w64-mingw32-ranlib
           export STRIP=aarch64-w64-mingw32-strip
+
           "$ROOT/wine/configure" \
             --host=aarch64-w64-mingw32 \
             --prefix=/usr \
@@ -123,20 +148,24 @@ jobs:
             --enable-archs=arm64ec,aarch64 \
             --disable-tests
 
+      # --- BUILD & INSTALL ---
       - name: Build Wine
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
+          ROOT="$(pwd)"
           cd "$ROOT/wine-build"
           make -j"$(nproc)"
 
-      - name: Install Wine to flat destdir
+      - name: Install Wine
         run: |
           set -euxo pipefail
-          ROOT="$PWD"
-          rm -rf "$ROOT/wine-install"
+          ROOT="$(pwd)"
           cd "$ROOT/wine-build"
+          rm -rf "$ROOT/wine-install"
           DESTDIR="$ROOT/wine-install" make install
+
+      # … дальше твой wcp, mesa, dxvk, vkd3d, fexcore, сборка PHAT …
+
 
       - name: Build Turnip Vulkan (mesa-tu8)
         run: |
