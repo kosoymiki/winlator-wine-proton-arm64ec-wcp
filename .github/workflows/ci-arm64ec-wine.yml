@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install base deps
+      - name: Install build deps (Ubuntu 24.04)
         run: |
           set -euxo pipefail
           sudo apt update
@@ -33,13 +33,15 @@ jobs:
             libfreetype-dev libfreetype6-dev \
             libfontconfig-dev \
             libdbus-1-dev \
+            libsdl2-dev \
             libx11-dev libxext-dev libxrender-dev \
-            libxrandr-dev libxinerama-dev libxcursor-dev \
-            libxi-dev libxfixes-dev libxcomposite-dev \
-            libsdl2-dev libpulse-dev libasound2-dev \
+            libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev libxfixes-dev \
+            libpulse-dev libasound2-dev \
             libudev-dev libgl-dev \
             rsync file zip xz-utils
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
+
 
 
       - name: Setup llvm-mingw
@@ -161,16 +163,15 @@ jobs:
             --host=aarch64-w64-mingw32 \
             --prefix=/usr \
             --with-wine-tools="$ROOT/wine-tools" \
-            --enable-win64 \
-            --enable-wow64 \
-            --enable-archs=arm64ec,aarch64 \
-            --disable-tests \
-            --with-freetype \
-            --with-fontconfig \
-            --without-vulkan \
-            --with-alsa \
-            --without-pulse \
-            --without-wayland \
+            --enable-win64
+            --enable-wow64
+            --enable-archs=arm64ec,aarch64
+            --with-freetype
+            --with-fontconfig
+            --without-vulkan
+            --with-alsa
+            --without-pulse
+            --without-wayland
             --with-sdl2
 
       - name: Build Wine
