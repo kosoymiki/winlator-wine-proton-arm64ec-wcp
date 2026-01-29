@@ -29,7 +29,9 @@ jobs:
             pkgconf cmake ninja-build meson \
             autoconf automake libtool \
             patchutils bison flex \
-            libc6-dev libfreetype-dev libfontconfig-dev \
+            libc6-dev \
+            libfreetype6-dev \
+            libfontconfig-dev \
             libx11-dev libxext-dev libxrender-dev \
             libxrandr-dev libxinerama-dev libxcursor-dev \
             libxi-dev libxfixes-dev libxcomposite-dev \
@@ -37,6 +39,7 @@ jobs:
             libdbus-1-dev libudev-dev libgl-dev \
             rsync file zip xz-utils
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
+
 
       - name: Setup llvm-mingw
         run: |
