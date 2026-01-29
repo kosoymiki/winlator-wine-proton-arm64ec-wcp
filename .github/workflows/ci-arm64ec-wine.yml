@@ -43,10 +43,11 @@ jobs:
             rsync file zip xz-utils
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
 
-      - name: Setup llvm-mingw (prebuilt aarch64 zip)
+      - name: Setup llvm-mingw (prebuilt)
         run: |
           set -euxo pipefail
           ROOT="$(pwd)"
+
           LLVM_MINGW_VERSION="20251216"
           ASSET="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-aarch64.zip"
           URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${ASSET}"
@@ -54,31 +55,20 @@ jobs:
           rm -rf "$ROOT/llvm-mingw"
           mkdir -p "$ROOT/llvm-mingw"
 
-          echo "Downloading llvm-mingw from: $URL"
-          wget -q "$URL" -O "$ROOT/llvm-mingw.zip"
-          unzip -q "$ROOT/llvm-mingw.zip" -d "$ROOT/llvm-mingw"
-          rm -f "$ROOT/llvm-mingw.zip"
+          wget -q "$URL" -O "$ROOT/$ASSET"
 
-          # Sanity check: ensure clang and tools are ARM64 Linux binaries
-          echo "Checking llvm-mingw/bin contents..."
-          ls -1 "$ROOT/llvm-mingw/bin" | head -n 100
+          # распаковать во временную
+          unzip -q "$ROOT/$ASSET" -d "$ROOT/llvm-mingw-tmp"
+          rm -f "$ROOT/$ASSET"
 
-          # Must be real ARM64 executables, not host executables
-          file -L "$ROOT/llvm-mingw/bin/clang" || true
-          file -L "$ROOT/llvm-mingw/bin/aarch64-w64-mingw32-clang" || true
+          # переместить содержимое
+          mv "$ROOT/llvm-mingw-tmp/"* "$ROOT/llvm-mingw/"
+          rm -rf "$ROOT/llvm-mingw-tmp"
 
-          # Add to PATH for xcompile tools
+          # добавить в PATH
           echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-          # Create triplet pkg-config shims so Wine configure finds host pkg-config
-          for t in aarch64-w64-mingw32 arm64ec-w64-mingw32 x86_64-w64-mingw32 i686-w64-mingw32; do
-            ln -sf /usr/bin/pkg-config "$ROOT/llvm-mingw/bin/${t}-pkg-config" || true
-          done
-
-          # Debug prints
-          echo "llvm-mingw PATH prepended; examples:"
-          "$ROOT/llvm-mingw/bin/aarch64-w64-mingw32-clang" --version
-          "$ROOT/llvm-mingw/bin/arm64ec-w64-mingw32-clang" --version || true
+          ls -1 "$ROOT/llvm-mingw/bin"
 
       - name: Verify llvm-mingw PE cross toolchain
         run: |
