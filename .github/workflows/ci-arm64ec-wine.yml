@@ -86,25 +86,32 @@ jobs:
         git fetch --tags
         git checkout -qf "$STAGING_TAG"
 
-    - name: Build wine tools (for host ARM64)
+    - name: Build and install wine tools (ARM64)
       run: |
         set -euxo pipefail
+
         cd "$WINEDIR"
         rm -rf build-tools
         mkdir -p build-tools
 
+        # Конфиг Wine с prefix в build-tools
         ./configure \
-          --prefix="$WINEDIR/build-tools" \
-          --disable-tests \
-          --disable-win16 \
-          --disable-wine9x \
-          --without-vulkan
+         --prefix="$WINEDIR/build-tools" \
+         --disable-tests \
+         --disable-win16 \
+         --disable-wine9x \
+         --without-vulkan
 
+        # Собираем инструменты
         make -j$(nproc) tools
-        make -C tools install
 
-        echo "Installed wine tools:"
+        # Явно устанавливаем инструменты в prefix
+        make install -C tools
+
+        # Проверяем результат
+        echo "Contents of build-tools/bin:"
         ls -l "$WINEDIR/build-tools/bin" || true
+
 
     - name: Apply staging patches
       run: |
@@ -115,6 +122,16 @@ jobs:
         cd "$WINEDIR"
         autoreconf -fiv
         ./tools/make_requests
+
+    - name: Verify wine tools binaries
+      run: |
+         set -euxo pipefail
+
+         ls -l "$WINEDIR/build-tools/bin"
+         test -x "$WINEDIR/build-tools/bin/winebuild"
+         test -x "$WINEDIR/build-tools/bin/wineg++"
+         test -x "$WINEDIR/build-tools/bin/makedep"
+
 
     - name: Configure Wine (cross‑compile)
       run: |
