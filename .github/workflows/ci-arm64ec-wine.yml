@@ -26,84 +26,67 @@ jobs:
           set -euxo pipefail
           sudo apt update
           sudo apt install -y --no-install-recommends \
-            build-essential git wget curl ca-certificates file \
-            python3 perl gettext \
+            build-essential git wget curl python3 perl gettext \
             pkgconf cmake ninja-build meson \
             autoconf automake libtool \
             patchutils bison flex \
-            libc6-dev linux-libc-dev \
+            libc6-dev \
             libfreetype-dev libfreetype6-dev \
             libfontconfig-dev \
             libdbus-1-dev \
+            libsdl2-dev \
             libx11-dev libxext-dev libxrender-dev \
             libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev libxfixes-dev \
             libpulse-dev libasound2-dev \
             libudev-dev libgl-dev \
-            rsync zip xz-utils
-          # pkg-config name
+            rsync file zip xz-utils
           sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
 
-          # sanity: these must exist on the build host
-          pkg-config --modversion freetype2
-          pkg-config --modversion fontconfig
-          pkg-config --modversion dbus-1
-
-      - name: Setup llvm-mingw (prebuilt, with arch check + fallback)
+      - name: Setup llvm-mingw (prebuilt with ARM sanity-check + fallback source build)
         run: |
           set -euxo pipefail
           ROOT="$(pwd)"
           LLVM_MINGW_VERSION="20251216"
-          CRT="ucrt"
-          DISTRO="ubuntu-22.04"
 
-          rm -rf "$ROOT/llvm-mingw"
+          rm -rf "$ROOT/llvm-mingw" "$ROOT/llvm-mingw-src"
           mkdir -p "$ROOT/llvm-mingw"
 
-          HOST_UNAME="$(uname -m)"
-          case "$HOST_UNAME" in
-            aarch64|arm64) HOST_ASSET_ARCH="aarch64" ;;
-            x86_64|amd64)  HOST_ASSET_ARCH="x86_64"  ;;
-            *) echo "Unsupported runner arch: $HOST_UNAME" >&2; exit 1 ;;
-          esac
-
-          ASSET="llvm-mingw-${LLVM_MINGW_VERSION}-${CRT}-${DISTRO}-${HOST_ASSET_ARCH}.tar.xz"
+          ASSET="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
           URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${ASSET}"
 
-          echo "Runner arch: $HOST_UNAME; trying asset: $ASSET"
+          echo "Runner arch: $(uname -m)"
+          echo "Downloading: $URL"
           wget -q "$URL" -O "$ROOT/llvm-mingw.tar.xz"
           tar -xJf "$ROOT/llvm-mingw.tar.xz" -C "$ROOT/llvm-mingw" --strip-components=1
           rm -f "$ROOT/llvm-mingw.tar.xz"
 
-          # Verify host executable arch (this is what was breaking you)
-          file "$ROOT/llvm-mingw/bin/clang" || true
-          if ! file "$ROOT/llvm-mingw/bin/clang" | grep -qiE '(aarch64|ARM aarch64)'; then
-            echo "Prebuilt clang is NOT aarch64 on an ARM runner -> Exec format error would happen. Fallback: build from source."
+          # IMPORTANT: follow symlinks when checking architecture
+          file -L "$ROOT/llvm-mingw/bin/clang" || true
+          if ! file -L "$ROOT/llvm-mingw/bin/clang" | grep -qiE '(aarch64|ARM aarch64)'; then
+            echo "Prebuilt clang is not runnable on this ARM runner -> building llvm-mingw from source (fallback)."
             rm -rf "$ROOT/llvm-mingw"
             mkdir -p "$ROOT/llvm-mingw"
-
-            rm -rf "$ROOT/llvm-mingw-src"
             git clone --depth 1 https://github.com/mstorsjo/llvm-mingw.git "$ROOT/llvm-mingw-src"
-            # Per upstream README: ./build-all.sh <target-dir>
-            # This is slower, but it produces correct host binaries on ARM. 12
-            "$ROOT/llvm-mingw-src/build-all.sh" "$ROOT/llvm-mingw"
+            # build-all.sh expects to be run from repo root (it calls ./build-llvm.sh etc.)
+            ( cd "$ROOT/llvm-mingw-src" && bash ./build-all.sh "$ROOT/llvm-mingw" )
           fi
 
           echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
-          ls -1 "$ROOT/llvm-mingw/bin" | head -n 50
+          ls -1 "$ROOT/llvm-mingw/bin" | head -n 60
+          "$ROOT/llvm-mingw/bin/clang" --version
 
-          # Provide triplet-prefixed pkg-config expected by Wine configure
-          for t in aarch64-w64-mingw32 arm64ec-w64-mingw32 x86_64-w64-mingw32 i686-w64-mingw32; do
-            ln -sf /usr/local/bin/pkg-config "$ROOT/llvm-mingw/bin/${t}-pkg-config" || true
-          done
-
-      - name: Verify llvm-mingw toolchain actually runs (no Exec format error)
+      - name: Verify llvm-mingw PE cross toolchain
         run: |
           set -euxo pipefail
+          command -v aarch64-w64-mingw32-clang
           aarch64-w64-mingw32-clang --version
-          if command -v arm64ec-w64-mingw32-clang; then arm64ec-w64-mingw32-clang --version; fi
-          command -v llvm-dlltool || true
+          command -v arm64ec-w64-mingw32-clang
+          arm64ec-w64-mingw32-clang --version
+          command -v llvm-dlltool
+          llvm-dlltool --version || true
           command -v lld || true
+          lld --version || true
           if command -v lld-link; then lld-link --version || true; fi
 
       - name: Verify cross compiler simple test
@@ -129,7 +112,7 @@ jobs:
           autoreconf -fiv
           ./tools/make_requests
 
-      - name: Build wine tools (native) and export in both tools/ and bin/
+      - name: Build wine tools
         run: |
           set -euxo pipefail
           ROOT="$(pwd)"
@@ -139,7 +122,7 @@ jobs:
 
           cd "$ROOT/wine"
           rm -rf tools-build
-          mkdir -p tools-build
+          mkdir tools-build
           cd tools-build
 
           ../configure \
@@ -151,46 +134,34 @@ jobs:
             --without-dbus \
             --without-alsa \
             --without-pulse \
-            --without-wayland
+            --without-wayland \
+            --without-sdl
 
           make -j"$(nproc)" \
             tools/winebuild/winebuild \
             tools/widl/widl \
             tools/wrc/wrc \
-            tools/makedep \
+            tools/makedep/makedep \
             tools/winegcc/winegcc \
             tools/wmc/wmc
 
-          # Export in a layout that Wine configure reliably finds
-          mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,winegcc,wmc}
-          cp tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild/"
-          cp tools/widl/widl           "$ROOT/wine-tools/tools/widl/"
-          cp tools/wrc/wrc             "$ROOT/wine-tools/tools/wrc/"
-          cp tools/winegcc/winegcc     "$ROOT/wine-tools/tools/winegcc/"
-          cp tools/wmc/wmc             "$ROOT/wine-tools/tools/wmc/"
+          mkdir -p "$ROOT/wine-tools/tools/winebuild"
+          mkdir -p "$ROOT/wine-tools/tools/widl"
+          mkdir -p "$ROOT/wine-tools/tools/wrc"
+          mkdir -p "$ROOT/wine-tools/tools/winegcc"
+          mkdir -p "$ROOT/wine-tools/tools/wmc"
 
-          # makedep can be either tools/makedep or tools/makedep/makedep depending on tree
-          if [ -x tools/makedep/makedep ]; then
-            mkdir -p "$ROOT/wine-tools/tools/makedep"
-            cp tools/makedep/makedep "$ROOT/wine-tools/tools/makedep/makedep"
-            ln -sf makedep/makedep "$ROOT/wine-tools/tools/makedep"
-          else
-            cp tools/makedep "$ROOT/wine-tools/tools/makedep"
-          fi
+          cp tools/winebuild/winebuild      "$ROOT/wine-tools/tools/winebuild/"
+          cp tools/widl/widl                "$ROOT/wine-tools/tools/widl/"
+          cp tools/wrc/wrc                  "$ROOT/wine-tools/tools/wrc/"
+          cp tools/makedep/makedep          "$ROOT/wine-tools/tools/makedep"
+          cp tools/winegcc/winegcc          "$ROOT/wine-tools/tools/winegcc/"
+          cp tools/wmc/wmc                  "$ROOT/wine-tools/tools/wmc/"
 
-          # Also provide bin/ with flat names (some configure paths expect this)
-          mkdir -p "$ROOT/wine-tools/bin"
-          ln -sf ../tools/winebuild/winebuild "$ROOT/wine-tools/bin/winebuild"
-          ln -sf ../tools/widl/widl           "$ROOT/wine-tools/bin/widl"
-          ln -sf ../tools/wrc/wrc             "$ROOT/wine-tools/bin/wrc"
-          ln -sf ../tools/winegcc/winegcc     "$ROOT/wine-tools/bin/winegcc"
-          ln -sf ../tools/wmc/wmc             "$ROOT/wine-tools/bin/wmc"
-          ln -sf ../tools/makedep             "$ROOT/wine-tools/bin/makedep" || true
+          ls -lR "$ROOT/wine-tools/tools"
+          test -x "$ROOT/wine-tools/tools/makedep"
 
-          ls -lR "$ROOT/wine-tools" | head -n 200
-          test -e "$ROOT/wine-tools/tools/makedep" || test -e "$ROOT/wine-tools/tools/makedep/makedep"
-
-      - name: Configure Wine (cross ARM64EC)
+      - name: Configure Wine (cross ARM64EC, keep Unix checks native)
         run: |
           set -euxo pipefail
           ROOT="$(pwd)"
@@ -200,20 +171,14 @@ jobs:
           mkdir -p "$ROOT/wine-build"
           cd "$ROOT/wine-build"
 
-          export CC=aarch64-w64-mingw32-clang
-          export CXX=aarch64-w64-mingw32-clang++
-          export AR=aarch64-w64-mingw32-ar
-          export RANLIB=aarch64-w64-mingw32-ranlib
-          export STRIP=aarch64-w64-mingw32-strip
-
-          # Ensure configure can discover host libs via our triplet-pkg-config wrappers
-          export PKG_CONFIG=/usr/local/bin/pkg-config
-          export PKG_CONFIG_LIBDIR="/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig"
+          # DO NOT set CC/CXX to mingw here — it breaks detection of Linux deps (freetype/dbus/inotify).
+          # Enable mingw for PE builds via --with-mingw and CROSSCC.
+          export CROSSCC=clang
 
           "$ROOT/wine/configure" \
-            --host=aarch64-w64-mingw32 \
             --prefix=/usr \
             --with-wine-tools="$ROOT/wine-tools" \
+            --with-mingw \
             --enable-win64 \
             --enable-wow64 \
             --enable-archs=arm64ec,aarch64 \
@@ -221,7 +186,8 @@ jobs:
             --with-freetype \
             --with-fontconfig \
             --with-dbus \
-            --with-alsa
+            --with-alsa \
+            --with-sdl
 
       - name: Build Wine
         run: |
