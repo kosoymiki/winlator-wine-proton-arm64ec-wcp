@@ -99,20 +99,30 @@ jobs:
         done
 
     ###################################################
-    # 5) Configure and Cross-build Wine + Tools
+    # 5) Configure & Compile Wine (with wine‑tools)
     ###################################################
     - name: Configure & Compile Wine
       run: |
         set -euxo pipefail
+
         cd wine
-        # Prepare autotools for staging & tkg
-        dlls/winevulkan/make_vulkan
-        tools/make_requests
-        tools/make_specfiles
-        autoreconf -f
+
+        # ─── Сборка wine‑tools на build‑машине ───
+        mkdir wine-tools-build
+        cd wine-tools-build
+        ../configure \
+          --enable-tools \
+          --disable-tests \
+          --disable-win16 \
+          --enable-archs=aarch64,i386
+        make -j"$(nproc)"
+
+        # ─── Возвращаемся для кросс‑сборки Wine ───
+        cd ..
 
         mkdir build
         cd build
+
         export BUILD=aarch64-linux-gnu
         export HOST=aarch64-w64-mingw32
         export CC=aarch64-w64-mingw32-clang
@@ -126,6 +136,7 @@ jobs:
           --build="$BUILD" \
           --host="$HOST" \
           --with-mingw=clang \
+          --with-wine-tools="../wine-tools-build" \
           --prefix=/usr \
           --enable-win64 \
           --enable-wow64 \
