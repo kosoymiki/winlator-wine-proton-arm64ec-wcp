@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging-TkG ARM64EC + VulkanTURNIP + DXVK + VKD3D
+name: Build Wine & Tools WCP for Winlator Ludashi
 
 on:
   push:
@@ -30,51 +30,35 @@ jobs:
     - name: Install build dependencies
       run: |
         set -euxo pipefail
-
         sudo apt update
         sudo apt install -y --no-install-recommends \
-        build-essential autoconf automake libtool pkg-config \
-        python3 python3-pip git gettext flex bison \
-        ninja-build cmake
+          build-essential autoconf automake libtool pkg-config \
+          python3 python3-pip git gettext flex bison \
+          ninja-build cmake \
+          libasound2-dev libpulse-dev libv4l-dev libgl-dev \
+          libx11-dev libxext-dev libxfixes-dev libxinerama-dev libxi-dev \
+          libxrandr-dev libxrender-dev libfontconfig-dev libfreetype-dev \
+          libgnutls28-dev libdbus-1-dev libsdl2-dev libjpeg-dev \
+          libpng-dev libxml2-dev libudev-dev libusb-1.0-0-dev libldap2-dev
+        sudo apt clean
+        sudo rm -rf /var/lib/apt/lists/*
 
-        sudo apt install -y --no-install-recommends \
-        libasound2-dev libpulse-dev libv4l-dev libgl-dev \
-        libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
-        libxi-dev libxrandr-dev libxrender-dev libfontconfig-dev \
-        libfreetype-dev libgnutls28-dev libdbus-1-dev \
-        libsdl2-dev libjpeg-dev libpng-dev libxml2-dev \
-        libudev-dev libusb-1.0-0-dev libldap2-dev
-        
     ###################################################
     # 3) LLVM-mingw (Cross toolchain)
     ###################################################
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
-
         TOOLCHAIN_VER="20260127"
         FILENAME="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${FILENAME}"
-
-        echo "Checking llvm-mingw archive availability at:"
-        echo "$URL"
-
-        # Проверим, доступен ли файл
-        if ! wget --spider "$URL"; then
-          echo "ERROR: llvm-mingw release tarball not found: $URL" >&2
-          exit 1
-        fi
-
-        # Скачиваем и распаковываем
         wget -q "$URL"
         mkdir -p llvm-mingw
         tar -xJf "$FILENAME" -C llvm-mingw --strip-components=1
-
-        # Добавим бинарники в PATH
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
     ###################################################
-    # 4) Wine + Staging + Tkg
+    # 4) Clone Wine & Patches
     ###################################################
     - name: Clone Wine & Patches
       run: |
@@ -83,6 +67,9 @@ jobs:
         git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
         git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
 
+    ###################################################
+    # 5) Apply patches
+    ###################################################
     - name: Apply Staging patches
       run: |
         set -euxo pipefail
@@ -103,15 +90,15 @@ jobs:
         done
 
     ###################################################
-    # 5) Configure & Compile Wine (with wine‑tools)
+    # 6) Build wine-tools and cross‑compile Wine
     ###################################################
-    - name: Configure & Compile Wine
+    - name: Configure & Compile Wine with wine-tools
       run: |
         set -euxo pipefail
 
         cd wine
 
-        # ─── Сборка wine‑tools на build‑машине ───
+        # ─ Build wine-tools locally ─
         mkdir wine-tools-build
         cd wine-tools-build
         ../configure \
@@ -121,9 +108,9 @@ jobs:
           --enable-archs=aarch64,i386
         make -j"$(nproc)"
 
-        # ─── Возвращаемся для кросс‑сборки Wine ───
         cd ..
 
+        # ─ Cross‑compile Wine with tools ─
         mkdir build
         cd build
 
@@ -156,7 +143,7 @@ jobs:
         make -j"$(nproc)"
 
     ###################################################
-    # 6) Build DXVK
+    # 7) Build DXVK
     ###################################################
     - name: Build DXVK
       run: |
@@ -170,7 +157,7 @@ jobs:
         ninja -C build && ninja -C build install
 
     ###################################################
-    # 7) Build VKD3D-Proton
+    # 8) Build VKD3D-Proton
     ###################################################
     - name: Build VKD3D-Proton
       run: |
@@ -183,14 +170,13 @@ jobs:
         ninja -C build && ninja -C build install
 
     ###################################################
-    # 8) Build Mesa TURNIP Vulkan
+    # 9) Build Mesa TURNIP Vulkan
     ###################################################
     - name: Build TURNIP Mesa
       run: |
         set -euxo pipefail
         git clone https://gitlab.freedesktop.org/mesa/mesa.git mesa
         cd mesa
-        # Apply TURNIP patches if present
         if [ -d "../turnip-ci/patches" ]; then
           for p in ../turnip-ci/patches/*.patch; do
             patch -p1 < "$p" || true
@@ -206,9 +192,9 @@ jobs:
         ninja -C builddir && ninja -C builddir install
 
     ###################################################
-    # 9) Packaging .wcp
+    # 10) Packing .wcp
     ###################################################
-    - name: Package WCP
+    - name: Package .wcp
       run: |
         set -euxo pipefail
         cd wine/build
@@ -216,37 +202,32 @@ jobs:
 
         cd install
         mkdir -p wcp/{bin,lib/wine,share}
+
         cp -a usr/bin/* wcp/bin/ 2>/dev/null
         cp -a usr/lib/wine/* wcp/lib/wine/ 2>/dev/null
         cp -a usr/share/* wcp/share/ 2>/dev/null
 
         cd wcp/bin && ln -sf wine64 wine && cd ../..
 
-        find bin -type f -exec chmod +x {} +
-        find lib -name "*.so*" -exec chmod +x {} +
-
-        cat > info.json << 'JSON'
+        # generate mandatory profile.json
+        cat > profile.json << 'EOF'
         {
-          "name": "Wine-11.1-Staging-TkG",
+          "id": "wine-11.1-staging-tkg-arm64ec",
+          "name": "Wine 11.1 Staging-TkG",
           "version": "11.1",
           "arch": "arm64ec",
-          "variant": "staging-tkg",
-          "features": ["staging","vulkan","dxvk","vkd3d"]
+          "files": {
+            "bin": "bin/",
+            "lib": "lib/",
+            "share": "share/"
+          }
         }
-        JSON
+        EOF
 
-        cat > env.sh << 'SH'
-        #!/bin/sh
-        export WINEDEBUG=-all
-        export WINEESYNC=1
-        export WINEFSYNC=1
-        SH
-        chmod +x env.sh
-
-        tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-tkg-arm64ec.wcp" -C wcp .
+        tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-tkg-arm64ec.wcp" profile.json wcp
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: wine-11.1-staging-tkg-arm64ec
+        name: wine-wcp-arm64ec
         path: wine-11.1-staging-tkg-arm64ec.wcp
