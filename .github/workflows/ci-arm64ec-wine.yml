@@ -16,12 +16,13 @@ jobs:
         shell: bash
 
     steps:
-
+    # 1) Checkout
     - name: Checkout source
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    # 2) Install build dependencies
     - name: Install dependencies
       run: |
         set -euxo pipefail
@@ -38,8 +39,9 @@ jobs:
           libudev-dev libgl-dev libusb-1.0-0-dev libpcap-dev \
           libxcomposite-dev libxdamage-dev libv4l-dev libopencv-dev \
           libpcsclite-dev libkrb5-dev libcups2-dev libgnutls28-dev \
-          libsane-dev rsync file zip xz-utils
+          libsane-dev rsync file zip xz-utils unzip
 
+    # 3) Setup llvm-mingw 20251216
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
@@ -54,65 +56,51 @@ jobs:
         rm -f "$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-    - name: Verify cross toolchain
-      run: |
-        set -euxo pipefail
-        arm64ec-w64-mingw32-clang --version
-        arm64ec-w64-mingw32-clang++ --version
-
+    # 4) Clone Wine & patch
     - name: Clone Wine & Staging
       run: |
         set -euxo pipefail
         git clone https://gitlab.winehq.org/wine/wine.git wine
         git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
-
     - name: Apply staging patches
       run: |
         set -euxo pipefail
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
 
-    - name: Build native tools
+    # 5) Build wine-tools
+    - name: Build wine-tools
       run: |
         set -euxo pipefail
         mkdir wine-tools-build && cd wine-tools-build
-        ../wine/configure \
-          --enable-tools \
-          --disable-tests \
-          --disable-win16 \
-          --enable-archs=aarch64,win32
+        ../wine/configure --enable-tools --disable-tests --disable-win16 --enable-archs=aarch64,win32
         make -j"$(nproc)"
         mkdir -p ../wine-tools
-        cp tools/makedep/makedep       ../wine-tools/ || true
-        cp tools/winebuild/winebuild   ../wine-tools/ || true
-        cp tools/widl/widl             ../wine-tools/ || true
-        cp tools/wrc/wrc               ../wine-tools/ || true
-        cp tools/wmc/wmc               ../wine-tools/ || true
+        cp tools/makedep/makedep ../wine-tools/ || true
+        cp tools/winebuild/winebuild ../wine-tools/ || true
+        cp tools/widl/widl ../wine-tools/ || true
+        cp tools/wrc/wrc ../wine-tools/ || true
+        cp tools/wmc/wmc ../wine-tools/ || true
 
-    - name: Check wine-tools
+    # 6) Configure Wine cross
+    - name: Configure Wine
       run: |
         set -euxo pipefail
-        for t in makedep winebuild widl wrc wmc; do
-          if [ ! -x "wine-tools/$t" ]; then
-            echo "Missing tool $t"; exit 1
-          fi
-        done
-
-    - name: Configure Wine cross build
-      run: |
-        set -euxo pipefail
-        ROOT="$(pwd)"
-        export PATH="$ROOT/llvm-mingw/bin:$PATH"
+        export PATH="$PWD/llvm-mingw/bin:$PATH"
         mkdir wine-cross && cd wine-cross
+        export BUILD=aarch64-linux-gnu
+        export HOST=arm64ec-w64-mingw32
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
         ../wine/configure \
+          --build=$BUILD \
+          --host=$HOST \
+          --with-mingw=clang \
+          --with-wine-tools="$PWD/../wine-tools" \
           --prefix=/usr \
-          --with-wine-tools="$ROOT/wine-tools" \
-          --host=arm64ec-w64-mingw32 \
-          --sysroot="$ROOT/llvm-mingw/aarch64-unknown-linux-gnu" \
+          --sysroot="$PWD/../llvm-mingw/aarch64-unknown-linux-gnu" \
           --enable-win64 \
           --enable-wow64 \
-          --enable-archs=arm64ec,aarch64,win32 \
+          --enable-archs=arm64ec,aarch64,i386 \
           --disable-tests \
           --with-freetype \
           --with-fontconfig \
@@ -120,52 +108,84 @@ jobs:
           --with-alsa \
           --with-pulse
 
+    # 7) Build Wine
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-cross
         make -j"$(nproc)"
 
+    # 8) Install Wine
     - name: Install Wine
       run: |
         set -euxo pipefail
         cd wine-cross
         DESTDIR="$PWD/install" make install
 
+    # 9) Download external WCP components
+    - name: Download external libs
+      run: |
+        set -euxo pipefail
+        mkdir -p extra_wcp
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O extra_wcp/FEXCore.wcp
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp" -O extra_wcp/DXVK.wcp
+        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp" -O extra_wcp/VKD3D.wcp
+        wget -q "https://github.com/StevenMXZ/freedreno_turnip-CI/releases/download/v26.1/Turnip_v26.1.0.zip" -O extra_wcp/Turnip.zip
+
+    # 10) Package WCP
     - name: Package WCP
       run: |
         set -euxo pipefail
         cd wine-cross
         DESTDIR=$PWD/install make install
         cd install
-
         mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share/wine,share/applications,share/man}
 
+        # Wine binaries
         cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
-        cd wcp/bin && ln -sf wine64 wine || true; cd ../..
+        cd wcp/bin && ln -sf wine64 wine || true
+        cd ../..
 
         cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ 2>/dev/null || cp -a usr/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ || true
         cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ 2>/dev/null || cp -a usr/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ || true
 
+        # Merge external libs
+        for P in ../extra_wcp/*; do
+          mkdir unpack
+          if [[ "$P" == *.zip ]]; then
+            unzip -q "$P" -d unpack
+          else
+            tar -xJf "$P" -C unpack
+          fi
+          cp -a unpack/* wcp/ || true
+          rm -rf unpack
+        done
+
+        # Shared data
         cp -a usr/local/share/wine/* wcp/share/wine/ 2>/dev/null || cp -a usr/share/wine/* wcp/share/wine/ || true
         cp -a usr/local/share/applications/* wcp/share/applications/ 2>/dev/null || cp -a usr/share/applications/* wcp/share/applications/ || true
         cp -a usr/local/share/man/* wcp/share/man/ 2>/dev/null || cp -a usr/share/man/* wcp/share/man/ || true
 
+        # Fix permissions
         find wcp/bin -type f -exec chmod +x {} +
         find wcp/lib/wine/aarch64-unix -type f -exec chmod +x {} +
 
-        cat > wcp/profile.json <<'JSON'
+        # Profile metadata
+        cat > wcp/profile.json << 'JSON'
         {
-          "name": "Wine 11.1 Staging ARM64EC",
+          "name": "wine-11.1-staging",
+          "displayName": "Wine 11.1 Staging ARM64EC (FEXCore)",
           "version": "11.1",
-          "description": "Wine 11.1 Staging для ARM64EC PHAT",
+          "description": "Wine 11.1 Staging with FEXCore + DXVK + VKD3D + Turnip for ARM64EC",
           "arch": "arm64",
           "variant": "staging",
           "type": "wine",
           "features": [
             "staging",
+            "fexcore",
             "vulkan",
-            "alsa"
+            "dxvk",
+            "vkd3d"
           ],
           "paths": {
             "bin": "bin/",
@@ -175,15 +195,54 @@ jobs:
         }
         JSON
 
-        cat > wcp/env.sh <<'SH'
+        # Smart env with profiles
+        cat > wcp/env.sh << 'SH'
         #!/bin/sh
         export WINEDEBUG=-all
+        export WINEESYNC=1
+        export WINEFSYNC=1
+
+        FEXCORE_PROFILE="${FEXCORE_PROFILE:-balanced}"
+        echo "=== FEXCore Profile: $FEXCORE_PROFILE ==="
+        case "$FEXCORE_PROFILE" in
+          balanced)
+            export FEXCORE_TSO=1
+            export FEXCORE_X87REDUCEDPRECISION=1
+            export FEXCORE_MULTIBLOCK=0
+            export FEXCORE_MEMCPYSETTSO=0
+            export FEXCORE_VECTORTSO=0
+            export FEXCORE_HALFBARRIERTSO=1
+            ;;
+          performance)
+            export FEXCORE_TSO=2
+            export FEXCORE_X87REDUCEDPRECISION=1
+            export FEXCORE_MULTIBLOCK=1
+            export FEXCORE_MEMCPYSETTSO=0
+            export FEXCORE_VECTORTSO=0
+            export FEXCORE_HALFBARRIERTSO=1
+            ;;
+          extreme)
+            export FEXCORE_TSO=2
+            export FEXCORE_X87REDUCEDPRECISION=0
+            export FEXCORE_MULTIBLOCK=1
+            export FEXCORE_MEMCPYSETTSO=1
+            export FEXCORE_VECTORTSO=1
+            export FEXCORE_HALFBARRIERTSO=1
+            ;;
+        esac
+
+        echo "FEXCORE_TSO=$FEXCORE_TSO"
+        echo "FEXCORE_X87REDUCEDPRECISION=$FEXCORE_X87REDUCEDPRECISION"
+        echo "FEXCORE_MULTIBLOCK=$FEXCORE_MULTIBLOCK"
+        echo "FEXCORE_MEMCPYSETTSO=$FEXCORE_MEMCPYSETTSO"
+        echo "FEXCORE_VECTORTSO=$FEXCORE_VECTORTSO"
+        echo "FEXCORE_HALFBARRIERTSO=$FEXCORE_HALFBARRIERTSO"
         SH
         chmod +x wcp/env.sh
 
         tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging.wcp -C wcp .
-
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
         name: wine-11.1-staging
         path: wine-11.1-staging.wcp
