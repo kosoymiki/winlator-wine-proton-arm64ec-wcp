@@ -17,13 +17,11 @@ jobs:
 
     steps:
 
-    # 1) Checkout source
     - name: Checkout source
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    # 2) Install dependencies
     - name: Install dependencies
       run: |
         set -euxo pipefail
@@ -35,18 +33,13 @@ jobs:
           libc6-dev linux-libc-dev \
           libfreetype-dev libfontconfig-dev libdbus-1-dev \
           libx11-dev libxext-dev libxrender-dev \
-          libxrandr-dev libxinerama-dev libxcursor-dev \
-          libxi-dev libxfixes-dev libsdl2-dev \
-          libpulse-dev libasound2-dev \
-          libudev-dev libgl-dev \
-          libusb-1.0-0-dev libpcap-dev \
-          libxcomposite-dev libxdamage-dev \
-          libv4l-dev libopencv-dev \
-          libpcsclite-dev libkrb5-dev libcups2-dev \
-          libgnutls28-dev libsane-dev \
-          rsync file zip xz-utils
+          libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+          libxfixes-dev libsdl2-dev libpulse-dev libasound2-dev \
+          libudev-dev libgl-dev libusb-1.0-0-dev libpcap-dev \
+          libxcomposite-dev libxdamage-dev libv4l-dev libopencv-dev \
+          libpcsclite-dev libkrb5-dev libcups2-dev libgnutls28-dev \
+          libsane-dev rsync file zip xz-utils
 
-    # 3) Setup llvm-mingw cross toolchain
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
@@ -56,65 +49,60 @@ jobs:
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${VERSION}/${ASSET}"
         rm -rf llvm-mingw
         mkdir llvm-mingw
-        wget --retry-connrefused --waitretry=2 --timeout=30 "$URL" -O "$ASSET"
+        wget -q "$URL" -O "$ASSET"
         tar -xJf "$ASSET" -C llvm-mingw --strip-components=1
         rm -f "$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-    # 4) Verify cross toolchain
     - name: Verify cross toolchain
       run: |
         set -euxo pipefail
         arm64ec-w64-mingw32-clang --version
         arm64ec-w64-mingw32-clang++ --version
 
-    # 5) Clone Wine & Staging
     - name: Clone Wine & Staging
       run: |
         set -euxo pipefail
         git clone https://gitlab.winehq.org/wine/wine.git wine
         git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
-    # 6) Apply staging patches
     - name: Apply staging patches
       run: |
         set -euxo pipefail
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
 
-    # 7) Build wine-tools natively
-    - name: Build wine-tools natively
+    - name: Build native tools
       run: |
         set -euxo pipefail
-        mkdir wine-tools-build
-        cd wine-tools-build
+        mkdir wine-tools-build && cd wine-tools-build
         ../wine/configure \
           --enable-tools \
           --disable-tests \
-          --disable-win16
+          --disable-win16 \
+          --enable-archs=aarch64,win32
         make -j"$(nproc)"
         mkdir -p ../wine-tools
-        cp tools/makedep/makedep ../wine-tools/ || true
-        cp tools/winebuild/winebuild ../wine-tools/ || true
-        cp tools/widl/widl ../wine-tools/ || true
-        cp tools/wrc/wrc ../wine-tools/ || true
-        cp tools/wmc/wmc ../wine-tools/ || true
+        cp tools/makedep/makedep       ../wine-tools/ || true
+        cp tools/winebuild/winebuild   ../wine-tools/ || true
+        cp tools/widl/widl             ../wine-tools/ || true
+        cp tools/wrc/wrc               ../wine-tools/ || true
+        cp tools/wmc/wmc               ../wine-tools/ || true
 
-    # 8) Verify wine-tools
     - name: Check wine-tools
       run: |
         set -euxo pipefail
-        for tool in makedep winebuild widl wrc wmc; do
-          [ -x "wine-tools/$tool" ] || { echo "ERROR: missing $tool"; exit 1; }
+        for t in makedep winebuild widl wrc wmc; do
+          if [ ! -x "wine-tools/$t" ]; then
+            echo "Missing tool $t"; exit 1
+          fi
         done
 
-    # 9) Configure Wine for cross compile
-    - name: Configure Wine (cross compile)
+    - name: Configure Wine cross build
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
         export PATH="$ROOT/llvm-mingw/bin:$PATH"
-        mkdir wine-cross-build
-        cd wine-cross-build
+        mkdir wine-cross && cd wine-cross
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
         ../wine/configure \
@@ -124,7 +112,7 @@ jobs:
           --sysroot="$ROOT/llvm-mingw/aarch64-unknown-linux-gnu" \
           --enable-win64 \
           --enable-wow64 \
-          --enable-archs=arm64ec,aarch64 \
+          --enable-archs=arm64ec,aarch64,win32 \
           --disable-tests \
           --with-freetype \
           --with-fontconfig \
@@ -132,120 +120,70 @@ jobs:
           --with-alsa \
           --with-pulse
 
-    # 10) Build Wine
     - name: Build Wine
       run: |
         set -euxo pipefail
-        cd wine-cross-build
+        cd wine-cross
         make -j"$(nproc)"
 
-    # 11) Install Wine
     - name: Install Wine
       run: |
         set -euxo pipefail
-        cd wine-cross-build
+        cd wine-cross
         DESTDIR="$PWD/install" make install
 
-    # 12) Package WCP
     - name: Package WCP
       run: |
         set -euxo pipefail
-
-        # Create staging install into local structure
-        cd build
+        cd wine-cross
         DESTDIR=$PWD/install make install
         cd install
 
-        # Create directories
         mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share/wine,share/applications,share/man}
 
-        # Copy binaries
         cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
+        cd wcp/bin && ln -sf wine64 wine || true; cd ../..
 
-        # Symlink for generic wine
-        cd wcp/bin
-        ln -sf wine64 wine || true
-        cd ../..
-
-        # Copy 64-bit PE DLLs
         cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ 2>/dev/null || cp -a usr/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ || true
-
-        # Copy 64-bit Unix SOs
         cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ 2>/dev/null || cp -a usr/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ || true
 
-        # Copy shared data
         cp -a usr/local/share/wine/* wcp/share/wine/ 2>/dev/null || cp -a usr/share/wine/* wcp/share/wine/ || true
         cp -a usr/local/share/applications/* wcp/share/applications/ 2>/dev/null || cp -a usr/share/applications/* wcp/share/applications/ || true
         cp -a usr/local/share/man/* wcp/share/man/ 2>/dev/null || cp -a usr/share/man/* wcp/share/man/ || true
 
-        # Make executables
         find wcp/bin -type f -exec chmod +x {} +
         find wcp/lib/wine/aarch64-unix -type f -exec chmod +x {} +
 
-        # Create profile.json
         cat > wcp/profile.json <<'JSON'
         {
-          "name": "wine-11.1-staging",
-          "displayName": "Wine 11.1 Staging ARM64EC",
+          "name": "Wine 11.1 Staging ARM64EC",
           "version": "11.1",
-          "description": "Wine 11.1 Staging build for Arm64EC (Winlator / Ludashi PHAT package)",
+          "description": "Wine 11.1 Staging для ARM64EC PHAT",
           "arch": "arm64",
           "variant": "staging",
           "type": "wine",
           "features": [
             "staging",
-            "fsr",
-            "fsync",
-            "esync",
             "vulkan",
-            "alsa",
-            "wow64"
+            "alsa"
           ],
           "paths": {
             "bin": "bin/",
             "lib": "lib/wine/",
             "share": "share/"
-          },
-          "launchers": {
-            "wine": { "path": "bin/wine", "args": [] },
-            "winecfg": { "path": "bin/winecfg", "args": [] }
-          },
-          "icons": [
-            { "name": "wine", "path": "share/applications/wine.desktop" }
-          ]
+          }
         }
         JSON
 
-        # Create env.sh with automatic sync selection
         cat > wcp/env.sh <<'SH'
         #!/bin/sh
         export WINEDEBUG=-all
-        export WINEESYNC=1
-        export WINEFSYNC=1
-        unset PROTON_NO_ESYNC
-        unset PROTON_NO_FSYNC
-
-        echo "=== Sync detection started ==="
-        if [ -e /dev/ntsync ]; then
-          echo ">>> NTSync support: detected kernel /dev/ntsync"
-          export PROTON_USE_NTSYNC=1
-          echo ">>> Using PROTON_USE_NTSYNC=1"
-        else
-          echo ">>> NTSync support: not detected"
-        fi
-        echo "=== Sync config ==="
-        echo "WINEESYNC=$WINEESYNC"
-        echo "WINEFSYNC=$WINEFSYNC"
-        echo "PROTON_USE_NTSYNC=${PROTON_USE_NTSYNC:-<unset>}"
         SH
         chmod +x wcp/env.sh
 
-        # Pack the .wcp
         tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging.wcp -C wcp .
 
-    # 13) Upload artifact
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
         name: wine-11.1-staging
         path: wine-11.1-staging.wcp
