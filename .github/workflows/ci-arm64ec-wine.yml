@@ -61,15 +61,14 @@ jobs:
         tar -xJf "$ROOT/$ASSET" -C "$ROOT/llvm-mingw" --strip-components=1
         rm -f "$ROOT/$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
-        ls -1 "$ROOT/llvm-mingw/bin" | head -n 80 || true
+        # Diagnostics: list available cross compilers
+        ls -1 "$ROOT/llvm-mingw/bin" | head -n 60 || true
 
     - name: Verify llvm-mingw cross toolchain
       run: |
         set -euxo pipefail
         arm64ec-w64-mingw32-clang --version
         arm64ec-w64-mingw32-clang++ --version
-        arm64ec-w64-mingw32-widl --version || true
-        arm64ec-w64-mingw32-dlltool --version || true
 
     - name: Clone Wine & Wine-Staging
       run: |
@@ -80,6 +79,7 @@ jobs:
     - name: Apply staging patches
       run: |
         set -euxo pipefail
+        ROOT="$(pwd)"
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
         cd wine
         autoreconf -fiv
@@ -90,43 +90,66 @@ jobs:
         set -euxo pipefail
         ROOT="$(pwd)"
         cd wine
-        autoreconf -fiv
-        rm -rf tools-build
-        mkdir tools-build && cd tools-build
-        ../configure --disable-tests --disable-win16 \
-          --with-freetype --with-fontconfig
-        make -j$(nproc) tools/winebuild/winebuild
-        make -j$(nproc) tools/widl/widl tools/wrc/wrc tools/wmc/wmc tools/makedep/makedep
-        mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,winegcc,wmc,makedep}
-        cp tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild/"
-        cp tools/widl/widl "$ROOT/wine-tools/tools/widl/"
-        cp tools/wrc/wrc "$ROOT/wine-tools/tools/wrc/"
-        cp tools/wmc/wmc "$ROOT/wine-tools/tools/wmc/"
-        cp tools/makedep/makedep "$ROOT/wine-tools/tools/makedep/"
 
-    - name: Configure Wine (with cross)
+        # Generate autotools for wine and all subdirs
+        autoreconf -fiv
+
+        # Build tools in isolation
+        rm -rf tools-build
+        mkdir tools-build
+        cd tools-build
+
+        ../configure \
+          --disable-tests \
+          --disable-win16 \
+          --with-freetype \
+          --with-fontconfig
+
+        # Build all required tools including makedep
+        make -j"$(nproc)" tools/winebuild/winebuild
+        make -j"$(nproc)" tools/widl/widl tools/wrc/wrc tools/wmc/wmc tools/makedep/makedep
+
+        # Install into wine-tools layout
+        mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,winegcc,wmc,makedep}
+
+        cp tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild/"
+        cp tools/widl/widl           "$ROOT/wine-tools/tools/widl/"
+        cp tools/wrc/wrc             "$ROOT/wine-tools/tools/wrc/"
+        cp tools/wmc/wmc             "$ROOT/wine-tools/tools/wmc/"
+        cp tools/makedep/makedep     "$ROOT/wine-tools/tools/makedep/"
+
+    - name: Configure Wine (cross ARM64EC)
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
         export PATH="$ROOT/llvm-mingw/bin:$PATH"
+
         rm -rf wine-build
-        mkdir wine-build && cd wine-build
-        CC=arm64ec-w64-mingw32-clang \
-        CXX=arm64ec-w64-mingw32-clang++ \
+        mkdir wine-build
+        cd wine-build
+
+        # Set cross compilers explicitly
+        export CC=arm64ec-w64-mingw32-clang
+        export CXX=arm64ec-w64-mingw32-clang++
+
         "$ROOT/wine/configure" \
           --prefix=/usr \
           --with-wine-tools="$ROOT/wine-tools" \
-          --enable-win64 --enable-wow64 \
+          --enable-win64 \
+          --enable-wow64 \
           --enable-archs=arm64ec,aarch64 \
           --disable-tests \
-          --with-freetype --with-fontconfig \
-          --with-dbus --with-alsa --with-pulse
+          --with-freetype \
+          --with-fontconfig \
+          --with-dbus \
+          --with-alsa \
+          --with-pulse
 
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-build
-        make -j$(nproc)
+        make -j"$(nproc)"
 
     - name: Install Wine
       run: |
@@ -138,7 +161,7 @@ jobs:
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
-        mkdir -p wcp/{bin,lib/wine}
+        mkdir -p wcp/{bin,lib/wine,dxvk/arm64ec,vkd3d/arm64ec,mesa/turnip}
         cp wine-install/usr/bin/{wine,wine64,wineboot,wineserver} wcp/bin/
         rsync -a wine-install/usr/lib/wine/ wcp/lib/wine/
 
