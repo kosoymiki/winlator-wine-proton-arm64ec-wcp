@@ -23,7 +23,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 2) Install dependencies (ARM only)
+    # 2) Install dependencies
     - name: Install dependencies
       run: |
         set -euxo pipefail
@@ -46,28 +46,31 @@ jobs:
           libgnutls28-dev libsane-dev \
           rsync file zip xz-utils
 
-    # 3) Setup llvm-mingw cross toolchain
+    # 3) Setup llvm-mingw (ARM64EC cross toolchain)
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
-        VERSION="20251216"
-        ASSET="llvm-mingw-${VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
+        VERSION="20251007" # актуальная версия с ARM64EC релизами
+        # Подгружаем конкретный архив с поддержкой AArch64 UCRT
+        ASSET="llvm-mingw-${VERSION}-ucrt-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${VERSION}/${ASSET}"
+
         rm -rf llvm-mingw
         mkdir llvm-mingw
-        wget -q "$URL" -O "$ASSET"
+        wget --retry-connrefused --waitretry=2 --timeout=30 "$URL" -O "$ASSET"
         tar -xJf "$ASSET" -C llvm-mingw --strip-components=1
         rm -f "$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
+    # 4) Verify cross toolchain
     - name: Verify cross toolchain
       run: |
         set -euxo pipefail
         arm64ec-w64-mingw32-clang --version
         arm64ec-w64-mingw32-clang++ --version
 
-    # 4) Clone Wine & Wine Staging
+    # 5) Clone Wine & Wine Staging
     - name: Clone Wine & Staging
       run: |
         set -euxo pipefail
@@ -79,51 +82,28 @@ jobs:
         set -euxo pipefail
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
 
-    # 5) Build wine-tools (native, minimal flags)
-    # 5) Build wine-tools (native, minimal flags)
+    # 6) Build wine-tools (native)
     - name: Build wine-tools natively
       run: |
         set -euxo pipefail
-
-        # Перейти в исходники Wine
-        cd wine
-
-        # Подготовка autotools — ядро, subdirs и скрипты
-        autoreconf -fiv
-
-        # Генерация необходимых файлов в tools/
-        ./tools/make_requests
-
-        # Очистка старых билд‑папок
-        rm -rf wine-tools-build wine-tools
         mkdir wine-tools-build
-        mkdir -p wine-tools
-
         cd wine-tools-build
 
-        # Configure только для сборки утилит
-        ../configure \
-        --disable-tests \
-        --disable-win16 \
-        --with-freetype \
-        --with-fontconfig
+        ../wine/configure \
+          --enable-tools \
+          --disable-tests \
+          --disable-win16
 
-        # Собрать **все инструменты** через make‑цели
-        make -j"$(nproc)" \
-        tools/winebuild/winebuild \
-        tools/widl/widl \
-        tools/wrc/wrc \
-        tools/wmc/wmc \
-        tools/makedep/makedep
+        make -j"$(nproc)"
 
-        # Копирование всех инструментов в единый каталог wine-tools
-        cp tools/winebuild/winebuild   ../wine-tools/
-        cp tools/widl/widl             ../wine-tools/
-        cp tools/wrc/wrc               ../wine-tools/
-        cp tools/wmc/wmc               ../wine-tools/
-        cp tools/makedep/makedep       ../wine-tools/
+        mkdir -p ../wine-tools
+        cp tools/makedep/makedep       ../wine-tools/ || true
+        cp tools/winebuild/winebuild   ../wine-tools/ || true
+        cp tools/widl/widl             ../wine-tools/ || true
+        cp tools/wrc/wrc               ../wine-tools/ || true
+        cp tools/wmc/wmc               ../wine-tools/ || true
 
-    # 6) Verify wine-tools exist
+    # 7) Check wine-tools existence
     - name: Check wine-tools
       run: |
         set -euxo pipefail
@@ -134,7 +114,7 @@ jobs:
           fi
         done
 
-    # 7) Configure Wine (cross compile)
+    # 8) Configure Wine (cross compile)
     - name: Configure Wine (cross compile)
       run: |
         set -euxo pipefail
@@ -160,23 +140,24 @@ jobs:
           --with-fontconfig \
           --with-dbus \
           --with-alsa \
-          --with-pulse
+          --with-pulse \
+          --disable-examples
 
-    # 8) Build Wine
+    # 9) Build Wine
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-cross-build
         make -j"$(nproc)"
 
-    # 9) Install Wine
+    #10) Install Wine
     - name: Install Wine
       run: |
         set -euxo pipefail
         cd wine-cross-build
         DESTDIR="$PWD/wine-install" make install
 
-    # 10) Package PHAT wcp
+    #11) Package PHAT wcp
     - name: Package PHAT wcp
       run: |
         set -euxo pipefail
