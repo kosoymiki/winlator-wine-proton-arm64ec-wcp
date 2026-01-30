@@ -32,15 +32,12 @@ jobs:
           autoconf automake libtool patchutils bison flex \
           libc6-dev linux-libc-dev \
           libfreetype-dev libfontconfig-dev libdbus-1-dev \
-          libx11-dev libxext-dev libxrender-dev \
-          libxrandr-dev libxinerama-dev libxcursor-dev \
-          libxi-dev libxfixes-dev libsdl2-dev \
-          libpulse-dev libasound2-dev \
-          libudev-dev libgl-dev \
-          libusb-1.0-0-dev libpcap-dev \
-          libxcomposite-dev libxdamage-dev \
-          libv4l-dev libopencv-dev \
-          libpcsclite-dev libkrb5-dev libcups2-dev \
+          libx11-dev libxext-dev libxrender-dev libxrandr-dev \
+          libxinerama-dev libxcursor-dev libxi-dev libxfixes-dev \
+          libsdl2-dev libpulse-dev libasound2-dev libudev-dev \
+          libgl-dev libusb-1.0-0-dev libpcap-dev \
+          libxcomposite-dev libxdamage-dev libv4l-dev \
+          libopencv-dev libpcsclite-dev libkrb5-dev libcups2-dev \
           libgnutls28-dev libsane-dev \
           rsync file zip xz-utils
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
@@ -61,8 +58,6 @@ jobs:
         tar -xJf "$ROOT/$ASSET" -C "$ROOT/llvm-mingw" --strip-components=1
         rm -f "$ROOT/$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
-        # Diagnostics: list available cross compilers
-        ls -1 "$ROOT/llvm-mingw/bin" | head -n 60 || true
 
     - name: Verify llvm-mingw cross toolchain
       run: |
@@ -88,46 +83,26 @@ jobs:
     - name: Build wine-tools (native)
       run: |
         set -euxo pipefail
-
         ROOT="$(pwd)"
         cd wine
 
-        # 1) Полная регенерация autotools
-        autoreconf -vfi --force --install
+        # Отдельная директория для сборки инструментов
+        mkdir -p build-tools
+        cd build-tools
 
-        # 2) Конфигурировать корневой проект, чтобы инструменты были включены
-        ./configure \
+        # Сборка только инструментов
+        ../configure \
+          --enable-tools \
           --disable-tests \
           --disable-win16 \
-          --enable-tools \
           --with-freetype \
           --with-fontconfig
+        make -j"$(nproc)"
 
-        # Проверяем, что Makefile действительно содержит правила для makedep
-        if ! grep -q "tools/makedep/makedep" Makefile; then
-          echo "ERROR: makedep target not found in Makefile"
-          exit 1
-        fi
-
-        # 3) Собираем инструменты из корневого Makefile
-        make -j"$(nproc)" \
-          tools/makedep/makedep \
-          tools/winebuild/winebuild \
-          tools/widl/widl \
-          tools/wrc/wrc \
-          tools/wmc/wmc
-
-        # 4) Устанавливаем их в wine-tools
+        # Скопировать собранные инструменты
         mkdir -p "$ROOT/wine-tools/tools"
+        cp tools/* "$ROOT/wine-tools/tools/"
 
-        cp tools/makedep/makedep     "$ROOT/wine-tools/tools/"
-        cp tools/winebuild/winebuild "$ROOT/wine‑tools/tools/"
-        cp tools/widl/widl           "$ROOT/wine‑tools/tools/"
-        cp tools/wrc/wrc             "$ROOT/wine‑tools/tools/"
-        cp tools/wmc/wmc             "$ROOT/wine‑tools/tools/"
-
-        echo "wine-tools built and copied"
-        
     - name: Configure Wine (cross ARM64EC)
       run: |
         set -euxo pipefail
@@ -141,7 +116,6 @@ jobs:
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
 
-        # 1) Указать wine-tools, собранные ранее
         "$ROOT/wine/configure" \
           --prefix=/usr \
           --with-wine-tools="$ROOT/wine-tools" \
