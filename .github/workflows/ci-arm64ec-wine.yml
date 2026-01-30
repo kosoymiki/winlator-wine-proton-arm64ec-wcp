@@ -34,13 +34,15 @@ jobs:
         sudo apt update
         sudo apt install -y --no-install-recommends \
           autoconf automake bash bison build-essential cmake \
-          curl git gettext libasound2-dev libdbus-1-dev libfontconfig-dev \
-          libfreetype-dev libgl-dev libgnutls28-dev libpciaccess-dev \
-          libpulse-dev libudev-dev libusb-1.0-0-dev libv4l-dev \
+          curl git gettext libasound2-dev libdbus-1-dev \
+          libfontconfig-dev libfreetype-dev libgl-dev \
+          libgnutls28-dev libpciaccess-dev libpulse-dev \
+          libudev-dev libusb-1.0-0-dev libv4l-dev \
           libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
           libxi-dev libxrandr-dev libxrender-dev pkgconf \
-          python3 python3-pip patchutils perl ninja-build meson flex \
-          llvm lld unzip zip wget xz-utils libvulkan-dev
+          python3 python3-pip patchutils perl ninja-build \
+          meson flex llvm lld unzip zip wget xz-utils \
+          libvulkan-dev
 
     ############################################################
     # 3) LLVM‑mingw (cross‑toolchain)
@@ -57,16 +59,16 @@ jobs:
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
     ############################################################
-    # 4) Clone Wine + Staging
+    # 4) Clone Wine + staging + tkg
     ############################################################
-    - name: Clone Wine and Staging
+    - name: Clone Wine + staging
       run: |
         set -euxo pipefail
         git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
         git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
 
     ############################################################
-    # 5) Apply Wine‑Staging patches
+    # 5) Apply staging patches
     ############################################################
     - name: Apply staging patches
       run: |
@@ -81,7 +83,7 @@ jobs:
         python3 ../wine-staging/staging/patchinstall.py --all $EXCLUDE_ARGS DESTDIR="$(pwd)"
 
     ############################################################
-    # 6) Apply Wine‑TkG patches
+    # 6) Apply wine‑tkg patches
     ############################################################
     - name: Apply wine‑tkg patches
       run: |
@@ -100,7 +102,7 @@ jobs:
         done
 
     ############################################################
-    # 7) Prepare build (vulkan, requests, specfiles)
+    # 7) Prepare build
     ############################################################
     - name: Prepare build
       run: |
@@ -112,28 +114,16 @@ jobs:
         autoreconf -f
 
     ############################################################
-    # 8) Minimal wine‑tools build
+    # 8) Build Wine tools *inside* Wine source
     ############################################################
-    - name: Build minimal wine-tools
+    - name: Build Wine internal tools
       run: |
         set -euxo pipefail
         cd wine
-        mkdir wine-tools-build
-        cd wine-tools-build
-        ../configure \
-          --enable-tools \
-          --disable-tests \
-          --disable-win16 \
-          --enable-archs=i386,aarch64
-        make -j"$(nproc)"
-        mkdir -p ../wine-tools
-        cp tools/winebuild/winebuild ../wine-tools/
-        cp tools/widl/widl ../wine-tools/
-        cp tools/wrc/wrc ../wine-tools/
-        cp tools/wmc/wmc ../wine-tools/
+        make tools
 
     ############################################################
-    # 9) Cross‑configure & compile Wine
+    # 9) Configure & compile Wine
     ############################################################
     - name: Configure & compile Wine
       run: |
@@ -153,7 +143,7 @@ jobs:
           --build=$BUILD \
           --host=$HOST \
           --with-mingw=clang \
-          --with-wine-tools="../wine-tools" \
+          --with-wine-tools="../wine" \
           --prefix=/usr \
           --enable-win64 \
           --enable-wow64 \
