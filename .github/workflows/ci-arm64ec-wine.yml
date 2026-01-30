@@ -32,57 +32,19 @@ jobs:
         set -euxo pipefail
 
         sudo apt update
-
-        # Базовые инструменты для сборки
         sudo apt install -y --no-install-recommends \
-          build-essential \
-          autoconf \
-          automake \
-          libtool \
-          pkg-config \
-          python3 \
-          python3-pip \
-          git \
-          gettext \
-          flex \
-          bison \
-          ninja-build \
-          cmake
+        build-essential autoconf automake libtool pkg-config \
+        python3 python3-pip git gettext flex bison \
+        ninja-build cmake
 
-        # Основные системные библиотеки
         sudo apt install -y --no-install-recommends \
-          libasound2-dev \
-          libpulse-dev \
-          libv4l-dev \
-          libgl-dev \
-          libx11-dev \
-          libxext-dev \
-          libxfixes-dev \
-          libxinerama-dev \
-          libxi-dev \
-          libxrandr-dev \
-          libxrender-dev \
-          libfontconfig-dev \
-          libfreetype-dev \
-          libgnutls28-dev
-
-        # DBus (требуется для --with-dbus)
-        sudo apt install -y libdbus-1-dev
-
-        # Дополнительные графические/мультимедиа библиотеки
-        sudo apt install -y --no-install-recommends \
-          libsdl2-dev \
-          libvulkan-dev \
-          libjpeg-dev \
-          libpng-dev \
-          libxml2-dev \
-          libudev-dev \
-          libusb-1.0-0-dev \
-          libldap2-dev
-
-        # Очистка неиспользуемых кэшей APT
-        sudo apt clean
-        sudo rm -rf /var/lib/apt/lists/*
+        libasound2-dev libpulse-dev libv4l-dev libgl-dev \
+        libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
+        libxi-dev libxrandr-dev libxrender-dev libfontconfig-dev \
+        libfreetype-dev libgnutls28-dev libdbus-1-dev \
+        libsdl2-dev libjpeg-dev libpng-dev libxml2-dev \
+        libudev-dev libusb-1.0-0-dev libldap2-dev
+        
     ###################################################
     # 3) LLVM-mingw (Cross toolchain)
     ###################################################
