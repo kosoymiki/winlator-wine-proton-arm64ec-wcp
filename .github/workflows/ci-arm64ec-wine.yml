@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging‑TkG ARM64EC + DXVK/VKD3D + Mesa TURNIP
+name: Build Wine 11.1 Staging‑TkG ARM64EC + VulkanTURNIP + DXVK + VKD3D
 
 on:
   push:
@@ -11,80 +11,101 @@ jobs:
   build-arm64ec:
     runs-on: ubuntu-24.04-arm
     defaults:
-      run:
-        shell: bash
+      run: shell: bash
 
     steps:
-    - name: Checkout
+    ############################################################
+    # Checkout
+    ############################################################
+    - name: Checkout source
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Install dependencies
+    ############################################################
+    # Install system dependencies
+    ############################################################
+    - name: Install build dependencies
       run: |
         set -euxo pipefail
         sudo apt update
         sudo apt install -y --no-install-recommends \
-          build-essential git wget curl python3 python3-pip perl gettext \
-          pkgconf cmake ninja-build meson autoconf automake libtool \
-          patchutils bison flex libc6-dev linux-libc-dev \
-          libfreetype-dev libfontconfig-dev libdbus-1-dev \
-          libx11-dev libxext-dev libxrender-dev libxrandr-dev \
-          libxinerama-dev libxcursor-dev libxi-dev libxfixes-dev \
-          libsdl2-dev libpulse-dev libasound2-dev libudev-dev \
-          libgl-dev libusb-1.0-0-dev libv4l-dev libpcap-dev \
-          libpcsclite-dev libkrb5-dev libcups2-dev libgnutls28-dev \
-          libsane-dev rsync file zip xz-utils unzip llvm lld mingw-w64 \
-          libvulkan-dev
+          autoconf automake bash bison build-essential cmake curl \
+          git gettext libasound2-dev libdbus-1-dev libfontconfig-dev \
+          libfreetype-dev libgl-dev libgnutls28-dev libpciaccess-dev \
+          libpulse-dev libudev-dev libusb-1.0-0-dev libv4l-dev \
+          libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
+          libxi-dev libxrandr-dev libxrender-dev pkgconf python3 \
+          python3-pip patchutils perl ninja-build meson flex llvm lld \
+          unzip zip wget xz-utils
 
+    ############################################################
+    # Install LLVM‑mingw (cross PE toolchain)
+    ############################################################
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
-        VERSION="20251216"
-        ASSET="llvm-mingw-${VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${VERSION}/${ASSET}"
+        TOOLCHAIN_VER="20251216"
+        ARCHIVE="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
+        URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${ARCHIVE}"
+        wget -q "$URL"
         mkdir llvm-mingw
-        tar -xJf "${ASSET}" -C llvm-mingw --strip-components=1
+        tar -xJf "$ARCHIVE" -C llvm-mingw --strip-components=1
+        rm -f "$ARCHIVE"
+        # add to PATH for all subsequent steps
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
+    ############################################################
+    # Clone Wine sources
+    ############################################################
     - name: Clone Wine & staging
       run: |
         set -euxo pipefail
         git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
         git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
 
-    - name: Apply wine-staging patches (exclude ntdsync)
+    ############################################################
+    # Apply Wine‑Staging patches excluding ntdsync
+    ############################################################
+    - name: Apply staging patches
       run: |
         set -euxo pipefail
         cd wine
-        EXCLUDES=""
+        # build exclude patterns for ntdsync patches
+        EXCLUDE_ARGS=""
         for P in ../wine-staging/staging/patches/*.patch; do
           case "$(basename "$P")" in
-            *ntsync*|*Syscall* ) EXCLUDES="$EXCLUDES -W $(basename $P)";;
+            *ntsync* ) EXCLUDE_ARGS="$EXCLUDE_ARGS -W $(basename "$P")";;
           esac
         done
-        python3 ../wine-staging/staging/patchinstall.py --all $EXCLUDES --destdir="$(pwd)"
+        python3 ../wine-staging/staging/patchinstall.py --all $EXCLUDE_ARGS --destdir="$(pwd)"
         cd ..
 
-    - name: Apply tkg patches (esync/fsync etc.)
+    ############################################################
+    # Apply wine‑tkg patchset (esync/fsync + misc)
+    ############################################################
+    - name: Apply wine-tkg patches
       run: |
         set -euxo pipefail
         cd wine
-        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
-        cd wine-tkg/wine-tkg-git
-        for D in wine-tkg-patches/esync-fsync wine-tkg-patches/general wine-tkg-patches/misc; do
-          for F in $D/*.patch; do
+        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-src
+        # "esync-fsync", "general", "misc" skipping ntdsync and proton
+        for DIR in \
+          wine-tkg-src/wine-tkg-git/wine-tkg-patches/esync-fsync \
+          wine-tkg-src/wine-tkg-git/wine-tkg-patches/general \
+          wine-tkg-src/wine-tkg-git/wine-tkg-patches/misc; do
+          for F in $DIR/*.patch; do
             [[ "$F" == *ntsync* ]] && continue
+            [[ "$F" == *proton* ]] && continue
             patch -p1 < "$F" || true
           done
         done
-        cd ../../..
-    
-    # =========================
-    # Build Wine
-    # =========================
+        cd ..
 
-    - name: Prepare Wine build
+    ############################################################
+    # Build Wine
+    ############################################################
+    - name: Prepare build system
       run: |
         set -euxo pipefail
         cd wine
@@ -94,7 +115,7 @@ jobs:
         autoreconf -f
         cd ..
 
-    - name: Build wine tools
+    - name: Build wine-tools
       run: |
         set -euxo pipefail
         mkdir wine-tools-build && cd wine-tools-build
@@ -107,11 +128,11 @@ jobs:
         cp tools/wmc/wmc ../wine-tools/ || true
         cd ..
 
-    - name: Configure and build Wine
+    - name: Configure & compile Wine
       run: |
         set -euxo pipefail
-        export PATH="$PWD/llvm-mingw/bin:$PATH"
-        mkdir wine-cross && cd wine-cross
+        mkdir wine-cross
+        cd wine-cross
         export BUILD=aarch64-linux-gnu
         export HOST=aarch64-w64-mingw32
         export CC=aarch64-w64-mingw32-clang
@@ -122,41 +143,43 @@ jobs:
         export RANLIB=aarch64-w64-mingw32-ranlib
 
         ../wine/configure \
-          --build=$BUILD --host=$HOST \
+          --build=$BUILD \
+          --host=$HOST \
           --with-mingw=clang \
           --with-wine-tools="../wine-tools" \
           --prefix=/usr \
-          --enable-win64 --enable-wow64 \
+          --enable-win64 \
+          --enable-wow64 \
           --enable-archs=arm64ec,aarch64,i386 \
           --disable-tests \
-          --with-freetype --with-fontconfig \
+          --with-freetype \
+          --with-fontconfig \
           --with-dbus \
-          --with-alsa --with-pulse
-
+          --with-alsa \
+          --with-pulse
         make -j$(nproc)
 
-    # =========================
-    # Build DXVK
-    # =========================
-
+    ############################################################
+    # Build DXVK (Vulkan -> DirectX)
+    ############################################################
     - name: Build DXVK
       run: |
         set -euxo pipefail
         git clone https://github.com/doitsujin/dxvk.git
         cd dxvk
         git submodule update --init --recursive
+        pip3 install meson ninja
         meson setup build \
           --cross-file=/github/workspace/ci/meson-cross-arm64ec.ini \
           --prefix=/usr \
-          -Dbuild_tests=false -Dvulkan_headers_dependency=system
+          -Dbuild_tests=false
         ninja -C build
         ninja -C build install
 
-    # =========================
+    ############################################################
     # Build VKD3D‑Proton
-    # =========================
-
-    - name: Build VKD3D‑Proton
+    ############################################################
+    - name: Build VKD3D-Proton
       run: |
         set -euxo pipefail
         git clone https://github.com/HansKristian-Work/vkd3d-proton.git
@@ -169,16 +192,15 @@ jobs:
         ninja -C build
         ninja -C build install
 
-    # =========================
-    # Build Mesa TURNIP (Vulkan driver)
-    # =========================
-
-    - name: Clone Turnip‑CI patches
+    ############################################################
+    # Build Mesa TURNIP Vulkan
+    ############################################################
+    - name: Clone Turnip CI patches
       run: |
         set -euxo pipefail
-        git clone https://github.com/StevenMXZ/freedreno_turnip-CI.git turnip-ci
+        git clone https://github.com/StevenMXZ/freedreno_turnip-CI.git turnip-ci || true
 
-    - name: Clone and patch Mesa for TURNIP Vulkan
+    - name: Prepare Mesa (Turnip+Patched)
       run: |
         set -euxo pipefail
         git clone https://gitlab.freedesktop.org/mesa/mesa.git
@@ -194,6 +216,7 @@ jobs:
       run: |
         set -euxo pipefail
         cd mesa
+        pip3 install meson ninja
         meson setup builddir \
           -Dvulkan-drivers=turnip \
           -Dgallium-drivers=freedreno \
@@ -203,16 +226,16 @@ jobs:
         ninja -C builddir
         ninja -C builddir install
 
-    # =========================
-    # Packaging (your existing steps)
-    # =========================
-
-    - name: Package and upload
+    ############################################################
+    # Package results
+    ############################################################
+    - name: Package WCP
       run: |
-        # … ваши шаги упаковки (WCP, профили, env.sh и т.д.)
+        # … твои существующие packaging шаги сюда …
+        echo "Packaging placeholder"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: wine‑mesa‑turnip‑arm64ec
-        path: *.wcp
+        name: wine-arm64ec-full
+        path: "*.wcp"
