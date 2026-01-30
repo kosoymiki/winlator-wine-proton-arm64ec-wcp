@@ -17,12 +17,14 @@ jobs:
 
     steps:
 
+    # ――― Checkout ―――
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Install base build dependencies
+    # ――― Install Dev Dependencies ―――
+    - name: Install dependencies
       run: |
         set -euxo pipefail
         sudo apt update
@@ -32,78 +34,89 @@ jobs:
           autoconf automake libtool patchutils bison flex \
           libc6-dev linux-libc-dev \
           libfreetype-dev libfontconfig-dev libdbus-1-dev \
-          libx11-dev libxext-dev libxrender-dev libxrandr-dev \
-          libxinerama-dev libxcursor-dev libxi-dev libxfixes-dev \
-          libsdl2-dev libpulse-dev libasound2-dev libudev-dev \
-          libgl-dev libusb-1.0-0-dev libpcap-dev \
-          libxcomposite-dev libxdamage-dev libv4l-dev \
-          libopencv-dev libpcsclite-dev libkrb5-dev libcups2-dev \
+          libx11-dev libxext-dev libxrender-dev \
+          libxrandr-dev libxinerama-dev libxcursor-dev \
+          libxi-dev libxfixes-dev libsdl2-dev \
+          libpulse-dev libasound2-dev \
+          libudev-dev libgl-dev \
+          libusb-1.0-0-dev libpcap-dev \
+          libxcomposite-dev libxdamage-dev \
+          libv4l-dev libopencv-dev \
+          libpcsclite-dev libkrb5-dev libcups2-dev \
           libgnutls28-dev libsane-dev \
           rsync file zip xz-utils
         sudo ln -sf /usr/bin/pkgconf /usr/local/bin/pkg-config || true
-        pkg-config --version
-        gcc --version
-        g++ --version
 
-    - name: Setup llvm-mingw (prebuilt Linux cross)
+    # ――― Setup llvm‑mingw Toolchain ―――
+    - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
         LLVM_MINGW_VERSION="20251216"
         ASSET="llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/${ASSET}"
-        rm -rf "$ROOT/llvm-mingw"
-        mkdir -p "$ROOT/llvm-mingw"
-        wget -q "$URL" -O "$ROOT/$ASSET"
-        tar -xJf "$ROOT/$ASSET" -C "$ROOT/llvm-mingw" --strip-components=1
-        rm -f "$ROOT/$ASSET"
+        rm -rf llvm-mingw
+        mkdir llvm-mingw
+        wget -q "$URL" -O "${ASSET}"
+        tar -xJf "${ASSET}" -C llvm-mingw --strip-components=1
+        rm -f "${ASSET}"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-    - name: Verify llvm-mingw cross toolchain
+    # ――― Verify Cross Toolchain ―――
+    - name: Verify llvm-mingw
       run: |
         set -euxo pipefail
         arm64ec-w64-mingw32-clang --version
         arm64ec-w64-mingw32-clang++ --version
 
-    - name: Clone Wine & Wine-Staging
+    # ――― Clone Wine & Wine‑Staging ―――
+    - name: Clone Wine repos
       run: |
         set -euxo pipefail
         git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
         git clone --depth 1 --branch v11.1 https://gitlab.winehq.org/wine/wine-staging.git wine-staging
 
+    # ――― Apply Staging Patches ―――
     - name: Apply staging patches
       run: |
         set -euxo pipefail
-        ROOT="$(pwd)"
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
-        cd wine
-        autoreconf -fiv
-        ./tools/make_requests
 
+    # ――― Build wine-tools ―――
     - name: Build wine-tools (native)
       run: |
         set -euxo pipefail
-        ROOT="$(pwd)"
         cd wine
 
-        # Отдельная директория для сборки инструментов
-        mkdir -p build-tools
-        cd build-tools
+        # regenerate autotools config
+        autoreconf -vfi --force --install
 
-        # Сборка только инструментов
-        ../configure \
-          --enable-tools \
+        # configure so tools are enabled
+        ./configure \
           --disable-tests \
           --disable-win16 \
+          --enable-tools \
           --with-freetype \
           --with-fontconfig
-        make -j"$(nproc)"
 
-        # Скопировать собранные инструменты
-        mkdir -p "$ROOT/wine-tools/tools"
-        cp tools/* "$ROOT/wine-tools/tools/"
+        # directly build only the tools we need
+        make -j$(nproc) \
+          tools/makedep/makedep \
+          tools/winebuild/winebuild \
+          tools/widl/widl \
+          tools/wrc/wrc \
+          tools/wmc/wmc
 
-    - name: Configure Wine (cross ARM64EC)
+        # install to wine-tools
+        mkdir -p ../wine-tools/tools
+        cp tools/makedep/makedep     ../wine-tools/tools/
+        cp tools/winebuild/winebuild ../wine-tools/tools/
+        cp tools/widl/widl           ../wine-tools/tools/
+        cp tools/wrc/wrc             ../wine-tools/tools/
+        cp tools/wmc/wmc             ../wine-tools/tools/
+
+    # ――― Configure Wine ―――
+    - name: Configure Wine (cross compile)
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
@@ -116,7 +129,7 @@ jobs:
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
 
-        "$ROOT/wine/configure" \
+        ../wine/configure \
           --prefix=/usr \
           --with-wine-tools="$ROOT/wine-tools" \
           --host=arm64ec-w64-mingw32 \
@@ -131,18 +144,21 @@ jobs:
           --with-alsa \
           --with-pulse
 
+    # ――― Build Wine ―――
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-build
         make -j"$(nproc)"
 
+    # ――― Install Wine ―――
     - name: Install Wine
       run: |
         set -euxo pipefail
         cd wine-build
         DESTDIR="$PWD/wine-install" make install
 
+    # ――― Assemble PHAT wcp ―――
     - name: Assemble PHAT wcp
       run: |
         set -euxo pipefail
@@ -151,6 +167,7 @@ jobs:
         cp wine-install/usr/bin/{wine,wine64,wineboot,wineserver} wcp/bin/
         rsync -a wine-install/usr/lib/wine/ wcp/lib/wine/
 
+    # ――― Upload artifact ―――
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
