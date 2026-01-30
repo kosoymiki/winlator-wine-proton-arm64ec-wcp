@@ -47,11 +47,26 @@ jobs:
     - name: Setup llvm-mingw
       run: |
         set -euxo pipefail
-        TOOLCHAIN_VER="20251216"
-        ARCHIVE="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${ARCHIVE}"
-        tar -xJf "$ARCHIVE" -C llvm-mingw --strip-components=1
-        rm -f "$ARCHIVE"
+
+        TOOLCHAIN_VER="20260127"
+        FILENAME="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
+        URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${FILENAME}"
+
+        echo "Checking llvm-mingw archive availability at:"
+        echo "$URL"
+
+        # Проверим, доступен ли файл
+        if ! wget --spider "$URL"; then
+          echo "ERROR: llvm-mingw release tarball not found: $URL" >&2
+          exit 1
+        fi
+
+        # Скачиваем и распаковываем
+        wget -q "$URL"
+        mkdir -p llvm-mingw
+        tar -xJf "$FILENAME" -C llvm-mingw --strip-components=1
+
+        # Добавим бинарники в PATH
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
     ###################################################
