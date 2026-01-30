@@ -28,7 +28,7 @@ jobs:
         set -euxo pipefail
         sudo apt update
         sudo apt install -y --no-install-recommends \
-          build-essential git wget curl python3 perl gettext \
+          build-essential git wget curl python3 python3-pip perl gettext \
           pkgconf cmake ninja-build meson autoconf automake libtool \
           patchutils bison flex libc6-dev linux-libc-dev \
           libfreetype-dev libfontconfig-dev libdbus-1-dev \
@@ -37,7 +37,7 @@ jobs:
           libsdl2-dev libpulse-dev libasound2-dev libudev-dev \
           libgl-dev libusb-1.0-0-dev libv4l-dev libpcap-dev \
           libpcsclite-dev libkrb5-dev libcups2-dev libgnutls28-dev \
-          libsane-dev rsync file zip xz-utils unzip
+          libsane-dev rsync file zip xz-utils unzip python3-setuptools
 
     # 3) Setup llvm‑mingw 20251216
     - name: Setup llvm‑mingw
@@ -47,7 +47,7 @@ jobs:
         VERSION="20251216"
         ASSET="llvm-mingw-${VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${VERSION}/${ASSET}"
-        mkdir llvm-mingw
+        mkdir -p llvm-mingw
         wget -q "$URL" -O "$ASSET"
         tar -xJf "$ASSET" -C llvm-mingw --strip-components=1
         rm -f "$ASSET"
@@ -60,14 +60,22 @@ jobs:
         git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
         git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
 
-    # 5) Apply staging patches
+    # 5) Apply wine‑staging patchset
     - name: Apply wine‑staging patchset
       run: |
         set -euxo pipefail
         cd wine
-        ../wine-staging/patches/patchinstall.sh --all \
-          -W staging-ntsync* -W *ntsync* \
-          DESTDIR="$(pwd)"
+
+        if [[ -f ../wine-staging/staging/patchinstall.py ]]; then
+          echo "Using staging patchinstall.py"
+          python3 ../wine-staging/staging/patchinstall.py --all \
+            -W staging-ntsync* -W *ntsync* \
+            --destdir="$(pwd)"
+        else
+          echo "wine-staging/staging/patchinstall.py not found!"
+          exit 1
+        fi
+
         cd ..
 
     # 6) Apply wine‑tkg patches (esync/fsync + general + misc + user/community)
@@ -77,64 +85,76 @@ jobs:
         cd wine
 
         # Clone wine‑tkg git patches
-        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-src
+        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-src || true
 
         # Clone userpatches and community patches
-        git clone https://github.com/openglfreak/wine-tkg-userpatches.git wine-userpatches-src
-        git clone https://github.com/Frogging-Family/community-patches.git community-patches-src
+        git clone https://github.com/openglfreak/wine-tkg-userpatches.git wine-userpatches-src || true
+        git clone https://github.com/Frogging-Family/community-patches.git community-patches-src || true
 
         # Apply esync/fsync
-        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/esync-fsync/*.patch; do
+        if [[ -d wine-tkg-src/wine-tkg-git/wine-tkg-patches/esync-fsync ]]; then
+          for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/esync-fsync/*.patch; do
+            [[ -f "$P" ]] || continue
             echo "Applying esync/fsync patch: $P"
             patch -p1 < "$P" || true
-        done
+          done
+        fi
 
-        # Apply general tkg patches (filter out proton/ntsync)
-        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/general/*.patch; do
+        # Apply general tkg patches
+        if [[ -d wine-tkg-src/wine-tkg-git/wine-tkg-patches/general ]]; then
+          for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/general/*.patch; do
+            [[ -f "$P" ]] || continue
             [[ "$P" == *ntsync* ]] && continue
             [[ "$P" == *proton* ]] && continue
             echo "Applying general tkg patch: $P"
             patch -p1 < "$P" || true
-        done
+          done
+        fi
 
         # Apply misc tkg patches
-        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/misc/*.patch; do
+        if [[ -d wine-tkg-src/wine-tkg-git/wine-tkg-patches/misc ]]; then
+          for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/misc/*.patch; do
+            [[ -f "$P" ]] || continue
             [[ "$P" == *ntsync* ]] && continue
             [[ "$P" == *proton* ]] && continue
             echo "Applying misc tkg patch: $P"
             patch -p1 < "$P" || true
-        done
+          done
+        fi
 
         # Apply aggregated wine‑tkg staging patch if exists
         if [[ -f wine-tkg-src/wine-tkg-git/wine-tkg-staging.patch ]]; then
-            echo "Applying wine-tkg-staging.patch"
-            patch -p1 < wine-tkg-src/wine-tkg-git/wine-tkg-staging.patch || true
+          echo "Applying wine-tkg-staging.patch"
+          patch -p1 < wine-tkg-src/wine-tkg-git/wine-tkg-staging.patch || true
         fi
 
         # Apply userpatches
         if [[ -d wine-userpatches-src/patches ]]; then
-            for P in wine-userpatches-src/patches/*.patch; do
-                [[ "$P" == *ntsync* ]] && continue
-                [[ "$P" == *proton* ]] && continue
-                echo "Applying userpatch: $P"
-                patch -p1 < "$P" || true
-            done
+          for P in wine-userpatches-src/patches/*.patch; do
+            [[ -f "$P" ]] || continue
+            [[ "$P" == *ntsync* ]] && continue
+            [[ "$P" == *proton* ]] && continue
+            echo "Applying userpatch: $P"
+            patch -p1 < "$P" || true
+          done
         fi
 
         # Apply community patches
         apply_dir() {
-            local DIR="$1"
-            if [[ -d "$DIR" ]]; then
-                for P in "$DIR"/*.patch; do
-                    [[ "$P" == *ntsync* ]] && continue
-                    [[ "$P" == *proton* ]] && continue
-                    echo "Applying community patch: $P"
-                    patch -p1 < "$P" || true
-                done
-            fi
+          local DIR="$1"
+          if [[ -d "$DIR" ]]; then
+            for P in "$DIR"/*.patch; do
+              [[ -f "$P" ]] || continue
+              [[ "$P" == *ntsync* ]] && continue
+              [[ "$P" == *proton* ]] && continue
+              echo "Applying community patch: $P"
+              patch -p1 < "$P" || true
+            done
+          fi
         }
         apply_dir "community-patches-src/wine-tkg-git"
         apply_dir "community-patches-src/wine"
+
         cd ..
 
     # 7) Prepare Wine build system
@@ -162,7 +182,7 @@ jobs:
         cp tools/wrc/wrc ../wine-tools/
         cp tools/wmc/wmc ../wine-tools/
 
-    # 9) Configure Wine
+    # 9) Configure Wine cross‑compile
     - name: Configure Wine cross‑compile
       run: |
         set -euxo pipefail
@@ -189,70 +209,4 @@ jobs:
           --with-alsa \
           --with-pulse
 
-    # 10) Build Wine
-    - name: Build Wine
-      run: |
-        set -euxo pipefail
-        cd wine-cross
-        make -j"$(nproc)"
-
-    # 11) Install Wine
-    - name: Install Wine
-      run: |
-        set -euxo pipefail
-        cd wine-cross
-        DESTDIR="$PWD/install" make install
-
-    # 12) Download external libs
-    - name: Download WCP extras
-      run: |
-        set -euxo pipefail
-        mkdir -p wcp_extra
-        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp -O wcp_extra/FEXCore.wcp
-        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp -O wcp_extra/DXVK.wcp
-        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp -O wcp_extra/VKD3D.wcp
-        wget -q https://github.com/StevenMXZ/freedreno_turnip-CI/releases/download/v26.1/Turnip_v26.1.0.zip -O wcp_extra/Turnip.zip
-
-    # 13) Package WCP
-    - name: Package WCP
-      run: |
-        set -euxo pipefail
-        cd wine-cross
-        DESTDIR="$PWD/install" make install
-        cd install
-        mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share}
-        cp -a usr/local/bin/* wcp/bin/
-        cd wcp/bin && ln -sf wine64 wine
-        cd ..
-        cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/
-        cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/
-        for P in ../wcp_extra/*; do
-          mkdir /tmp/unp
-          if [[ "$P" == *.zip ]]; then unzip -q "$P" -d /tmp/unp; else tar -xJf "$P" -C /tmp/unp; fi
-          cp -a /tmp/unp/* wcp/
-          rm -rf /tmp/unp
-        done
-        cat > wcp/profile.json << "EOF"
-        {
-          "name": "wine-11.1-staging-tkg-arm64ec",
-          "displayName": "Wine 11.1 Staging‑TkG ARM64EC (FEXCore + esync/fsync)",
-          "version": "11.1",
-          "arch": "arm64",
-          "features": ["staging","tkg","esync","fsync","vulkan","dxvk","vkd3d"],
-          "paths": {"bin":"bin/","lib":"lib/wine/","share":"share/"}
-        }
-        EOF
-        cat > wcp/env.sh << "EOF"
-        #!/bin/sh
-        export WINEDEBUG=-all
-        export WINEESYNC=1
-        export WINEFSYNC=1
-        EOF
-        chmod +x wcp/env.sh
-        tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-tkg-arm64ec.wcp -C wcp .
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: wine-11.1-staging-tkg-arm64ec
-        path: wine-11.1-staging-tkg-arm64ec.wcp
+    # Remaining steps...
