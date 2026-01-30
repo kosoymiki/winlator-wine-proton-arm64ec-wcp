@@ -1,4 +1,4 @@
-name: Build Wine 11.1 Staging ARM64EC PHAT
+name: Build Wine 11.1 Staging‑TkG ARM64EC (FEXCore + esync/fsync)
 
 on:
   push:
@@ -22,68 +22,148 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 2) Install build dependencies
-    - name: Install dependencies
+    # 2) Install build deps
+    - name: Install build dependencies
       run: |
         set -euxo pipefail
         sudo apt update
         sudo apt install -y --no-install-recommends \
           build-essential git wget curl python3 perl gettext \
-          pkgconf cmake ninja-build meson \
-          autoconf automake libtool patchutils bison flex \
-          libc6-dev linux-libc-dev \
+          pkgconf cmake ninja-build meson autoconf automake libtool \
+          patchutils bison flex libc6-dev linux-libc-dev \
           libfreetype-dev libfontconfig-dev libdbus-1-dev \
-          libx11-dev libxext-dev libxrender-dev \
-          libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-          libxfixes-dev libsdl2-dev libpulse-dev libasound2-dev \
-          libudev-dev libgl-dev libusb-1.0-0-dev libpcap-dev \
-          libxcomposite-dev libxdamage-dev libv4l-dev libopencv-dev \
+          libx11-dev libxext-dev libxrender-dev libxrandr-dev \
+          libxinerama-dev libxcursor-dev libxi-dev libxfixes-dev \
+          libsdl2-dev libpulse-dev libasound2-dev libudev-dev \
+          libgl-dev libusb-1.0-0-dev libv4l-dev libpcap-dev \
           libpcsclite-dev libkrb5-dev libcups2-dev libgnutls28-dev \
           libsane-dev rsync file zip xz-utils unzip
 
-    # 3) Setup llvm-mingw 20251216
-    - name: Setup llvm-mingw
+    # 3) Setup llvm‑mingw 20251216
+    - name: Setup llvm‑mingw
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
         VERSION="20251216"
         ASSET="llvm-mingw-${VERSION}-ucrt-ubuntu-22.04-aarch64.tar.xz"
         URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${VERSION}/${ASSET}"
-        rm -rf llvm-mingw
         mkdir llvm-mingw
         wget -q "$URL" -O "$ASSET"
         tar -xJf "$ASSET" -C llvm-mingw --strip-components=1
         rm -f "$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-    # 4) Clone Wine & apply staging patches
-    - name: Clone Wine & Staging
+    # 4) Clone Wine mainline and wine‑staging
+    - name: Clone Wine & staging
       run: |
         set -euxo pipefail
-        git clone https://gitlab.winehq.org/wine/wine.git wine
-        git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+        git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
+        git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
 
-    - name: Apply staging patches
+    # 5) Apply staging patches
+    - name: Apply wine‑staging patchset
       run: |
         set -euxo pipefail
-        python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
+        cd wine
+        ../wine-staging/patches/patchinstall.sh --all \
+          -W staging-ntsync* -W *ntsync* \
+          DESTDIR="$(pwd)"
+        cd ..
 
-    # 5) Build wine-tools
-    - name: Build wine-tools
+    # 6) Apply wine‑tkg patches (esync/fsync + general + misc + user/community)
+    - name: Apply wine‑tkg & community patches
+      run: |
+        set -euxo pipefail
+        cd wine
+
+        # Clone wine‑tkg git patches
+        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-src
+
+        # Clone userpatches and community patches
+        git clone https://github.com/openglfreak/wine-tkg-userpatches.git wine-userpatches-src
+        git clone https://github.com/Frogging-Family/community-patches.git community-patches-src
+
+        # Apply esync/fsync
+        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/esync-fsync/*.patch; do
+            echo "Applying esync/fsync patch: $P"
+            patch -p1 < "$P" || true
+        done
+
+        # Apply general tkg patches (filter out proton/ntsync)
+        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/general/*.patch; do
+            [[ "$P" == *ntsync* ]] && continue
+            [[ "$P" == *proton* ]] && continue
+            echo "Applying general tkg patch: $P"
+            patch -p1 < "$P" || true
+        done
+
+        # Apply misc tkg patches
+        for P in wine-tkg-src/wine-tkg-git/wine-tkg-patches/misc/*.patch; do
+            [[ "$P" == *ntsync* ]] && continue
+            [[ "$P" == *proton* ]] && continue
+            echo "Applying misc tkg patch: $P"
+            patch -p1 < "$P" || true
+        done
+
+        # Apply aggregated wine‑tkg staging patch if exists
+        if [[ -f wine-tkg-src/wine-tkg-git/wine-tkg-staging.patch ]]; then
+            echo "Applying wine-tkg-staging.patch"
+            patch -p1 < wine-tkg-src/wine-tkg-git/wine-tkg-staging.patch || true
+        fi
+
+        # Apply userpatches
+        if [[ -d wine-userpatches-src/patches ]]; then
+            for P in wine-userpatches-src/patches/*.patch; do
+                [[ "$P" == *ntsync* ]] && continue
+                [[ "$P" == *proton* ]] && continue
+                echo "Applying userpatch: $P"
+                patch -p1 < "$P" || true
+            done
+        fi
+
+        # Apply community patches
+        apply_dir() {
+            local DIR="$1"
+            if [[ -d "$DIR" ]]; then
+                for P in "$DIR"/*.patch; do
+                    [[ "$P" == *ntsync* ]] && continue
+                    [[ "$P" == *proton* ]] && continue
+                    echo "Applying community patch: $P"
+                    patch -p1 < "$P" || true
+                done
+            fi
+        }
+        apply_dir "community-patches-src/wine-tkg-git"
+        apply_dir "community-patches-src/wine"
+        cd ..
+
+    # 7) Prepare Wine build system
+    - name: Prepare build
+      run: |
+        set -euxo pipefail
+        cd wine
+        dlls/winevulkan/make_vulkan
+        tools/make_requests
+        tools/make_specfiles
+        autoreconf -f
+        cd ..
+
+    # 8) Build wine-tools
+    - name: Build wine tools
       run: |
         set -euxo pipefail
         mkdir wine-tools-build && cd wine-tools-build
         ../wine/configure --enable-tools --disable-tests --disable-win16 --enable-archs=aarch64,i386
         make -j"$(nproc)"
         mkdir -p ../wine-tools
-        cp tools/makedep/makedep ../wine-tools/ || true
-        cp tools/winebuild/winebuild ../wine-tools/ || true
-        cp tools/widl/widl ../wine-tools/ || true
-        cp tools/wrc/wrc ../wine-tools/ || true
-        cp tools/wmc/wmc ../wine-tools/ || true
+        cp tools/makedep/makedep ../wine-tools/
+        cp tools/winebuild/winebuild ../wine-tools/
+        cp tools/widl/widl ../wine-tools/
+        cp tools/wrc/wrc ../wine-tools/
+        cp tools/wmc/wmc ../wine-tools/
 
-    # 6) Configure Wine cross‑compile
-    - name: Configure Wine
+    # 9) Configure Wine
+    - name: Configure Wine cross‑compile
       run: |
         set -euxo pipefail
         export PATH="$PWD/llvm-mingw/bin:$PATH"
@@ -109,129 +189,70 @@ jobs:
           --with-alsa \
           --with-pulse
 
-    # 7) Build Wine
+    # 10) Build Wine
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-cross
         make -j"$(nproc)"
 
-    # 8) Install Wine
+    # 11) Install Wine
     - name: Install Wine
       run: |
         set -euxo pipefail
         cd wine-cross
         DESTDIR="$PWD/install" make install
 
-    # 9) Download external WCP components
-    - name: Download external libs
+    # 12) Download external libs
+    - name: Download WCP extras
       run: |
         set -euxo pipefail
-        mkdir -p extra_wcp
-        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp" -O extra_wcp/FEXCore.wcp
-        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp" -O extra_wcp/DXVK.wcp
-        wget -q "https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp" -O extra_wcp/VKD3D.wcp
-        wget -q "https://github.com/StevenMXZ/freedreno_turnip-CI/releases/download/v26.1/Turnip_v26.1.0.zip" -O extra_wcp/Turnip.zip
+        mkdir -p wcp_extra
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore/FEXCore-2601.wcp -O wcp_extra/FEXCore.wcp
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/DXVK-GPLASYNC-ARM64EC/dxvk-gplasync-arm64ec-2.7.1-1.wcp -O wcp_extra/DXVK.wcp
+        wget -q https://github.com/Arihany/WinlatorWCPHub/releases/download/VKD3D-PROTON-ARM64EC/vkd3d-proton-arm64ec-3.0b.wcp -O wcp_extra/VKD3D.wcp
+        wget -q https://github.com/StevenMXZ/freedreno_turnip-CI/releases/download/v26.1/Turnip_v26.1.0.zip -O wcp_extra/Turnip.zip
 
-    # 10) Package WCP
+    # 13) Package WCP
     - name: Package WCP
       run: |
         set -euxo pipefail
         cd wine-cross
-        DESTDIR=$PWD/install make install
+        DESTDIR="$PWD/install" make install
         cd install
-
-        mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share/wine,share/applications,share/man}
-
-        cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
-        cd wcp/bin && ln -sf wine64 wine || true
-        cd ../..
-
-        cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ 2>/dev/null || cp -a usr/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ || true
-        cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ 2>/dev/null || cp -a usr/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ || true
-
-        for P in ../extra_wcp/*; do
-          mkdir unpack
-          if [[ "$P" == *.zip ]]; then
-            unzip -q "$P" -d unpack
-          else
-            tar -xJf "$P" -C unpack
-          fi
-          cp -a unpack/* wcp/ || true
-          rm -rf unpack
+        mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share}
+        cp -a usr/local/bin/* wcp/bin/
+        cd wcp/bin && ln -sf wine64 wine
+        cd ..
+        cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/
+        cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/
+        for P in ../wcp_extra/*; do
+          mkdir /tmp/unp
+          if [[ "$P" == *.zip ]]; then unzip -q "$P" -d /tmp/unp; else tar -xJf "$P" -C /tmp/unp; fi
+          cp -a /tmp/unp/* wcp/
+          rm -rf /tmp/unp
         done
-
-        cp -a usr/local/share/wine/* wcp/share/wine/ 2>/dev/null || cp -a usr/share/wine/* wcp/share/wine/ || true
-        cp -a usr/local/share/applications/* wcp/share/applications/ 2>/dev/null || cp -a usr/share/applications/* wcp/share/applications/ || true
-        cp -a usr/local/share/man/* wcp/share/man/ 2>/dev/null || cp -a usr/share/man/* wcp/share/man/ || true
-
-        find wcp/bin -type f -exec chmod +x {} +
-        find wcp/lib/wine/aarch64-unix -type f -exec chmod +x {} +
-
-        cat > wcp/profile.json << "JSON"
+        cat > wcp/profile.json << "EOF"
         {
-          "name": "wine-11.1-staging",
-          "displayName": "Wine 11.1 Staging ARM64EC (FEXCore)",
+          "name": "wine-11.1-staging-tkg-arm64ec",
+          "displayName": "Wine 11.1 Staging‑TkG ARM64EC (FEXCore + esync/fsync)",
           "version": "11.1",
-          "description": "Wine 11.1 Staging with FEXCore + DXVK + VKD3D + Turnip for ARM64EC",
           "arch": "arm64",
-          "variant": "staging",
-          "type": "wine",
-          "features": [
-            "staging",
-            "fexcore",
-            "vulkan",
-            "dxvk",
-            "vkd3d"
-          ],
-          "paths": {
-            "bin": "bin/",
-            "lib": "lib/wine/",
-            "share": "share/"
-          }
+          "features": ["staging","tkg","esync","fsync","vulkan","dxvk","vkd3d"],
+          "paths": {"bin":"bin/","lib":"lib/wine/","share":"share/"}
         }
-        JSON
-
-        cat > wcp/env.sh << "SH"
+        EOF
+        cat > wcp/env.sh << "EOF"
         #!/bin/sh
         export WINEDEBUG=-all
         export WINEESYNC=1
         export WINEFSYNC=1
-
-        FEXCORE_PROFILE="${FEXCORE_PROFILE:-balanced}"
-        case "$FEXCORE_PROFILE" in
-          balanced)
-            export FEXCORE_TSO=1
-            export FEXCORE_X87REDUCEDPRECISION=1
-            export FEXCORE_MULTIBLOCK=0
-            export FEXCORE_MEMCPYSETTSO=0
-            export FEXCORE_VECTORTSO=0
-            export FEXCORE_HALFBARRIERTSO=1
-            ;;
-          performance)
-            export FEXCORE_TSO=2
-            export FEXCORE_X87REDUCEDPRECISION=1
-            export FEXCORE_MULTIBLOCK=1
-            export FEXCORE_MEMCPYSETTSO=0
-            export FEXCORE_VECTORTSO=0
-            export FEXCORE_HALFBARRIERTSO=1
-            ;;
-          extreme)
-            export FEXCORE_TSO=2
-            export FEXCORE_X87REDUCEDPRECISION=0
-            export FEXCORE_MULTIBLOCK=1
-            export FEXCORE_MEMCPYSETTSO=1
-            export FEXCORE_VECTORTSO=1
-            export FEXCORE_HALFBARRIERTSO=1
-            ;;
-        esac
-        SH
+        EOF
         chmod +x wcp/env.sh
-
-        tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging.wcp -C wcp .
+        tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging-tkg-arm64ec.wcp -C wcp .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: wine-11.1-staging
-        path: wine-11.1-staging.wcp
+        name: wine-11.1-staging-tkg-arm64ec
+        path: wine-11.1-staging-tkg-arm64ec.wcp
