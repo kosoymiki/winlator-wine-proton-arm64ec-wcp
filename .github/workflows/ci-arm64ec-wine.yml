@@ -23,11 +23,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    # 2) Install dependencies (ARM only, no i386)
+    # 2) Install dependencies (ARM only)
     - name: Install dependencies
       run: |
         set -euxo pipefail
-        # Update repo
         sudo apt update
         sudo apt install -y --no-install-recommends \
           build-essential git wget curl python3 perl gettext \
@@ -68,7 +67,7 @@ jobs:
         arm64ec-w64-mingw32-clang --version
         arm64ec-w64-mingw32-clang++ --version
 
-    # 4) Clone Wine & Wine Staging, apply patches
+    # 4) Clone Wine & Wine Staging
     - name: Clone Wine & Staging
       run: |
         set -euxo pipefail
@@ -80,7 +79,7 @@ jobs:
         set -euxo pipefail
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
 
-    # 5) Build wine-tools (native)
+    # 5) Build wine-tools (native, minimal flags)
     - name: Build wine-tools natively
       run: |
         set -euxo pipefail
@@ -88,16 +87,12 @@ jobs:
         cd wine-tools-build
 
         ../wine/configure \
-          --disable-tests \
-          --disable-win16 \
           --enable-tools \
-          --with-freetype \
-          --with-fontconfig
+          --disable-tests \
+          --disable-win16
 
-        # Build all tools (may build some wine parts as deps)
         make -j"$(nproc)"
 
-        # Copy only the tool binaries
         mkdir -p ../wine-tools
         cp tools/makedep/makedep       ../wine-tools/ || true
         cp tools/winebuild/winebuild   ../wine-tools/ || true
@@ -105,7 +100,18 @@ jobs:
         cp tools/wrc/wrc               ../wine-tools/ || true
         cp tools/wmc/wmc               ../wine-tools/ || true
 
-    # 6) Configure Wine for cross compile
+    # 6) Verify wine-tools exist
+    - name: Check wine-tools
+      run: |
+        set -euxo pipefail
+        for tool in makedep winebuild widl wrc wmc; do
+          if [ ! -x "wine-tools/$tool" ]; then
+            echo "ERROR: wine-tools/$tool not found or not executable"
+            exit 1
+          fi
+        done
+
+    # 7) Configure Wine (cross compile)
     - name: Configure Wine (cross compile)
       run: |
         set -euxo pipefail
@@ -133,21 +139,21 @@ jobs:
           --with-alsa \
           --with-pulse
 
-    # 7) Build Wine
+    # 8) Build Wine
     - name: Build Wine
       run: |
         set -euxo pipefail
         cd wine-cross-build
         make -j"$(nproc)"
 
-    # 8) Install Wine
+    # 9) Install Wine
     - name: Install Wine
       run: |
         set -euxo pipefail
         cd wine-cross-build
         DESTDIR="$PWD/wine-install" make install
 
-    # 9) Package PHAT WCP
+    # 10) Package PHAT wcp
     - name: Package PHAT wcp
       run: |
         set -euxo pipefail
