@@ -90,13 +90,12 @@ jobs:
         set -euxo pipefail
         ROOT="$(pwd)"
 
-        # Перейти в исходники Wine
         cd wine
 
-        # Полная генерация autotools для wine и всех поддиректорий
+        # 1) Autotools генерация для Wine (host/native)
         autoreconf -fiv
 
-        # Настроить корневой Makefile с явной поддержкой инструментов
+        # 2) Полная конфигурация для wine‑tools (host build)
         ./configure \
           --disable-tests \
           --disable-win16 \
@@ -104,27 +103,22 @@ jobs:
           --with-freetype \
           --with-fontconfig
 
-        # Убедиться, что Makefile реально содержит правила для инструментов
-        grep -R "tools/makedep/makedep" Makefile || true
-
-        # Построить инструменты
+        # 3) Собрать только инструменты
         make -j"$(nproc)" tools/winebuild/winebuild \
                          tools/widl/widl \
                          tools/wrc/wrc \
                          tools/wmc/wmc \
                          tools/makedep/makedep
 
-        # Создать директорию для wine-tools
-        mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,wmc,makedep}
+        # 4) Установить wine-tools в отдельную директорию
+        WORKTOOLS="$ROOT/wine-tools"
+        mkdir -p "$WORKTOOLS/tools"
+        cp tools/winebuild/winebuild "$WORKTOOLS/tools/"
+        cp tools/widl/widl           "$WORKTOOLS/tools/"
+        cp tools/wrc/wrc             "$WORKTOOLS/tools/"
+        cp tools/wmc/wmc             "$WORKTOOLS/tools/"
+        cp tools/makedep/makedep     "$WORKTOOLS/tools/"
 
-        # Скопировать бинарники инструментов туда
-        cp tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild/"
-        cp tools/widl/widl           "$ROOT/wine-tools/tools/widl/"
-        cp tools/wrc/wrc             "$ROOT/wine-tools/tools/wrc/"
-        cp tools/wmc/wmc             "$ROOT/wine-tools/tools/wmc/"
-        cp tools/makedep/makedep     "$ROOT/wine-tools/tools/makedep/"
-
-      
     - name: Configure Wine (cross ARM64EC)
       run: |
         set -euxo pipefail
@@ -135,13 +129,15 @@ jobs:
         mkdir wine-build
         cd wine-build
 
-        # Set cross compilers explicitly
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
 
+        # 1) Указать wine-tools, собранные ранее
         "$ROOT/wine/configure" \
           --prefix=/usr \
           --with-wine-tools="$ROOT/wine-tools" \
+          --host=arm64ec-w64-mingw32 \
+          --sysroot="$ROOT/llvm-mingw/aarch64-unknown-linux-gnu" \
           --enable-win64 \
           --enable-wow64 \
           --enable-archs=arm64ec,aarch64 \
