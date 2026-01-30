@@ -199,22 +199,22 @@ jobs:
         export HOST=arm64ec-w64-mingw32
         export CC=arm64ec-w64-mingw32-clang
         export CXX=arm64ec-w64-mingw32-clang++
+
         ../wine/configure \
-          --build=$BUILD \
-          --host=$HOST \
-          --with-mingw=clang \
-          --with-wine-tools="$PWD/../wine-tools" \
-          --prefix=/usr \
-          --sysroot="$PWD/../llvm-mingw/aarch64-unknown-linux-gnu" \
-          --enable-win64 \
-          --enable-wow64 \
-          --enable-archs=arm64ec,aarch64,i386 \
-          --disable-tests \
-          --with-freetype \
-          --with-fontconfig \
-          --with-dbus \
-          --with-alsa \
-          --with-pulse
+        --build=$BUILD \
+        --host=$HOST \
+        --with-mingw=clang \
+        --with-wine-tools="$PWD/../wine-tools" \
+        --prefix=/usr \
+        --enable-win64 \
+        --enable-wow64 \
+        --enable-archs=arm64ec,aarch64,i386 \
+        --disable-tests \
+        --with-freetype \
+        --with-fontconfig \
+        --with-dbus \
+        --with-alsa \
+        --with-pulse
 
     # 10) Build Wine
     - name: Build Wine
