@@ -56,12 +56,13 @@ jobs:
         rm -f "$ASSET"
         echo "$ROOT/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-    # 4) Clone Wine & patch
+    # 4) Clone Wine & apply staging patches
     - name: Clone Wine & Staging
       run: |
         set -euxo pipefail
         git clone https://gitlab.winehq.org/wine/wine.git wine
         git clone https://gitlab.winehq.org/wine/wine-staging.git wine-staging
+
     - name: Apply staging patches
       run: |
         set -euxo pipefail
@@ -72,7 +73,7 @@ jobs:
       run: |
         set -euxo pipefail
         mkdir wine-tools-build && cd wine-tools-build
-        ../wine/configure --enable-tools --disable-tests --disable-win16 --enable-archs=aarch64,win32
+        ../wine/configure --enable-tools --disable-tests --disable-win16 --enable-archs=aarch64,i386
         make -j"$(nproc)"
         mkdir -p ../wine-tools
         cp tools/makedep/makedep ../wine-tools/ || true
@@ -81,7 +82,7 @@ jobs:
         cp tools/wrc/wrc ../wine-tools/ || true
         cp tools/wmc/wmc ../wine-tools/ || true
 
-    # 6) Configure Wine cross
+    # 6) Configure Wine cross‑compile
     - name: Configure Wine
       run: |
         set -euxo pipefail
@@ -139,9 +140,9 @@ jobs:
         cd wine-cross
         DESTDIR=$PWD/install make install
         cd install
+
         mkdir -p wcp/{bin,lib/wine/aarch64-windows,lib/wine/aarch64-unix,share/wine,share/applications,share/man}
 
-        # Wine binaries
         cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
         cd wcp/bin && ln -sf wine64 wine || true
         cd ../..
@@ -149,7 +150,6 @@ jobs:
         cp -a usr/local/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ 2>/dev/null || cp -a usr/lib/wine/*.dll wcp/lib/wine/aarch64-windows/ || true
         cp -a usr/local/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ 2>/dev/null || cp -a usr/lib/wine/*.so* wcp/lib/wine/aarch64-unix/ || true
 
-        # Merge external libs
         for P in ../extra_wcp/*; do
           mkdir unpack
           if [[ "$P" == *.zip ]]; then
@@ -161,17 +161,14 @@ jobs:
           rm -rf unpack
         done
 
-        # Shared data
         cp -a usr/local/share/wine/* wcp/share/wine/ 2>/dev/null || cp -a usr/share/wine/* wcp/share/wine/ || true
         cp -a usr/local/share/applications/* wcp/share/applications/ 2>/dev/null || cp -a usr/share/applications/* wcp/share/applications/ || true
         cp -a usr/local/share/man/* wcp/share/man/ 2>/dev/null || cp -a usr/share/man/* wcp/share/man/ || true
 
-        # Fix permissions
         find wcp/bin -type f -exec chmod +x {} +
         find wcp/lib/wine/aarch64-unix -type f -exec chmod +x {} +
 
-        # Profile metadata
-        cat > wcp/profile.json << 'JSON'
+        cat > wcp/profile.json << "JSON"
         {
           "name": "wine-11.1-staging",
           "displayName": "Wine 11.1 Staging ARM64EC (FEXCore)",
@@ -195,15 +192,13 @@ jobs:
         }
         JSON
 
-        # Smart env with profiles
-        cat > wcp/env.sh << 'SH'
+        cat > wcp/env.sh << "SH"
         #!/bin/sh
         export WINEDEBUG=-all
         export WINEESYNC=1
         export WINEFSYNC=1
 
         FEXCORE_PROFILE="${FEXCORE_PROFILE:-balanced}"
-        echo "=== FEXCore Profile: $FEXCORE_PROFILE ==="
         case "$FEXCORE_PROFILE" in
           balanced)
             export FEXCORE_TSO=1
@@ -230,17 +225,11 @@ jobs:
             export FEXCORE_HALFBARRIERTSO=1
             ;;
         esac
-
-        echo "FEXCORE_TSO=$FEXCORE_TSO"
-        echo "FEXCORE_X87REDUCEDPRECISION=$FEXCORE_X87REDUCEDPRECISION"
-        echo "FEXCORE_MULTIBLOCK=$FEXCORE_MULTIBLOCK"
-        echo "FEXCORE_MEMCPYSETTSO=$FEXCORE_MEMCPYSETTSO"
-        echo "FEXCORE_VECTORTSO=$FEXCORE_VECTORTSO"
-        echo "FEXCORE_HALFBARRIERTSO=$FEXCORE_HALFBARRIERTSO"
         SH
         chmod +x wcp/env.sh
 
         tar -cJf $GITHUB_WORKSPACE/wine-11.1-staging.wcp -C wcp .
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
