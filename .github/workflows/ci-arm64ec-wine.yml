@@ -80,25 +80,48 @@ jobs:
         python3 wine-staging/staging/patchinstall.py -d wine -a --no-autoconf
 
     # 5) Build wine-tools (native, minimal flags)
+    # 5) Build wine-tools (native, minimal flags)
     - name: Build wine-tools natively
       run: |
         set -euxo pipefail
+
+        # Перейти в исходники Wine
+        cd wine
+
+        # Подготовка autotools — ядро, subdirs и скрипты
+        autoreconf -fiv
+
+        # Генерация необходимых файлов в tools/
+        ./tools/make_requests
+
+        # Очистка старых билд‑папок
+        rm -rf wine-tools-build wine-tools
         mkdir wine-tools-build
+        mkdir -p wine-tools
+
         cd wine-tools-build
 
-        ../wine/configure \
-          --enable-tools \
-          --disable-tests \
-          --disable-win16
+        # Configure только для сборки утилит
+        ../configure \
+        --disable-tests \
+        --disable-win16 \
+        --with-freetype \
+        --with-fontconfig
 
-        make -j"$(nproc)"
+        # Собрать **все инструменты** через make‑цели
+        make -j"$(nproc)" \
+        tools/winebuild/winebuild \
+        tools/widl/widl \
+        tools/wrc/wrc \
+        tools/wmc/wmc \
+        tools/makedep/makedep
 
-        mkdir -p ../wine-tools
-        cp tools/makedep/makedep       ../wine-tools/ || true
-        cp tools/winebuild/winebuild   ../wine-tools/ || true
-        cp tools/widl/widl             ../wine-tools/ || true
-        cp tools/wrc/wrc               ../wine-tools/ || true
-        cp tools/wmc/wmc               ../wine-tools/ || true
+        # Копирование всех инструментов в единый каталог wine-tools
+        cp tools/winebuild/winebuild   ../wine-tools/
+        cp tools/widl/widl             ../wine-tools/
+        cp tools/wrc/wrc               ../wine-tools/
+        cp tools/wmc/wmc               ../wine-tools/
+        cp tools/makedep/makedep       ../wine-tools/
 
     # 6) Verify wine-tools exist
     - name: Check wine-tools
