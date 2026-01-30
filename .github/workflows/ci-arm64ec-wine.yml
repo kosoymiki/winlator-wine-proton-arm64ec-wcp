@@ -89,35 +89,42 @@ jobs:
       run: |
         set -euxo pipefail
         ROOT="$(pwd)"
+
+        # Перейти в исходники Wine
         cd wine
 
-        # Generate autotools for wine and all subdirs
+        # Полная генерация autotools для wine и всех поддиректорий
         autoreconf -fiv
 
-        # Build tools in isolation
-        rm -rf tools-build
-        mkdir tools-build
-        cd tools-build
-
-        ../configure \
+        # Настроить корневой Makefile с явной поддержкой инструментов
+        ./configure \
           --disable-tests \
           --disable-win16 \
+          --enable-tools \
           --with-freetype \
           --with-fontconfig
 
-        # Build all required tools including makedep
-        make -j"$(nproc)" tools/winebuild/winebuild
-        make -j"$(nproc)" tools/widl/widl tools/wrc/wrc tools/wmc/wmc tools/makedep/makedep
+        # Убедиться, что Makefile реально содержит правила для инструментов
+        grep -R "tools/makedep/makedep" Makefile || true
 
-        # Install into wine-tools layout
-        mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,winegcc,wmc,makedep}
+        # Построить инструменты
+        make -j"$(nproc)" tools/winebuild/winebuild \
+                         tools/widl/widl \
+                         tools/wrc/wrc \
+                         tools/wmc/wmc \
+                         tools/makedep/makedep
 
+        # Создать директорию для wine-tools
+        mkdir -p "$ROOT/wine-tools/tools"/{winebuild,widl,wrc,wmc,makedep}
+
+        # Скопировать бинарники инструментов туда
         cp tools/winebuild/winebuild "$ROOT/wine-tools/tools/winebuild/"
         cp tools/widl/widl           "$ROOT/wine-tools/tools/widl/"
         cp tools/wrc/wrc             "$ROOT/wine-tools/tools/wrc/"
         cp tools/wmc/wmc             "$ROOT/wine-tools/tools/wmc/"
         cp tools/makedep/makedep     "$ROOT/wine-tools/tools/makedep/"
 
+      
     - name: Configure Wine (cross ARM64EC)
       run: |
         set -euxo pipefail
