@@ -189,17 +189,26 @@ jobs:
 
         cd ..
 
-    # 9) Configure Wine cross‑compile
+    # 9) Configure Wine cross‑compile (fixed ARM64EC toolchain)
     - name: Configure Wine cross‑compile
       run: |
         set -euxo pipefail
-        export PATH="$PWD/llvm-mingw/bin:$PATH"
-        mkdir wine-cross && cd wine-cross
-        export BUILD=aarch64-linux-gnu
-        export HOST=arm64ec-w64-mingw32
-        export CC=arm64ec-w64-mingw32-clang
-        export CXX=arm64ec-w64-mingw32-clang++
 
+        export PATH="$PWD/llvm-mingw/bin:$PATH"
+
+        mkdir wine-cross && cd wine-cross
+
+        export BUILD=aarch64-linux-gnu
+        # use aarch64-w64-mingw32 tools from llvm-mingw
+        export HOST=aarch64-w64-mingw32
+        export CC=aarch64-w64-mingw32-clang
+        export CXX=aarch64-w64-mingw32-clang++
+        export AR=aarch64-w64-mingw32-ar
+        export RANLIB=aarch64-w64-mingw32-ranlib
+        export LD=aarch64-w64-mingw32-lld
+        export RC=aarch64-w64-mingw32-windres
+
+        # configure Wine for ARM64EC + aarch64 + i386
         ../wine/configure \
         --build=$BUILD \
         --host=$HOST \
