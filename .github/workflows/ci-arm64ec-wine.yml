@@ -32,14 +32,23 @@ jobs:
         set -euxo pipefail
         sudo apt update
         sudo apt install -y --no-install-recommends \
-          autoconf automake bash bison build-essential cmake curl \
-          git gettext libasound2-dev libdbus-1-dev libfontconfig-dev \
-          libfreetype-dev libgl-dev libgnutls28-dev libpciaccess-dev \
-          libpulse-dev libudev-dev libusb-1.0-0-dev libv4l-dev \
-          libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
-          libxi-dev libxrandr-dev libxrender-dev pkgconf \
-          python3 python3-pip patchutils perl ninja-build meson flex \
-          llvm lld unzip zip wget xz-utils libvulkan-dev
+        build-essential autoconf automake libtool pkg-config python3 python3-pip \
+        git gettext flex bison ninja-build cmake \
+        libasound2-dev libpulse-dev libv4l-dev libgl-dev \
+        libx11-dev libxext-dev libxfixes-dev libxi-dev libxrandr-dev \
+        libxrender-dev libxinerama-dev \
+        libfontconfig-dev libfreetype-dev libgnutls28-dev \
+        libdbus-1-dev libsdl2-dev libvulkan-dev \
+        libjpeg-dev libpng-dev libxml2-dev libudev-dev \
+        libusb-1.0-0-dev libldap2-dev
+
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        sudo apt install -y \
+        libc6:i386 libdbus-1-dev:i386 libpulse-dev:i386 \
+        libv4l-dev:i386 libsdl2-dev:i386 libx11-dev:i386 \
+        libxext-dev:i386 libxrandr-dev:i386 \
+        libfontconfig-dev:i386 libvulkan-dev:i386
 
     ###################################################
     # 3) LLVM-mingw (Cross toolchain)
