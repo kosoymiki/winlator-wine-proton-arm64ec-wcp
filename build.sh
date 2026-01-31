@@ -37,11 +37,10 @@ export RANLIB=${TOOLCHAIN}-ranlib
 export WINDRES=${TOOLCHAIN}-windres
 
 # Ensure variables exist for 'set -u'
-export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
+export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
-export CFLAGS="-I$PREFIX_DEPS/include${CFLAGS:+ }$CFLAGS"
-export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS:+ }$LDFLAGS"
-
+export CFLAGS="-I$PREFIX_DEPS/include${CFLAGS+: }${CFLAGS:-}"
+export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS+: }${LDFLAGS:-}"
 #####################################
 # 1) Core deps
 #####################################
