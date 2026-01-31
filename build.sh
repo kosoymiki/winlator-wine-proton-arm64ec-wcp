@@ -20,7 +20,8 @@ sudo apt install -y --no-install-recommends \
   libudev-dev libusb-1.0-0-dev libldap2-dev \
   libxkbcommon-dev libxv-dev libxxf86vm-dev \
   libxcursor-dev libxss-dev \
-  libvulkan-dev llvm clang lld
+  libvulkan-dev llvm clang lld \
+  p11‑kit
   
 fi
 
