@@ -2,9 +2,8 @@
 set -euxo pipefail
 
 #####################################
-# Prereqs (for local build/CI)
+# Install host deps (optional)
 #####################################
-# Try apt install if available
 if command -v sudo &>/dev/null && command -v apt &>/dev/null; then
     sudo apt update
     sudo apt install -y --no-install-recommends \
@@ -24,7 +23,7 @@ if command -v sudo &>/dev/null && command -v apt &>/dev/null; then
 fi
 
 #####################################
-# Configure environment
+# Configure env
 #####################################
 PREFIX_DEPS="${PWD}/deps/install"
 mkdir -p "$PREFIX_DEPS"/{lib/pkgconfig,include,bin}
@@ -36,10 +35,12 @@ export CXX=${TOOLCHAIN}-clang++
 export AR=${TOOLCHAIN}-ar
 export RANLIB=${TOOLCHAIN}-ranlib
 export WINDRES=${TOOLCHAIN}-windres
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+# Ensure variables exist for 'set -u'
+export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig${PKG_CONFIG_PATH:+:}$PKG_CONFIG_PATH"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
-export CFLAGS="-I$PREFIX_DEPS/include $CFLAGS"
-export LDFLAGS="-L$PREFIX_DEPS/lib $LDFLAGS"
+export CFLAGS="-I$PREFIX_DEPS/include${CFLAGS:+ }$CFLAGS"
+export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS:+ }$LDFLAGS"
 
 #####################################
 # 1) Core deps
@@ -79,7 +80,8 @@ mkdir -p build && cd build
 ../configure --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" LDFLAGS="-L$PREFIX_DEPS/lib"
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
 make -j"$(nproc)" && make install
 cd ../..
 
@@ -89,7 +91,8 @@ cd gnutls
 ./configure --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static --disable-doc \
-  CPPFLAGS="-I$PREFIX_DEPS/include" LDFLAGS="-L$PREFIX_DEPS/lib"
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
 make -j"$(nproc)" && make install
 cd ..
 
