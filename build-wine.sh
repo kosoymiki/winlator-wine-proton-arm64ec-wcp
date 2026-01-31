@@ -93,7 +93,7 @@ export LD=aarch64-w64-mingw32-lld
 export WINDRES=aarch64-w64-mingw32-windres
 export RANLIB=aarch64-w64-mingw32-ranlib
 
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
+export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
 export CFLAGS="-I$PREFIX_DEPS/include $CFLAGS"
 export LDFLAGS="-L$PREFIX_DEPS/lib $LDFLAGS"
