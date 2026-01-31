@@ -1,4 +1,4 @@
-name: Build Wine‑11.1 Staging‑tkg ARM64EC + Vulkan + inotify
+name: Build Wine‑11.1 Staging‑tkg ARM64EC + Fsync/Esync
 
 on:
   push:
@@ -18,15 +18,15 @@ jobs:
     steps:
 
     ###################################################
-    # 1) Checkout source
+    # 1) Checkout code
     ###################################################
-    - name: Checkout source
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     ###################################################
-    # 2) Install build dependencies
+    # 2) Install system dependencies
     ###################################################
     - name: Install build dependencies
       run: |
@@ -51,129 +51,121 @@ jobs:
         sudo rm -rf /var/lib/apt/lists/*
 
     ###################################################
-    # 3) Setup llvm-mingw cross toolchain
+    # 3) Setup llvm‑mingw cross toolchain
     ###################################################
-    - name: Setup llvm-mingw
+    - name: Setup llvm‑mingw
       run: |
         set -euxo pipefail
-
         TOOLCHAIN_VER="20260127"
         ARCHIVE="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${ARCHIVE}"
-        mkdir -p llvm-mingw
-        tar -xJf "$ARCHIVE" -C llvm-mingw --strip-components=1
-        echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
+        wget -q "https://github.com/mstorsjo/llvm‑mingw/releases/download/${TOOLCHAIN_VER}/${ARCHIVE}"
+        mkdir -p llvm‑mingw
+        tar -xJf "$ARCHIVE" -C llvm‑mingw --strip-components=1
+        echo "$PWD/llvm‑mingw/bin" >> "$GITHUB_PATH"
 
     ###################################################
-    # 4) Clone Wine & patches
+    # 4) Clone Wine & staging & wine‑tkg
     ###################################################
-    - name: Clone Wine & staging + tkg
+    - name: Clone Wine sources
       run: |
         set -euxo pipefail
-        git clone --depth 1 --branch wine-11.1 https://gitlab.winehq.org/wine/wine.git wine
-        git clone --depth 1 --branch v11.1 https://github.com/wine-staging/wine-staging.git wine-staging
-        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-git
+        git clone --depth 1 --branch wine‑11.1 https://gitlab.winehq.org/wine/wine.git wine
+        git clone --depth 1 --branch v11.1 https://github.com/wine‑staging/wine‑staging.git wine‑staging
+        git clone https://github.com/Frogging‑Family/wine‑tkg‑git.git wine‑tkg
 
     ###################################################
-    # 5) Apply Staging patches
+    # 5) Apply staging patches
     ###################################################
-    - name: Apply Staging patches
+    - name: Apply Wine‑Staging patches
       run: |
         set -euxo pipefail
         cd wine
-        python3 ../wine-staging/staging/patchinstall.py --all --destdir="$(pwd)"
+        python3 ../wine‑staging/staging/patchinstall.py --all --destdir="$(pwd)"
         cd ..
 
     ###################################################
-    # 6) Prepare wine-tkg structure
+    # 6) Prepare wine‑tkg patch structure
     ###################################################
-    - name: Prepare wine-tkg patche structure
+    - name: Prepare tkg patch layout & config
       run: |
         set -euxo pipefail
 
-        # copy tkg patch folders into wine
-        cp -r wine-tkg-git/wine-tkg-patches wine/
+        cd wine
 
-        # copy customization.cfg to root of tkg
-        mkdir -p wine/tkg-custom
-        cat > wine/tkg-custom/customization.cfg << 'EOF'
+        # copy all tkg patch folders
+        cp -r ../wine‑tkg/wine‑tkg‑git/wine‑tkg‑patches .
+
+        # generate customization.cfg with esync+fsync enabled
+        cat > wine‑tkg‑patches/customization.cfg << 'EOF'
         _use_staging="true"
         _use_esync="true"
         _use_fsync="true"
         _use_mono="false"
         _use_gecko="false"
         _use_vulkan="true"
-        _optimize_cflags="-O2 -march=armv8.6‑a"
-        _optimize_cxxflags="-O2 -march=armv8.6‑a"
+        _optimize_cflags="-O2 -march=armv8‑a"
+        _optimize_cxxflags="-O2 -march=armv8‑a"
         _EXTERNAL_INSTALL="false"
         EOF
 
-        # move config where tkg expects it
-        mv wine/tkg-custom/customization.cfg wine/wine-tkg-patches/customization.cfg
+    ###################################################
+    # 7) Use tkg prepare.sh to apply patches
+    ###################################################
+    - name: Apply wine‑tkg patches
+      run: |
+        set -euxo pipefail
+        cd wine
+        bash ../wine‑tkg/wine‑tkg‑git/wine‑tkg‑scripts/prepare.sh --no‑interactive
 
     ###################################################
-    # 7) Run prepare.sh (tkg patch apply)
+    # 8) Configure & build Wine with wine‑tools
     ###################################################
-    - name: Apply tkg patches
+    - name: Configure & cross compile Wine
       run: |
         set -euxo pipefail
 
         cd wine
 
-        # execute tkg build system patch insertion
-        bash ../wine-tkg-git/wine-tkg-scripts/prepare.sh --no-interactive
-
-    ###################################################
-    # 8) Configure & cross compile Wine
-    ###################################################
-    - name: Configure & Compile Wine
-      run: |
-        set -euxo pipefail
-
-        cd wine
-
-        # wine-tools build (native)
-        mkdir wine-tools-build
-        cd wine-tools-build
+        # build wine‑tools for cross‑compilation
+        mkdir wine‑tools‑build && cd wine‑tools‑build
         ../configure \
-          --enable-tools \
-          --disable-tests \
-          --disable-win16 \
-          --enable-archs=aarch64
-        make -j"$(nproc)"
+          --enable‑tools \
+          --disable‑tests \
+          --disable‑win16 \
+          --enable‑archs=aarch64
+        make ‑j"$(nproc)"
         cd ..
 
-        # cross compile
-        mkdir build
-        cd build
+        # configure Wine cross build
+        mkdir build && cd build
 
-        export BUILD=aarch64-linux-gnu
-        export HOST=aarch64-w64-mingw32
-        export CC=aarch64-w64-mingw32-clang
-        export CXX=aarch64-w64-mingw32-clang++
-        export AR=aarch64-w64-mingw32-ar
-        export LD=aarch64-w64-mingw32-lld
-        export RC=aarch64-w64-mingw32-windres
-        export RANLIB=aarch64-w64-mingw32-ranlib
+        export BUILD=aarch64‑linux‑gnu
+        export HOST=aarch64‑w64‑mingw32
+        export CC=aarch64‑w64‑mingw32‑clang
+        export CXX=aarch64‑w64‑mingw32‑clang++
+        export AR=aarch64‑w64‑mingw32‑ar
+        export LD=aarch64‑w64‑mingw32‑lld
+        export RC=aarch64‑w64‑mingw32‑windres
+        export RANLIB=aarch64‑w64‑mingw32‑ranlib
 
         ../configure \
           --build="$BUILD" \
           --host="$HOST" \
-          --with-mingw=clang \
-          --with-wine-tools="../wine-tools-build" \
+          --with‑mingw=clang \
+          --with‑wine‑tools="../wine‑tools‑build" \
           --prefix=/usr \
-          --enable-win64 \
-          --enable-wow64 \
-          --enable-archs=arm64ec,aarch64 \
-          --disable-tests \
-          --without-mono \
-          --without-gecko \
-          --with-freetype \
-          --with-fontconfig \
-          --with-alsa \
-          --with-pulse \
-          --with-vulkan
-        make -j"$(nproc)"
+          --enable‑win64 \
+          --enable‑wow64 \
+          --enable‑archs=arm64ec,aarch64 \
+          --disable‑tests \
+          --without‑mono \
+          --without‑gecko \
+          --with‑freetype \
+          --with‑fontconfig \
+          --with‑alsa \
+          --with‑pulse \
+          --with‑vulkan
+        make ‑j"$(nproc)"
 
     ###################################################
     # 9) Build DXVK
@@ -186,7 +178,7 @@ jobs:
         git submodule update --init --recursive
         pip3 install meson ninja
         meson setup build \
-          --cross-file=../wine/build/config/meson.cross.arm64ec.ini \
+          --cross‑file=../wine/build/config/meson.cross.arm64ec.ini \
           --prefix=/usr -Dbuild_tests=false
         ninja -C build && ninja -C build install
 
@@ -196,28 +188,29 @@ jobs:
     - name: Build VKD3D‑Proton
       run: |
         set -euxo pipefail
-        git clone https://github.com/HansKristian-Work/vkd3d-proton.git vkd3d
+        git clone https://github.com/HansKristian‑Work/vkd3d‑proton.git vkd3d
         cd vkd3d
         git submodule update --init --recursive
         meson setup build \
-          --cross-file=../wine/build/config/meson.cross.arm64ec.ini \
+          --cross‑file=../wine/build/config/meson.cross.arm64ec.ini \
           --prefix=/usr -Dbuild_tests=false
         ninja -C build && ninja -C build install
 
     ###################################################
-    # 11) Package WCP
+    # 11) Package .wcp for Winlator
     ###################################################
-    - name: Package WCP
+    - name: Package .wcp
       run: |
         set -euxo pipefail
         cd wine/build
         DESTDIR=$PWD/install make install
         cd install
-        mkdir -p wcp/{bin,lib/wine,share}
+        mkdir -p wcp/{bin,lib,wine,share}
 
         cp -a usr/bin/* wcp/bin/ 2>/dev/null || true
         cp -a usr/lib/wine/* wcp/lib/wine/ 2>/dev/null || true
         cp -a usr/share/* wcp/share/ 2>/dev/null || true
+
         cd wcp/bin && ln -sf wine64 wine && cd ../..
 
         find bin -type f -exec chmod +x {} +
@@ -225,8 +218,8 @@ jobs:
 
         cat > profile.json << 'EOF'
         {
-          "id": "wine-11.1-staging-tkg-arm64ec",
-          "name": "Wine 11.1 Staging‑tkg Arm64EC",
+          "id": "wine‑11.1‑staging‑tkg‑arm64ec",
+          "name": "Wine 11.1 Staging‑tkg ARM64EC",
           "version": "11.1",
           "arch": "arm64ec",
           "files": {
@@ -236,13 +229,14 @@ jobs:
           }
         }
         EOF
-        tar -cJf "$GITHUB_WORKSPACE/wine-11.1-staging-tkg-arm64ec.wcp" profile.json wcp
+
+        tar -cJf "$GITHUB_WORKSPACE/wine‑11.1‑staging‑tkg‑arm64ec.wcp" profile.json wcp
 
     ###################################################
     # 12) Upload artifact
     ###################################################
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload‑artifact@v4
       with:
-        name: wine-tkg-arm64ec-wcp
-        path: wine-11.1-staging-tkg-arm64ec.wcp
+        name: wine‑tkg‑arm64ec‑wcp
+        path: wine‑11.1‑staging‑tkg‑arm64ec.wcp
