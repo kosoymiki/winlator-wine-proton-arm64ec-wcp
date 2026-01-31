@@ -96,18 +96,18 @@ cd ..
 git clone --depth=1 https://git.savannah.gnu.org/git/freetype/freetype2.git freetype2
 cd freetype2
 
-# generate configure scripts
-autoreconf -fi
-
-./configure \
-  --host="${TOOLCHAIN}" \
-  --prefix="${PREFIX_DEPS}" \
-  --disable-shared --enable-static \
-  CPPFLAGS="-I${PREFIX_DEPS}/include" \
-  LDFLAGS="-L${PREFIX_DEPS}/lib"
-
-make -j"$(nproc)" && make install
-cd ..
+mkdir build && cd build
+cmake \
+  -DCMAKE_SYSTEM_NAME=Windows \
+  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+  ..
+cmake --build . --parallel "$(nproc)" && cmake --install .
+cd ../..
 
 #####################################
 # gnutls
