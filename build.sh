@@ -116,16 +116,13 @@ cd ../..
 git clone --depth=1 https://gitlab.com/gnutls/gnutls.git gnutls
 cd gnutls
 
-# init submodules (nettle, libtasn1, unistring и др.)
+# init submodules (nettle, libtasn1, gnulib, etc.)
 git submodule update --init --recursive
 
-# generate autotools files
-./bootstrap \
-  --disable-doc \
-  --disable-tests \
-  --only-tools
+# generate Autotools files (no args)
+./bootstrap
 
-# configure build
+# configure
 ./configure \
   --host="${TOOLCHAIN}" \
   --prefix="${PREFIX_DEPS}" \
@@ -133,13 +130,13 @@ git submodule update --init --recursive
   --enable-static \
   --with-included-unistring \
   --with-included-tasn1 \
-  --with-included-libtasn1 \
   --with-included-nettle \
   CPPFLAGS="-I${PREFIX_DEPS}/include" \
   LDFLAGS="-L${PREFIX_DEPS}/lib"
 
 # build & install
 make -j"$(nproc)" && make install
+
 cd ..
 
 #####################################
