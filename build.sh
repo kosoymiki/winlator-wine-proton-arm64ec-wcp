@@ -91,18 +91,23 @@ cmake --install build
 cd ..
 
 #####################################
-# freetype2
+# freetype2 from git (via autogen)
 #####################################
 git clone --depth=1 https://git.savannah.gnu.org/git/freetype/freetype2.git freetype2
 cd freetype2
-mkdir -p build && cd build
-../configure --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" \
+
+# generate configure scripts
+autoreconf -fi
+
+./configure \
+  --host="${TOOLCHAIN}" \
+  --prefix="${PREFIX_DEPS}" \
   --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  CPPFLAGS="-I${PREFIX_DEPS}/include" \
+  LDFLAGS="-L${PREFIX_DEPS}/lib"
+
 make -j"$(nproc)" && make install
-cd ../..
+cd ..
 
 #####################################
 # gnutls
