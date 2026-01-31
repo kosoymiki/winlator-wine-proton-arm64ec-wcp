@@ -131,12 +131,15 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# 7) libtasn1
+# libtasn1 (required for GnuTLS)
 #####################################
-wget -q https://download.savannah.gnu.org/releases/libtasn1/libtasn1-4.18.0.tar.gz \
-    -O libtasn1-4.18.0.tar.gz
-tar xf libtasn1-4.18.0.tar.gz
-cd libtasn1-4.18.0
+echo ">>> Cross‑compile libtasn1 (ASN.1 library)"
+
+wget -q https://ftp.gnu.org/gnu/libtasn1/libtasn1-4.21.0.tar.gz \
+    -O libtasn1-4.21.0.tar.gz
+tar xf libtasn1-4.21.0.tar.gz
+cd libtasn1-4.21.0
+
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
