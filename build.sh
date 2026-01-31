@@ -53,9 +53,19 @@ cd zlib
 make -j"$(nproc)" && make install
 cd ..
 
-# libpng (CMake build)
-git clone --depth=1 https://github.com/glennrp/libpng.git libpng
-cd libpng
+# libpng — official release (autotools)
+wget -q https://download.sourceforge.net/libpng/libpng-1.6.40.tar.xz
+tar xf libpng-1.6.40.tar.xz
+cd libpng-1.6.40
+
+./configure \
+  --host="$TOOLCHAIN" \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared --enable-static \
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
+make -j"$(nproc)" && make install
+cd ..
 
 # Generate a dedicated toolchain file
 cat > libpng.toolchain.cmake << 'EOF'
