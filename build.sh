@@ -102,30 +102,45 @@ cd freetype-2.14.1
 make -j"$(nproc)" && make install
 cd ..
 
-# Build GMP first
-git clone --depth=1 https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz gmp
-cd gmp
+#####################################
+# Build GMP from release tarball
+#####################################
+
+echo ">>> Cross‑compile GMP (needed for hogweed)"
+
+wget -q https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz -O gmp-6.3.0.tar.xz
+tar xf gmp-6.3.0.tar.xz
+cd gmp-6.3.0
+
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static
-make -j$(nproc) && make install
+  --disable-shared \
+  --enable-static \
+  --enable-cxx
+
+make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# Build nettle (release tarball)
+# Build Nettle + Hogweed with GMP support
 #####################################
 
-echo ">>> Cross‑compile nettle (release)"
+echo ">>> Cross‑compile Nettle (GMP support for hogweed)"
 
-wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
-tar xf nettle-3.10.2.tar.gz
-cd nettle-3.10.2
+git clone https://git.lysator.liu.se/nettle/nettle.git nettle
+cd nettle
 
+# Generate configure scripts
+./bootstrap
+
+# Configure with GMP support (so libhogweed will be built)
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
+  --disable-shared \
+  --enable-static \
+  --with-gmp \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
 
