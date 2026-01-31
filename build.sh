@@ -195,8 +195,6 @@ cd gnutls-3.8.0
 export ac_cv_func_asm_sha1_armv8=no
 export ac_cv_func_asm_aes_armv8=no
 
-rm -rf lib/accelerated/aarch64
-
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
@@ -207,6 +205,8 @@ rm -rf lib/accelerated/aarch64
   --without-p11-kit \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
+
+rm -rf lib/accelerated/aarch64
 
 make -j"$(nproc)" && make install
 cd ..
