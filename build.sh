@@ -151,16 +151,50 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# 8) libunistring
+# Generate pkg‑config file for libev
 #####################################
-wget -q https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz \
-    -O libunistring-1.1.tar.xz
+echo ">>> Generating pkg‑config file for libev"
+
+# Ensure pkgconfig directory exists
+mkdir -p "$PREFIX_DEPS/lib/pkgconfig"
+
+# Write libev.pc
+cat > "$PREFIX_DEPS/lib/pkgconfig/libev.pc" << 'EOF'
+prefix=${prefix}
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libev
+Description: high performance event loop library
+Version: 4.33
+Libs: -L${libdir} -lev
+Cflags: -I${includedir}
+EOF
+
+# Replace placeholder ${prefix} with real install prefix
+sed -i "s|\${prefix}|$PREFIX_DEPS|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
+sed -i "s|\${exec_prefix}|$PREFIX_DEPS|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
+
+# Verify
+echo "Generated libev.pc:"
+cat "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
+
+#####################################
+# libunistring (disable tests for cross)
+#####################################
+wget -q https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz -O libunistring-1.1.tar.xz
 tar xf libunistring-1.1.tar.xz
 cd libunistring-1.1
+
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static
+  --disable-shared --enable-static \
+  --disable-tests \
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
+
 make -j"$(nproc)" && make install
 cd ..
 
