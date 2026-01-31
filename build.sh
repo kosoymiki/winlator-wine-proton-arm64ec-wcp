@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 #####################################
-# Install host deps (optional)
+# Install host deps if possible
 #####################################
 if command -v sudo &>/dev/null && command -v apt &>/dev/null; then
     sudo apt update
@@ -26,7 +26,7 @@ fi
 # Configure env
 #####################################
 PREFIX_DEPS="${PWD}/deps/install"
-mkdir -p "$PREFIX_DEPS"/{lib/pkgconfig,include,bin}
+mkdir -p "$PREFIX_DEPS"/{bin,include,lib/pkgconfig}
 mkdir -p deps/build
 
 export TOOLCHAIN=aarch64-w64-mingw32
@@ -36,11 +36,12 @@ export AR=${TOOLCHAIN}-ar
 export RANLIB=${TOOLCHAIN}-ranlib
 export WINDRES=${TOOLCHAIN}-windres
 
-# Ensure variables exist for 'set -u'
+# safe init under set -u
 export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
 export CFLAGS="-I$PREFIX_DEPS/include${CFLAGS+: }${CFLAGS:-}"
 export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS+: }${LDFLAGS:-}"
+
 #####################################
 # 1) Core deps
 #####################################
@@ -52,27 +53,50 @@ cd zlib
 make -j"$(nproc)" && make install
 cd ..
 
+#####################################
+# libpng via CMake
+#####################################
 git clone --depth=1 https://github.com/glennrp/libpng.git libpng
 cd libpng
-./configure --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" LDFLAGS="-L$PREFIX_DEPS/lib"
-make -j"$(nproc)" && make install
-cd ..
 
+# toolchain file for libpng
+cat > png.toolchain.cmake << 'EOF'
+SET(CMAKE_SYSTEM_NAME Windows)
+SET(CMAKE_SYSTEM_PROCESSOR ARM64)
+SET(CMAKE_C_COMPILER "${CC}")
+SET(CMAKE_CXX_COMPILER "${CXX}")
+SET(CMAKE_FIND_ROOT_PATH "$PREFIX_DEPS")
+SET(CMAKE_PREFIX_PATH "$PREFIX_DEPS")
+SET(PKG_CONFIG_EXECUTABLE "pkg-config")
+SET(CMAKE_INSTALL_PREFIX "$PREFIX_DEPS")
+EOF
+
+mkdir -p build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE="../png.toolchain.cmake" \
+      -DPNG_SHARED=OFF -DPNG_STATIC=ON -DPNG_TESTS=OFF ..
+cmake --build . --parallel "$(nproc)"
+cmake --install .
+cd ../..
+
+#####################################
+# libjpeg‑turbo
+#####################################
 git clone --depth=1 https://github.com/libjpeg-turbo/libjpeg-turbo.git libjpeg
 cd libjpeg
 cmake -S . -B build \
-  -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DENABLE_SHARED=OFF -DENABLE_STATIC=ON
+      -DCMAKE_SYSTEM_NAME=Windows \
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DENABLE_SHARED=OFF -DENABLE_STATIC=ON
 cmake --build build --parallel "$(nproc)"
 cmake --install build
 cd ..
 
+#####################################
+# freetype2
+#####################################
 git clone --depth=1 https://git.savannah.gnu.org/git/freetype/freetype2.git freetype2
 cd freetype2
 mkdir -p build && cd build
@@ -84,6 +108,9 @@ mkdir -p build && cd build
 make -j"$(nproc)" && make install
 cd ../..
 
+#####################################
+# gnutls
+#####################################
 git clone --depth=1 https://gitlab.com/gnutls/gnutls.git gnutls
 cd gnutls
 ./bootstrap.sh
@@ -96,9 +123,10 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# 2) Extended deps
+# Extended deps
 #####################################
 
+# fontconfig
 git clone --depth=1 https://gitlab.freedesktop.org/fontconfig/fontconfig.git fontconfig
 cd fontconfig
 autoreconf -fi
@@ -107,6 +135,7 @@ autoreconf -fi
 make -j"$(nproc)" && make install
 cd ..
 
+# harfbuzz (meson)
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 cat > cross.ini << 'EOF'
@@ -116,7 +145,6 @@ cxx = '${CXX}'
 ar = '${AR}'
 ranlib = '${RANLIB}'
 pkgconfig = 'pkg-config'
-
 [host_machine]
 system = 'windows'
 cpu_family = 'aarch64'
@@ -129,83 +157,89 @@ meson setup build --cross-file=cross.ini \
 ninja -C build install
 cd ..
 
+# libxml2
 git clone --depth=1 https://gitlab.gnome.org/GNOME/libxml2.git libxml2
 cd libxml2
 mkdir -p build && cd build
-cat > cross_file.xml << 'EOF'
-<toolchain>
-  <c compiler='${CC}' />
-  <cxx compiler='${CXX}' />
-  <ar program='${AR}' />
-  <ranlib program='${RANLIB}' />
-</toolchain>
+cat > xml.toolchain.cmake << 'EOF'
+SET(CMAKE_SYSTEM_NAME Windows)
+SET(CMAKE_SYSTEM_PROCESSOR ARM64)
+SET(CMAKE_C_COMPILER "${CC}")
+SET(CMAKE_CXX_COMPILER "${CXX}")
+SET(CMAKE_FIND_ROOT_PATH "$PREFIX_DEPS")
+SET(CMAKE_PREFIX_PATH "$PREFIX_DEPS")
+SET(PKG_CONFIG_EXECUTABLE "pkg-config")
+SET(CMAKE_INSTALL_PREFIX "$PREFIX_DEPS")
 EOF
-cmake -DCMAKE_TOOLCHAIN_FILE=cross_file.xml \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DCMAKE_SYSTEM_NAME=Windows \
-  -DLIBXML2_WITH_PIC=ON \
-  -DLIBXML2_BUILD_TESTS=OFF ..
+cmake -DCMAKE_TOOLCHAIN_FILE="../xml.toolchain.cmake" \
+      -DLIBXML2_WITH_PIC=ON \
+      -DLIBXML2_BUILD_TESTS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
+# SDL2
 git clone --depth=1 https://github.com/libsdl-org/SDL.git SDL2
 cd SDL2
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DSDL_SHARED=OFF -DSDL_STATIC=ON ..
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DSDL_SHARED=OFF -DSDL_STATIC=ON ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
+# libusb
 git clone --depth=1 https://github.com/libusb/libusb.git libusb
 cd libusb
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DENABLE_SHARED=OFF -DENABLE_STATIC=ON ..
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DENABLE_SHARED=OFF -DENABLE_STATIC=ON ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
+# libtiff
 git clone --depth=1 https://gitlab.com/libtiff/libtiff.git libtiff
 cd libtiff
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DBUILD_SHARED_LIBS=OFF ..
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
+# lcms2
 git clone --depth=1 https://github.com/mm2/Little-CMS.git lcms2
 cd lcms2
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DBUILD_SHARED_LIBS=OFF ..
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
+# libgphoto2
 git clone --depth=1 https://github.com/gphoto/libgphoto2.git libgphoto2
 cd libgphoto2
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DCMAKE_C_COMPILER="$CC" \
-  -DCMAKE_CXX_COMPILER="$CXX" \
-  -DENABLE_SHARED=OFF -DENABLE_STATIC=ON ..
+      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+      -DCMAKE_C_COMPILER="$CC" \
+      -DCMAKE_CXX_COMPILER="$CXX" \
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+      -DENABLE_SHARED=OFF -DENABLE_STATIC=ON ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
-echo "=== All deps built to $PREFIX_DEPS ==="
+echo "=== All deps built at $PREFIX_DEPS ==="
