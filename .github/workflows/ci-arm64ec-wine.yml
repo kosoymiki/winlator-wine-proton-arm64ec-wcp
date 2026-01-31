@@ -11,36 +11,41 @@ jobs:
   build:
     runs-on: ubuntu-24.04-arm
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
+
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Make build script executable
+    - name: Make build scripts executable
       run: |
         chmod +x build.sh
+        chmod +x build-wine.sh
 
     - name: Setup llvm-mingw
       run: |
         TOOLCHAIN_VER="20260127"
-        F="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${F}"
+        FILE="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
+        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${FILE}"
         mkdir llvm-mingw
-        tar -xJf "$F" -C llvm-mingw --strip-components=1
+        tar -xJf "$FILE" -C llvm-mingw --strip-components=1
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
     - name: Run deps build
       run: |
         ./build.sh
 
-    - name: Build Wine & .wcp
+    - name: Run wine build
       run: |
-        chmod +x build-wine.sh
         ./build-wine.sh
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: wine-arm64ec-wcp
-        path: wine-*.wcp
+        path: "*.wcp"
