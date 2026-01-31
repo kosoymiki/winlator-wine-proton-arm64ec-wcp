@@ -133,18 +133,15 @@ cd ..
 #####################################
 # Build aarch64‑w64‑mingw32 pkgconf/pkg‑config
 #####################################
-echo ">>> Cross‑compile pkgconf for target aarch64‑w64‑mingw32"
+echo ">>> Download prebuilt pkgconf release"
+wget -q https://distfiles.ariadne.space/pkgconf/pkgconf-2.5.1.tar.xz
+tar -xf pkgconf-2.5.1.tar.xz
+cd pkgconf-2.5.1
 
-# Clone pkgconf (lightweight pkg‑config implementation)
-git clone --depth=1 https://github.com/pkgconf/pkgconf.git pkgconf
-cd pkgconf
-
-# Configure for target
 ./configure \
   --host=aarch64-w64-mingw32 \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  PKG_CONFIG=":" # disable host pkg‑config probing
+  --disable-shared --enable-static
 
 make -j"$(nproc)" && make install
 cd ..
