@@ -131,6 +131,39 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
+# Build aarch64‑w64‑mingw32 pkgconf/pkg‑config
+#####################################
+echo ">>> Cross‑compile pkgconf for target aarch64‑w64‑mingw32"
+
+# Clone pkgconf (lightweight pkg‑config implementation)
+git clone --depth=1 https://github.com/pkgconf/pkgconf.git pkgconf
+cd pkgconf
+
+# Configure for target
+./configure \
+  --host=aarch64-w64-mingw32 \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared --enable-static \
+  PKG_CONFIG=":" # disable host pkg‑config probing
+
+make -j"$(nproc)" && make install
+cd ..
+
+# Create symlinks so that aarch64‑w64‑mingw32‑pkg‑config is in PATH
+(
+  cd "$PREFIX_DEPS/bin"
+  ln -sf pkgconf aarch64-w64-mingw32-pkg-config
+  ln -sf pkgconf pkg-config
+)
+
+# Export deps prefix bin into PATH so configure sees aarch64‑w64‑mingw32‑pkg‑config
+echo "$PREFIX_DEPS/bin" >> "$GITHUB_PATH"
+export PATH="$PREFIX_DEPS/bin:$PATH"
+
+echo ">>> pkgconf installed, checking versions:"
+aarch64-w64-mingw32-pkg-config --version || echo "pkgconf version not found"
+
+#####################################
 # libev 4.33 (event loop library)
 #####################################
 echo ">>> Cross‑compile libev 4.33"
