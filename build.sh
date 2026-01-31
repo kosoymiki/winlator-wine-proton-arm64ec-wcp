@@ -96,6 +96,7 @@ cd freetype-2.14.1
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
+  --without-brotli \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
 make -j"$(nproc)" && make install
@@ -107,23 +108,18 @@ cd ..
 
 echo ">>> Cross‑compile nettle (nettle + hogweed)"
 
-git clone --depth=1 https://github.com/gnutls/nettle.git nettle
+git clone https://git.lysator.liu.se/nettle/nettle.git nettle
 cd nettle
 
-# Генерируем autotools для сборки из git
 ./bootstrap
 
-# Конфигурируем под кросс‑компилятор
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
-
-# Собираем и устанавливаем
 make -j"$(nproc)" && make install
-
 cd ..
 
 #####################################
