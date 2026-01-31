@@ -50,6 +50,65 @@ jobs:
             python3-setuptools python3-wheel
           sudo apt clean
 
+      - name: Cross‑compile core dependencies
+        run: |
+          set -euxo pipefail
+
+          PREFIX_DEPS="$PWD/deps/install"
+          mkdir -p deps/build
+
+          export TOOLCHAIN=aarch64-w64-mingw32
+          export CC=${TOOLCHAIN}-clang
+          export CXX=${TOOLCHAIN}-clang++
+          export AR=${TOOLCHAIN}-ar
+          export RANLIB=${TOOLCHAIN}-ranlib
+          export WINDRES=${TOOLCHAIN}-windres
+          export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig"
+          export CFLAGS="-I${PREFIX_DEPS}/include"
+          export LDFLAGS="-L${PREFIX_DEPS}/lib"
+
+          # Build zlib
+          cd deps/build
+          git clone --depth 1 https://github.com/madler/zlib.git zlib
+          cd zlib
+          ./configure --prefix="${PREFIX_DEPS}" --static --cross-prefix=${TOOLCHAIN}- --host=${TOOLCHAIN}
+          make -j$(nproc) && make install
+          cd ..
+
+          # Build libpng (depends on zlib)
+          git clone --depth 1 https://github.com/glennrp/libpng.git libpng
+          cd libpng
+          ./configure --host=${TOOLCHAIN} --prefix="${PREFIX_DEPS}" --disable-shared --enable-static
+          make -j$(nproc) && make install
+          cd ..
+
+          # Build libjpeg‑turbo
+          git clone --depth 1 https://github.com/libjpeg-turbo/libjpeg-turbo.git libjpeg
+          cd libjpeg
+          cmake -DCMAKE_TOOLCHAIN_FILE=../your_mingw_toolchain.cmake \
+                -DCMAKE_INSTALL_PREFIX="${PREFIX_DEPS}" \
+                -DENABLE_SHARED=OFF -DENABLE_STATIC=ON .
+          make -j$(nproc) && make install
+          cd ..
+
+          # Build freetype
+          git clone --depth 1 https://git.savannah.gnu.org/git/freetype/freetype2.git freetype2
+          cd freetype2
+          mkdir build && cd build
+          ../configure --host=${TOOLCHAIN} --prefix="${PREFIX_DEPS}" --disable-shared --enable-static
+          make -j$(nproc) && make install
+          cd ../..
+
+          # Build libgnutls
+          git clone --depth 1 https://gitlab.com/gnutls/gnutls.git gnutls
+          cd gnutls
+          ./bootstrap.sh
+          ./configure --host=${TOOLCHAIN} --prefix="${PREFIX_DEPS}" --disable-doc --disable-shared --enable-static
+          make -j$(nproc) && make install
+          cd ../..
+
+          echo "All dependencies cross‑compiled."
+
       ###################################################
       # 3) Setup llvm-mingw cross toolchain
       ###################################################
