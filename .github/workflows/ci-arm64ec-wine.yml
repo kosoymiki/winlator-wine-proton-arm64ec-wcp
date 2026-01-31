@@ -1,4 +1,4 @@
-name: Build Wine & WCP for Winlator-Ludashi
+name: Build Wine & WCP for Winlator‑Ludashi
 
 on:
   push:
@@ -9,8 +9,9 @@ on:
 
 jobs:
   build-arm64ec:
+    # Используем Ubuntu 24.04 ARM64 runner
+    # Это важно, чтобы сборка Wine arm64ec была чистой и нативной
     runs-on: ubuntu-24.04-arm
-
     defaults:
       run:
         shell: bash
@@ -30,26 +31,57 @@ jobs:
       - name: Install build dependencies
         run: |
           set -euxo pipefail
+
+          ################################################################
+          # 📌 Add ports.ubuntu.com for arm64 — обязательно,
+          # иначе apt не видит dev‑пакетов (например FreeType, SDL2).
+          # Без этого Ubuntu‑runner не распознаёт arm64‑dev пакеты.
+          ################################################################
+          sudo bash -euxo pipefail << 'EOF'
+          cat << 'CONFIG' | sudo tee /etc/apt/sources.list.d/ports-arm64.list
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe multiverse
+          CONFIG
           sudo apt update
+          EOF
+
+          ################################################################
+          # 📦 Install build essentials and dev libs
+          # We include SDL2, FreeType, Vulkan, fontconfig, dbus, usb, xml, ...
+          # SDL2 — обязательна для Wine UI & input handling.
+          # FreeType — обязательна для корректного рендеринга шрифтов.
+          # Vulkan — нужна для Turnip / WineD3D Vulkan backend.
+          ################################################################
           sudo apt install -y --no-install-recommends \
             build-essential autoconf automake libtool pkg-config \
             python3 python3-pip git gettext flex bison \
-            ninja-build cmake \
+            ninja-build cmake meson \
+            llvm clang lld \
             libasound2-dev libpulse-dev libv4l-dev libgl-dev \
-            libx11-dev libxext-dev libxfixes-dev libxinerama-dev libxi-dev \
-            libxrandr-dev libxrender-dev libfontconfig-dev libfreetype-dev \
-            libgnutls28-dev libdbus-1-dev libsdl2-dev \
-            libjpeg-dev libpng-dev libxml2-dev \
-            libudev-dev libusb-1.0-0-dev libldap2-dev \
-            libpciaccess-dev lld llvm \
-            meson libvulkan-dev
+            libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
+            libxi-dev libxrandr-dev libxrender-dev \
+            libfontconfig-dev libfreetype-dev libgnutls28-dev \
+            libdbus-1-dev libsdl2-dev \
+            libjpeg-dev libpng-dev libxml2-dev libudev-dev \
+            libusb-1.0-0-dev libldap2-dev \
+            libvulkan-dev
+
+          ################################################################
+          # 📌 Export pkg‑config variables for arm64 — чтобы configure
+          # видел *.pc файлы (например freetype2, sdl2) в /usr/lib/aarch64-linux-gnu
+          # Обязательно для корректного обнаружения всех либ.
+          PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
+          PKG_CONFIG_LIBDIR="/usr/lib/aarch64-linux-gnu/pkgconfig"
+          export PKG_CONFIG_PATH PKG_CONFIG_LIBDIR
+
           sudo apt clean
           sudo rm -rf /var/lib/apt/lists/*
 
       ###################################################
-      # 3) Setup llvm-mingw cross toolchain
+      # 3) Setup llvm‑mingw cross toolchain
       ###################################################
-      - name: Setup llvm-mingw
+      - name: Setup llvm‑mingw
         run: |
           set -euxo pipefail
           TOOLCHAIN_VER="20260127"
@@ -70,23 +102,23 @@ jobs:
           git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
 
       ###################################################
-      # 5) Apply Staging patches
+      # 5) Apply Wine‑Staging patches
       ###################################################
       - name: Apply Staging patches
         run: |
           set -euxo pipefail
           cd wine
-          python3 ../wine-staging/staging/patchinstall.py --all --destdir="$(pwd)"
+          python3 ../wine-staging/staging/patchinstall.py DESTDIR="$(pwd)" --all
           cd ..
 
       ###################################################
-      # 6) Prepare wine-tkg configuration
+      # 6) Generate tkg customization
       ###################################################
-      - name: Generate wine-tkg customization.cfg
+      - name: Generate wine‑tkg customization.cfg
         run: |
           set -euxo pipefail
           mkdir -p wine/tkg-custom
-          cat > wine/tkg-custom/customization.cfg <<'EOF'
+          cat > wine/tkg-custom/customization.cfg << 'EOF'
           ################################################################################
           #  Winlator‑oriented wine‑tkg config
           ################################################################################
@@ -103,29 +135,34 @@ jobs:
           EOF
 
       ###################################################
-      # 7) Configure & Compile Wine with wine-tools
+      # 7) Build Wine with wine‑tools
       ###################################################
       - name: Configure & Compile Wine
         run: |
           set -euxo pipefail
-
           cd wine
 
-          # ── Build wine-tools locally (needed for cross compile)
+          ################################################################
+          # ── Build wine‑tools locally – нужно для cross сборки Wine
+          ################################################################
           mkdir wine-tools-build
           cd wine-tools-build
           ../configure \
             --enable-tools \
             --disable-tests \
             --disable-win16 \
-            --enable-archs=aarch64,i386
+            --enable-archs=aarch64
           make -j"$(nproc)"
           cd ..
 
-          # ── Run tkg prepare to apply all patches from customization.cfg
+          ################################################################
+          # ── Run tkg prepare to apply tkg custom patches
+          ################################################################
           bash ../wine-tkg/wine-tkg-git/wine-tkg-scripts/prepare.sh
 
-          # ── Cross compile Wine
+          ################################################################
+          # ── Cross‑compile Wine arm64ec
+          ################################################################
           mkdir build
           cd build
 
@@ -146,14 +183,16 @@ jobs:
             --prefix=/usr \
             --enable-win64 \
             --enable-wow64 \
-            --enable-archs=arm64ec,aarch64,i386 \
+            --enable-archs=arm64ec,aarch64 \
             --disable-tests \
             --without-mono \
             --without-gecko \
             --with-freetype \
             --with-fontconfig \
             --with-alsa \
-            --with-pulse
+            --with-pulse \
+            --with-vulkan
+
           make -j"$(nproc)"
 
       ###################################################
@@ -215,20 +254,16 @@ jobs:
           cd install
           mkdir -p wcp/{bin,lib/wine,share}
 
-          # Copy executables and libraries
           cp -a usr/bin/* wcp/bin/ 2>/dev/null || true
           cp -a usr/lib/wine/* wcp/lib/wine/ 2>/dev/null || true
           cp -a usr/share/* wcp/share/ 2>/dev/null || true
 
-          # Symlink wine to wine64
-          cd wcp/bin && ln -sf wine64 wine && cd ../..
+          cd wcp/bin && ln -sf wine64 wine && cd ..
 
-          # Ensure executables and .so are executable
           find bin -type f -exec chmod +x {} +
           find lib -name "*.so*" -exec chmod +x {} +
 
-          # Create profile for Winlator
-          cat > profile.json <<'EOF'
+          cat > profile.json << 'EOF'
           {
             "id": "wine-11.1-staging-tkg-arm64ec",
             "name": "Wine 11.1 Staging‑tkg Arm64EC",
