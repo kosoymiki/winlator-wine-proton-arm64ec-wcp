@@ -7,19 +7,21 @@ set -euxo pipefail
 if command -v apt &>/dev/null && command -v sudo &>/dev/null; then
   sudo apt update
   sudo apt install -y --no-install-recommends \
-    build-essential autoconf automake libtool gettext gperf \
-    flex bison ninja-build cmake meson pkg-config \
-    python3 python3-pip git wget unzip \
-    libasound2-dev libpulse-dev libv4l-dev \
-    libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
-    libxi-dev libxrandr-dev libxrender-dev \
-    libfontconfig-dev \
-    libdbus-1-dev libsdl2-dev \
-    libjpeg-dev libpng-dev libxml2-dev \
-    libudev-dev libusb-1.0-0-dev libldap2-dev \
-    libxkbcommon-dev libxv-dev libxxf86vm-dev \
-    libxcursor-dev libxss-dev \
-    libvulkan-dev llvm clang lld
+  build-essential autoconf automake libtool gettext gperf \
+  flex bison ninja-build cmake meson pkg-config \
+  python3 python3-pip git wget unzip \
+  intltool gtk-doc-tools \
+  libasound2-dev libpulse-dev libv4l-dev \
+  libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
+  libxi-dev libxrandr-dev libxrender-dev \
+  libfontconfig-dev \
+  libdbus-1-dev libsdl2-dev \
+  libjpeg-dev libpng-dev libxml2-dev \
+  libudev-dev libusb-1.0-0-dev libldap2-dev \
+  libxkbcommon-dev libxv-dev libxxf86vm-dev \
+  libxcursor-dev libxss-dev \
+  libvulkan-dev llvm clang lld
+  
 fi
 
 ####################################
