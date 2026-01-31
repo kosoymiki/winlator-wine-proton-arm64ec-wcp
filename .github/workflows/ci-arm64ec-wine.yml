@@ -36,27 +36,6 @@ jobs:
         tar -xJf "$FILE" -C llvm-mingw --strip-components=1
         echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
 
-
-    - name: Install mingw‑w64 cross tools
-      run: |
-        sudo apt update
-
-        # Install cross‑gcc for aarch64‑w64‑mingw32
-        sudo apt install -y \
-          gcc‑aarch64‑w64‑mingw32 \
-          g++‑aarch64‑w64‑mingw32 \
-          binutils‑aarch64‑w64‑mingw32 \
-          pkg‑config
-
-        # Check installed
-        echo "=== Mingw cross tools ==="
-        aarch64‑w64‑mingw32‑gcc --version
-        aarch64‑w64‑mingw32‑g++ --version
-        pkg‑config --version
-
-        # Configure pkg‑config search for target libs
-        echo "MINGW_PKG_CONFIG_PATH=/usr/aarch64-w64-mingw32/lib/pkgconfig:/usr/share/aarch64-w64-mingw32/pkgconfig" >> "$GITHUB_ENV"
-
     - name: Run deps build
       run: |
         ./build.sh
