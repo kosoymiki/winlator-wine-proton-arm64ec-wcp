@@ -103,15 +103,14 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# Build nettle + hogweed
+# Build nettle (release tarball)
 #####################################
 
-echo ">>> Cross‑compile nettle (nettle + hogweed)"
+echo ">>> Cross‑compile nettle (release)"
 
-git clone https://git.lysator.liu.se/nettle/nettle.git nettle
-cd nettle
-
-./bootstrap
+wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
+tar xf nettle-3.10.2.tar.gz
+cd nettle-3.10.2
 
 ./configure \
   --host="$TOOLCHAIN" \
@@ -119,6 +118,7 @@ cd nettle
   --disable-shared --enable-static \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
+
 make -j"$(nproc)" && make install
 cd ..
 
