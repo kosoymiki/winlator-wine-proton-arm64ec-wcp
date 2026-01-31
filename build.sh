@@ -20,8 +20,7 @@ sudo apt install -y --no-install-recommends \
   libudev-dev libusb-1.0-0-dev libldap2-dev \
   libxkbcommon-dev libxv-dev libxxf86vm-dev \
   libxcursor-dev libxss-dev \
-  libvulkan-dev llvm clang lld \
-  p11‑kit
+  libvulkan-dev llvm clang lld
   
 fi
 
@@ -200,6 +199,7 @@ cd gnutls-3.8.0
   --enable-static \
   --with-included-unistring \
   --with-included-libtasn1 \
+  --without-p11-kit \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
 
