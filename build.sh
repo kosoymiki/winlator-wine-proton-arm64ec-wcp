@@ -53,14 +53,12 @@ cd zlib
 make -j"$(nproc)" && make install
 cd ..
 
-#####################################
-# libpng via CMake
-#####################################
+# libpng (CMake build)
 git clone --depth=1 https://github.com/glennrp/libpng.git libpng
 cd libpng
 
-# toolchain file for libpng
-cat > png.toolchain.cmake << 'EOF'
+# Generate a dedicated toolchain file
+cat > libpng.toolchain.cmake << 'EOF'
 SET(CMAKE_SYSTEM_NAME Windows)
 SET(CMAKE_SYSTEM_PROCESSOR ARM64)
 SET(CMAKE_C_COMPILER "${CC}")
@@ -72,8 +70,10 @@ SET(CMAKE_INSTALL_PREFIX "$PREFIX_DEPS")
 EOF
 
 mkdir -p build && cd build
-cmake -DCMAKE_TOOLCHAIN_FILE="../png.toolchain.cmake" \
-      -DPNG_SHARED=OFF -DPNG_STATIC=ON -DPNG_TESTS=OFF ..
+cmake -DCMAKE_TOOLCHAIN_FILE="../libpng.toolchain.cmake" \
+      -DPNG_SHARED=OFF \
+      -DPNG_STATIC=ON \
+      -DPNG_TESTS=OFF .
 cmake --build . --parallel "$(nproc)"
 cmake --install .
 cd ../..
