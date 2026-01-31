@@ -20,8 +20,11 @@ if command -v apt &>/dev/null && command -v sudo &>/dev/null; then
     libudev-dev libusb-1.0-0-dev libldap2-dev \
     libxkbcommon-dev libxv-dev libxxf86vm-dev \
     libxcursor-dev libxss-dev \
-    libvulkan-dev llvm clang lld \
-    libev-dev
+    libvulkan-dev \
+    # Mingw-w64 cross compilation helpers
+    gcc-aarch64-w64-mingw32 g++-aarch64-w64-mingw32 \
+    binutils-aarch64-w64-mingw32 \
+    pkg-config
 fi
 
 #####################################
@@ -32,32 +35,33 @@ mkdir -p "$PREFIX_DEPS"/{bin,include,lib/pkgconfig}
 mkdir -p deps/build
 cd deps/build
 
+#####################################
+# Set cross product variables
+#####################################
 export TOOLCHAIN=aarch64-w64-mingw32
-export CC=${TOOLCHAIN}-clang
-export CXX=${TOOLCHAIN}-clang++
-export AR=${TOOLCHAIN}-ar
-export RANLIB=${TOOLCHAIN}-ranlib
-export WINDRES=${TOOLCHAIN}-windres
 
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
+# Use LLVM‑mingw clang for Wine later, but for deps we rely on Mingw‑w64 GCC
+# So we do not export CC/CXX to clang here (let configure pick aarch64‑w64‑mingw32‑gcc)
+export CC=aarch64-w64-mingw32-gcc
+export CXX=aarch64-w64-mingw32-g++
+export AR=aarch64-w64-mingw32-ar
+export RANLIB=aarch64-w64-mingw32-ranlib
+export WINDRES=aarch64-w64-mingw32-windres
+
+# Add mingw pkg-config to search path
+export PKG_CONFIG_PATH="/usr/aarch64-w64-mingw32/lib/pkgconfig:/usr/share/aarch64-w64-mingw32/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
+
+# Ensure deps headers/libs are findable
 export CFLAGS="-I$PREFIX_DEPS/include${CFLAGS+: }${CFLAGS:-}"
 export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS+: }${LDFLAGS:-}"
-
-
-#####################################
-# Configure pkgconfig for MinGW‑w64
-#####################################
-echo ">>> Setup pkgconfig for aarch64‑w64‑mingw32"
-export PKG_CONFIG_PATH="/usr/aarch64-w64-mingw32/lib/pkgconfig:/usr/share/aarch64-w64-mingw32/pkgconfig:$PKG_CONFIG_PATH"
-echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
 
 #####################################
 # 1) zlib
 #####################################
 git clone --depth=1 https://github.com/madler/zlib.git zlib
 cd zlib
-./configure --prefix="$PREFIX_DEPS" --static
+./configure --host="$TOOLCHAIN" --prefix="$PREFIX_DEPS" --static
 make -j"$(nproc)" && make install
 cd ..
 
@@ -70,9 +74,7 @@ cd libpng-1.6.40
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  --disable-shared --enable-static
 make -j"$(nproc)" && make install
 cd ..
 
@@ -102,182 +104,61 @@ cd freetype-2.14.1
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
-  --without-brotli \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  --without-brotli
 make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# 5) GMP (for nettle hogweed)
+# 5) GMP (needed for nettle)
 #####################################
-wget -q https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz -O gmp-6.3.0.tar.xz
+wget -q https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
 tar xf gmp-6.3.0.tar.xz
 cd gmp-6.3.0
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared \
-  --enable-static \
-  --enable-cxx
+  --disable-shared --enable-static --enable-cxx
 make -j"$(nproc)" && make install
 cd ..
 
 #####################################
 # 6) nettle + hogweed
 #####################################
-wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz -O nettle-3.10.2.tar.gz
+wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz
 tar xf nettle-3.10.2.tar.gz
 cd nettle-3.10.2
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
-  --with-gmp \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  --with-gmp
 make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# Build aarch64‑w64‑mingw32 pkgconf/pkg‑config
+# 7) libtasn1
 #####################################
-echo ">>> Download and build cross pkgconf for aarch64-w64-mingw32"
-
-# Download release with configure script
-wget -q https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz
-tar -xf pkgconf-2.5.1.tar.xz
-cd pkgconf-2.5.1
-
-# Configure for target with correct prefix
+wget -q https://ftp.gnu.org/gnu/libtasn1/libtasn1-4.21.0.tar.gz
+tar xf libtasn1-4.21.0.tar.gz
+cd libtasn1-4.21.0
 ./configure \
-  --host=aarch64-w64-mingw32 \
+  --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static
-
-make -j"$(nproc)" && make install
-cd ..
-
-# Create symlinks so that configure finds pkg-config
-(
-  cd "$PREFIX_DEPS/bin"
-  ln -sf pkgconf aarch64-w64-mingw32-pkg-config
-  ln -sf pkgconf pkg-config
-)
-
-# Add deps prefix bin into PATH
-echo "$PREFIX_DEPS/bin" >> "$GITHUB_PATH"
-export PATH="$PREFIX_DEPS/bin:$PATH"
-
-#####################################
-# libev 4.33 (event loop library)
-#####################################
-echo ">>> Cross‑compile libev 4.33"
-
-wget -q https://dist.schmorp.de/libev/libev-4.33.tar.gz \
-    -O libev-4.33.tar.gz
-tar xf libev-4.33.tar.gz
-cd libev-4.33
-
-./configure \
-  --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
-
 make -j"$(nproc)" && make install
 cd ..
 
 #####################################
-# Generate pkg‑config file for libev
+# 8) libunistring
 #####################################
-echo ">>> Generating pkg‑config for libev"
-
-# Ensure pkgconfig dir exists
-mkdir -p "$PREFIX_DEPS/lib/pkgconfig"
-
-# Write libev.pc
-cat > "$PREFIX_DEPS/lib/pkgconfig/libev.pc" << 'EOF'
-prefix=@PREFIX@
-exec_prefix=\${prefix}
-libdir=\${exec_prefix}/lib
-includedir=\${exec_prefix}/include
-
-Name: libev
-Description: High performance event loop library
-Version: @VERSION@
-Libs: -L\${libdir} -lev
-Cflags: -I\${includedir}
-EOF
-
-# Replace placeholders
-sed -i "s|@PREFIX@|$PREFIX_DEPS|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-sed -i "s|@VERSION@|4.33|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-
-# Info for debugging
-echo "------ libev.pc content ------"
-cat "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-echo "-----------------------------"
-
-# Ensure PKG_CONFIG_PATH includes this
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
-echo "PKG_CONFIG_PATH set to: $PKG_CONFIG_PATH"
-
-# Test if pkg‑config can see libev
-if command -v aarch64-w64-mingw32-pkg-config >/dev/null 2>&1; then
-  echo "Checking libev via aarch64-w64-mingw32-pkg-config:"
-  aarch64-w64-mingw32-pkg-config --cflags libev || true
-  aarch64-w64-mingw32-pkg-config --libs libev || true
-else
-  echo "Warning: aarch64-w64-mingw32-pkg-config not found in PATH"
-fi
-
-#####################################
-# Generate pkg‑config file for libev
-#####################################
-echo ">>> Generating pkg‑config file for libev"
-
-# Ensure pkgconfig directory exists
-mkdir -p "$PREFIX_DEPS/lib/pkgconfig"
-
-# Write libev.pc
-cat > "$PREFIX_DEPS/lib/pkgconfig/libev.pc" << 'EOF'
-prefix=${prefix}
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include
-
-Name: libev
-Description: high performance event loop library
-Version: 4.33
-Libs: -L${libdir} -lev
-Cflags: -I${includedir}
-EOF
-
-# Replace placeholder ${prefix} with real install prefix
-sed -i "s|\${prefix}|$PREFIX_DEPS|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-sed -i "s|\${exec_prefix}|$PREFIX_DEPS|g" "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-
-# Verify
-echo "Generated libev.pc:"
-cat "$PREFIX_DEPS/lib/pkgconfig/libev.pc"
-
-#####################################
-# libunistring (disable tests for cross)
-#####################################
-wget -q https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz -O libunistring-1.1.tar.xz
+wget -q https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz
 tar xf libunistring-1.1.tar.xz
 cd libunistring-1.1
-
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
-  --disable-tests \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
-
+  --disable-tests
 make -j"$(nproc)" && make install
 cd ..
 
@@ -291,12 +172,9 @@ git submodule update --init --recursive
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared \
-  --enable-static \
+  --disable-shared --enable-static \
   --with-included-unistring \
-  --with-included-libtasn1 \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  --with-included-libtasn1
 make -j"$(nproc)" && make install
 cd ..
 
@@ -308,9 +186,7 @@ cd fontconfig
 autoreconf -fi
 ./configure \
   --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  --prefix="$PREFIX_DEPS"
 make -j"$(nproc)" && make install
 cd ..
 
@@ -319,12 +195,12 @@ cd ..
 #####################################
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
-cat > cross.ini << 'EOF'
+meson setup build \
+  --cross-file=<(cat <<EOF
 [binaries]
-c = '${CC}'
-cxx = '${CXX}'
-ar = '${AR}'
-ranlib = '${RANLIB}'
+c = '$CC'
+cxx = '$CXX'
+ar = '$AR'
 pkgconfig = 'pkg-config'
 [host_machine]
 system = 'windows'
@@ -332,26 +208,10 @@ cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
 EOF
-meson setup build --cross-file=cross.ini \
-  -Dfontconfig=enabled -Dfreetype=enabled \
-  --prefix="$PREFIX_DEPS"
-ninja -C build install
+) --prefix="$PREFIX_DEPS" -Dfreetype=enabled -Dfontconfig=enabled -Dtests=disabled
+meson compile -C build --parallel "$(nproc)"
+meson install -C build
 cd ..
-
-#####################################
-# 12) libxml2
-#####################################
-git clone --depth=1 https://gitlab.gnome.org/GNOME/libxml2.git libxml2
-cd libxml2
-mkdir -p build && cd build
-cat > xml.toolchain.cmake << 'EOF'
-...
-EOF
-cmake -DCMAKE_TOOLCHAIN_FILE="../xml.toolchain.cmake" \
-      -DLIBXML2_WITH_PIC=ON \
-      -DLIBXML2_BUILD_TESTS=OFF ..
-cmake --build . --parallel "$(nproc)" && cmake --install .
-cd ../..
 
 #####################################
 # 13+) remaining deps (SDL2, libusb, libtiff, lcms2, libgphoto2)
