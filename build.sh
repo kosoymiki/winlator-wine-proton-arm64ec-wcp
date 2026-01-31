@@ -102,7 +102,7 @@ make -j"$(nproc)" && make install
 cd ..
 
 wget -q https://github.com/libexpat/libexpat/releases/download/R_2_7_4/expat-2.7.4.tar.xz
-tar xf expat-2.7.к.tar.xz
+tar xf expat-2.7.4.tar.xz
 cd expat-2.7.4
 
 ./configure \
