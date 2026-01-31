@@ -192,7 +192,6 @@ wget -q https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.0.tar.xz
 tar xf gnutls-3.8.0.tar.xz
 cd gnutls-3.8.0
 
-export AS=aarch64-w64-mingw32-as
 export ac_cv_func_asm_sha1_armv8=no
 export ac_cv_func_asm_aes_armv8=no
 
@@ -201,7 +200,6 @@ rm -rf lib/accelerated/aarch64
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --with‑as=$AS \
   --disable-shared \
   --enable-static \
   --with-included-unistring \
