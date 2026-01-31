@@ -115,6 +115,27 @@ make -j"$(nproc)" && make install
 cd ..
 
 #####################################
+# libev event loop library
+#####################################
+echo ">>> Cross‑compile libev"
+
+wget -q https://dist.schmorp.de/libev/libev-4.33.tar.gz \
+    -O libev-4.33.tar.gz
+tar xf libev-4.33.tar.gz
+cd libev-4.33
+
+# libev includes configure scripts
+./configure \
+  --host="$TOOLCHAIN" \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared --enable-static \
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
+
+make -j"$(nproc)" && make install
+cd ..
+
+#####################################
 # 6) nettle + hogweed
 #####################################
 wget -q https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz -O nettle-3.10.2.tar.gz
