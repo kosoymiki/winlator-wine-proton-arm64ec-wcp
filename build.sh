@@ -370,30 +370,12 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-diff --git a/src/meson.build b/src/meson.build
-index e3c1f2a..b2a3f5c 100644
---- a/src/meson.build
-+++ b/src/meson.build
-@@ -102,6 +102,13 @@ if glib_dep.found()
- endif
-
- harfbuzz_deps = [
-   freetype2_dep,
-   zlib_dep,
-   png_dep,
-+  # Добавляем поддержку Brotli для статической линковки
-+  declare_dependency(
-+    link_args : ['-lbrotlidec', '-lbrotlicommon'],
-+    include_directories : include_directories('$PREFIX_DEPS/include'),
-+  ),
-+  # Конец поддержки Brotli
- ]
-
+cat > harfbuzz-brotli.patch << 'EOF'
 diff --git a/src/meson.build b/src/meson.build
 index e3c1f2a..addfix 100644
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -94,6 +94,19 @@ if glib_dep.found()
+@@ -100,6 +100,17 @@ if glib_dep.found()
  endif
 
  harfbuzz_deps = [
@@ -414,8 +396,9 @@ index e3c1f2a..addfix 100644
 +  ),
 +  # Brotli static linking end
  ]
+EOF
 
- # Default common library
+git apply harfbuzz-brotli.patch
 
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
