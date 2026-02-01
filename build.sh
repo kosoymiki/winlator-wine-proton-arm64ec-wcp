@@ -185,6 +185,17 @@ cd ../..
 rm -f "$BROTLI_TOOLCHAIN"
 
 ####################################
+# Fix pkg-config for brotli static linking
+####################################
+echo ">>> Patching brotli pkgconfig to include common static lib"
+for pc in "$PREFIX_DEPS/lib/pkgconfig"/brotli*.pc; do
+  if grep -q "\-lbrotlidec" "$pc"; then
+    sed -i 's/-lbrotlidec/-lbrotlidec -lbrotlicommon/' "$pc" || true
+    echo "> Patched $pc"
+  fi
+done
+
+####################################
 # 4) freetype2
 ####################################
 build_autotools_dep \
@@ -349,31 +360,6 @@ cd ..
 echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
-
-# apply static brotli linking patch
-cat > harfbuzz-fix-brotli.patch << 'EOF'
-diff --git a/src/meson.build b/src/meson.build
-index e3c1f2a..add0000 100644
---- a/src/meson.build
-+++ b/src/meson.build
-@@ -102,6 +102,13 @@ if glib_dep.found()
- endif
-
- harfbuzz_deps = [
-   freetype2_dep,
-   zlib_dep,
-   png_dep,
-+
-+  # Brotli static support — ensure both decoder + common libs are linked
-+  declare_dependency(
-+    link_args : ['-lbrotlidec', '-lbrotlicommon'],
-+    include_directories : brotli_inc,
-+  ),
-+  # END Brotli patch
-
-EOF
-
-git apply harfbuzz-fix-brotli.patch
 
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
