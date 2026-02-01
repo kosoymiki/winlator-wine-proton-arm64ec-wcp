@@ -370,15 +370,24 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-# Печатаем первые 200 строк файла meson.build
-echo "=== BEGIN harfbuzz/src/meson.build (first 200 lines) ==="
-sed -n '1,200p' src/meson.build || true
-echo "=== END ==="
+diff --git a/src/meson.build b/src/meson.build
+index e3c1f2a..b2a3f5c 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -102,6 +102,13 @@ if glib_dep.found()
+ endif
 
-# Печатаем строки 200–400 файла meson.build
-echo "=== BEGIN harfbuzz/src/meson.build (lines 200–400) ==="
-sed -n '200,400p' src/meson.build || true
-echo "=== END ==="
+ harfbuzz_deps = [
+   freetype2_dep,
+   zlib_dep,
+   png_dep,
++  # Добавляем поддержку Brotli для статической линковки
++  declare_dependency(
++    link_args : ['-lbrotlidec', '-lbrotlicommon'],
++    include_directories : include_directories('$PREFIX_DEPS/include'),
++  ),
++  # Конец поддержки Brotli
+ ]
 
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
