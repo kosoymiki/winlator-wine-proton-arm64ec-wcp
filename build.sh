@@ -377,31 +377,28 @@ grep -n "png_dep" -n src/meson.build || true
 grep -n "zlib_dep" -n src/meson.build || true
 echo "=== END SEARCH ==="
 
-# Create and apply patch to add Brotli static linking
+# Apply Brotli linking patch
 cat > harfbuzz-brotli.patch << 'EOF'
-*** Begin Patch
-*** Update File: src/meson.build
+diff --git a/src/meson.build b/src/meson.build
+index 0000000..0000000 100644
+--- a/src/meson.build
++++ b/src/meson.build
 @@
-   harfbuzz_deps += [freetype_dep]
-+  # --------------------------------------------------------------------
+ harfbuzz_deps += [freetype_dep]
 +  # Brotli static decoding support (needed by FreeType WOFF2)
-+  # Find Brotli decoder and common libs and add them
 +  brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)
 +  brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)
 +  if brotli_decoder.found() and brotli_common.found()
 +    harfbuzz_deps += [
-+      # include all objects from common to satisfy decoder symbols
++      # Include entire common library so that all brotli symbols are present
 +      declare_dependency(link_whole : brotli_common),
 +      brotli_decoder,
 +    ]
 +  endif
-+  # End Brotli support
-*** End Patch
 EOF
 
 echo "=== Applying harfbuzz-brotli.patch ==="
-git apply harfbuzz-brotli.patch || ( echo "ERROR: failed to apply patch"; exit 1 )
-
+git apply harfbuzz-brotli.patch || (echo "ERROR: failed to apply patch"; exit 1)
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
