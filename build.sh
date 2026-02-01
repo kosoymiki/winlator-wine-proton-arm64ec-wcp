@@ -395,6 +395,14 @@ meson setup build \
   -Dfreetype=enabled \
   -Dtests=disabled
 
+echo "=== harfbuzz/src/meson.build (lines 1–200) ==="
+sed -n '1,200p' harfbuzz/src/meson.build
+echo "=== END ==="
+
+echo "=== harfbuzz/src/meson.build (lines 200–400) ==="
+sed -n '200,400p' harfbuzz/src/meson.build
+echo "=== END ==="
+
 ninja -C build -j "$(nproc)"
 ninja -C build -j "$(nproc)" install
 
