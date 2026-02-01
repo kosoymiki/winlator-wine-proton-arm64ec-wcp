@@ -134,6 +134,24 @@ build_autotools_dep \
   https://download.savannah.gnu.org/releases/freetype/freetype-2.14.1.tar.xz \
   freetype-2.14.1
 
+# Explicitly ensure pkgconfig file is in correct place
+if [ -f "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" ]; then
+  echo "freetype2 .pc found"
+else
+  echo "Error: freetype2 .pc not found"
+  exit 1
+fi
+
+# Ensure pkg-config sees freetype2
+export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
+export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
+export PKG_CONFIG_LIBDIR="$PREFIX_DEPS/lib/pkgconfig"
+
+echo ">>> pkg-config freetype2 info:"
+pkg-config --modversion freetype2
+pkg-config --cflags freetype2
+pkg-config --libs freetype2
+
 ####################################
 # Build expat
 ####################################
