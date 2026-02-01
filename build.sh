@@ -190,7 +190,7 @@ rm -f "$BROTLI_TOOLCHAIN"
 # 4) freetype2
 ####################################
 build_autotools_dep \
-  https://download.savannah.gnu.org/releases/freetype/freetype-2.14.1.tar.xz \
+  https://sourceforge.net/projects/freetype/files/freetype2/2.14.1/freetype-2.14.1.tar.xz/download \
   freetype-2.14.1
 
 # Explicitly ensure pkgconfig file is in correct place
