@@ -370,6 +370,17 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
+# Печатаем первые 200 строк файла meson.build
+echo "=== BEGIN harfbuzz/src/meson.build (first 200 lines) ==="
+sed -n '1,200p' src/meson.build || true
+echo "=== END ==="
+
+# Печатаем строки 200–400 файла meson.build
+echo "=== BEGIN harfbuzz/src/meson.build (lines 200–400) ==="
+sed -n '200,400p' src/meson.build || true
+echo "=== END ==="
+
+# Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
 [binaries]
@@ -389,19 +400,12 @@ root_prefix = '$PREFIX_DEPS'
 pkg_config_path = '$PKG_CONFIG_PATH'
 EOF
 
+# Настройка сборки через Meson
 meson setup build \
   --cross-file="$MESON_CROSS" \
   --prefix="$PREFIX_DEPS" \
   -Dfreetype=enabled \
   -Dtests=disabled
-
-echo "=== harfbuzz/src/meson.build (lines 1–200) ==="
-sed -n '1,200p' harfbuzz/src/meson.build
-echo "=== END ==="
-
-echo "=== harfbuzz/src/meson.build (lines 200–400) ==="
-sed -n '200,400p' harfbuzz/src/meson.build
-echo "=== END ==="
 
 ninja -C build -j "$(nproc)"
 ninja -C build -j "$(nproc)" install
