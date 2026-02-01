@@ -376,7 +376,6 @@ meson setup build \
   --cross-file="$MESON_CROSS" \
   --prefix="$PREFIX_DEPS" \
   -Dfreetype=enabled \
-  -Dfontconfig=enabled \
   -Dtests=disabled
 
 ninja -C build --parallel "$(nproc)"
