@@ -370,35 +370,11 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-cat > harfbuzz-brotli.patch << 'EOF'
-diff --git a/src/meson.build b/src/meson.build
-index e3c1f2a..addfix 100644
---- a/src/meson.build
-+++ b/src/meson.build
-@@ -100,6 +100,17 @@ if glib_dep.found()
- endif
-
- harfbuzz_deps = [
-   freetype2_dep,
-   zlib_dep,
-   png_dep,
-+
-+  # Brotli: всегда включаем обе статические библиотеки
-+  # Оборачиваем common в link_whole, чтобы обеспечить попадание всех символов
-+  declare_dependency(
-+    link_args : [
-+      '-Wl,--whole-archive',
-+      '-lbrotlicommon',
-+      '-Wl,--no-whole-archive',
-+      '-lbrotlidec',
-+    ],
-+    include_directories : include_directories('$PREFIX_DEPS/include'),
-+  ),
-+  # Brotli static linking end
- ]
-EOF
-
-git apply harfbuzz-brotli.patch
+echo "=== SEARCHING DEPENDENCY BLOCK ==="
+grep -n "harfbuzz_deps" -n src/meson.build || true
+grep -n "png_dep" -n src/meson.build || true
+grep -n "zlib_dep" -n src/meson.build || true
+echo "=== END SEARCH ==="
 
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
