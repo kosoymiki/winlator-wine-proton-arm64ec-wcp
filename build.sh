@@ -193,12 +193,16 @@ rm -f "$BROTLI_TOOLCHAIN"
 # Fix pkg-config for brotli static linking
 ####################################
 echo ">>> Patching brotli pkgconfig to include common static lib"
+
 for pc in "$PREFIX_DEPS/lib/pkgconfig"/brotli*.pc; do
   if grep -q "\-lbrotlidec" "$pc"; then
     sed -i 's/-lbrotlidec/-lbrotlidec -lbrotlicommon/' "$pc" || true
-    echo "> Patched $pc"
+    echo "Patched $pc"
   fi
 done
+
+echo ">>> Checked pkg-config for brotli:"
+pkg-config --static --libs brotli || true
 
 ####################################
 # 4) freetype2
