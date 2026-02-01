@@ -128,6 +128,14 @@ cmake --install build
 cd ..
 
 ####################################
+# 4) libtiff
+####################################
+echo "=== Building libtiff ==="
+build_autotools_dep \
+  "https://download.osgeo.org/libtiff/tiff-4.5.0.tar.gz" \
+  "tiff-4.5.0"
+
+####################################
 # Brotli (needed by FreeType for WOFF2)
 ####################################
 
@@ -202,6 +210,21 @@ echo ">>> pkg-config freetype2 info:"
 pkg-config --modversion freetype2
 pkg-config --cflags freetype2
 pkg-config --libs freetype2
+
+####################################
+# 7) libxml2 (с SAX1)
+####################################
+echo "=== Building libxml2 ==="
+wget -q http://xmlsoft.org/sources/libxml2-2.9.14.tar.xz
+tar xf libxml2-2.9.14.tar.xz
+cd libxml2-2.9.14
+./configure \
+  --host="$TOOLCHAIN" \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared --enable-static \
+  --with-sax1
+make -j"$(nproc)" && make install
+cd ..
 
 ####################################
 # Build expat
@@ -312,40 +335,42 @@ cd ..
 
 
 ####################################
-# 12) harfbuzz
+# 10) harfbuzz
 ####################################
+echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-meson setup build \
-  --cross-file=<(cat <<EOF
+# Meson cross file
+MESON_CROSS="$PWD/meson_cross.ini"
+cat > "$MESON_CROSS" <<EOF
 [binaries]
 c = '$CC'
 cxx = '$CXX'
 ar = '$AR'
 pkgconfig = 'pkg-config'
+
 [host_machine]
 system = 'windows'
 cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
+
+[properties]
+root_prefix = '$PREFIX_DEPS'
+pkg_config_path = '$PKG_CONFIG_PATH'
 EOF
-  ) \
+
+meson setup build \
+  --cross-file="$MESON_CROSS" \
   --prefix="$PREFIX_DEPS" \
   -Dfreetype=true \
-  -Dglib=false \
-  -Dgobject=false \
-  -Dcairo=false \
-  -Dicu=false \
-  -Dgraphite2=false \
-  -Dfontations=false \
-  -Ddirectwrite=false \
-  -Dcoretext=false \
-  -Dtests=false \
-  -Dutilities=true
+  -Dfontconfig=true \
+  -Dtests=false
 
-meson compile -C build --parallel "$(nproc)"
-meson install -C build
+ninja -C build --parallel "$(nproc)"
+ninja -C build install
+
 cd ..
 
 ####################################
