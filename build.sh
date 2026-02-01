@@ -376,6 +376,27 @@ grep -n "png_dep" -n src/meson.build || true
 grep -n "zlib_dep" -n src/meson.build || true
 echo "=== END SEARCH ==="
 
+# Apply Brotli linking patch
+cat > harfbuzz-brotli.patch << 'EOF'
+*** Begin Patch
+*** Update File: src/meson.build
+@@
+-495:   harfbuzz_deps += [freetype_dep]
++495:   harfbuzz_deps += [freetype_dep]
++    # Add static brotli decoding libraries to satisfy woff2 requirements
++    brotli_dep = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)
++    brotlicommon_dep = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)
++    if brotli_dep.found() and brotlicommon_dep.found()
++      harfbuzz_deps += [
++        declare_dependency(link_whole : brotlicommon_dep),
++        brotli_dep,
++      ]
++    endif
+*** End Patch
+EOF
+
+git apply harfbuzz-brotli.patch
+
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
