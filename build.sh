@@ -247,6 +247,7 @@ cd ..
 ####################################
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
+
 meson setup build \
   --cross-file=<(cat <<EOF
 [binaries]
@@ -260,8 +261,20 @@ cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
 EOF
-) --prefix="$PREFIX_DEPS" \
-    -Dfreetype=enabled -Dfontconfig=enabled -Dtests=disabled
+  ) \
+  --prefix="$PREFIX_DEPS" \
+  -Dfreetype=true \
+  -Dglib=false \
+  -Dgobject=false \
+  -Dcairo=false \
+  -Dicu=false \
+  -Dgraphite2=false \
+  -Dfontations=false \
+  -Ddirectwrite=false \
+  -Dcoretext=false \
+  -Dtests=false \
+  -Dutilities=true
+
 meson compile -C build --parallel "$(nproc)"
 meson install -C build
 cd ..
