@@ -190,19 +190,25 @@ cd ../..
 rm -f "$BROTLI_TOOLCHAIN"
 
 ####################################
-# Fix pkg-config for brotli static linking
+# Fix pkg‑config for brotli static linking
 ####################################
-echo ">>> Patching brotli pkgconfig to include common static lib"
+echo ">>> Creating combined brotli.pc for Meson"
 
-for pc in "$PREFIX_DEPS/lib/pkgconfig"/brotli*.pc; do
-  if grep -q "\-lbrotlidec" "$pc"; then
-    sed -i 's/-lbrotlidec/-lbrotlidec -lbrotlicommon/' "$pc" || true
-    echo "Patched $pc"
-  fi
-done
+cat > "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" <<EOF
+prefix=${PREFIX_DEPS}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
 
-echo ">>> Checked pkg-config for brotli:"
-pkg-config --static --libs brotli || true
+Name: brotli
+Description: Brotli static libs (decoder + common)
+Version: 1.0
+Libs: -L\${libdir} -lbrotlicommon -lbrotlidec
+Cflags: -I\${includedir}
+EOF
+
+echo ">>> Created brotli.pc:"
+cat "$PREFIX_DEPS/lib/pkgconfig/brotli.pc"
 
 ####################################
 # 4) freetype2
