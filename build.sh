@@ -569,17 +569,21 @@ cd ../..
 ####################################
 echo "=== Building libgphoto2 (cross compile) ==="
 
-# Clone source
+# Clone libgphoto2
 git clone --depth=1 https://github.com/gphoto/libgphoto2.git libgphoto2
 cd libgphoto2
 
-# Regenerate configure/autotools if necessary
+# Regenerate autotools scripts (needed in git)
 autoreconf --install --force --verbose
 
-# Ensure pkg-config can find libltdl first (we built it earlier)
+# Ensure pkg-config can find previously built libltdl
 export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-# Call configure with cross settings
+# Explicitly give libltdl include & lib paths
+export LTDLINCL="-I${PREFIX_DEPS}/include"
+export LIBLTDL="-L${PREFIX_DEPS}/lib -lltdl"
+
+# Configure with correct cross settings
 ./configure \
   --host=aarch64-w64-mingw32 \
   --prefix="${PREFIX_DEPS}" \
@@ -592,11 +596,10 @@ export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig:${PKG_CONFIG_PATH}"
   CFLAGS="-I${PREFIX_DEPS}/include ${CFLAGS}" \
   CPPFLAGS="-I${PREFIX_DEPS}/include ${CPPFLAGS}" \
   LDFLAGS="-L${PREFIX_DEPS}/lib ${LDFLAGS}" \
-  LTDLINCL="-I${PREFIX_DEPS}/include" \
-  LIBLTDL="-L${PREFIX_DEPS}/lib -lltdl"
-  
+  LTDLINCL="${LTDLINCL}" \
+  LIBLTDL="${LIBLTDL}"
 
-# Build and install
+# Build & install
 make -j"$(nproc)"
 make install
 
