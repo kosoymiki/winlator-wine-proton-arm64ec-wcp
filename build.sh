@@ -193,9 +193,21 @@ echo ">>> brotli static build completed."
 ####################################
 # 4) freetype2
 ####################################
-build_autotools_dep \
-  https://sourceforge.net/projects/freetype/files/freetype2/2.14.1/freetype-2.14.1.tar.xz/download \
-  freetype-2.14.1
+wget -q https://download.sourceforge.net/libpng/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
+tar xf freetype-2.14.1.tar.xz
+cd freetype-2.14.1
+
+# Настраиваем freetype для mingw‑цели (target)
+./configure \
+  --host="$TOOLCHAIN" \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared \
+  --enable-static \
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
+
+make -j"$(nproc)"
+make install
 
 # Ensure .pc exists
 if [ ! -f "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" ]; then
@@ -211,6 +223,8 @@ echo ">>> pkg-config freetype2 info:"
 pkg-config --modversion freetype2
 pkg-config --cflags freetype2
 pkg-config --libs freetype2
+
+cd .. 
 
 ####################################
 # 7) libxml2 (с SAX1)
