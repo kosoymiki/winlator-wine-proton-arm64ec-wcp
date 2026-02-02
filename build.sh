@@ -383,31 +383,27 @@ pkg-config --static --libs brotli || true
 # Проверяем, что brotli‑pkgconfig видит оба .a
 # Ожидаемый: -L... -lbrotlicommon -lbrotlidec
 
-echo ">>> Patching meson.build to include brotli"
-# meson.build находится прямо в текущей директории, а не в ./src
+echo ">>> Patching meson.build to include brotli link_args"
 HARFBUILD="meson.build"
 
-diff --git a/meson.build b/meson.build
-index XXX..YYY
---- a/meson.build
-+++ b/meson.build
-@@ -503,6 +503,15 @@ harfbuzz_deps += [freetype_dep]
+if [ ! -f "$HARFBUILD" ]; then
+  echo "ERROR: HarfBuzz meson.build not found!"
+  exit 1
+fi
 
- # Brotli support
- brotli_dep = cc.find_library('brotli', dirs : get_option('libdir'), required : false)
-+
-+# Also find both components of brotli static libs
-+brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)
-+brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)
-+
-+if brotli_decoder.found() and brotli_common.found()
-+  # add both libraries to link arguments for harfbuzz
-+  link_args += [brotli_decoder, brotli_common]
-+endif
+sed -i "/harfbuzz_deps += \[freetype_dep\]/a \\
+  # --- Brotli support ---\\
+  brotli_decoder = cc.find_library('brotlidec', dirs: get_option('libdir'), required: false)\\
+  brotli_common = cc.find_library('brotlicommon', dirs: get_option('libdir'), required: false)\\
+  if brotli_decoder.found() and brotli_common.found()\\
+    # explicitly add both brotli static libs to linker arguments\\
+    harfbuzz_lib = meson.get_target('harfbuzz')\\
+    harfbuzz_lib.set_link_args([brotli_decoder, brotli_common])\\
+  endif\\
   # --- End brotli support ---" \
   "$HARFBUILD"
 
-echo ">>> HarfBuzz meson.build patched for Brotli"
+echo ">>> HarfBuzz meson.build patched for brotli link_args"
 
 # создаём файл cross‑конфигурации для meson
 MESON_CROSS="$PWD/meson_cross.ini"
