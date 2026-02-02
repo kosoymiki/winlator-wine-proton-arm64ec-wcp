@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 ####################################
-# System host deps (Ubuntu)
+# System host deps (Ubuntu ARM)
 ####################################
 if command -v apt &>/dev/null && command -v sudo &>/dev/null; then
   sudo apt update
