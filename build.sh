@@ -456,6 +456,7 @@ cmake -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_CXX_COMPILER="$CXX" \
       -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
+
 ####################################
 # Install pkg-config and CMake module for libusb
 ####################################
@@ -533,6 +534,38 @@ cmake -DCMAKE_SYSTEM_NAME=Windows \
       -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
+
+####################################
+# Build libtool + libltdl (cross)
+####################################
+echo "=== Building libtool + libltdl (cross compile) ==="
+
+# Clone libtool
+git clone --depth=1 https://git.savannah.gnu.org/git/libtool.git libtool
+cd libtool
+
+# Prepare autotools
+# autoreconf might not be needed if configure exists, but safe to ensure
+autoreconf --install --force --verbose || true
+
+# Configure libtool for cross compile
+./configure \
+  --host=aarch64-w64-mingw32 \
+  --prefix="${PREFIX_DEPS}" \
+  --enable-static \
+  --disable-shared \
+  --disable-dependency-tracking \
+  LT_CONFIG_LTDL_WEBDOWNLOAD=false \
+  CC="${CC}" \
+  CFLAGS="-I${PREFIX_DEPS}/include ${CFLAGS}" \
+  LDFLAGS="-L${PREFIX_DEPS}/lib ${LDFLAGS}"
+
+# Build and install
+make -j"$(nproc)"
+make install
+
+cd ..
+echo "=== libtool + libltdl build complete ==="
 
 
 ####################################
