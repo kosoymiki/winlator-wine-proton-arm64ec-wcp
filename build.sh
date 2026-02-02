@@ -456,6 +456,69 @@ cmake -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_CXX_COMPILER="$CXX" \
       -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
+####################################
+# Install pkg-config and CMake module for libusb
+####################################
+echo "=== Installing libusb pkg-config and CMake module ==="
+
+# Generate pkg-config if not already
+mkdir -p "${PREFIX_DEPS}/lib/pkgconfig"
+cat > "${PREFIX_DEPS}/lib/pkgconfig/libusb-1.0.pc" <<EOF
+prefix=${PREFIX_DEPS}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: libusb-1.0
+Description: libusb library for USB device access
+Version: 1.0
+Libs: -L\${libdir} -lusb-1.0
+Cflags: -I\${includedir}
+EOF
+echo "Installed ${PREFIX_DEPS}/lib/pkgconfig/libusb-1.0.pc"
+
+# Install FindLibUSB.cmake
+mkdir -p "${PREFIX_DEPS}/cmake/modules"
+cat > "${PREFIX_DEPS}/cmake/modules/FindLibUSB.cmake" << 'EOF'
+# FindLibUSB.cmake
+include(FindPackageHandleStandardArgs)
+
+find_package(PkgConfig QUIET)
+
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_LibUSB libusb-1.0)
+endif()
+
+find_path(LibUSB_INCLUDE_DIR
+    NAMES libusb.h
+    HINTS ${PC_LibUSB_INCLUDE_DIRS}
+)
+
+find_library(LibUSB_LIBRARY
+    NAMES usb-1.0 libusb-1.0
+    HINTS ${PC_LibUSB_LIBRARY_DIRS}
+)
+
+set(LibUSB_LIBRARIES ${LibUSB_LIBRARY})
+set(LibUSB_INCLUDE_DIRS ${LibUSB_INCLUDE_DIR})
+
+if(PC_LibUSB_FOUND)
+    set(LibUSB_VERSION ${PC_LibUSB_VERSION})
+endif()
+
+find_package_handle_standard_args(LibUSB DEFAULT_MSG
+    LibUSB_LIBRARY LibUSB_INCLUDE_DIRS
+)
+
+if(LibUSB_FOUND AND NOT TARGET LibUSB::LibUSB)
+    add_library(LibUSB::LibUSB UNKNOWN IMPORTED)
+    set_target_properties(LibUSB::LibUSB PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${LibUSB_INCLUDE_DIRS}"
+        IMPORTED_LOCATION "${LibUSB_LIBRARY}"
+    )
+endif()
+EOF
+echo "Installed FindLibUSB.cmake to ${PREFIX_DEPS}/cmake/modules"
 cd ../..
 
 
