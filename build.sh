@@ -163,10 +163,6 @@ EOF
 git clone --depth=1 https://github.com/google/brotli.git brotli
 cd brotli
 
-# Debug dump for harfbuzz Meson build file
-echo ">>> BEGIN harfbuzz/src/meson.build (first 200 lines)"
-sed -n '1,200p' harfbuzz/src/meson.build || true
-echo ">>> END harfbuzz/src/meson.build"
 
 # 3) Configure with CMake
 mkdir build && cd build
@@ -375,6 +371,11 @@ cd ..
 echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
+
+# Debug dump for harfbuzz Meson build file
+echo ">>> BEGIN harfbuzz/src/meson.build (first 200 lines)"
+sed -n '1,200p' harfbuzz/src/meson.build || true
+echo ">>> END harfbuzz/src/meson.build"
 
 # Для отладки: покажем где находятся зависимости
 echo "=== SEARCHING DEPENDENCY BLOCK ==="
