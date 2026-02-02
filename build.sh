@@ -387,22 +387,23 @@ echo ">>> Patching meson.build to include brotli"
 # meson.build находится прямо в текущей директории, а не в ./src
 HARFBUILD="meson.build"
 
-if [ ! -f "$HARFBUILD" ]; then
-  echo "ERROR: HarfBuzz meson.build not found at $PWD/$HARFBUILD"
-  exit 1
-fi
+diff --git a/meson.build b/meson.build
+index XXX..YYY
+--- a/meson.build
++++ b/meson.build
+@@ -503,6 +503,15 @@ harfbuzz_deps += [freetype_dep]
 
-# вставляем блок после строки с freetype_dep
-sed -i "/harfbuzz_deps += \[freetype_dep\]/a \\
-  # --- Brotli support (added by build script) ---\\
-  brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)\\
-  brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)\\
-  if brotli_decoder.found() and brotli_common.found()\\
-    harfbuzz_deps += [\\
-      brotli_decoder,\\
-      brotli_common,\\
-    ]\\
-  endif\\
+ # Brotli support
+ brotli_dep = cc.find_library('brotli', dirs : get_option('libdir'), required : false)
++
++# Also find both components of brotli static libs
++brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)
++brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)
++
++if brotli_decoder.found() and brotli_common.found()
++  # add both libraries to link arguments for harfbuzz
++  link_args += [brotli_decoder, brotli_common]
++endif
   # --- End brotli support ---" \
   "$HARFBUILD"
 
