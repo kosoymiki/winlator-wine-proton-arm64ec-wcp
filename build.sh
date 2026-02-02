@@ -372,51 +372,43 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-echo ">>> Export pkgconfig path"
+echo ">>> Setting PKG_CONFIG_PATH for brotli"
+# добавляем каталог deps/install/lib/pkgconfig
 export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
 echo "PKG_CONFIG_PATH = $PKG_CONFIG_PATH"
 
-# Debug dump for harfbuzz Meson build file
-echo ">>> BEGIN harfbuzz/meson.build (first 200 lines)"
-sed -n '1,200p' harfbuzz/meson.build || true
-echo ">>> END harfbuzz/meson.build"
-
-# Показать зависимые блоки в Meson скрипте
-echo "=== SEARCHING DEPENDENCY BLOCK ==="
-grep -n "harfbuzz_deps" -n harfbuzz/meson.build || true
-grep -n "png_dep" -n harfbuzz/meson.build || true
-grep -n "zlib_dep" -n harfbuzz/meson.build || true
-echo "=== END SEARCH ==="
-
-echo ">>> Showing pkg-config brotli results"
 echo ">>> pkg-config brotli:"
 pkg-config --static --libs brotli || true
 
-echo ">>> Patching HarfBuzz Meson build for Brotli"
+# Проверяем, что brotli‑pkgconfig видит оба .a
+# Ожидаемый: -L... -lbrotlicommon -lbrotlidec
 
-HARFBUILD="harfbuzz/meson.build"
+echo ">>> Patching meson.build to include brotli"
+# meson.build находится прямо в текущей директории, а не в ./src
+HARFBUILD="meson.build"
 
 if [ ! -f "$HARFBUILD" ]; then
-  echo "ERROR: HarfBuzz meson.build not found at $HARFBUILD"
+  echo "ERROR: HarfBuzz meson.build not found at $PWD/$HARFBUILD"
   exit 1
 fi
 
+# вставляем блок после строки с freetype_dep
 sed -i "/harfbuzz_deps += \[freetype_dep\]/a \\
   # --- Brotli support (added by build script) ---\\
   brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)\\
   brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)\\
   if brotli_decoder.found() and brotli_common.found()\\
     harfbuzz_deps += [\\
-      declare_dependency(link_whole : brotli_common),\\
       brotli_decoder,\\
+      brotli_common,\\
     ]\\
   endif\\
-  # --- End Brotli support ---" \
+  # --- End brotli support ---" \
   "$HARFBUILD"
 
-echo ">>> HarfBuzz Meson build patched for Brotli"
+echo ">>> HarfBuzz meson.build patched for Brotli"
 
-# Генерируем файл meson_cross.ini
+# создаём файл cross‑конфигурации для meson
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
 [binaries]
@@ -443,14 +435,14 @@ meson setup build \
   -Dfreetype=enabled \
   -Dtests=disabled \
   2>&1 | tee meson-harfbuzz-config.log
-echo "=== END MESON CONFIG ==="
 
-# Собираем и устанавливаем
 echo "=== RUNNING NINJA BUILD ==="
-ninja -C build -j "$(nproc)" 2>&1 | tee ninja-harfbuzz-build.log
-echo "=== END NINJA BUILD ==="
-ninja -C build -j "$(nproc)" install
+ninja -C build -j"$(nproc)" 2>&1 | tee ninja-harfbuzz-build.log
 
+echo "=== INSTALLING HARFBUZZ ==="
+ninja -C build -j"$(nproc)" install
+
+# возвращаемся
 cd ..
 
 ####################################
