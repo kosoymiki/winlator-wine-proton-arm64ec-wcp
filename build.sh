@@ -137,74 +137,58 @@ build_autotools_dep \
   "tiff-4.5.0"
 
 ####################################
-# Brotli (needed by FreeType for WOFF2)
+# BROTLI: Build from source for HarfBuzz
 ####################################
+echo "=== Building brotli from source (static) ==="
 
-# 1) Create temporary CMake toolchain file
-export BROTLI_TOOLCHAIN="$PWD/brotli_toolchain.cmake"
-cat > "$BROTLI_TOOLCHAIN" <<EOF
-# Cross‑compile for Windows aarch64
+git clone --depth=1 https://github.com/google/brotli.git brotli
+cd brotli
+
+# Create CMake toolchain for cross compile
+cat > brotli-toolchain.cmake << EOF
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
+set(CMAKE_C_COMPILER   ${CC})
+set(CMAKE_CXX_COMPILER ${CXX})
+set(CMAKE_RC_COMPILER  ${WINDRES})
 
-set(CMAKE_C_COMPILER   aarch64-w64-mingw32-clang)
-set(CMAKE_CXX_COMPILER aarch64-w64-mingw32-clang++)
-
-set(CMAKE_FIND_ROOT_PATH $PREFIX_DEPS)
+set(CMAKE_FIND_ROOT_PATH ${PREFIX_DEPS})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
-# Force static libs
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
+set(BROTLI_DISABLE_TESTS ON)
+set(BROTLI_DISABLE_TOOLS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 EOF
 
-# 2) Clone Brotli
-git clone --depth=1 https://github.com/google/brotli.git brotli
-cd brotli
-
-
-# 3) Configure with CMake
-mkdir build && cd build
-cmake \
-  -DCMAKE_TOOLCHAIN_FILE="$BROTLI_TOOLCHAIN" \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-  -DBUILD_SHARED_LIBS=OFF \
+# Build brotli with CMake
+mkdir -p build-brotli && cd build-brotli
+cmake -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE=../brotli-toolchain.cmake \
+  -DCMAKE_INSTALL_PREFIX=${PREFIX_DEPS} \
+  -DBROTLI_BUILD_SHARED_LIBS=OFF \
   -DBROTLI_DISABLE_TESTS=ON \
   ..
-
-# 4) Build all static libs
-cmake --build . --parallel "$(nproc)"
-
-# 5) Copy BOTH decoder and common static libs
-cp libbrotlicommon.a libbrotlidec.a libbrotlienc.a "$PREFIX_DEPS/lib/"
-
-# 6) Install headers AND pkgconfig
-cmake --install .
-
+ninja install
 cd ../..
-rm -f "$BROTLI_TOOLCHAIN"
 
-####################################
-# Fix pkg‑config for brotli static linking
-####################################
-echo ">>> Creating combined brotli.pc for Meson"
-
-cat > "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" <<EOF
+# Create pkgconfig for static brotli
+mkdir -p "$PREFIX_DEPS/lib/pkgconfig"
+cat > "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" << EOF
 prefix=${PREFIX_DEPS}
 exec_prefix=\${prefix}
 libdir=\${exec_prefix}/lib
 includedir=\${prefix}/include
 
 Name: brotli
-Description: Brotli static libs (decoder + common)
+Description: Brotli static libs (common + decode + encode)
 Version: 1.0
-Libs: -L\${libdir} -lbrotlicommon -lbrotlidec
+Libs: -L\${libdir} -lbrotlicommon -lbrotlidec -lbrotlienc
 Cflags: -I\${includedir}
 EOF
 
-echo ">>> Created brotli.pc:"
-cat "$PREFIX_DEPS/lib/pkgconfig/brotli.pc"
+echo ">>> brotli static build completed."
 
 ####################################
 # 4) freetype2
@@ -366,95 +350,26 @@ cd ..
 
 
 ####################################
-# 10) harfbuzz
+# HARFBUZZ
 ####################################
-echo "=== Building harfbuzz with brotli support ==="
-
-# 10.1 Download prebuilt brotli for ARM64 Windows
-echo ">>> Downloading prebuilt brotli for ARM64 Windows"
-curl -L \
-  https://dev-libs.wireshark.org/windows/packages/brotli/brotli-1.2.0-1-arm64-windows-ws.7z \
-  -o brotli-arm64.7z
-
-echo ">>> Extracting brotli"
-7z x brotli-arm64.7z -obrotli
-
-echo ">>> Installing brotli into deps/install"
-mkdir -p "$PREFIX_DEPS/lib" "$PREFIX_DEPS/include" "$PREFIX_DEPS/lib/pkgconfig"
-
-# Copy all static libs
-echo ">>> Copying brotli static libs"
-find brotli -type f -name '*.a' -print | while read file; do
-  cp "$file" "$PREFIX_DEPS/lib/"
-done
-
-# Copy headers
-echo ">>> Copying brotli headers"
-find brotli -type d -name 'include' -print | while read inc; do
-  cp -r "$inc/"* "$PREFIX_DEPS/include/"
-done
-
-# Generate pkgconfig file if needed
-echo ">>> Generating brotli.pc if absent"
-PCFILE="$PREFIX_DEPS/lib/pkgconfig/brotli.pc"
-if [ ! -f "$PCFILE" ]; then
-  echo "prefix=${PREFIX_DEPS}" > "$PCFILE"
-  echo "exec_prefix=\${prefix}" >> "$PCFILE"
-  echo "libdir=\${exec_prefix}/lib" >> "$PCFILE"
-  echo "includedir=\${prefix}/include" >> "$PCFILE"
-  echo "Name: brotli" >> "$PCFILE"
-  echo "Description: Brotli static libs (decoder + common)" >> "$PCFILE"
-  echo "Version: 1.2.0" >> "$PCFILE"
-  echo "Libs: -L\${libdir} -lbrotlidec -lbrotlicommon" >> "$PCFILE"
-  echo "Cflags: -I\${includedir}" >> "$PCFILE"
-  echo ">>> Created generated brotli.pc"
-fi
-
-# Debug output of installed brotli files
-echo ">>> Installed brotli libs:"
-ls -l "$PREFIX_DEPS/lib/"*brotli* || true
-echo ">>> Installed brotli headers:"
-ls -l "$PREFIX_DEPS/include/brotli"* || true
-echo ">>> Installed brotli pkgconfig:"
-ls -l "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" || true
-
-# Ensure pkg-config can find brotli
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
-echo "PKG_CONFIG_PATH after brotli install = $PKG_CONFIG_PATH"
-
-# Check that pkg-config sees brotli
-echo ">>> pkg-config brotli libs:"
-pkg-config --static --libs brotli || true
-pkg-config --modversion brotli || true
-
-# 10.2 Clone HarfBuzz
-echo "=== Cloning HarfBuzz ==="
+echo "=== Building HarfBuzz with brotli support ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-# 10.3 Patch meson.build for brotli linking
-echo ">>> Patching HarfBuzz meson.build to include brotli"
-HARFBUILD="meson.build"
-if [ ! -f "$HARFBUILD" ]; then
-  echo "ERROR: HarfBuzz meson.build not found!"
-  exit 1
-fi
+# Patch meson.build for explicit brotli .a linking
 sed -i "/harfbuzz_deps += \\[freetype_dep\\]/a \\
-  # --- Brotli support added by build script ---\\
-  brotli_decoder = cc.find_library('brotlidec', dirs : get_option('libdir'), required : false)\\
-  brotli_common  = cc.find_library('brotlicommon', dirs : get_option('libdir'), required : false)\\
-  if brotli_decoder.found() and brotli_common.found()\\
-    message('Found brotli_decoder:' + brotli_decoder.full_path())\\
-    message('Found brotli_common:' + brotli_common.full_path())\\
-    harfbuzz_lib = meson.get_target('harfbuzz')\\
-    harfbuzz_lib.link_with += [brotli_decoder, brotli_common]\\
-  endif\\
-  # --- End brotli support ---" \
-  "$HARFBUILD"
+# --- Brotli static libs ---\\
+brotli_libs = [\\
+  files(join_paths(get_option('libdir'), 'libbrotlicommon.a')),\\
+  files(join_paths(get_option('libdir'), 'libbrotlidec.a')),\\
+  files(join_paths(get_option('libdir'), 'libbrotlienc.a'))\\
+]\\
+harfbuzz_lib = meson.get_target('harfbuzz')\\
+harfbuzz_lib.link_with += brotli_libs\\
+# --- End brotli ---" \
+  meson.build
 
-echo ">>> HarfBuzz meson.build patched for brotli"
-
-# 10.4 Write cross file for Meson
+# Meson cross file
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
 [binaries]
@@ -474,20 +389,12 @@ root_prefix = '$PREFIX_DEPS'
 pkg_config_path = '$PKG_CONFIG_PATH'
 EOF
 
-echo "=== RUNNING MESON CONFIGURATION ==="
-meson setup build \
-  --cross-file="$MESON_CROSS" \
-  --prefix="$PREFIX_DEPS" \
-  -Dfreetype=enabled \
-  -Dtests=disabled \
-  2>&1 | tee meson-harfbuzz-config.log
+meson setup build --cross-file="$MESON_CROSS" --prefix="$PREFIX_DEPS" \
+  -Dfreetype=enabled -Dtests=disabled \
+  | tee meson-harfbuzz-config.log
 
-echo "=== RUNNING NINJA BUILD ==="
-ninja -C build -j"$(nproc)" 2>&1 | tee ninja-harfbuzz-build.log
-
-echo "=== INSTALLING HARFBUZZ ==="
-ninja -C build -j"$(nproc)" install
-
+ninja -C build -j"$(nproc)" | tee ninja-harfbuzz-build.log
+ninja -C build install
 cd ..
 echo ">>> HarfBuzz build with brotli support complete"
 
