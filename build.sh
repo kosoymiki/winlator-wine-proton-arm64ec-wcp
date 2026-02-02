@@ -372,9 +372,13 @@ echo "=== Building harfbuzz ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
+echo ">>> Export pkgconfig path"
+export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig:$PKG_CONFIG_PATH"
+echo "PKG_CONFIG_PATH = $PKG_CONFIG_PATH"
+
 # Debug dump for harfbuzz Meson build file
-echo ">>> BEGIN harfbuzz/src/meson.build (first 200 lines)"
-sed -n '1,200p' harfbuzz/src/meson.build || true
+echo ">>> BEGIN harfbuzz/src/meson.build (first 1000 lines)"
+sed -n '1,1000p' harfbuzz/src/meson.build || true
 echo ">>> END harfbuzz/src/meson.build"
 
 # Для отладки: покажем где находятся зависимости
