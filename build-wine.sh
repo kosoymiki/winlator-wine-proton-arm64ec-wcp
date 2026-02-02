@@ -100,12 +100,18 @@ mkdir -p wine-tools-native
 cd wine-tools-native
 
 ../configure \
-    --enable-tools \
-    --disable-tests \
-    --disable-win16 \
-    --enable-archs=aarch64 \
-    --prefix="${PREFIX_DEPS}/wine-tools-native"
-
+  --build="$(./config.guess)" \
+  --host="aarch64-w64-mingw32" \
+  --prefix="${PREFIX_DEPS}/wine-tools-native" \
+  --disable-tests \
+  --disable-win16 \
+  --enable-tools \
+  CC="${CC}" \
+  CXX="${CXX}" \
+  AR="${AR}" \
+  RANLIB="${RANLIB}" \
+  PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
+  
 make -j"$(nproc)"
 make install
 
