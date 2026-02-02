@@ -394,36 +394,31 @@ echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
 echo ">>> pkg-config brotli:"
 pkg-config --static --libs brotli || true
 
-echo ">>> Applying deep HarfBuzz Brotli patch"
+echo ">>> Patching HarfBuzz Meson build for brotli"
 
-cat > harfbuzz-brotli.patch << 'EOF'
-diff --git a/src/meson.build b/src/meson.build
-index 0000000000..0000000000 100644
---- a/src/meson.build
-+++ b/src/meson.build
-@@
-   harfbuzz_deps += [freetype_dep]
-+  # --------------------------------------------------------------------
-+  # Brotli static decoding support (needed for WOFF2 support)
-+  # Find both the decoder and the common part
-+  brotli_decoder = cc.find_library('brotlidec',
-+                                   dirs: get_option('libdir'),
-+                                   required: false)
-+  brotli_common  = cc.find_library('brotlicommon',
-+                                   dirs: get_option('libdir'),
-+                                   required: false)
-+  if brotli_decoder.found() and brotli_common.found()
-+    # Add both libraries; common must be linked whole so symbols are not dropped
-+    harfbuzz_deps += [
-+      declare_dependency(link_whole: brotli_common),
-+      brotli_decoder,
-+    ]
-+  endif
-+  # End Brotli support
-EOF
+# Path to HarfBuzz meson.build
+HARFBUILD="harfbuzz/src/meson.build"
 
-git apply harfbuzz-brotli.patch || { echo "ERROR: failed to apply brotli patch"; exit 1; }
-echo ">>> Applied HarfBuzz Brotli patch"
+# Make sure file exists
+if [ ! -f "$HARFBUILD" ]; then
+  echo "ERROR: HarfBuzz meson.build not found at $HARFBUILD"
+  exit 1
+fi
+
+# Insert brotli support after freetype_dep line
+sed -i '/harfbuzz_deps += \[freetype_dep\]/a \
+  # --- Brotli support (added by build script) ---\
+  brotli_decoder = cc.find_library('"'"'brotlidec'"'"', dirs : get_option('"'"'libdir'"'"'), required : false)\
+  brotli_common  = cc.find_library('"'"'brotlicommon'"'"', dirs : get_option('"'"'libdir'"'"'), required : false)\
+  if brotli_decoder.found() and brotli_common.found()\
+    harfbuzz_deps += [\
+      declare_dependency(link_whole : brotli_common),\
+      brotli_decoder,\
+    ]\
+  endif\
+  # --- End brotli support ---' "$HARFBUILD"
+
+echo ">>> HarfBuzz Meson build patched for brotli"
 
 # Генерируем файл meson_cross.ini
 MESON_CROSS="$PWD/meson_cross.ini"
