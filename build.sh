@@ -535,16 +535,87 @@ cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
 
+####################################
+# Build libgphoto2 (Autotools cross)
+####################################
+echo "=== Building libgphoto2 (cross compile) ==="
+
 git clone --depth=1 https://github.com/gphoto/libgphoto2.git libgphoto2
 cd libgphoto2
-mkdir -p build && cd build
-cmake -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-      -DCMAKE_C_COMPILER="$CC" \
-      -DCMAKE_CXX_COMPILER="$CXX" \
-      -DENABLE_SHARED=OFF -DENABLE_STATIC=ON ..
-cmake --build . --parallel "$(nproc)" && cmake --install .
-cd ../..
 
-echo "=== All deps built at $PREFIX_DEPS ==="
+# Regenerate configure
+autoreconf --install --force --verbose
+
+# Configure for cross compile
+./configure \
+  --host=aarch64-w64-mingw32 \
+  --prefix="${PREFIX_DEPS}" \
+  --disable-shared \
+  --enable-static \
+  --without-curl \
+  --without-exif \
+  --disable-nls \
+  CC="${CC}" \
+  CFLAGS="${CFLAGS}" \
+  CPPFLAGS="-I${PREFIX_DEPS}/include ${CPPFLAGS}" \
+  LDFLAGS="-L${PREFIX_DEPS}/lib ${LDFLAGS}"
+
+make -j"$(nproc)"
+make install
+
+cd ..
+
+# Create pkg-config .pc for libgphoto2
+mkdir -p "${PREFIX_DEPS}/lib/pkgconfig"
+cat > "${PREFIX_DEPS}/lib/pkgconfig/libgphoto2.pc" <<EOF
+prefix=${PREFIX_DEPS}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: libgphoto2
+Description: gPhoto2 digital camera library
+Version: 2.5.32
+Libs: -L\${libdir} -lgphoto2
+Cflags: -I\${includedir}
+EOF
+
+echo "=== libgphoto2 pkg-config installed ==="
+
+# Install FindGphoto2.cmake module
+mkdir -p "${PREFIX_DEPS}/cmake/modules"
+cat > "${PREFIX_DEPS}/cmake/modules/FindGphoto2.cmake" << 'EOF'
+include(FindPackageHandleStandardArgs)
+find_package(PkgConfig QUIET)
+
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_GPHOTO2 libgphoto2)
+endif()
+
+find_path(GPHOTO2_INCLUDE_DIR
+    NAMES gphoto2/gphoto2.h
+    HINTS ${PC_GPHOTO2_INCLUDE_DIRS}
+)
+
+find_library(GPHOTO2_LIBRARY
+    NAMES gphoto2 libgphoto2
+    HINTS ${PC_GPHOTO2_LIBRARY_DIRS}
+)
+
+set(GPHOTO2_LIBRARIES ${GPHOTO2_LIBRARY})
+set(GPHOTO2_VERSION ${PC_GPHOTO2_VERSION})
+
+find_package_handle_standard_args(Gphoto2 DEFAULT_MSG
+    GPHOTO2_LIBRARY GPHOTO2_INCLUDE_DIR
+)
+
+if(Gphoto2_FOUND AND NOT TARGET Gphoto2::Gphoto2)
+    add_library(Gphoto2::Gphoto2 UNKNOWN IMPORTED)
+    set_target_properties(Gphoto2::Gphoto2 PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${GPHOTO2_INCLUDE_DIR}"
+        IMPORTED_LOCATION "${GPHOTO2_LIBRARY}"
+    )
+endif()
+EOF
+
+echo "=== FindGphoto2.cmake module installed ==="
