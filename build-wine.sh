@@ -100,35 +100,31 @@ mkdir -p wine-tools-native
 cd wine-tools-native
 
 ../configure \
-  --build="$(./config.guess)" \
-  --host="aarch64-w64-mingw32" \
+  --build="$(../config.guess)" \
+  --host="$(../config.guess)" \
   --prefix="${PREFIX_DEPS}/wine-tools-native" \
   --disable-tests \
   --disable-win16 \
   --enable-tools \
-  CC="${CC}" \
-  CXX="${CXX}" \
-  AR="${AR}" \
-  RANLIB="${RANLIB}" \
+  CC="$(clang)" \
+  CXX="$(clang++)" \
+  AR="ar" \
+  RANLIB="ranlib" \
   PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
-  
+
 make -j"$(nproc)"
 make install
 
 cd ..
 
 #####################################
-# Configure & compile Wine
+# Configure & compile Wine proper
 #####################################
 cd wine
-
-#####################################
-# Configure Wine proper (cross)
-#####################################
 mkdir -p build
 cd build
 
-export BUILD=aarch64-linux-gnu
+export BUILD=$(../config.guess)
 export HOST=aarch64-w64-mingw32
 
 echo ">>> pkg-config deps summary:"
