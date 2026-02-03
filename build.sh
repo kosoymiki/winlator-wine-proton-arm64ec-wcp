@@ -396,7 +396,7 @@ echo "=== Building HarfBuzz with brotli support ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-# Patch meson.build for explicit brotli .a linking
+# Add brotli linking
 sed -i "/harfbuzz_deps += \\[freetype_dep\\]/a \\
 # --- Brotli static libs ---\\
 brotli_libs = [\\
@@ -409,14 +409,26 @@ harfbuzz_lib.link_with += brotli_libs\\
 # --- End brotli ---" \
   meson.build
 
-# Meson cross file
+# Apply patch to relax freetype2 version check
+cat > harfbuzz-freetype-pkgconfig-fix.patch << 'EOF'
+*** Begin Patch
+*** Update File: meson.build
+@@
+-  freetype2_dep = dependency('freetype2', version : '>= 12.0.6', required : true)
++  # Accept any freetype2 version (avoid strict version compare)
++  freetype2_dep = dependency('freetype2', required : true)
+EOF
+
+patch -p1 < harfbuzz-freetype-pkgconfig-fix.patch
+
+# Meson cross file — ensure pkgconfig points to your cross pkg-config
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
 [binaries]
 c = '$CC'
 cxx = '$CXX'
 ar = '$AR'
-pkgconfig = 'pkg-config'
+pkgconfig = '${PREFIX_DEPS}/bin/aarch64-w64-mingw32-pkg-config'
 
 [host_machine]
 system = 'windows'
