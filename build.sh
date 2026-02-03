@@ -315,13 +315,12 @@ tar xf fontconfig-2.16.0.tar.xz
 cd fontconfig-2.16.0
 
 # Apply patch to accept our freetype2 version
-cat > freetype-version-fix.patch << 'EOF'
+cat > freetype2-version.patch << 'EOF'
 *** Begin Patch
 *** Update File: configure.ac
 @@
 -  PKG_CHECK_MODULES([FREETYPE2], [freetype2 >= 21.0.15],
 +  PKG_CHECK_MODULES([FREETYPE2], [freetype2 >= 2.14.1],
-     [have_freetype2=yes], [have_freetype2=no])
 *** End Patch
 EOF
 
