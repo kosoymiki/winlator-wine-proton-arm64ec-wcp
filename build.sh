@@ -218,6 +218,19 @@ if [ ! -f "$PREFIX_DEPS/lib/libfreetype.a" ]; then
   exit 1
 fi
 
+cat > "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" << EOF
+prefix=${PREFIX_DEPS}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include/freetype2
+
+Name: freetype2
+Description: FreeType 2 library
+Version: 2.14.1
+Libs: -L\${libdir} -lfreetype
+Cflags: -I\${includedir}
+EOF
+
 # Ensure pkg‑config sees freetype2 .pc
 if [ ! -f "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" ]; then
   echo "Error: freetype2.pc missing"
