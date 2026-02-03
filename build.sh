@@ -9,7 +9,7 @@ if command -v apt &>/dev/null && command -v sudo &>/dev/null; then
 
   # Core build tools
   sudo apt install -y --no-install-recommends \
-    build-essential autoconf automake libtool gettext gettext‑tools \
+    build-essential autoconf automake libtool gettext \
     gperf gawk m4 patch \
     bison flex
 
