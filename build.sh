@@ -191,25 +191,33 @@ EOF
 echo ">>> brotli static build completed."
 
 ####################################
-# 4) freetype2
+# 4) freetype2 (cross compile for mingw)
 ####################################
-wget -q https://download.sourceforge.net/libpng/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
+echo ">>> Building freetype2 (cross target)"
+
+wget -q https://download.sourceforge.net/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
 tar xf freetype-2.14.1.tar.xz
 cd freetype-2.14.1
 
-# Настраиваем freetype для mingw‑цели (target)
+# Configure for mingw target
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared \
   --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
+  CPPFLAGS="-I${PREFIX_DEPS}/include" \
+  LDFLAGS="-L${PREFIX_DEPS}/lib"
 
 make -j"$(nproc)"
 make install
 
-# Ensure .pc exists
+# Verify static lib and pkgconfig
+if [ ! -f "$PREFIX_DEPS/lib/libfreetype.a" ]; then
+  echo "Error: libfreetype.a missing!"
+  exit 1
+fi
+
+# Ensure pkg‑config sees the freetype2 .pc
 if [ ! -f "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" ]; then
   echo "Error: freetype2.pc missing"
   exit 1
@@ -224,8 +232,7 @@ pkg-config --modversion freetype2
 pkg-config --cflags freetype2
 pkg-config --libs freetype2
 
-cd .. 
-
+cd ..
 ####################################
 # 7) libxml2 (с SAX1)
 ####################################
