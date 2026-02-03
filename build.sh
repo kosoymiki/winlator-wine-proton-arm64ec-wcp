@@ -417,6 +417,16 @@ cd libev-4.33
 make -j"$(nproc)" && make install
 cd ..
 
+cat > "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" <<EOF
+#!/usr/bin/env bash
+PREFIX_DEPS="$PREFIX_DEPS"
+export PKG_CONFIG_LIBDIR="\$PREFIX_DEPS/lib/pkgconfig"
+export PKG_CONFIG_SYSROOT_DIR="\$PREFIX_DEPS"
+exec "\$PREFIX_DEPS/bin/pkgconf" "\$@"
+EOF
+
+chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
+ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
 
 ####################################
 # HARFBUZZ
