@@ -32,49 +32,7 @@ fi
 PREFIX_DEPS="${PWD}/deps/install"
 mkdir -p "$PREFIX_DEPS"/{bin,include,lib/pkgconfig}
 mkdir -p deps/build
-cd deps/build
-
-####################################
-# Build pkgconf (host pkg-config tool)
-####################################
-echo ">>> Building pkgconf (host pkg‑config tool)"
-
-wget -q https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz
-tar xf pkgconf-2.5.1.tar.xz
-cd pkgconf-2.5.1
-
-# Build only host pkgconf; do NOT try to cross‑compile pkgconf itself
-./configure \
-  --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static
-
-make -j"$(nproc)" && make install
-cd ..
-
-# Install wrappers that act as cross pkg‑config
-echo ">>> Creating cross pkg-config wrappers"
-mkdir -p "$PREFIX_DEPS/bin"
-
-# Wrapper for target triplet
-cat > "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" <<'EOF'
-#!/usr/bin/env bash
-# Wrapper for cross pkg-config — uses host pkgconf
-# Ensure PKG_CONFIG looks only into our prefix deps pkgconfig
-PREFIX_DEPS="@PREFIX_DEPS@"
-export PKG_CONFIG_LIBDIR="\$PREFIX_DEPS/lib/pkgconfig"
-export PKG_CONFIG_SYSROOT_DIR="\$PREFIX_DEPS"
-exec "\$PREFIX_DEPS/bin/pkgconf" "$@"
-EOF
-
-chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
-
-# Also make “pkg-config” symlink to the same wrapper
-ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
-
-echo ">>> Cross pkg-config wrappers installed:"
-ls -l "$PREFIX_DEPS/bin/pkgconf" \
-      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
-      "$PREFIX_DEPS/bin/pkg-config"
+cd depsbuild
 
 ####################################
 # Compiler / toolchain
@@ -427,6 +385,57 @@ EOF
 
 chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
 ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
+
+####################################
+# Build cross pkgconf (pkg-config for target)
+####################################
+echo ">>> Building pkgconf (cross)"
+
+wget -q https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz
+tar xf pkgconf-2.5.1.tar.xz
+cd pkgconf-2.5.1
+
+# Patch to disable __declspec(dllimport) for cross build (no import library needed)
+cat << 'EOF' > disable-dllimport.patch
+*** Begin Patch
+*** Update File: configure.ac
+@@
+- AC_DEFINE([PKGCONF_API],[__declspec(dllimport)], [Define import API for Windows])
++ AC_DEFINE([PKGCONF_API],[], [Disable dllimport for cross build])
+EOF
+
+patch -p1 < disable-dllimport.patch
+
+./configure \
+  --host=aarch64-w64-mingw32 \
+  --prefix="$PREFIX_DEPS" \
+  --disable-shared --enable-static
+
+make -j"$(nproc)" && make install
+cd ..
+
+echo ">>> Creating cross pkg-config wrappers"
+mkdir -p "$PREFIX_DEPS/bin"
+
+# Remove old links if any
+rm -f "$PREFIX_DEPS/bin/pkgconf" \
+      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
+      "$PREFIX_DEPS/bin/pkg-config"
+
+# Link pkgconf so it can be called as mingw pkg-config
+ln -s "$PREFIX_DEPS/bin/pkgconf" "$PREFIX_DEPS/bin/pkgconf"
+ln -s pkgconf "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
+ln -s aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
+
+echo ">>> Cross pkg-config wrappers installed:"
+ls -l "$PREFIX_DEPS/bin/pkgconf" \
+      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
+      "$PREFIX_DEPS/bin/pkg-config"
+
+# Quick test to ensure it sees freetype2
+"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --modversion freetype2 || true
+"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --cflags freetype2 || true
+"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --libs freetype2 || true
 
 ####################################
 # HARFBUZZ
