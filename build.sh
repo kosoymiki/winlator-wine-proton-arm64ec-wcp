@@ -6,39 +6,61 @@ set -euxo pipefail
 ####################################
 if command -v apt &>/dev/null && command -v sudo &>/dev/null; then
   sudo apt update
-sudo apt install -y --no-install-recommends \
-  build-essential autoconf automake libtool gettext gperf \
-  flex bison ninja-build cmake meson pkg-config \
-  meson ninja-build \
-  python3 python3-pip git wget unzip \
-  intltool gtk-doc-tools \
-  libasound2-dev libpulse-dev libv4l-dev \
-  libx11-dev libxext-dev libxfixes-dev libxinerama-dev \
-  libxi-dev libxrandr-dev libxrender-dev \
-  libfontconfig-dev \
-  libdbus-1-dev libsdl2-dev \
-  libjpeg-dev libpng-dev libxml2-dev \
-  libudev-dev libusb-1.0-0-dev libldap2-dev \
-  libxkbcommon-dev libxv-dev libxxf86vm-dev \
-  libxcursor-dev libxss-dev \
-  libvulkan-dev llvm clang lld \
-  gettext autopoint autoconf automake libtool \
-  
+
+  # Core build tools
+  sudo apt install -y --no-install-recommends \
+    build-essential autoconf automake libtool gettext gettext‑tools \
+    gperf gawk m4 patch \
+    bison flex
+
+  # Meson, Ninja, CMake, pkg‑config for host builds
+  sudo apt install -y --no-install-recommends \
+    meson ninja-build cmake pkg-config
+
+  # Python3 tooling
+  sudo apt install -y --no-install-recommends \
+    python3 python3-pip python3-setuptools python3-venv python3-docutils
+
+  # Dev headers for libraries used in Wine + your deps
+  sudo apt install -y --no-install-recommends \
+    libfreetype6-dev libfontconfig1-dev libexpat1-dev \
+    libjpeg-dev libpng-dev libxml2-dev liblzma-dev zlib1g-dev \
+    liblcms2-dev libbsd-dev
+
+  # X11 / windowing libs (needed for Wine X11 support)
+  sudo apt install -y --no-install-recommends \
+    libx11-dev libxext-dev libxfixes-dev libxi-dev \
+    libxrandr-dev libxcursor-dev libxinerama-dev \
+    libxxf86vm-dev libxss-dev libxv-dev \
+    libdbus-1-dev
+
+  # Sound, input and multimedia
+  sudo apt install -y --no-install-recommends \
+    libasound2-dev libpulse-dev libsdl2-dev \
+    libudev-dev libusb-1.0-0-dev libldap2-dev
+
+  # LLVM/Clang suite (optional, but needed for your clang use)
+  sudo apt install -y --no-install-recommends \
+    clang lld llvm
+
+  echo ">>> apt dependencies installed successfully"
 fi
 
 ####################################
-# Prepare prefix & environment
+# Prepare
 ####################################
+
 PREFIX_DEPS="${PWD}/deps/install"
+
 mkdir -p "$PREFIX_DEPS"/{bin,include,lib/pkgconfig}
 mkdir -p deps/build
-cd depsbuild
+cd deps/build
 
 ####################################
-# Compiler / toolchain
+# Cross Compiler
 ####################################
+
 export TOOLCHAIN=aarch64-w64-mingw32
-
 export CC="${TOOLCHAIN}-clang"
 export CXX="${TOOLCHAIN}-clang++"
 export AR="${TOOLCHAIN}-ar"
@@ -51,6 +73,7 @@ export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS+: }${LDFLAGS:-}"
 ####################################
 # Helper: build autotools deps
 ####################################
+
 build_autotools_dep() {
   local url="$1"
   local name="$2"
@@ -76,9 +99,6 @@ cd zlib
 make -j"$(nproc)" && make install
 cd ..
 
-
-make -j"$(nproc)" && make install
-cd ..
 ####################################
 # 2) libpng
 ####################################
@@ -92,12 +112,12 @@ build_autotools_dep \
 git clone --depth=1 https://github.com/libjpeg-turbo/libjpeg-turbo.git libjpeg
 cd libjpeg
 cmake -S . -B build \
-      -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-      -DCMAKE_C_COMPILER="$CC" \
-      -DCMAKE_CXX_COMPILER="$CXX" \
-      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-      -DENABLE_SHARED=OFF -DENABLE_STATIC=ON
+  -DCMAKE_SYSTEM_NAME=Windows \
+  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+  -DENABLE_SHARED=OFF -DENABLE_STATIC=ON
 cmake --build build --parallel "$(nproc)"
 cmake --install build
 cd ..
@@ -111,32 +131,26 @@ build_autotools_dep \
   "tiff-4.5.0"
 
 ####################################
-# BROTLI: Build from source for HarfBuzz
+# 5) brotli
 ####################################
 echo "=== Building brotli from source (static) ==="
-
 git clone --depth=1 https://github.com/google/brotli.git brotli
 cd brotli
 
-# Create CMake toolchain for cross compile
-cat > brotli-toolchain.cmake << EOF
+cat > brotli-toolchain.cmake <<EOF
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
-set(CMAKE_C_COMPILER   ${CC})
+set(CMAKE_C_COMPILER ${CC})
 set(CMAKE_CXX_COMPILER ${CXX})
-set(CMAKE_RC_COMPILER  ${WINDRES})
-
+set(CMAKE_RC_COMPILER ${WINDRES})
 set(CMAKE_FIND_ROOT_PATH ${PREFIX_DEPS})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-
 set(BROTLI_DISABLE_TESTS ON)
 set(BROTLI_DISABLE_TOOLS ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 EOF
 
-# Build brotli with CMake
 mkdir -p build-brotli && cd build-brotli
 cmake -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE=../brotli-toolchain.cmake \
@@ -147,16 +161,15 @@ cmake -G Ninja \
 ninja install
 cd ../..
 
-# Create pkgconfig for static brotli
 mkdir -p "$PREFIX_DEPS/lib/pkgconfig"
-cat > "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" << EOF
+cat > "$PREFIX_DEPS/lib/pkgconfig/brotli.pc" <<EOF
 prefix=${PREFIX_DEPS}
 exec_prefix=\${prefix}
 libdir=\${exec_prefix}/lib
 includedir=\${prefix}/include
 
 Name: brotli
-Description: Brotli static libs (common + decode + encode)
+Description: brotli static libs (common + decode + encode)
 Version: 1.0
 Libs: -L\${libdir} -lbrotlicommon -lbrotlidec -lbrotlienc
 Cflags: -I\${includedir}
@@ -165,29 +178,15 @@ EOF
 echo ">>> brotli static build completed."
 
 ####################################
-# 4) freetype2 (cross compile for mingw)
+# 6) freetype2
 ####################################
 echo ">>> Building freetype2 (cross target)"
-
-# Download correct source archive (.tar.xz)
 wget -q https://download-mirror.savannah.gnu.org/releases/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
-
-# Fallback if mirror down — try SourceForge
-if [ $? -ne 0 ] || [ ! -s freetype-2.14.1.tar.xz ]; then
-    echo ">>> Mirror failed, trying SourceForge"
-    wget -q https://downloads.sourceforge.net/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
-fi
-
-# Verify download
 if [ ! -s freetype-2.14.1.tar.xz ]; then
-    echo "Error: failed to download freetype2 source"
-    exit 1
+  wget -q https://downloads.sourceforge.net/freetype/freetype-2.14.1.tar.xz -O freetype-2.14.1.tar.xz
 fi
-
 tar xf freetype-2.14.1.tar.xz
 cd freetype-2.14.1
-
-# Configure for cross compilation (mingw target)
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
@@ -195,17 +194,10 @@ cd freetype-2.14.1
   --enable-static \
   CPPFLAGS="-I${PREFIX_DEPS}/include" \
   LDFLAGS="-L${PREFIX_DEPS}/lib"
-
 make -j"$(nproc)"
 make install
+cd ..
 
-# Verify static library built
-if [ ! -f "$PREFIX_DEPS/lib/libfreetype.a" ]; then
-  echo "Error: libfreetype.a missing!"
-  exit 1
-fi
-
-# Rewrite pkg‑config so Wine configure sees supported version
 cat > "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" <<EOF
 prefix=${PREFIX_DEPS}
 exec_prefix=\${prefix}
@@ -219,58 +211,30 @@ Libs: -L\${libdir} -lfreetype
 Cflags: -I\${includedir}
 EOF
 
-# Ensure .pc exists
-if [ ! -f "$PREFIX_DEPS/lib/pkgconfig/freetype2.pc" ]; then
-  echo "Error: freetype2.pc missing"
-  exit 1
-fi
-
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-export PKG_CONFIG_LIBDIR="$PREFIX_DEPS/lib/pkgconfig"
-export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
-
-echo ">>> pkg-config freetype2 info:"
-pkg-config --modversion freetype2
-pkg-config --cflags freetype2
-pkg-config --libs freetype2
-
-cd ..
-
 ####################################
-# 7) libxml2 (с SAX1)
+# 7) libxml2
 ####################################
 echo "=== Building libxml2 ==="
-
-# Ensure CPPFLAGS and LDFLAGS exist
-export CPPFLAGS="-I$PREFIX_DEPS/include${CPPFLAGS:+ $CPPFLAGS}"
-export LDFLAGS="-L$PREFIX_DEPS/lib${LDFLAGS:+ $LDFLAGS}"
-
-wget -q https://download.gnome.org/sources/libxml2/2.9/libxml2-2.9.14.tar.xz \
-  -O libxml2-2.9.14.tar.xz
-
+wget -q https://download.gnome.org/sources/libxml2/2.9/libxml2-2.9.14.tar.xz -O libxml2-2.9.14.tar.xz
 tar xf libxml2-2.9.14.tar.xz
 cd libxml2-2.9.14
-
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static \
   --with-sax1 \
-  CPPFLAGS="$CPPFLAGS" \
-  LDFLAGS="$LDFLAGS"
-
+  CPPFLAGS="-I$PREFIX_DEPS/include" \
+  LDFLAGS="-L$PREFIX_DEPS/lib"
 make -j"$(nproc)" && make install
 cd ..
 
 ####################################
-# Build expat
+# 8) expat
 ####################################
-
 echo ">>> Build expat"
 wget -q https://github.com/libexpat/libexpat/releases/download/R_2_7_4/expat-2.7.4.tar.xz
 tar xf expat-2.7.4.tar.xz
 cd expat-2.7.4
-
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
@@ -278,173 +242,71 @@ cd expat-2.7.4
   --with-pkgconfigdir="$PREFIX_DEPS/lib/pkgconfig" \
   CPPFLAGS="-I$PREFIX_DEPS/include" \
   LDFLAGS="-L$PREFIX_DEPS/lib"
-
 make -j"$(nproc)" && make install
 cd ..
 
-# Make sure pkg-config sees expat
-export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH+:}${PKG_CONFIG_PATH:-}"
+export PKG_CONFIG_PATH="$PREFIX_DEPS/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 export PKG_CONFIG_LIBDIR="$PREFIX_DEPS/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
 
-echo ">>> Check expat pkg-config"
-pkg-config --modversion expat
-pkg-config --cflags expat
-pkg-config --libs expat
+####################################
+# Build native pkgconf & create cross wrapper
+####################################
+echo ">>> Building host pkgconf"
+wget -q https://github.com/pkgconf/pkgconf/releases/download/pkgconf-1.8.0/pkgconf-1.8.0.tar.xz
+tar xf pkgconf-1.8.0.tar.xz
+cd pkgconf-1.8.0
+./configure \
+  --prefix="$PREFIX_DEPS/pkgconf-native" \
+  --disable-shared \
+  --enable-static
+make -j"$(nproc)" && make install
+cd ..
+
+echo ">>> Creating cross pkg-config wrapper"
+mkdir -p "$PREFIX_DEPS/bin"
+
+cat > "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" << 'EOF'
+#!/usr/bin/env bash
+export PKG_CONFIG_SYSROOT_DIR="${PREFIX_DEPS}"
+export PKG_CONFIG_LIBDIR="${PREFIX_DEPS}/lib/pkgconfig"
+export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig"
+exec "${PREFIX_DEPS}/pkgconf-native/bin/pkgconf" "$@"
+EOF
+
+chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
+ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
+
+echo ">>> pkg-config wrapper ready"
 
 ####################################
-# Build fontconfig
+# Build fontconfig 2.16.0
 ####################################
-
 echo ">>> Build fontconfig 2.16.0"
 wget -q https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.16.0.tar.xz
 tar xf fontconfig-2.16.0.tar.xz
 cd fontconfig-2.16.0
 
-# Патчим configure напрямую, чтобы freetype2 >= 2.14.1
+# Patch configure to accept freetype2 >= 2.14.1
 sed -i 's/freetype2 >= 21.0.15/freetype2 >= 2.14.1/' configure
 
-# Отладочный вывод, чтобы убедиться, что замена прошла
-grep -n "freetype2 >=" configure || true
-
-# Provide include paths so freetype and expat can be found
 export CPPFLAGS="-I$PREFIX_DEPS/include -I$PREFIX_DEPS/include/freetype2"
 export LDFLAGS="-L$PREFIX_DEPS/lib"
 
 ./configure \
   --host="$TOOLCHAIN" \
   --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  CPPFLAGS="$CPPFLAGS" \
-  LDFLAGS="$LDFLAGS"
-
-make -j"$(nproc)" && make install
-cd ..
-
-
-####################################
-# 5) GMP
-####################################
-build_autotools_dep \
-  https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz \
-  gmp-6.3.0
-
-####################################
-# 6) nettle + hogweed
-####################################
-build_autotools_dep \
-  https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz \
-  nettle-3.10.2
-
-####################################
-# 7) libtasn1
-####################################
-build_autotools_dep \
-  https://ftp.gnu.org/gnu/libtasn1/libtasn1-4.21.0.tar.gz \
-  libtasn1-4.21.0
-
-####################################
-# 8) libunistring
-####################################
-wget -q https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.xz
-tar xf libunistring-1.1.tar.xz
-cd libunistring-1.1
-./configure \
-  --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  --disable-tests \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
-make -j"$(nproc)" && make install
-cd ..
-
-####################################
-# 9) libev 4.33
-####################################
-echo ">>> Build libev 4.33"
-wget -q https://dist.schmorp.de/libev/libev-4.33.tar.gz
-tar xf libev-4.33.tar.gz
-cd libev-4.33
-./configure \
-  --host="$TOOLCHAIN" \
-  --prefix="$PREFIX_DEPS" \
-  --disable-shared --enable-static \
-  CPPFLAGS="-I$PREFIX_DEPS/include" \
-  LDFLAGS="-L$PREFIX_DEPS/lib"
-make -j"$(nproc)" && make install
-cd ..
-
-cat > "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" <<EOF
-#!/usr/bin/env bash
-PREFIX_DEPS="$PREFIX_DEPS"
-export PKG_CONFIG_LIBDIR="\$PREFIX_DEPS/lib/pkgconfig"
-export PKG_CONFIG_SYSROOT_DIR="\$PREFIX_DEPS"
-exec "\$PREFIX_DEPS/bin/pkgconf" "\$@"
-EOF
-
-chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
-ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
-
-####################################
-# Build cross pkgconf (pkg-config for target)
-####################################
-echo ">>> Building pkgconf (cross)"
-
-wget -q https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz
-tar xf pkgconf-2.5.1.tar.xz
-cd pkgconf-2.5.1
-
-# Patch to disable __declspec(dllimport) for cross build (no import library needed)
-cat << 'EOF' > disable-dllimport.patch
-*** Begin Patch
-*** Update File: configure.ac
-@@
-- AC_DEFINE([PKGCONF_API],[__declspec(dllimport)], [Define import API for Windows])
-+ AC_DEFINE([PKGCONF_API],[], [Disable dllimport for cross build])
-EOF
-
-patch -p1 < disable-dllimport.patch
-
-./configure \
-  --host=aarch64-w64-mingw32 \
-  --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static
-
 make -j"$(nproc)" && make install
 cd ..
 
-echo ">>> Creating cross pkg-config wrappers"
-mkdir -p "$PREFIX_DEPS/bin"
-
-# Remove old links if any
-rm -f "$PREFIX_DEPS/bin/pkgconf" \
-      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
-      "$PREFIX_DEPS/bin/pkg-config"
-
-# Link pkgconf so it can be called as mingw pkg-config
-ln -s "$PREFIX_DEPS/bin/pkgconf" "$PREFIX_DEPS/bin/pkgconf"
-ln -s pkgconf "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
-ln -s aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
-
-echo ">>> Cross pkg-config wrappers installed:"
-ls -l "$PREFIX_DEPS/bin/pkgconf" \
-      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
-      "$PREFIX_DEPS/bin/pkg-config"
-
-# Quick test to ensure it sees freetype2
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --modversion freetype2 || true
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --cflags freetype2 || true
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --libs freetype2 || true
-
 ####################################
-# HARFBUZZ
+# Build HarfBuzz with brotli support
 ####################################
 echo "=== Building HarfBuzz with brotli support ==="
 git clone --depth=1 https://github.com/harfbuzz/harfbuzz.git harfbuzz
 cd harfbuzz
 
-# Add brotli static libs to meson.build
 sed -i "/harfbuzz_deps += \\[freetype_dep\\]/a \\
 # --- Brotli static libs ---\\
 brotli_libs = [\\
@@ -456,14 +318,14 @@ harfbuzz_lib = meson.get_target('harfbuzz')\\
 harfbuzz_lib.link_with += brotli_libs\\
 # --- End brotli ---" meson.build
 
-# Create Meson cross file
+# Meson cross file
 MESON_CROSS="$PWD/meson_cross.ini"
 cat > "$MESON_CROSS" <<EOF
 [binaries]
 c = '$CC'
 cxx = '$CXX'
 ar = '$AR'
-pkgconfig = '${PREFIX_DEPS}/bin/aarch64-w64-mingw32-pkg-config'
+pkgconfig = '$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config'
 
 [host_machine]
 system = 'windows'
@@ -473,58 +335,41 @@ endian = 'little'
 
 [properties]
 root_prefix = '$PREFIX_DEPS'
-pkg_config_path = '$PREFIX_DEPS/lib/pkgconfig'
 EOF
 
-# Debug cross pkg-config
-echo ">>> Cross pkg-config test for HarfBuzz"
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --modversion freetype2 || true
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --cflags freetype2 || true
-"$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" --libs freetype2 || true
-
-# Run Meson
-meson setup build \
-  --cross-file="$MESON_CROSS" \
+meson setup build --cross-file="$MESON_CROSS" \
   --prefix="$PREFIX_DEPS" \
   -Dfreetype=enabled -Dtests=disabled \
   | tee meson-harfbuzz-config.log
 
-# Build + Install
-ninja -C build -j"$(nproc)" | tee ninja-harfbuzz-build.log
-ninja -C build install
-
+ninja -C build -j"$(nproc)" && ninja -C build install
 cd ..
+
 echo ">>> HarfBuzz build with brotli support complete"
 
 ####################################
-# 13+) Remaining deps
-####################################
 # SDL2
+####################################
+echo "=== Building SDL2 ==="
 git clone --depth=1 --branch SDL2 https://github.com/libsdl-org/SDL.git SDL2
 cd SDL2
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-      -DCMAKE_C_COMPILER="$CC" \
-      -DCMAKE_CXX_COMPILER="$CXX" \
-      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-      -DSDL_SHARED=OFF -DSDL_STATIC=ON ..
+  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+  -DSDL_SHARED=OFF -DSDL_STATIC=ON ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
-
 ####################################
-# libusb (CMake cross compile via libusb‑cmake)
+# libusb via libusb-cmake
 ####################################
 echo "=== Building libusb via libusb-cmake ==="
-
 git clone --depth=1 https://github.com/libusb/libusb-cmake.git libusb-cmake
 cd libusb-cmake
-
-# Create build dir
 mkdir -p build && cd build
-
-# Run CMake with cross settings
 cmake \
   -DCMAKE_SYSTEM_NAME=Windows \
   -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
@@ -535,33 +380,10 @@ cmake \
   -DBUILD_SHARED_LIBS=OFF \
   -DENABLE_STATIC=ON \
   -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
-  -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-  ..
-
-# Build and install
+  -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY ..
 cmake --build . --parallel "$(nproc)" --target install
-
 cd ../..
-echo "=== libusb CMake build complete ==="
 
-git clone --depth=1 https://gitlab.com/libtiff/libtiff.git libtiff
-cd libtiff
-mkdir -p build && cd build
-cmake -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-      -DCMAKE_C_COMPILER="$CC" \
-      -DCMAKE_CXX_COMPILER="$CXX" \
-      -DBUILD_SHARED_LIBS=OFF ..
-cmake --build . --parallel "$(nproc)" && cmake --install .
-
-####################################
-# Install pkg-config and CMake module for libusb
-####################################
-echo "=== Installing libusb pkg-config and CMake module ==="
-
-# Generate pkg-config if not already
-mkdir -p "${PREFIX_DEPS}/lib/pkgconfig"
 cat > "${PREFIX_DEPS}/lib/pkgconfig/libusb-1.0.pc" <<EOF
 prefix=${PREFIX_DEPS}
 exec_prefix=\${prefix}
@@ -574,176 +396,62 @@ Version: 1.0
 Libs: -L\${libdir} -lusb-1.0
 Cflags: -I\${includedir}
 EOF
-echo "Installed ${PREFIX_DEPS}/lib/pkgconfig/libusb-1.0.pc"
 
-# Install FindLibUSB.cmake
-mkdir -p "${PREFIX_DEPS}/cmake/modules"
-cat > "${PREFIX_DEPS}/cmake/modules/FindLibUSB.cmake" << 'EOF'
-# FindLibUSB.cmake
-include(FindPackageHandleStandardArgs)
-
-find_package(PkgConfig QUIET)
-
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_LibUSB libusb-1.0)
-endif()
-
-find_path(LibUSB_INCLUDE_DIR
-    NAMES libusb.h
-    HINTS ${PC_LibUSB_INCLUDE_DIRS}
-)
-
-find_library(LibUSB_LIBRARY
-    NAMES usb-1.0 libusb-1.0
-    HINTS ${PC_LibUSB_LIBRARY_DIRS}
-)
-
-set(LibUSB_LIBRARIES ${LibUSB_LIBRARY})
-set(LibUSB_INCLUDE_DIRS ${LibUSB_INCLUDE_DIR})
-
-if(PC_LibUSB_FOUND)
-    set(LibUSB_VERSION ${PC_LibUSB_VERSION})
-endif()
-
-find_package_handle_standard_args(LibUSB DEFAULT_MSG
-    LibUSB_LIBRARY LibUSB_INCLUDE_DIRS
-)
-
-if(LibUSB_FOUND AND NOT TARGET LibUSB::LibUSB)
-    add_library(LibUSB::LibUSB UNKNOWN IMPORTED)
-    set_target_properties(LibUSB::LibUSB PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${LibUSB_INCLUDE_DIRS}"
-        IMPORTED_LOCATION "${LibUSB_LIBRARY}"
-    )
-endif()
-EOF
-echo "Installed FindLibUSB.cmake to ${PREFIX_DEPS}/cmake/modules"
-cd ../..
-
-
+####################################
+# lcms2
+####################################
+echo "=== Building lcms2 ==="
 git clone --depth=1 https://github.com/mm2/Little-CMS.git lcms2
 cd lcms2
 mkdir -p build && cd build
 cmake -DCMAKE_SYSTEM_NAME=Windows \
-      -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
-      -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
-      -DCMAKE_C_COMPILER="$CC" \
-      -DCMAKE_CXX_COMPILER="$CXX" \
-      -DBUILD_SHARED_LIBS=OFF ..
+  -DCMAKE_SYSTEM_PROCESSOR=ARM64 \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX_DEPS" \
+  -DCMAKE_C_COMPILER="$CC" \
+  -DCMAKE_CXX_COMPILER="$CXX" \
+  -DBUILD_SHARED_LIBS=OFF ..
 cmake --build . --parallel "$(nproc)" && cmake --install .
 cd ../..
 
 ####################################
-# Build full libtool + libltdl (cross compile)
+# libtool + libltdl
 ####################################
-echo "=== Building full libtool + libltdl (cross compile) ==="
-
+echo "=== Building full libtool + libltdl ==="
 LIBTOOL_VER=2.5.4
-
-# Download official GNU libtool release
 wget -q "https://ftp.gnu.org/gnu/libtool/libtool-${LIBTOOL_VER}.tar.gz"
 tar xf "libtool-${LIBTOOL_VER}.tar.gz"
 cd "libtool-${LIBTOOL_VER}"
-
-# Configure for cross compile
 ./configure \
-  --host=aarch64-w64-mingw32 \
+  --host="$TOOLCHAIN" \
   --prefix="${PREFIX_DEPS}" \
-  --enable-static \
-  --disable-shared \
-  --disable-dependency-tracking \
-  CC="${CC}" \
-  AR="${AR}" \
-  RANLIB="${RANLIB}" \
+  --disable-shared --enable-static \
+  CC="${CC}" AR="${AR}" RANLIB="${RANLIB}" \
   CFLAGS="-I${PREFIX_DEPS}/include ${CFLAGS}" \
   LDFLAGS="-L${PREFIX_DEPS}/lib ${LDFLAGS}"
-
-# Build and install
-make -j"$(nproc)"
-make install
-
+make -j"$(nproc)" && make install
 cd ..
-echo "=== full libtool + libltdl installed ==="
 
 ####################################
-# Build libgphoto2 (cross compile)
+# libgphoto2 (cross)
 ####################################
-echo "=== Building libgphoto2 (cross compile) ==="
-
-# Clone libgphoto2
+echo "=== Building libgphoto2 (cross) ==="
 git clone --depth=1 https://github.com/gphoto/libgphoto2.git libgphoto2
 cd libgphoto2
-
-# Regenerate autotools scripts (needed in git)
 autoreconf --install --force --verbose
-
-####################################
-# Apply cross‑compile patches
-####################################
-echo ">>> Patching libgphoto2 for cross compile"
-
-# 1) Fix missing MAX/MIN macros in camlibs (QuickTake and other legacy codecs)
-find . -type f -name "*.h" | grep -E "quicktake1x0.h|qtkt|qtkn" | while read -r file; do
-  echo "Patching MAX/MIN in $file"
-  sed -i '1i \
-#ifndef MAX\n#define MAX(a,b) ((a) > (b) ? (a) : (b))\n#endif\n#ifndef MIN\n#define MIN(a,b) ((a) < (b) ? (a) : (b))\n#endif\n' "$file"
-done
-
-# 2) Optionally skip problematic camera libs if still failing
-#    (Uncomment to disable these modules completely)
-# PATCH_SKIP="camlibs/quicktake1x0 camlibs/imagetypeX"
-# for mod in $PATCH_SKIP; do
-#   echo "Disabling module: $mod"
-#   sed -i "s/ SUBDIRS =/ SUBDIRS = !${mod}/" Makefile.am
-# done
-
-# 3) Silence warnings about SIZE_MAX formatting & other printf format issues
-#    by adding appropriate macros.
-grep -q "SIZE_MAX" ./configure.ac && \
-  echo 'AC_DEFINE([_GNU_SOURCE],[1],[Enable GNU extensions for SIZE_MAX])' >> configure.ac
-
-echo ">>> libgphoto2 patches applied"
-
-####################################
-# Configure with correct cross settings
-####################################
-# Ensure pkg-config can find libltdl and other deps
 export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-# Configure
 ./configure \
-  --host=aarch64-w64-mingw32 \
+  --host="$TOOLCHAIN" \
   --prefix="${PREFIX_DEPS}" \
-  --disable-shared \
-  --enable-static \
-  --without-curl \
-  --without-exif \
-  --disable-nls \
+  --disable-shared --enable-static \
+  --without-curl --without-exif --disable-nls \
   CC="${CC}" \
   CFLAGS="-I${PREFIX_DEPS}/include ${CFLAGS}" \
   CPPFLAGS="-I${PREFIX_DEPS}/include ${CPPFLAGS}" \
   LDFLAGS="-L${PREFIX_DEPS}/lib ${LDFLAGS}"
-
-####################################
-# Build & Install
-####################################
-echo ">>> Building libgphoto2"
-make -j"$(nproc)" || {
-  echo "libgphoto2 build failed! Inspect logs…"
-  exit 1
-}
-
-echo ">>> Installing libgphoto2"
+make -j"$(nproc)"
 make install
-
 cd ..
-echo "=== libgphoto2 build complete ==="
-
-####################################
-# Install pkg‑config files for libgphoto2
-####################################
-echo "=== Installing libgphoto2 pkg-config files ==="
-mkdir -p "${PREFIX_DEPS}/lib/pkgconfig"
 
 cat > "${PREFIX_DEPS}/lib/pkgconfig/libgphoto2.pc" <<EOF
 prefix=${PREFIX_DEPS}
@@ -771,53 +479,4 @@ Libs: -L\${libdir} -lgphoto2_port
 Cflags: -I\${includedir}
 EOF
 
-echo "=== libgphoto2 pkg-config installed ==="
-
-####################################
-# Install FindGphoto2.cmake module
-####################################
-echo "=== Installing FindGphoto2.cmake module ==="
-mkdir -p "${PREFIX_DEPS}/cmake/modules"
-cat > "${PREFIX_DEPS}/cmake/modules/FindGphoto2.cmake" << 'EOF'
-include(FindPackageHandleStandardArgs)
-find_package(PkgConfig QUIET)
-
-# Try pkg-config first
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_GPHOTO2 libgphoto2)
-endif()
-
-# Look for include dir
-find_path(GPHOTO2_INCLUDE_DIR
-    NAMES gphoto2/gphoto2.h
-    HINTS ${PC_GPHOTO2_INCLUDE_DIRS}
-)
-
-# Look for libgphoto2
-find_library(GPHOTO2_LIBRARY
-    NAMES gphoto2 libgphoto2
-    HINTS ${PC_GPHOTO2_LIBRARY_DIRS}
-)
-
-# Set variables
-set(GPHOTO2_LIBRARIES ${GPHOTO2_LIBRARY})
-if(PC_GPHOTO2_FOUND)
-    set(GPHOTO2_VERSION ${PC_GPHOTO2_VERSION})
-endif()
-
-# Report results
-find_package_handle_standard_args(Gphoto2 DEFAULT_MSG
-    GPHOTO2_LIBRARY GPHOTO2_INCLUDE_DIR
-)
-
-# Provide imported target for CMake
-if(Gphoto2_FOUND AND NOT TARGET Gphoto2::Gphoto2)
-    add_library(Gphoto2::Gphoto2 UNKNOWN IMPORTED)
-    set_target_properties(Gphoto2::Gphoto2 PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${GPHOTO2_INCLUDE_DIR}"
-        IMPORTED_LOCATION "${GPHOTO2_LIBRARY}"
-    )
-endif()
-EOF
-
-echo "=== FindGphoto2.cmake module installed ==="
+echo "=== build.sh complete! ==="
