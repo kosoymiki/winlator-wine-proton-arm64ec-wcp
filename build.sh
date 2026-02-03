@@ -35,32 +35,36 @@ mkdir -p deps/build
 cd deps/build
 
 ####################################
-# Build cross pkgconf (pkg-config for target)
+# Build pkgconf (host host pkg-config tool)
 ####################################
-echo ">>> Building pkgconf (cross)"
+echo ">>> Building pkgconf (host pkg‑config tool)"
+
 wget -q https://distfiles.dereferenced.org/pkgconf/pkgconf-2.5.1.tar.xz
 tar xf pkgconf-2.5.1.tar.xz
 cd pkgconf-2.5.1
 
+# Build pkgconf for the build machine (this will produce a working pkg‑config)
 ./configure \
-  --host=aarch64-w64-mingw32 \
   --prefix="$PREFIX_DEPS" \
   --disable-shared --enable-static
 
-make -j"$(nproc)" && make install
+make -j"$(nproc)"
+make install
 cd ..
 
-echo ">>> Creating cross pkg-config wrappers"
+echo ">>> Creating pkg‑config wrappers"
+
+# Make sure the build‑host pkgconfig is in PATH
 mkdir -p "$PREFIX_DEPS/bin"
 
 cd "$PREFIX_DEPS/bin"
-ln -sf pkgconf aarch64-w64-mingw32-pkg-config
-ln -sf aarch64-w64-mingw32-pkg-config pkg-config
 
-echo ">>> Cross pkg-config wrappers installed:"
-ls -l "$PREFIX_DEPS/bin/pkgconf" \
-      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
-      "$PREFIX_DEPS/bin/pkg-config"
+# pkgconf will produce pkgconf executable
+# Create wrappers for pkg‑config
+ln -sf pkgconf pkg-config
+
+echo ">>> pkg‑config tool installed:"
+ls -l "$PREFIX_DEPS/bin/pkgconf" "$PREFIX_DEPS/bin/pkg-config"
 
 cd - > /dev/null
 
