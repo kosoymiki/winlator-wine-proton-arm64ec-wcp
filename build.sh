@@ -250,34 +250,38 @@ export PKG_CONFIG_LIBDIR="$PREFIX_DEPS/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="$PREFIX_DEPS"
 
 ####################################
-# Build native pkgconf & create cross wrapper
+# Build cross pkgconf (pkg-config for target)
 ####################################
-echo ">>> Building host pkgconf"
-wget -q https://github.com/pkgconf/pkgconf/releases/download/pkgconf-1.8.0/pkgconf-1.8.0.tar.xz
-tar xf pkgconf-1.8.0.tar.xz
-cd pkgconf-1.8.0
+echo ">>> Building pkgconf (cross)"
+
+# Download pkgconf 2.5.1 from reliable mirror
+wget -q https://distfiles.ariadne.space/pkgconf/pkgconf-2.5.1.tar.xz
+tar xf pkgconf-2.5.1.tar.xz
+cd pkgconf-2.5.1
+
 ./configure \
-  --prefix="$PREFIX_DEPS/pkgconf-native" \
+  --host=aarch64-w64-mingw32 \
+  --prefix="$PREFIX_DEPS" \
   --disable-shared \
   --enable-static
-make -j"$(nproc)" && make install
+
+make -j"$(nproc)"
+make install
 cd ..
 
-echo ">>> Creating cross pkg-config wrapper"
+echo ">>> Creating cross pkg-config wrappers"
 mkdir -p "$PREFIX_DEPS/bin"
+cd "$PREFIX_DEPS/bin"
 
-cat > "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" << 'EOF'
-#!/usr/bin/env bash
-export PKG_CONFIG_SYSROOT_DIR="${PREFIX_DEPS}"
-export PKG_CONFIG_LIBDIR="${PREFIX_DEPS}/lib/pkgconfig"
-export PKG_CONFIG_PATH="${PREFIX_DEPS}/lib/pkgconfig"
-exec "${PREFIX_DEPS}/pkgconf-native/bin/pkgconf" "$@"
-EOF
+ln -sf pkgconf aarch64-w64-mingw32-pkg-config
+ln -sf aarch64-w64-mingw32-pkg-config pkg-config
 
-chmod +x "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config"
-ln -sf aarch64-w64-mingw32-pkg-config "$PREFIX_DEPS/bin/pkg-config"
+echo ">>> Cross pkg-config wrappers installed:"
+ls -l "$PREFIX_DEPS/bin/pkgconf" \
+      "$PREFIX_DEPS/bin/aarch64-w64-mingw32-pkg-config" \
+      "$PREFIX_DEPS/bin/pkg-config"
 
-echo ">>> pkg-config wrapper ready"
+cd - > /dev/null
 
 ####################################
 # Build fontconfig 2.16.0
