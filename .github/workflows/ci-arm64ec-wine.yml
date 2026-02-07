@@ -1,12 +1,13 @@
-name: Build Wine‑TKG ARM64EC
+name: Build Wine-TKG ARM64EC
 
 on:
-  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
-  build_wine_tkg:
+  build:
     runs-on: ubuntu-latest
-
     container:
       image: archlinux:latest
 
@@ -14,69 +15,57 @@ jobs:
       WCP_NAME: wine-11.1-staging-tkg-arm64ec
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Enable multilib repository
+        run: |
+          sed -Ei '/^#\s*\[multilib\]/{s/^#//;n;s/^#//;}' /etc/pacman.conf
+          pacman -Syy --noconfirm
 
-    - name: Enable multilib in pacman
-      run: |
-        # Раскомментируем multilib в pacman.conf
-        sed -Ei '/^#\[multilib\]/{s/^#//;n;s/^#//;}' /etc/pacman.conf
-        pacman -Syy --noconfirm
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm \
+            base-devel git wget unzip \
+            clang lld mingw-w64-gcc \
+            cmake ninja pkgconf python \
+            vulkan-icd-loader \
+            freetype2 \
+            libx11 \
+            libpulse \
+            gtk3 \
+            libpng \
+            giflib \
+            openal \
+            gnutls \
+            libxslt \
+            sqlite \
+            libjpeg-turbo \
+            lib32-freetype2 \
+            lib32-libx11 \
+            lib32-libpng \
+            lib32-giflib \
+            lib32-openal \
+            lib32-gnutls \
+            lib32-sqlite \
+            lib32-libjpeg-turbo \
+            lib32-libxslt \
+            lib32-fontconfig \
+            lib32-mesa
 
-    - name: Install packages dependencies
-      run: |
-        pacman -Sy --noconfirm \
-          base-devel git wget unzip \
-          clang lld mingw-w64-gcc \
-          cmake ninja pkgconf python \
-          vulkan-icd-loader \
-          freetype2 \
-          libx11 \
-          libpulse \
-          gtk3 \
-          libpng \
-          giflib \
-          openal \
-          gnutls \
-          libxslt \
-          sqlite \
-          libjpeg-turbo \
-          opencl-icd-loader \
-          v4l-utils \
-          libxrandr \
-          libxcursor \
-          libxinerama \
-          alsa-lib \
-          alsa-plugins \
-          gst-plugins-base-libs \
-          lib32-libx11 \
-          lib32-freetype2 \
-          lib32-vulkan-icd-loader \
-          lib32-giflib \
-          lib32-openal \
-          lib32-gnutls \
-          lib32-libxslt \
-          lib32-sqlite \
-          lib32-libjpeg-turbo \
-          lib32-opencl-icd-loader \
-          lib32-v4l-utils \
-          lib32-libxrandr \
-          lib32-libxcursor \
-          lib32-libxinerama \
-          lib32-alsa-lib \
-          lib32-alsa-plugins \
-          lib32-gst-plugins-base-libs
+      - name: Download llvm‑mingw toolchain
+        run: |
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip
+          unzip llvm-mingw-20251216-ucrt-x86_64.zip -d llvm-mingw
+          echo "LLVM_MINGW=$(pwd)/llvm-mingw" >> $GITHUB_ENV
 
-    - name: Run build script
-      run: |
-        chmod +x scripts/build.sh
-        ./scripts/build.sh
+      - name: Prepare and build
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
 
-    - name: Upload WCP artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.WCP_NAME }}
-        path: "*.wcp"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.WCP_NAME }}
+          path: "*.wcp"
