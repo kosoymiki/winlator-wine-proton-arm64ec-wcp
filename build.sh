@@ -1,74 +1,39 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
-#########################################
-# Build Wine‑TKG ARM64EC on Arch Linux
-#########################################
+######################################
+# Build Wine‑tkg ARM64EC on Arch Linux
+######################################
 
-echo ">>> Starting build"
-
-# Working directories
 WORK="$PWD/work"
 SRC="$WORK/src"
-LLVM_MINGW="$WORK/llvm-mingw"
+HOST="$WORK/host"
 INSTALL="$WORK/install"
+LLVM_MINGW="$WORK/llvm-mingw"
 WCP_OUT="$PWD"
 
+# Clean everything
 rm -rf "$WORK"
-mkdir -p "$WORK" "$SRC" "$LLVM_MINGW" "$INSTALL"
+mkdir -p "$WORK" "$SRC" "$HOST" "$INSTALL" "$LLVM_MINGW"
 
-# === 1) Install dependencies ===
+echo "=== Starting Wine‑tkg ARM64EC build ==="
 
-echo ">>> Installing dependencies"
-
-# Enable multilib for pacman
-sed -Ei '/^#\[multilib\]/{s/^#//;n;s/^#//;}' /etc/pacman.conf
-pacman -Syy --noconfirm
-
-pacman -Sy --noconfirm \
-  base-devel git wget unzip \
-  clang lld mingw-w64-gcc \
-  cmake ninja pkgconf python \
-  vulkan-icd-loader \
-  freetype2 lib32-freetype2 \
-  libx11 lib32-libx11 \
-  libpulse lib32-libpulse \
-  gtk3 lib32-gtk3 \
-  libpng lib32-libpng \
-  giflib lib32-giflib \
-  openal lib32-openal \
-  gnutls lib32-gnutls \
-  libxslt lib32-libxslt \
-  sqlite lib32-sqlite \
-  libjpeg-turbo lib32-libjpeg-turbo \
-  opencl-icd-loader lib32-opencl-icd-loader \
-  v4l-utils lib32-v4l-utils \
-  libxrandr lib32-libxrandr \
-  libxcursor lib32-libxcursor \
-  libxinerama lib32-libxinerama \
-  alsa-lib lib32-alsa-lib \
-  alsa-plugins lib32-alsa-plugins \
-  gst-plugins-base-libs lib32-gst-plugins-base-libs
-
-echo ">>> Dependencies installed"
-
-# === 2) Download llvm‑mingw toolchain ===
+# === 1) LLVM‑Mingw toolchain ===
 
 echo ">>> Downloading llvm‑mingw"
-
 wget -q -O "$WORK/llvm-mingw.zip" \
      https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip
 
+echo ">>> Extracting llvm‑mingw"
 unzip -q "$WORK/llvm-mingw.zip" -d "$LLVM_MINGW"
 
 export PATH="$LLVM_MINGW/bin:$PATH"
+echo ">>> Using llvm‑mingw from: $LLVM_MINGW"
+clang --version | head -n1
 
-echo "llvm‑mingw path: $(which clang)"
+# === 2) Clone sources ===
 
-# === 3) Clone repositories ===
-
-echo ">>> Cloning sources"
-
+echo ">>> Cloning Wine 11.1"
 git clone https://gitlab.winehq.org/wine/wine.git "$SRC/wine-git"
 (
   cd "$SRC/wine-git"
@@ -76,60 +41,72 @@ git clone https://gitlab.winehq.org/wine/wine.git "$SRC/wine-git"
   git checkout wine-11.1
 )
 
+echo ">>> Cloning Wine‑Staging"
 git clone https://gitlab.winehq.org/wine/wine-staging.git "$SRC/wine-staging-git"
+
+echo ">>> Cloning wine‑tkg‑git"
 git clone https://github.com/Frogging-Family/wine-tkg-git.git "$SRC/wine-tkg-git"
 
-# === 4) Prepare wine‑tkg ===
+# === 3) Prepare Wine‑tkg ===
 
 echo ">>> Preparing wine‑tkg"
 
 cd "$SRC/wine-tkg-git"
 
-# copy default config
+# Copy example customization
 cp wine-tkg-profiles/advanced-customization.cfg customization.cfg
 
-# enable staging, esync, fsync, proton options
+# Turn on staging + various patches
 sed -i 's/^_use_staging=.*/_use_staging="true"/' customization.cfg
 sed -i 's/^_use_esync=.*/_use_esync="true"/' customization.cfg
 sed -i 's/^_use_fsync=.*/_use_fsync="true"/' customization.cfg
+sed -i 's/^_use_GE_patches=.*/_use_GE_patches="true"/' customization.cfg
 sed -i 's/^_protonify=.*/_protonify="true"/' customization.cfg
 sed -i 's/^_proton_rawinput=.*/_proton_rawinput="true"/' customization.cfg
+sed -i 's/^_proton_fs_hack=.*/_proton_fs_hack="true"/' customization.cfg
 
+# Make sure scripts are executable
 chmod +x wine-tkg-scripts/*.sh
+
+# Prepare sources (wine–staging + tkg patches)
 yes "" | ./wine-tkg-scripts/prepare.sh
 
 cd "$WORK"
 
-# === 5) Build host tools ===
+# === 4) Build host tools ===
 
-echo ">>> Building wine host tools"
+echo ">>> Building host tools"
 
-mkdir -p "$WORK/host-build"
-cd "$WORK/host-build"
+mkdir -p "$HOST"
+cd "$HOST"
 
 "$SRC/wine-git/configure" --disable-tests --enable-win64
 make __tooldeps__ -j$(nproc)
 
-# === 6) Build Wine for ARM64EC ===
+# === 5) Build Wine ARM64EC ===
 
 echo ">>> Building Wine ARM64EC"
 
-mkdir -p "$WORK/arm64ec"
-cd "$WORK/arm64ec"
+mkdir -p "$WORK/build-arm64ec"
+cd "$WORK/build-arm64ec"
 
+# Set cross compilers
 export CC=aarch64-w64-mingw32-clang
 export CXX=aarch64-w64-mingw32-clang++
 export WINDRES=aarch64-w64-mingw32-windres
 
+# Optimization flags
 export CFLAGS="-O3 -march=armv8.2-a+fp16+dotprod"
 export CXXFLAGS="$CFLAGS"
 export CROSSCFLAGS="$CFLAGS -mstrict-align"
 
+# Configure Wine build
 "$SRC/wine-git/configure" \
   --host=aarch64-w64-mingw32 \
   --enable-win64 \
-  --with-wine-tools="$WORK/host-build" \
+  --with-wine-tools="$HOST" \
   --with-mingw=clang \
+  --enable-archs=i386,arm64ec,aarch64 \
   --disable-tests \
   --with-x \
   --with-vulkan \
@@ -139,55 +116,62 @@ export CROSSCFLAGS="$CFLAGS -mstrict-align"
   --without-gstreamer \
   --without-cups \
   --without-sane \
-  --without-oss \
-  --enable-archs=i386,arm64ec,aarch64
+  --without-oss
 
+# Build
 make -j$(nproc)
 
-echo ">>> Installing build"
+# === 6) Install to DESTDIR ===
+
+echo ">>> Installing build to DESTDIR"
 
 rm -rf "$INSTALL"
 make DESTDIR="$INSTALL" install
 
-# === 7) Package .wcp ===
+# === 7) Package into .wcp ===
 
-echo ">>> Packaging Wine to WCP"
+echo ">>> Packaging WCP archive"
 
 WCPDIR="$WORK/wcp"
 rm -rf "$WCPDIR"
 mkdir -p "$WCPDIR/bin" "$WCPDIR/lib/wine" "$WCPDIR/share"
 
+# Copy binaries and libs
 cp -a "$INSTALL"/usr/bin/* "$WCPDIR/bin/" 2>/dev/null || true
 cp -a "$INSTALL"/usr/lib/wine* "$WCPDIR/lib/wine/" 2>/dev/null || true
 cp -a "$INSTALL"/usr/share/* "$WCPDIR/share/" 2>/dev/null || true
 
+# Symlink wine
 (
   cd "$WCPDIR/bin"
   ln -sf wine64 wine || true
 )
 
+# Fix permissions
 find "$WCPDIR/bin" -type f -exec chmod +x {} \;
-find "$WCPDIR/lib/wine" -name '*.so*' -exec chmod +x {} \;
+find "$WCPDIR/lib/wine" -name "*.so*" -exec chmod +x {} \;
 
+# Produce info.json
 cat > "$WCPDIR/info.json" << 'EOF'
 {
   "name": "Wine-11.1-Staging-TKG-ARM64EC",
   "version": "11.1",
   "arch": "arm64",
   "variant": "staging+tkg",
-  "features": ["staging","fsync","esync","vulkan"]
+  "features": ["staging","esync","fsync","vulkan","proton"]
 }
 EOF
 
+# Produce env.sh
 cat > "$WCPDIR/env.sh" << 'EOF'
-#!/bin/sh
+#!/usr/bin/env sh
 export WINEDEBUG=-all
 export WINEESYNC=1
 export WINEFSYNC=1
 EOF
-
 chmod +x "$WCPDIR/env.sh"
 
+# Create final archive
 tar -cJf "$WCP_OUT/${WCP_NAME:-wine-tkg-arm64ec.wcp}" -C "$WCPDIR" .
 
-echo ">>> Build complete: $WCP_OUT/${WCP_NAME:-wine-tkg-arm64ec.wcp}"
+echo "=== Build finished: $WCP_OUT/${WCP_NAME:-wine-tkg-arm64ec.wcp}"
