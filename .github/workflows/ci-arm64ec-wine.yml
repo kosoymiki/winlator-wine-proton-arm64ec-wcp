@@ -1,56 +1,76 @@
-name: Build Wine ARM64EC .wcp
+name: Build Wine‑tkg ARM64EC
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04-arm
+  build_wine_tkg:
+    runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash
+    # Запускаем Arch Linux контейнер
+    container:
+      image: archlinux:latest
+
+    env:
+      # Имя выходного .wcp
+      WCP_NAME: wine-11.1-staging-tkg-arm64ec
 
     steps:
 
-    - name: Checkout
+    # Клонируем репозиторий
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Make build scripts executable
+    # Инициализируем pacman keyring
+    - name: Initialize pacman keyring
       run: |
-        chmod +x build.sh
-        chmod +x build-wine.sh
+        # Без этого pacman может не работать в Arch Docker образах
+        pacman-key --init
+        pacman-key --populate archlinux
+        # Обновим keyring
+        pacman -Sy archlinux-keyring --noconfirm
+        # Синхронизируем базу
+        pacman -Sy --noconfirm
 
-    - name: Setup llvm-mingw
+    # Установка зависимостей
+    - name: Install build dependencies
       run: |
-        TOOLCHAIN_VER="20260127"
-        FILE="llvm-mingw-${TOOLCHAIN_VER}-ucrt-ubuntu-22.04-aarch64.tar.xz"
-        wget -q "https://github.com/mstorsjo/llvm-mingw/releases/download/${TOOLCHAIN_VER}/${FILE}"
-        mkdir llvm-mingw
-        tar -xJf "$FILE" -C llvm-mingw --strip-components=1
-        echo "$PWD/llvm-mingw/bin" >> "$GITHUB_PATH"
+        pacman -Sy --noconfirm \
+          base-devel git wget unzip \
+          clang lld mingw-w64-clang \
+          cmake ninja pkgconf python \
+          vulkan-icd-loader lib32-vulkan-icd-loader \
+          freetype2 lib32-freetype2 \
+          libx11 lib32-libx11 \
+          libpulse lib32-libpulse \
+          gtk3 lib32-gtk3 \
+          libpng lib32-libpng \
+          giflib lib32-giflib \
+          openal lib32-openal \
+          gnutls lib32-gnutls \
+          libxslt lib32-libxslt \
+          sqlite lib32-sqlite \
+          libjpeg-turbo lib32-libjpeg-turbo \
+          opencl-icd-loader lib32-opencl-icd-loader \
+          v4l-utils lib32-v4l-utils \
+          libxrandr lib32-libxrandr \
+          libxcursor lib32-libxcursor \
+          libxinerama lib32-libxinerama \
+          alsa-lib lib32-alsa-lib \
+          alsa-plugins lib32-alsa-plugins \
+          gst-plugins-base-libs lib32-gst-plugins-base-libs
 
-    - name: Run deps build
+    # Выполнение скрипта сборки
+    - name: Run build script
       run: |
-        ./build.sh
+        chmod +x scripts/build.sh
+        ./scripts/build.sh
 
-    - name: Confirm freetype pkgconfig
-      run: |
-        echo "PKG_CONFIG_PATH=$PWD/deps/install/lib/pkgconfig"
-        ls deps/install/lib/pkgconfig
-
-    - name: Run wine build
-      run: |
-        ./build-wine.sh
-
-    - name: Upload Wine artifact
+    # Загрузка .wcp как артефакта
+    - name: Upload WCP artifact
       uses: actions/upload-artifact@v4
       with:
-        name: wine-arm64ec-wcp
+        name: ${{ env.WCP_NAME }}
         path: "*.wcp"
