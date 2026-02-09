@@ -7,6 +7,33 @@ echo " Wine ARM64EC TKG + Staging WCP build"
 echo "======================================================="
 
 #########################################################################
+# 0) Sparse‑checkout wine-tkg sources
+#########################################################################
+
+echo "--- Sparse‑checkout only needed TKG files ---"
+rm -rf wine-tkg-sparse
+git init wine-tkg-sparse
+cd wine-tkg-sparse
+
+git remote add origin https://github.com/Frogging-Family/wine-tkg-git.git
+git config core.sparseCheckout true
+
+# Only paths we need
+cat <<EOF > .git/info/sparse-checkout
+customization.cfg
+non-makepkg-build.sh
+wine-tkg-patches/
+wine-tkg-profiles/
+wine-tkg-scripts/
+wine-tkg-userpatches/
+EOF
+
+# Pull just those files
+git pull --depth=1 origin master
+
+cd ..
+
+#########################################################################
 # 1) Install LLVM‑MinGW cross toolchain
 #########################################################################
 
@@ -16,7 +43,7 @@ LLVM_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_VER}/$
 LLVM_PREFIX="/opt/llvm-mingw"
 LLVM_BIN="${LLVM_PREFIX}/bin"
 
-echo "--- Getting LLVM‑MinGW"
+echo "--- Getting LLVM‑MinGW ---"
 mkdir -p "${LLVM_PREFIX}"
 wget -q "${LLVM_URL}" -O "/tmp/${LLVM_ARCHIVE}"
 tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
@@ -24,20 +51,13 @@ tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
 export PATH="${LLVM_BIN}:${PATH}"
 
 #########################################################################
-# 2) Clone wine‑tkg and wine‑staging
+# 2) Clone wine‑staging and AndreRH Wine arm64ec
 #########################################################################
 
-echo "--- Cloning wine‑tkg"
-[[ -d wine-tkg-git ]] || git clone https://github.com/Frogging-Family/wine-tkg-git.git
+echo "--- Cloning wine-staging ---"
+git clone --depth=1 https://gitlab.winehq.org/wine/wine-staging.git
 
-echo "--- Cloning wine‑staging"
-[[ -d wine-staging ]] || git clone https://gitlab.winehq.org/wine/wine-staging.git
-
-#########################################################################
-# 3) Pull AndreRH Wine arm64ec
-#########################################################################
-
-echo "--- Cloning AndreRH Wine arm64ec"
+echo "--- Cloning AndreRH Wine arm64ec ---"
 rm -rf wine-src
 git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
 (
@@ -46,60 +66,65 @@ git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
   git checkout arm64ec
 )
 
-# Overwrite TKG wine source
-rm -rf wine-tkg-git/wine
-cp -a wine-src wine-tkg-git/wine
-
 #########################################################################
-# 4) Enable patch groups in wine‑tkg‑git/customization.cfg
+# 3) Copy Wine source into sparse‑checked TKG folder
 #########################################################################
 
-CFG="wine-tkg-git/customization.cfg"
-echo "--- Enabling patch groups in TKG config"
+rm -rf wine-tkg-sparse/wine
+cp -a wine-src wine-tkg-sparse/wine
 
-for flag in staging esync fsync pba GE_WAYLAND; do
-    sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
+#########################################################################
+# 4) Enable TKG patch groups
+#########################################################################
+
+echo "--- Enabling patch groups in customization.cfg ---"
+CFG="wine-tkg-sparse/customization.cfg"
+
+# Core TKG options
+for flag in staging esync fsync; do
+  sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
 done
 
+# Proton/protonify support
 for flag in proton_battleye_support proton_eac_support proton_winevulkan proton_mf_patches proton_rawinput protonify; do
-    sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
+  sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
 done
 
+# Misc game fixes
 for flag in mk11_fix re4_fix mwo_fix use_josh_flat_theme; do
-    sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
+  sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
 done
 
 #########################################################################
-# 5) Setup cross compilation environment
+# 5) Setup cross compile environment
 #########################################################################
 
-export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O3 -march=native"
-export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O3 -march=native"
+export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O2"
+export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O2"
 export LD="lld-link"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
 #########################################################################
-# 6) Build via wine‑tkg non‑makepkg build
+# 6) Run non‑makepkg TKG build
 #########################################################################
 
-cd wine-tkg-git
-echo "--- Running TKG non-makepkg build"
+cd wine-tkg-sparse
+echo "--- Running TKG non‑makepkg build ---"
 chmod +x non-makepkg-build.sh
-./non-makepkg-build.sh
+./non-makepkg-build.sh --cross
 
 #########################################################################
-# 7) Install build to staging
+# 7) Install into staging
 #########################################################################
 
 STAGING="$(pwd)/../wcp/install"
 rm -rf "${STAGING}"
 mkdir -p "${STAGING}"
-
 make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
 #########################################################################
-# 8) Create wcp structure
+# 8) Arrange final .wcp structure
 #########################################################################
 
 cd "${STAGING}"
@@ -143,8 +168,7 @@ chmod +x wcp/env.sh
 #########################################################################
 
 WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
-
-echo "--- Creating final .wcp: ${WCP}"
+echo "--- Creating final .wcp: ${WCP} ---"
 tar -cJf "${WCP}" -C wcp .
 
 echo "=== .wcp created ==="
