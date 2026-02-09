@@ -46,12 +46,12 @@ git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
   git checkout arm64ec
 )
 
-# Replace TKG wine source
+# Overwrite TKG wine source
 rm -rf wine-tkg-git/wine
 cp -a wine-src wine-tkg-git/wine
 
 #########################################################################
-# 4) Enable patch groups
+# 4) Enable patch groups in wine‑tkg‑git/customization.cfg
 #########################################################################
 
 CFG="wine-tkg-git/customization.cfg"
@@ -80,53 +80,37 @@ export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
 #########################################################################
-# 6) Build via wine‑tkg with non‑makepkg‑build.sh
+# 6) Build via wine‑tkg non‑makepkg build
 #########################################################################
 
 cd wine-tkg-git
-
 echo "--- Running TKG non-makepkg build"
-
-# запускаем единственный правильный скрипт
 chmod +x non-makepkg-build.sh
-./non-makepkg-build.sh \
-  --host=arm64ec-w64-mingw32 \
-  --enable-win64 \
-  --with-mingw=clang
+./non-makepkg-build.sh
 
 #########################################################################
-# 7) Install build to staging area
+# 7) Install build to staging
 #########################################################################
 
 STAGING="$(pwd)/../wcp/install"
 rm -rf "${STAGING}"
 mkdir -p "${STAGING}"
 
-echo "--- Installing compiled wine"
 make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
 #########################################################################
 # 8) Create wcp structure
 #########################################################################
 
-echo "--- Assembling WCP directory"
 cd "${STAGING}"
-
 mkdir -p wcp/{bin,lib/wine,share}
 
-echo "Copying binaries"
 cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
-
-# Symlink wine => wine64
 cd wcp/bin && ln -sf wine64 wine && cd ../..
 
-echo "Copying libs"
 cp -a usr/local/lib/wine/* wcp/lib/wine/ 2>/dev/null || cp -a usr/lib/wine/* wcp/lib/wine/
-
-echo "Copying share files"
 cp -a usr/local/share/* wcp/share/ 2>/dev/null || cp -a usr/share/* wcp/share/
 
-echo "Fixing permissions"
 find wcp/bin -type f -exec chmod +x {} +
 find wcp/lib -name "*.so*" -exec chmod +x {} +
 
@@ -134,15 +118,13 @@ find wcp/lib -name "*.so*" -exec chmod +x {} +
 # 9) Write info.json & env.sh
 #########################################################################
 
-echo "--- Writing info.json and env.sh"
-
 cat > wcp/info.json << 'EOF'
 {
   "name": "Wine-11.1-Staging-S8G1",
   "version": "11.1",
   "arch": "arm64",
   "variant": "staging",
-  "features": ["staging","fsr","fsync","esync","vulkan"]
+  "features": ["staging","fsync","esync","vulkan"]
 }
 EOF
 
@@ -153,6 +135,7 @@ export WINEESYNC=1
 export WINEFSYNC=1
 export WINE_FULLSCREEN_FSR=1
 EOF
+
 chmod +x wcp/env.sh
 
 #########################################################################
@@ -165,4 +148,3 @@ echo "--- Creating final .wcp: ${WCP}"
 tar -cJf "${WCP}" -C wcp .
 
 echo "=== .wcp created ==="
-echo "=== Build finished ==="
