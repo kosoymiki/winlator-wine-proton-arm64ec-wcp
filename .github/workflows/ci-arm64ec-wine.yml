@@ -1,4 +1,4 @@
-name: Build Wine ARM64EC (AndreRH fork)
+name: Build Wine ARM64EC + Staging + tkg
 
 on:
   push:
@@ -13,67 +13,44 @@ jobs:
       image: archlinux:latest
 
     env:
-      WCP_NAME: wine-arm64ec-andrerh
+      # LLVM‑Mingw used for ARM64EC PE support
       LLVM_MINGW_VER: "20260127"
       LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.tar.xz
+      WCP_NAME: wine-arm64ec-tkg
 
     steps:
 
-    - name: Sync time (pacman)
-      run: pacman -Sy --noconfirm
-
-    - name: Install Arch build dependencies
+    - name: Install Arch dependencies
       run: |
         pacman -Sy --noconfirm \
-          base-devel git wget unzip \
-          clang lld cmake ninja pkgconf python \
-          vulkan-icd-loader \
-          freetype2 \
-          libx11 \
-          libpulse \
-          gtk3 \
-          libpng \
-          giflib \
-          openal \
-          gnutls \
-          libxslt \
-          sqlite \
-          libjpeg-turbo \
-          opencl-icd-loader \
-          v4l-utils \
-          libxrandr \
-          libxcursor \
-          libxinerama \
-          alsa-lib \
-          alsa-plugins \
+          base-devel git wget unzip clang lld cmake ninja \
+          pkgconf python vulkan-icd-loader \
+          freetype2 libx11 libpulse gtk3 libpng giflib \
+          openal gnutls libxslt sqlite libjpeg-turbo \
+          opencl-icd-loader v4l-utils libxrandr \
+          libxcursor libxinerama alsa-lib alsa-plugins \
           gst-plugins-base-libs
 
-    - name: Fetch LLVM‑Mingw
+    - name: Fetch LLVM‑Mingw toolchain
       run: |
         wget $LLVM_MINGW_URL -O llvm-mingw.tar.xz
         tar -xf llvm-mingw.tar.xz -C /opt
         export PATH="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin:$PATH"
 
-    - name: Checkout AndreRH arm64ec Wine
+    - name: Checkout Wine arm64ec fork
       run: |
-        git clone https://github.com/AndreRH/wine.git wine-anfork
-        cd wine-anfork
+        git clone https://github.com/AndreRH/wine.git wine-src
+        cd wine-src
         git checkout arm64ec
 
-    - name: Download fresh config.sub/config.guess
+    - name: Clone tkg builder
       run: |
-        wget https://pastebin.com/raw/2Wbtmybz -O wine-anfork/config.sub
-        wget https://pastebin.com/raw/e155AbHi -O wine-anfork/config.guess
+        git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
 
-    - name: Prepare build directory
+    - name: Run build
       run: |
-        mkdir -p wine-build
-        cd wine-build
-
-    - name: Run build script
-      run: |
-        chmod +x $GITHUB_WORKSPACE/build.sh
-        bash $GITHUB_WORKSPACE/build.sh
+        chmod +x ./build.sh
+        ./build.sh
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
