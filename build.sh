@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-echo "=== Wine ARM64EC TKG build start ==="
+echo
+echo "======================================================="
+echo " Wine ARM64EC TKG + Staging WCP build"
+echo "======================================================="
 
-################################################################################
+#########################################################################
 # 1) Install LLVM‑MinGW cross toolchain
-################################################################################
+#########################################################################
 
 LLVM_VER="${LLVM_MINGW_VER:-20251216}"
 LLVM_ARCHIVE="llvm-mingw-${LLVM_VER}-ucrt-ubuntu-22.04-x86_64.tar.xz"
@@ -20,9 +23,9 @@ tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
 
 export PATH="${LLVM_BIN}:${PATH}"
 
-################################################################################
+#########################################################################
 # 2) Clone wine‑tkg and wine‑staging
-################################################################################
+#########################################################################
 
 echo "--- Cloning wine‑tkg"
 if [[ ! -d wine-tkg-git ]]; then
@@ -34,29 +37,28 @@ if [[ ! -d wine-staging ]]; then
     git clone https://gitlab.winehq.org/wine/wine-staging.git
 fi
 
-################################################################################
-# 3) Checkout Wine source from AndreRH arm64ec branch
-################################################################################
+#########################################################################
+# 3) Pull AndreRH Wine arm64ec
+#########################################################################
 
-echo "--- Cloning Wine (AndreRH arm64ec)"
-if [[ -d wine-tkg-git/wine ]]; then
-    rm -rf wine-tkg-git/wine
-fi
-
-git clone https://github.com/AndreRH/wine.git wine‑src
-cd wine‑src
-git fetch --all
+echo "--- Cloning AndreRH Wine arm64ec"
+rm -rf wine-src
+git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
+cd wine-src
+git fetch --depth=1 origin arm64ec
 git checkout arm64ec
 cd ..
 
-cp -r wine‑src wine-tkg-git/wine
+# copy into tkg source
+rm -rf wine-tkg-git/wine
+cp -a wine-src wine-tkg-git/wine
 
-################################################################################
-# 4) Enable staging + all patch groups in TKG config
-################################################################################
+#########################################################################
+# 4) Enable all available patch groups
+#########################################################################
 
 CFG="wine-tkg-git/wine-tkg-git/customization.cfg"
-echo "--- Modifying tkg patch config"
+echo "--- Enabling patch groups in TKG config"
 
 for flag in staging esync fsync pba GE_WAYLAND; do
     sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
@@ -70,9 +72,9 @@ for flag in mk11_fix re4_fix mwo_fix use_josh_flat_theme; do
     sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
 done
 
-################################################################################
-# 5) Setup cross compiler environment
-################################################################################
+#########################################################################
+# 5) Setup cross compilation environment
+#########################################################################
 
 export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
 export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
@@ -80,17 +82,17 @@ export LD="lld-link"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
-################################################################################
+#########################################################################
 # 6) Build via wine‑tkg
-################################################################################
+#########################################################################
 
 cd wine-tkg-git
-echo "--- Running tkg build"
+echo "--- Running TKG build"
 ./prepare.sh --cross
 
-################################################################################
+#########################################################################
 # 7) Install build to staging
-################################################################################
+#########################################################################
 
 STAGING="$(pwd)/../wcp/install"
 rm -rf "${STAGING}"
@@ -98,9 +100,9 @@ mkdir -p "${STAGING}"
 
 make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
-################################################################################
+#########################################################################
 # 8) Create wcp structure
-################################################################################
+#########################################################################
 
 cd "${STAGING}"
 mkdir -p wcp/bin
@@ -116,9 +118,9 @@ cp -a usr/local/share/* wcp/share/ 2>/dev/null || cp -a usr/share/* wcp/share/
 find wcp/bin -type f -exec chmod +x {} +
 find wcp/lib -name "*.so*" -exec chmod +x {} +
 
-################################################################################
+#########################################################################
 # 9) Write info.json & env.sh
-################################################################################
+#########################################################################
 
 cat > wcp/info.json << 'EOF'
 {
@@ -140,14 +142,14 @@ EOF
 
 chmod +x wcp/env.sh
 
-################################################################################
+#########################################################################
 # 10) Package into .wcp (tar.xz)
-################################################################################
+#########################################################################
 
 WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
 
-echo "--- Creating WCP"
+echo "--- Creating final .wcp: ${WCP}"
 tar -cJf "${WCP}" -C wcp .
 
-echo "=== Built: ${WCP} ==="
-echo "=== Wine ARM64EC WCP done ==="
+echo "=== .wcp created ==="
+echo "=== Build finished ==="
