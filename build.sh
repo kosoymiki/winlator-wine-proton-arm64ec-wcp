@@ -28,14 +28,10 @@ export PATH="${LLVM_BIN}:${PATH}"
 #########################################################################
 
 echo "--- Cloning wine‑tkg"
-if [[ ! -d wine-tkg-git ]]; then
-    git clone https://github.com/Frogging-Family/wine-tkg-git.git
-fi
+[[ -d wine-tkg-git ]] || git clone https://github.com/Frogging-Family/wine-tkg-git.git
 
 echo "--- Cloning wine‑staging"
-if [[ ! -d wine-staging ]]; then
-    git clone https://gitlab.winehq.org/wine/wine-staging.git
-fi
+[[ -d wine-staging ]] || git clone https://gitlab.winehq.org/wine/wine-staging.git
 
 #########################################################################
 # 3) Pull AndreRH Wine arm64ec
@@ -44,20 +40,21 @@ fi
 echo "--- Cloning AndreRH Wine arm64ec"
 rm -rf wine-src
 git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
-cd wine-src
-git fetch --depth=1 origin arm64ec
-git checkout arm64ec
-cd ..
+(
+  cd wine-src
+  git fetch --depth=1 origin arm64ec
+  git checkout arm64ec
+)
 
-# copy into tkg source
+# Replace TKG wine source
 rm -rf wine-tkg-git/wine
 cp -a wine-src wine-tkg-git/wine
 
 #########################################################################
-# 4) Enable all available patch groups
+# 4) Enable patch groups
 #########################################################################
 
-CFG="wine-tkg-git/wine-tkg-git/customization.cfg"
+CFG="wine-tkg-git/customization.cfg"
 echo "--- Enabling patch groups in TKG config"
 
 for flag in staging esync fsync pba GE_WAYLAND; do
@@ -76,51 +73,68 @@ done
 # 5) Setup cross compilation environment
 #########################################################################
 
-export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
-export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
+export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O3 -march=native"
+export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O3 -march=native"
 export LD="lld-link"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
 #########################################################################
-# 6) Build via wine‑tkg
+# 6) Build via wine‑tkg with non‑makepkg‑build.sh
 #########################################################################
 
 cd wine-tkg-git
-echo "--- Running TKG build"
-./prepare.sh --cross
+
+echo "--- Running TKG non-makepkg build"
+
+# запускаем единственный правильный скрипт
+chmod +x non-makepkg-build.sh
+./non-makepkg-build.sh \
+  --host=arm64ec-w64-mingw32 \
+  --enable-win64 \
+  --with-mingw=clang
 
 #########################################################################
-# 7) Install build to staging
+# 7) Install build to staging area
 #########################################################################
 
 STAGING="$(pwd)/../wcp/install"
 rm -rf "${STAGING}"
 mkdir -p "${STAGING}"
 
+echo "--- Installing compiled wine"
 make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
 #########################################################################
 # 8) Create wcp structure
 #########################################################################
 
+echo "--- Assembling WCP directory"
 cd "${STAGING}"
-mkdir -p wcp/bin
-mkdir -p wcp/lib/wine
-mkdir -p wcp/share
 
+mkdir -p wcp/{bin,lib/wine,share}
+
+echo "Copying binaries"
 cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
+
+# Symlink wine => wine64
 cd wcp/bin && ln -sf wine64 wine && cd ../..
 
+echo "Copying libs"
 cp -a usr/local/lib/wine/* wcp/lib/wine/ 2>/dev/null || cp -a usr/lib/wine/* wcp/lib/wine/
+
+echo "Copying share files"
 cp -a usr/local/share/* wcp/share/ 2>/dev/null || cp -a usr/share/* wcp/share/
 
+echo "Fixing permissions"
 find wcp/bin -type f -exec chmod +x {} +
 find wcp/lib -name "*.so*" -exec chmod +x {} +
 
 #########################################################################
 # 9) Write info.json & env.sh
 #########################################################################
+
+echo "--- Writing info.json and env.sh"
 
 cat > wcp/info.json << 'EOF'
 {
@@ -139,11 +153,10 @@ export WINEESYNC=1
 export WINEFSYNC=1
 export WINE_FULLSCREEN_FSR=1
 EOF
-
 chmod +x wcp/env.sh
 
 #########################################################################
-# 10) Package into .wcp (tar.xz)
+# 10) Package into .wcp
 #########################################################################
 
 WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
