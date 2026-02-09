@@ -1,4 +1,4 @@
-name: Build Wine ARM64EC + tkg (no external pastebin)
+name: Build Wine ARM64EC + tkg
 
 on:
   push:
@@ -9,16 +9,19 @@ jobs:
   build-arm64ec:
     runs-on: ubuntu-latest
 
-    # We will use an Arch Linux container to install dependencies via pacman
     container:
       image: archlinux:latest
 
     env:
       LLVM_MINGW_VER: "20260127"
-      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.tar.xz
-      WCP_NAME: wine-arm64ec-tkg
+      WCP_NAME: "wine-arm64ec-tkg"
 
     steps:
+
+    - name: Setup LLVM Mingw URL
+      # Формируем переменную LLVM_MINGW_URL через GitHub expression
+      run: echo "LLVM_MINGW_URL=https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.tar.xz" >> $GITHUB_ENV
+
     - name: Sync pacman database
       run: pacman -Sy --noconfirm
 
@@ -47,7 +50,7 @@ jobs:
         cd wine-src
         git checkout arm64ec
 
-    - name: Clone wine‑tkg build system
+    - name: Clone wine‑tkg builder
       run: |
         git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
 
@@ -56,7 +59,7 @@ jobs:
         chmod +x ./build.sh
         ./build.sh
 
-    - name: Upload artifact
+    - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.WCP_NAME }}
