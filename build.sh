@@ -2,73 +2,69 @@
 set -euxo pipefail
 
 ROOT="$PWD"
-SRC="$ROOT/wine-src"
 TKG="$ROOT/wine-tkg-git"
-BUILD_OUT="$TKG/non-makepkg-builds"
-INSTALL_DIR="$ROOT/install"
+INSTALL_PREFIX="$ROOT/install"
+LLVM_DIR="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt-x86_64"
 
-# === STEP 1: LLVM‑Mingw toolchain setup ===
-LLVM_BASE="/opt"
-LLVM_VERSION="llvm-mingw-${LLVM_MINGW_VER}-ucrt-x86_64"
-LLVM_DIR="${LLVM_BASE}/${LLVM_VERSION}"
+echo "=== Build start $(date)"
 
-echo "--- LLVM‑Mingw dir = $LLVM_DIR"
+# 1) Ensure LLVM‑MinGW toolchain
 if [ ! -d "$LLVM_DIR" ]; then
-    echo "LLVM mingw toolchain not found!"
+    echo "LLVM Mingw toolchain missing"
     exit 1
 fi
 
-# Add to PATH so wine‑tkg finds it
-export PATH="${LLVM_DIR}/bin:$PATH"
-echo "Using LLVM clang = $(which clang)"
+export PATH="$LLVM_DIR/bin:$PATH"
+echo "clang => $(which clang)"
+echo "lld => $(which lld-link || which lld)"
 
-# === STEP 2: Prepare wine‑tkg environment ===
-rm -rf "$TKG/wine"
-cp -r "$SRC" "$TKG/wine"
-
+# 2) Prepare wine‑tkg config
 cd "$TKG"
 
-# Optional: customize wine‑tkg config (wine‑tkg-config.txt)
-# Example: enable fsync/proton patches in configs
+if [ ! -f customization.cfg ]; then
+  cat > customization.cfg <<EOF
+# Config for Wine ARM64EC
+_wine_git_repo="https://github.com/AndreRH/wine.git"
+_wine_git_branch="arm64ec"
+_use_staging="yes"
+_staging_level="default"
+# add additional tkg patches if needed
+EOF
+fi
 
-# === STEP 3: Run the wine‑tkg build script ===
-echo "--- Starting wine‑tkg build"
+# show effective config
+echo "--- custom config"
+grep -E "_wine_git|_use_staging" customization.cfg || true
+
+# 3) Run wine‑tkg build
 ./non-makepkg-build.sh \
   --enable-win64 \
   --host=arm64ec-w64-mingw32 \
   --enable-archs=arm64ec,aarch64,i386 \
   --with-mingw=clang
 
-# wine‑tkg build outputs in "non-makepkg-builds"
+# 4) Install and package
+BUILD_OUT="$(find . -type d -name "*-build" | head -n1 || true)"
+if [ -z "$BUILD_OUT" ]; then
+  BUILD_OUT="./non-makepkg-builds"
+fi
 
-cd "$BUILD_OUT"
+rm -rf "$INSTALL_PREFIX"
+mkdir -p "$INSTALL_PREFIX"
 
-# === STEP 4: Manual install of build output ===
-echo "--- Installing built Wine to prefix"
-rm -rf "$INSTALL_DIR"
-mkdir -p "$INSTALL_DIR"
+cp -a "$BUILD_OUT/bin" "$INSTALL_PREFIX/"
+cp -a "$BUILD_OUT/lib" "$INSTALL_PREFIX/"
+cp -a "$BUILD_OUT/share" "$INSTALL_PREFIX/" || true
 
-# If wine‑tkg build produced bin/lib/share in root of non‑makepkg-builds:
-cp -a bin "$INSTALL_DIR/"
-cp -a lib "$INSTALL_DIR/"
-cp -a share "$INSTALL_DIR/"
-
-# Ensure main runner is accessible
-mkdir -p "$INSTALL_DIR/bin"
-ln -sf "$INSTALL_DIR/bin64/wine64" "$INSTALL_DIR/bin/wine"
-
-# === STEP 5: Prepare .wcp packaging ===
-echo "--- Packaging .wcp format"
 mkdir -p wcp/{bin,lib,share}
-
-cp -a "$INSTALL_DIR/bin"/* wcp/bin/
-cp -a "$INSTALL_DIR/lib"/* wcp/lib/
-cp -a "$INSTALL_DIR/share"/* wcp/share/
+cp -a "$INSTALL_PREFIX/bin/." wcp/bin/
+cp -a "$INSTALL_PREFIX/lib/." wcp/lib/
+cp -a "$INSTALL_PREFIX/share/." wcp/share/
 
 cat > wcp/info.json <<EOF
 {
   "name": "${WCP_NAME}",
-  "version": "arm64ec-tkg",
+  "version": "arm64ec-staging-tkg",
   "arch": "arm64ec",
   "variant": "tkg"
 }
@@ -76,4 +72,4 @@ EOF
 
 tar -cJf "${ROOT}/${WCP_NAME}.wcp" -C wcp .
 
-echo "--- Done"
+echo "=== Build complete $(date)"
