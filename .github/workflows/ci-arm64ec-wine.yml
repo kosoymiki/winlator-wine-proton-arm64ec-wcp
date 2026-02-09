@@ -1,4 +1,4 @@
-name: Build Wine ARM64EC + Staging + tkg
+name: Build Wine ARM64EC + tkg (no external pastebin)
 
 on:
   push:
@@ -9,33 +9,37 @@ jobs:
   build-arm64ec:
     runs-on: ubuntu-latest
 
+    # We will use an Arch Linux container to install dependencies via pacman
     container:
       image: archlinux:latest
 
     env:
-      #LLVM‑Mingw used for ARM64EC PE support
       LLVM_MINGW_VER: "20260127"
       LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.tar.xz
       WCP_NAME: wine-arm64ec-tkg
 
     steps:
+    - name: Sync pacman database
+      run: pacman -Sy --noconfirm
 
-    - name: Install Arch dependencies
+    - name: Install dependencies
       run: |
         pacman -Sy --noconfirm \
-          base-devel git wget unzip clang lld cmake ninja \
-          pkgconf python vulkan-icd-loader \
-          freetype2 libx11 libpulse gtk3 libpng giflib \
-          openal gnutls libxslt sqlite libjpeg-turbo \
-          opencl-icd-loader v4l-utils libxrandr \
-          libxcursor libxinerama alsa-lib alsa-plugins \
+          base-devel git wget unzip \
+          clang lld cmake ninja pkgconf python \
+          vulkan-icd-loader freetype2 \
+          libx11 libpulse gtk3 libpng giflib \
+          openal gnutls libxslt sqlite \
+          libjpeg-turbo opencl-icd-loader \
+          v4l-utils libxrandr libxcursor \
+          libxinerama alsa-lib alsa-plugins \
           gst-plugins-base-libs
 
-    - name: Fetch LLVM‑Mingw toolchain
+    - name: Setup LLVM‑Mingw toolchain
       run: |
         wget $LLVM_MINGW_URL -O llvm-mingw.tar.xz
         tar -xf llvm-mingw.tar.xz -C /opt
-        export PATH="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin:$PATH"
+        echo "/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin" >> $GITHUB_PATH
 
     - name: Checkout Wine arm64ec fork
       run: |
@@ -43,11 +47,11 @@ jobs:
         cd wine-src
         git checkout arm64ec
 
-    - name: Clone tkg builder
+    - name: Clone wine‑tkg build system
       run: |
         git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg
 
-    - name: Run build
+    - name: Run build script
       run: |
         chmod +x ./build.sh
         ./build.sh
