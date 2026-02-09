@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-echo
-echo "======================================================="
-echo " Starting Wine WCP build @ $(date)"
-echo "======================================================="
-echo
+echo "=== Wine ARM64EC TKG build start ==="
 
-#########################################################################
-# 1) Setup LLVM‑MinGW cross toolchain for Windows
-#########################################################################
+################################################################################
+# 1) Install LLVM‑MinGW cross toolchain
+################################################################################
 
 LLVM_VER="${LLVM_MINGW_VER:-20251216}"
 LLVM_ARCHIVE="llvm-mingw-${LLVM_VER}-ucrt-ubuntu-22.04-x86_64.tar.xz"
@@ -17,61 +13,66 @@ LLVM_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_VER}/$
 LLVM_PREFIX="/opt/llvm-mingw"
 LLVM_BIN="${LLVM_PREFIX}/bin"
 
-echo "--- Setting up LLVM‑MinGW cross toolchain…"
-if [[ ! -d "${LLVM_PREFIX}" ]]; then
-    echo "Downloading: ${LLVM_ARCHIVE}"
-    wget -q "${LLVM_URL}" -O "/tmp/${LLVM_ARCHIVE}"
-    mkdir -p "${LLVM_PREFIX}"
-    tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
-else
-    echo "Toolchain already exists at ${LLVM_PREFIX}"
-fi
+echo "--- Getting LLVM‑MinGW"
+mkdir -p "${LLVM_PREFIX}"
+wget -q "${LLVM_URL}" -O "/tmp/${LLVM_ARCHIVE}"
+tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
 
-echo "Adding LLVM‑MinGW to PATH"
 export PATH="${LLVM_BIN}:${PATH}"
 
-echo "--- Verify cross toolchain"
-clang --version || true
-clang --target=arm64ec-w64-windows-gnu --version || true
-lld --version || true
-lld-link --version || true
-echo
+################################################################################
+# 2) Clone wine‑tkg and wine‑staging
+################################################################################
 
-#########################################################################
-# 2) Apply optimized C/C++ flags
-#########################################################################
+echo "--- Cloning wine‑tkg"
+if [[ ! -d wine-tkg-git ]]; then
+    git clone https://github.com/Frogging-Family/wine-tkg-git.git
+fi
 
-echo "--- Applying optimization flags"
+echo "--- Cloning wine‑staging"
+if [[ ! -d wine-staging ]]; then
+    git clone https://gitlab.winehq.org/wine/wine-staging.git
+fi
 
-# Aggressive optimization for modern ARM64EC
-OPT_FLAGS_ARM64EC="-O3 \
-    -mcpu=arm64-v8-a \
-    -march=arm64-v8-a \
-    -funroll-loops \
-    -fomit-frame-pointer \
-    -mllvm -vectorize-loops \
-    -mllvm -slp-vectorizer"
+################################################################################
+# 3) Checkout Wine source from AndreRH arm64ec branch
+################################################################################
 
-# If x86_64 build paths exist, define fallback
-OPT_FLAGS_X86_64="-O3 \
-    -mcpu=x86-64 \
-    -funroll-loops \
-    -fomit-frame-pointer \
-    -mllvm -vectorize-loops \
-    -mllvm -slp-vectorizer"
+echo "--- Cloning Wine (AndreRH arm64ec)"
+if [[ -d wine-tkg-git/wine ]]; then
+    rm -rf wine-tkg-git/wine
+fi
 
-echo "CFLAGS (ARM64EC) = ${OPT_FLAGS_ARM64EC}"
-echo "CXXFLAGS (ARM64EC) = ${OPT_FLAGS_ARM64EC}"
+git clone https://github.com/AndreRH/wine.git wine‑src
+cd wine‑src
+git fetch --all
+git checkout arm64ec
+cd ..
 
-export CFLAGS="${OPT_FLAGS_ARM64EC}"
-export CXXFLAGS="${OPT_FLAGS_ARM64EC}"
-export CPPFLAGS=""
+cp -r wine‑src wine-tkg-git/wine
 
-#########################################################################
-# 3) Set cross compilers for Windows
-#########################################################################
+################################################################################
+# 4) Enable staging + all patch groups in TKG config
+################################################################################
 
-echo "--- Setting cross compilers"
+CFG="wine-tkg-git/wine-tkg-git/customization.cfg"
+echo "--- Modifying tkg patch config"
+
+for flag in staging esync fsync pba GE_WAYLAND; do
+    sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
+done
+
+for flag in proton_battleye_support proton_eac_support proton_winevulkan proton_mf_patches proton_rawinput protonify; do
+    sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
+done
+
+for flag in mk11_fix re4_fix mwo_fix use_josh_flat_theme; do
+    sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
+done
+
+################################################################################
+# 5) Setup cross compiler environment
+################################################################################
 
 export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
 export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
@@ -79,33 +80,74 @@ export LD="lld-link"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
-echo "CC  = ${CC}"
-echo "CXX = ${CXX}"
-echo "LD  = ${LD}"
-echo "AR  = ${AR}"
-echo
+################################################################################
+# 6) Build via wine‑tkg
+################################################################################
 
-#########################################################################
-# 4) Run internal Wine build logic
-#########################################################################
+cd wine-tkg-git
+echo "--- Running tkg build"
+./prepare.sh --cross
 
-echo "--- Running internal build logic (build.sh core)"
+################################################################################
+# 7) Install build to staging
+################################################################################
 
-# Make sure script is executable
-chmod +x ./build.sh
+STAGING="$(pwd)/../wcp/install"
+rm -rf "${STAGING}"
+mkdir -p "${STAGING}"
 
-# Run the actual build with the cross compilers and flags applied
-# Since the repo uses a single script, we re‑invoke it with overrides
-exec "${CC}" --version >/dev/null 2>&1 || :
+make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
-# Now call the in‑repo build actions
-./build.sh
+################################################################################
+# 8) Create wcp structure
+################################################################################
 
-#########################################################################
-# 5) Final note
-#########################################################################
+cd "${STAGING}"
+mkdir -p wcp/bin
+mkdir -p wcp/lib/wine
+mkdir -p wcp/share
 
-echo
-echo "======================================================="
-echo " Wine WCP build finished @ $(date)"
-echo "======================================================="
+cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
+cd wcp/bin && ln -sf wine64 wine && cd ../..
+
+cp -a usr/local/lib/wine/* wcp/lib/wine/ 2>/dev/null || cp -a usr/lib/wine/* wcp/lib/wine/
+cp -a usr/local/share/* wcp/share/ 2>/dev/null || cp -a usr/share/* wcp/share/
+
+find wcp/bin -type f -exec chmod +x {} +
+find wcp/lib -name "*.so*" -exec chmod +x {} +
+
+################################################################################
+# 9) Write info.json & env.sh
+################################################################################
+
+cat > wcp/info.json << 'EOF'
+{
+  "name": "Wine-11.1-Staging-S8G1",
+  "version": "11.1",
+  "arch": "arm64",
+  "variant": "staging",
+  "features": ["staging","fsr","fsync","esync","vulkan"]
+}
+EOF
+
+cat > wcp/env.sh << 'EOF'
+#!/bin/sh
+export WINEDEBUG=-all
+export WINEESYNC=1
+export WINEFSYNC=1
+export WINE_FULLSCREEN_FSR=1
+EOF
+
+chmod +x wcp/env.sh
+
+################################################################################
+# 10) Package into .wcp (tar.xz)
+################################################################################
+
+WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
+
+echo "--- Creating WCP"
+tar -cJf "${WCP}" -C wcp .
+
+echo "=== Built: ${WCP} ==="
+echo "=== Wine ARM64EC WCP done ==="
