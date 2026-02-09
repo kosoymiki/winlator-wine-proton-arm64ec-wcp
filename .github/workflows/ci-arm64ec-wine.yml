@@ -1,4 +1,4 @@
-name: Build Wine ARM64EC with Staging + tkg
+name: Build Wine ARM64EC (Arch Linux)
 
 on:
   push:
@@ -17,34 +17,56 @@ jobs:
       WCP_NAME: "wine-arm64ec-staging-tkg"
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Setup pacman keyring
+        run: |
+          pacman-key --init
+          pacman-key --populate archlinux
+          pacman -Sy --noconfirm
 
-      - name: Install dependencies
+      - name: Install Arch build dependencies
         run: |
           pacman -Sy --noconfirm \
-            base-devel git wget unzip \
-            ninja cmake pkgconf python \
+            base-devel git wget unzip tar \
+            llvm clang lld mingw-w64-bin mingw-w64-crt \
+            cmake ninja pkgconf python \
             vulkan-icd-loader freetype2 \
-            libx11 libpulse gtk3 libpng giflib \
-            openal gnutls libxslt sqlite \
-            libjpeg-turbo opencl-icd-loader \
-            v4l-utils libxrandr libxcursor \
-            libxinerama alsa-lib alsa-plugins \
-            gst-plugins-base-libs
+            libx11 libpulse gtk3 libpng \
+            libjpeg-turbo gnutls libxslt sqlite \
+            openal v4l-utils libxrandr \
+            libxcursor libxinerama alsa-lib \
+            alsa-plugins gst-plugins-base
 
-      - name: Setup LLVM‑Mingw toolchain
-  run: |
-    wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz -O llvm‑mingw.tar.xz
-    tar -xJf llvm‑mingw.tar.xz -C /opt
-    echo "/opt/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
+      - name: Checkout main repo
+        uses: actions/checkout@v4
 
-      - name: Build Wine ARM64EC
+      - name: Checkout wine-tkg-git
+        uses: actions/checkout@v4
+        with:
+          repository: Frogging-Family/wine-tkg-git
+          path: wine-tkg-git
+
+      - name: Download LLVM-Mingw (Linux toolchain)
+        run: |
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-ubuntu-22.04-x86_64.tar.xz -O /tmp/llvm-mingw.tar.xz
+          mkdir -p /opt/llvm
+          tar -xJf /tmp/llvm-mingw.tar.xz --strip-components=1 -C /opt/llvm
+
+      - name: Add LLVM-Mingw to PATH
+        run: |
+          echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Verify LLVM‑MinGW
+        run: |
+          clang --version
+          lld --version
+          lld-link --version || true
+
+      - name: Run build script
         run: |
           chmod +x ./build.sh
           ./build.sh
 
-      - name: Upload artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.WCP_NAME }}
