@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-wcp:
-    name: Build Wine ARM64EC and Package .wcp
+    name: Build Wine ARM64EC and Package WCP
     runs-on: ubuntu-latest
 
     env:
@@ -17,25 +17,33 @@ jobs:
 
     steps:
 
+      # 1) Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # 2) Build using Arch Linux container
       - name: Build in Arch Linux container
         uses: addnab/docker-run-action@v3
         with:
           image: archlinux:latest
           options: >
             --privileged
-            -v "${{ github.workspace }}:/github/workspace"
+            -v ${{ github.workspace }}:/github/workspace
           run: |
             set -eux
 
+            # Перейти в репо
             cd /github/workspace
 
-            # Установка зависимостей
+            echo "=== Workspace ==="
+            ls -l .
+
+            # Обновить pacman
             pacman -Sy --noconfirm
+
+            # Установить зависимости
             pacman -Sy --noconfirm \
               base-devel git wget unzip tar pkgconf \
               freetype2 libpng libjpeg-turbo zlib \
@@ -43,11 +51,13 @@ jobs:
               gstreamer gst-plugins-base \
               gnutls
 
-            ls -l .
+            echo "=== Dependencies installed ==="
 
+            # Проверить и запустить build.sh
             chmod +x build.sh
             ./build.sh
 
+      # 3) Upload .wcp artifact
       - name: Upload .wcp artifact
         uses: actions/upload-artifact@v4
         with:
