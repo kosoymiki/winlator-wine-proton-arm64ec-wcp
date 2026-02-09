@@ -3,33 +3,34 @@ set -Eeuo pipefail
 
 echo
 echo "======================================================="
-echo " Starting Wine ARM64EC build @ $(date)"
+echo " Starting Wine WCP build @ $(date)"
 echo "======================================================="
 echo
 
 #########################################################################
-# 1) Set up LLVM ‑ MinGW cross toolchain
+# 1) Setup LLVM‑MinGW cross toolchain for Windows
 #########################################################################
 
 LLVM_VER="${LLVM_MINGW_VER:-20251216}"
 LLVM_ARCHIVE="llvm-mingw-${LLVM_VER}-ucrt-ubuntu-22.04-x86_64.tar.xz"
 LLVM_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_VER}/${LLVM_ARCHIVE}"
-
 LLVM_PREFIX="/opt/llvm-mingw"
 LLVM_BIN="${LLVM_PREFIX}/bin"
 
-echo "--- Ensuring LLVM‑MinGW cross toolchain exists"
+echo "--- Setting up LLVM‑MinGW cross toolchain…"
 if [[ ! -d "${LLVM_PREFIX}" ]]; then
-    echo "Downloading LLVM‑MinGW toolchain: ${LLVM_ARCHIVE}"
+    echo "Downloading: ${LLVM_ARCHIVE}"
     wget -q "${LLVM_URL}" -O "/tmp/${LLVM_ARCHIVE}"
     mkdir -p "${LLVM_PREFIX}"
     tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
+else
+    echo "Toolchain already exists at ${LLVM_PREFIX}"
 fi
 
-echo "LLVM‑MinGW bin => ${LLVM_BIN}"
+echo "Adding LLVM‑MinGW to PATH"
 export PATH="${LLVM_BIN}:${PATH}"
 
-echo "--- Verify toolchain"
+echo "--- Verify cross toolchain"
 clang --version || true
 clang --target=arm64ec-w64-windows-gnu --version || true
 lld --version || true
@@ -37,59 +38,40 @@ lld-link --version || true
 echo
 
 #########################################################################
-# 2) Clone upstream build system and sources
+# 2) Apply optimized C/C++ flags
 #########################################################################
 
-WORKDIR="${PWD}"
+echo "--- Applying optimization flags"
 
-echo "--- Cloning wine‑tkg‑git"
-git clone https://github.com/Frogging-Family/wine-tkg-git.git wine-tkg-git
+# Aggressive optimization for modern ARM64EC
+OPT_FLAGS_ARM64EC="-O3 \
+    -mcpu=arm64-v8-a \
+    -march=arm64-v8-a \
+    -funroll-loops \
+    -fomit-frame-pointer \
+    -mllvm -vectorize-loops \
+    -mllvm -slp-vectorizer"
 
-echo "--- Cloning Wine ARM64EC source"
-git clone --branch arm64ec https://github.com/AndreRH/wine.git wine
+# If x86_64 build paths exist, define fallback
+OPT_FLAGS_X86_64="-O3 \
+    -mcpu=x86-64 \
+    -funroll-loops \
+    -fomit-frame-pointer \
+    -mllvm -vectorize-loops \
+    -mllvm -slp-vectorizer"
 
-echo "--- Cloning Wine‑staging patches"
-git clone https://github.com/wine-staging/wine-staging.git wine-staging
+echo "CFLAGS (ARM64EC) = ${OPT_FLAGS_ARM64EC}"
+echo "CXXFLAGS (ARM64EC) = ${OPT_FLAGS_ARM64EC}"
 
-#########################################################################
-# 3) Move sources into expected wine‑tkg structure
-#########################################################################
-
-echo "--- Copying Wine into wine‑tkg"
-cp -r wine wine-tkg-git/wine
-
-echo "--- Copying staging into wine‑tkg"
-cp -r wine-staging wine-tkg-git/wine-staging
-
-if [[ -d "${WORKDIR}/wine-tkg-patches" ]]; then
-    echo "--- Copying custom tkg patches"
-    cp -r "${WORKDIR}/wine-tkg-patches" wine-tkg-git/
-fi
-
-#########################################################################
-# 4) Create customization.cfg
-#########################################################################
-
-cat > wine-tkg-git/customization.cfg <<EOF
-_wine_git_repo="https://github.com/AndreRH/wine.git"
-_wine_git_branch="arm64ec"
-_use_staging="yes"
-_staging_level="default"
-# disable unnecessary wrapper compilers
-_ccache=""
-# sysroot and flags injected by environment
-EOF
-
-echo "--- customization.cfg"
-cat wine-tkg-git/customization.cfg
-echo
+export CFLAGS="${OPT_FLAGS_ARM64EC}"
+export CXXFLAGS="${OPT_FLAGS_ARM64EC}"
+export CPPFLAGS=""
 
 #########################################################################
-# 5) Build with wine‑tkg
+# 3) Set cross compilers for Windows
 #########################################################################
 
-echo "--- Starting wine‑tkg build"
-cd wine-tkg-git
+echo "--- Setting cross compilers"
 
 export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
 export CXX="clang++ --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link"
@@ -97,20 +79,33 @@ export LD="lld-link"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
-echo "CC=${CC}"
-echo "CXX=${CXX}"
-echo "LD=${LD}"
-echo "AR=${AR}"
+echo "CC  = ${CC}"
+echo "CXX = ${CXX}"
+echo "LD  = ${LD}"
+echo "AR  = ${AR}"
+echo
 
-chmod +x non-makepkg-build.sh
+#########################################################################
+# 4) Run internal Wine build logic
+#########################################################################
 
-./non-makepkg-build.sh \
-    --enable-win64 \
-    --host=arm64ec-w64-mingw32 \
-    --enable-archs=arm64ec,aarch64,i386 \
-    --with-mingw=clang
+echo "--- Running internal build logic (build.sh core)"
+
+# Make sure script is executable
+chmod +x ./build.sh
+
+# Run the actual build with the cross compilers and flags applied
+# Since the repo uses a single script, we re‑invoke it with overrides
+exec "${CC}" --version >/dev/null 2>&1 || :
+
+# Now call the in‑repo build actions
+./build.sh
+
+#########################################################################
+# 5) Final note
+#########################################################################
 
 echo
 echo "======================================================="
-echo " Build complete @ $(date)"
+echo " Wine WCP build finished @ $(date)"
 echo "======================================================="
