@@ -7,7 +7,7 @@ echo " Wine ARM64EC TKG + Staging WCP build"
 echo "======================================================="
 
 #########################################################################
-# 0) Ensure dependencies for git sparse‑checkout
+# 0) Install dependencies for git + build
 #########################################################################
 
 echo "=== Installing dependencies ==="
@@ -17,32 +17,30 @@ pacman -Sy --noconfirm git wget unzip tar base-devel \
   gst-plugins-base gnutls
 
 #########################################################################
-# 1) Sparse‑checkout the wine‑tkg‑git directory
+# 1) Sparse‑checkout the wine-tkg-git content
 #########################################################################
 
-echo "=== Sparse‑checkout wine‑tkg‑git folder ==="
+echo "=== Sparse‑checkout wine‑tkg‑git directory ==="
 
-rm -rf wine-tkg-git
-mkdir wine-tkg-git
+rm -rf wine-tkg-src
+mkdir wine-tkg-src
+cd wine-tkg-src
 
-cd wine-tkg-git
-
-# Initialize an empty git repository
 git init
-
-# Add remote origin
 git remote add origin https://github.com/Frogging-Family/wine-tkg-git.git
-
-# Enable sparse checkout
 git config core.sparseCheckout true
 
-# Tell Git which path we want
+# Required subpaths
 cat > .git/info/sparse-checkout <<EOF
-wine-tkg-git/*
+wine-tkg-git/non-makepkg-build.sh
+wine-tkg-git/wine-tkg-scripts/
+wine-tkg-git/wine-tkg-patches/
+wine-tkg-git/wine-tkg-profiles/
+wine-tkg-git/wine-tkg-userpatches/
+wine-tkg-git/customization.cfg
 EOF
 
-# Pull only that directory
-git pull origin master --depth=1
+git pull --depth=1 origin master
 
 cd ..
 
@@ -63,14 +61,13 @@ tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
 export PATH="${LLVM_PREFIX}/bin:${PATH}"
 
 #########################################################################
-# 3) Clone wine‑staging and wine arm64ec
+# 3) Clone wine‑staging and Android ARM64EC wine sources
 #########################################################################
 
 echo "=== Cloning Wine sources ==="
 git clone --depth=1 https://gitlab.winehq.org/wine/wine-staging.git
 rm -rf wine-src
 git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
-
 (
   cd wine-src
   git fetch --depth=1 origin arm64ec
@@ -78,26 +75,26 @@ git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
 )
 
 #########################################################################
-# 4) Move wine sources into the sparse TKG folder
+# 4) Copy wine sources into the TKG folder
 #########################################################################
 
-echo "=== Preparing TKG source directory ==="
-rm -rf wine-tkg-git/wine
-cp -a wine-src wine-tkg-git/wine
+echo "=== Preparing TKG sources ==="
+rm -rf wine-tkg-src/wine
+cp -a wine-src wine-tkg-src/wine
 
 #########################################################################
-# 5) Enable patch groups in TKG config
+# 5) Enable patch groups in customization.cfg
 #########################################################################
 
-CFG="wine-tkg-git/wine-tkg-git/customization.cfg"
+CFG="wine-tkg-src/wine-tkg-git/customization.cfg"
 echo "=== Enabling patch groups ==="
 
-# Essential patch groups
+# Enable core patchgroups
 for flag in staging esync fsync; do
   sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
 done
 
-# Proton‑style features
+# Enable Proton‑related options
 for flag in proton_battleye_support proton_eac_support proton_winevulkan \
             proton_mf_patches proton_rawinput protonify; do
   sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
@@ -109,7 +106,7 @@ for flag in mk11_fix re4_fix mwo_fix use_josh_flat_theme; do
 done
 
 #########################################################################
-# 6) Setup cross compilation environment
+# 6) Set up cross compilation environment
 #########################################################################
 
 export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O2"
@@ -119,10 +116,10 @@ export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
 #########################################################################
-# 7) Build via wine‑tkg non‑makepkg
+# 7) Build via TKG non‑makepkg
 #########################################################################
 
-cd wine-tkg-git
+cd wine-tkg-src
 
 echo "=== Running TKG build ==="
 chmod +x wine-tkg-git/non-makepkg-build.sh
@@ -188,4 +185,4 @@ WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
 echo "=== Packaging .wcp: ${WCP} ==="
 tar -cJf "${WCP}" -C wcp .
 
-echo "=== Build completed successfully ==="
+echo "=== Build finished successfully ==="
