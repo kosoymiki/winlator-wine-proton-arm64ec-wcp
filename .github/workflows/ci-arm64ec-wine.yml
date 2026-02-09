@@ -25,10 +25,13 @@ jobs:
         with:
           image: archlinux:latest
           options: --privileged
-          # Важно: указать рабочую директорию внутри контейнера
           run: |
-            # Перейти в директорию репозитория (пусть это /__w/<repo>)
-            cd /__w/$(basename $GITHUB_REPOSITORY)
+            # Перейти в рабочую директорию репо
+            cd /github/workspace
+
+            # Вывести содержимое — проверка
+            echo "Contents of workspace:"
+            ls -l .
 
             # Обновить pacman
             pacman -Sy --noconfirm
@@ -41,10 +44,11 @@ jobs:
               gstreamer gst-plugins-base \
               gnutls
 
-            # Убедиться, что build.sh существует
+            # Проверить наличие build.sh
+            echo "Checking build.sh:"
             ls -l build.sh
 
-            # Установить права
+            # Сделать исполняемым
             chmod +x build.sh
 
             # Запустить сборку
