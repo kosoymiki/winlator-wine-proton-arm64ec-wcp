@@ -33,11 +33,11 @@ jobs:
             libxinerama alsa-lib alsa-plugins \
             gst-plugins-base-libs
 
-      - name: Setup LLVM-Mingw toolchain
-        run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.zip -O llvm-mingw.zip
-          unzip llvm-mingw.zip -d /opt
-          echo "/opt/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64/bin" >> $GITHUB_PATH
+     - name: Setup LLVM‑Mingw toolchain
+  run: |
+    wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64.tar.xz -O llvm‑mingw.tar.xz
+    tar -xJf llvm‑mingw.tar.xz -C /opt
+    echo "/opt/llvm-mingw-20251216-ucrt-ubuntu-22.04-x86_64/bin" >> $GITHUB_PATH
 
       - name: Build Wine ARM64EC
         run: |
