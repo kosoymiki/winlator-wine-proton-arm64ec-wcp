@@ -12,42 +12,30 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Версия LLVM‑MinGW тулчейна (можно обновить при необходимости)
       LLVM_MINGW_VER: "20251216"
-      # Имя финального WCP
       WCP_NAME: "wine-11.1-staging-s8g1"
 
     steps:
 
-      # 1) Checkout репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2) Run build.sh внутри Arch Linux
       - name: Build in Arch Linux container
         uses: addnab/docker-run-action@v3
         with:
           image: archlinux:latest
-          options: |
+          options: >
             --privileged
-            # Монтируем весь GitHub workspace внутрь контейнера
             -v "${{ github.workspace }}:/github/workspace"
           run: |
             set -eux
 
-            echo "=== Entering workspace ==="
             cd /github/workspace
 
-            # Покажем содержимое для отладки
-            echo "--- Workspace root ---"
-            ls -l .
-
-            # Обновление pacman DB
+            # Установка зависимостей
             pacman -Sy --noconfirm
-
-            # Установка базовых зависимостей
             pacman -Sy --noconfirm \
               base-devel git wget unzip tar pkgconf \
               freetype2 libpng libjpeg-turbo zlib \
@@ -55,20 +43,11 @@ jobs:
               gstreamer gst-plugins-base \
               gnutls
 
-            echo "--- Installed dependencies ---"
+            ls -l .
 
-            # Проверяем, что build.sh на месте
-            echo "--- Checking build.sh ---"
-            ls -l build.sh
-
-            # Делаем его исполняемым
             chmod +x build.sh
-
-            # Запускаем сборку
-            echo "=== Starting build.sh ==="
             ./build.sh
 
-      # 3) Загружаем артефакт .wcp
       - name: Upload .wcp artifact
         uses: actions/upload-artifact@v4
         with:
