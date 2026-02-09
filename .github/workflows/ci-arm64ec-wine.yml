@@ -1,4 +1,4 @@
-name: Build Wine ARM64EC (Arch Linux + LLVM‑MinGW)
+name: Build Wine ARM64EC WCP
 
 on:
   push:
@@ -6,69 +6,40 @@ on:
   pull_request:
 
 jobs:
-  build-arm64ec:
+  build-wcp:
+    name: Build & Package .wcp
     runs-on: ubuntu-latest
-
-    # Запуск в Arch Linux контейнере
-    container:
-      image: archlinux:latest
 
     env:
       LLVM_MINGW_VER: "20251216"
-      WCP_NAME: "wine-arm64ec-staging-tkg"
-      TARGET_WIN: "x86_64-w64-windows-gnu"
+      WCP_NAME: "wine-11.1-staging-s8g1"
 
     steps:
-    - name: Initialize pacman keyring
-      run: |
-        pacman-key --init
-        pacman-key --populate archlinux
-        pacman -Sy --noconfirm
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install required packages
-      run: |
-        pacman -Sy --noconfirm \
-          base-devel git wget unzip tar pkgconf \
-          cmake ninja python \
-          freetype2 libx11 libpulse gtk3 \
-          libpng libjpeg-turbo gnutls \
-          libxslt sqlite openal v4l-utils \
-          libxrandr libxcursor libxinerama \
-          alsa-lib alsa-plugins gst-plugins-base
+      - name: Build in Arch Linux container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: archlinux:latest
+          options: --privileged
+          run: |
+            pacman -Sy --noconfirm
 
-    - name: Checkout source
-      uses: actions/checkout@v4
+            pacman -Sy --noconfirm \
+              base-devel git wget unzip tar pkgconf \
+              freetype2 libpng libjpeg-turbo zlib \
+              libx11 libxext libxrandr libxinerama libxi libxcursor \
+              gstreamer gst-plugins-base \
+              gnutls
 
-    - name: Checkout wine‑tkg‑git
-      uses: actions/checkout@v4
-      with:
-        repository: Frogging-Family/wine-tkg-git
-        path: wine-tkg-git
+            chmod +x build.sh
+            ./build.sh
 
-    - name: Download LLVM‑MinGW
-      run: |
-        wget https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-ubuntu-22.04-x86_64.tar.xz -O /tmp/llvm-mingw.tar.xz
-        mkdir -p /opt/llvm-mingw
-        tar -xJf /tmp/llvm-mingw.tar.xz -C /opt/llvm-mingw --strip-components=1
-
-    - name: Add LLVM toolchain to PATH
-      run: echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
-
-    - name: Verify LLVM‑MinGW
-      run: |
-        clang --version || true
-        lld --version || true
-        lld-link --version || true
-
-    - name: Build Wine using LLVM‑MinGW
-      run: |
-        export CC="clang --target=${{ env.TARGET_WIN }} -fuse-ld=lld-link"
-        export CXX="clang++ --target=${{ env.TARGET_WIN }} -fuse-ld=lld-link"
-        chmod +x ./build.sh
-        ./build.sh
-
-    - name: Upload .wcp artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.WCP_NAME }}
-        path: "*.wcp"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.WCP_NAME }}.wcp
+          path: "*.wcp"
