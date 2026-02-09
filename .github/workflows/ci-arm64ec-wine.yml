@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-wcp:
-    name: Build & Package .wcp
+    name: Build Wine ARM64EC and Package .wcp
     runs-on: ubuntu-latest
 
     env:
@@ -25,9 +25,15 @@ jobs:
         with:
           image: archlinux:latest
           options: --privileged
+          # Важно: указать рабочую директорию внутри контейнера
           run: |
+            # Перейти в директорию репозитория (пусть это /__w/<repo>)
+            cd /__w/$(basename $GITHUB_REPOSITORY)
+
+            # Обновить pacman
             pacman -Sy --noconfirm
 
+            # Установить зависимости
             pacman -Sy --noconfirm \
               base-devel git wget unzip tar pkgconf \
               freetype2 libpng libjpeg-turbo zlib \
@@ -35,10 +41,16 @@ jobs:
               gstreamer gst-plugins-base \
               gnutls
 
+            # Убедиться, что build.sh существует
+            ls -l build.sh
+
+            # Установить права
             chmod +x build.sh
+
+            # Запустить сборку
             ./build.sh
 
-      - name: Upload artifact
+      - name: Upload .wcp artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.WCP_NAME }}.wcp
