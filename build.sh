@@ -7,13 +7,44 @@ echo " Wine ARM64EC TKG + Staging WCP build"
 echo "======================================================="
 
 #########################################################################
-# 1) Install dependencies (needed for SVN and build)
+# 0) Ensure dependencies for git sparse‑checkout
 #########################################################################
 
 echo "=== Installing dependencies ==="
-pacman -Sy --noconfirm subversion git wget unzip tar base-devel \
-  freetype2 libpng libjpeg-turbo zlib libx11 libxext libxrandr \
-  libxinerama libxi libxcursor gstreamer gst-plugins-base gnutls
+pacman -Sy --noconfirm git wget unzip tar base-devel \
+  freetype2 libpng libjpeg-turbo zlib libx11 libxext \
+  libxrandr libxinerama libxi libxcursor gstreamer \
+  gst-plugins-base gnutls
+
+#########################################################################
+# 1) Sparse‑checkout the wine‑tkg‑git directory
+#########################################################################
+
+echo "=== Sparse‑checkout wine‑tkg‑git folder ==="
+
+rm -rf wine-tkg-git
+mkdir wine-tkg-git
+
+cd wine-tkg-git
+
+# Initialize an empty git repository
+git init
+
+# Add remote origin
+git remote add origin https://github.com/Frogging-Family/wine-tkg-git.git
+
+# Enable sparse checkout
+git config core.sparseCheckout true
+
+# Tell Git which path we want
+cat > .git/info/sparse-checkout <<EOF
+wine-tkg-git/*
+EOF
+
+# Pull only that directory
+git pull origin master --depth=1
+
+cd ..
 
 #########################################################################
 # 2) Install LLVM‑MinGW cross toolchain
@@ -28,33 +59,18 @@ echo "--- Getting LLVM‑MinGW"
 mkdir -p "${LLVM_PREFIX}"
 wget -q "${LLVM_URL}" -O "/tmp/${LLVM_ARCHIVE}"
 tar -xJf "/tmp/${LLVM_ARCHIVE}" -C "${LLVM_PREFIX}" --strip-components=1
+
 export PATH="${LLVM_PREFIX}/bin:${PATH}"
 
 #########################################################################
-# 3) Download exactly needed TKG directory via SVN export
+# 3) Clone wine‑staging and wine arm64ec
 #########################################################################
 
-echo "=== Downloading TKG sources via SVN ==="
-
-# Make sure target exists
-rm -rf wine-tkg
-mkdir wine-tkg
-cd wine-tkg
-
-svn export --force \
-  https://github.com/Frogging-Family/wine-tkg-git/trunk/wine-tkg-git || \
-  { echo "SVN export failed"; exit 1; }
-
-cd ..
-
-#########################################################################
-# 4) Clone wine‑staging and AndreRH Wine arm64ec
-#########################################################################
-
-echo "=== Cloning wine‑staging and Wine sources ==="
+echo "=== Cloning Wine sources ==="
 git clone --depth=1 https://gitlab.winehq.org/wine/wine-staging.git
 rm -rf wine-src
 git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
+
 (
   cd wine-src
   git fetch --depth=1 origin arm64ec
@@ -62,26 +78,26 @@ git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
 )
 
 #########################################################################
-# 5) Copy Wine into TKG folder
+# 4) Move wine sources into the sparse TKG folder
 #########################################################################
 
-echo "=== Copying Wine sources into TKG folder ==="
-rm -rf wine-tkg/wine
-cp -a wine-src wine-tkg/wine
+echo "=== Preparing TKG source directory ==="
+rm -rf wine-tkg-git/wine
+cp -a wine-src wine-tkg-git/wine
 
 #########################################################################
-# 6) Enable patchgroups in TKG config (customization.cfg)
+# 5) Enable patch groups in TKG config
 #########################################################################
 
-CFG="wine-tkg/wine-tkg-git/customization.cfg"
+CFG="wine-tkg-git/wine-tkg-git/customization.cfg"
 echo "=== Enabling patch groups ==="
 
-# Core TKG patchgroups
+# Essential patch groups
 for flag in staging esync fsync; do
   sed -i "s/_use_${flag}=\"false\"/_use_${flag}=\"true\"/g" "$CFG" || true
 done
 
-# Proton‑like options
+# Proton‑style features
 for flag in proton_battleye_support proton_eac_support proton_winevulkan \
             proton_mf_patches proton_rawinput protonify; do
   sed -i "s/_${flag}=\"false\"/_${flag}=\"true\"/g" "$CFG" || true
@@ -93,7 +109,7 @@ for flag in mk11_fix re4_fix mwo_fix use_josh_flat_theme; do
 done
 
 #########################################################################
-# 7) Setup cross compile environment
+# 6) Setup cross compilation environment
 #########################################################################
 
 export CC="clang --target=arm64ec-w64-windows-gnu -fuse-ld=lld-link -O2"
@@ -103,32 +119,33 @@ export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 
 #########################################################################
-# 8) Run non‑makepkg TKG build
+# 7) Build via wine‑tkg non‑makepkg
 #########################################################################
 
-cd wine-tkg
-echo "=== Running TKG non‑makepkg build ==="
+cd wine-tkg-git
+
+echo "=== Running TKG build ==="
 chmod +x wine-tkg-git/non-makepkg-build.sh
 ./wine-tkg-git/non-makepkg-build.sh --cross
 
 #########################################################################
-# 9) Install into staging
+# 8) Install build to staging
 #########################################################################
 
 STAGING="$(pwd)/../wcp/install"
-echo "=== Installing build to staging ==="
+echo "=== Installing build into staging ==="
 rm -rf "${STAGING}"
 mkdir -p "${STAGING}"
 make -C non-makepkg-builds install DESTDIR="${STAGING}"
 
 #########################################################################
-# 10) Create final WCP layout
+# 9) Create final WCP layout
 #########################################################################
 
 echo "=== Creating WCP structure ==="
 cd "${STAGING}"
-mkdir -p wcp/{bin,lib/wine,share}
 
+mkdir -p wcp/{bin,lib/wine,share}
 cp -a usr/local/bin/* wcp/bin/ 2>/dev/null || cp -a usr/bin/* wcp/bin/
 cd wcp/bin && ln -sf wine64 wine && cd ../..
 
@@ -139,10 +156,10 @@ find wcp/bin -type f -exec chmod +x {} +
 find wcp/lib -name "*.so*" -exec chmod +x {} +
 
 #########################################################################
-# 11) Write info.json & env.sh
+# 10) Write info.json & env.sh
 #########################################################################
 
-echo "=== Writing info.json and env.sh ==="
+echo "=== Writing WCP metadata ==="
 cat > wcp/info.json << 'EOF'
 {
   "name": "Wine-11.1-Staging-S8G1",
@@ -164,11 +181,11 @@ EOF
 chmod +x wcp/env.sh
 
 #########################################################################
-# 12) Package into .wcp (tar.xz)
+# 11) Package into .wcp
 #########################################################################
 
 WCP="${GITHUB_WORKSPACE:-$(pwd)}/wine-11.1-staging-s8g1.wcp"
-echo "=== Creating final .wcp: ${WCP} ==="
+echo "=== Packaging .wcp: ${WCP} ==="
 tar -cJf "${WCP}" -C wcp .
 
-echo "=== Build finished successfully ==="
+echo "=== Build completed successfully ==="
