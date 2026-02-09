@@ -1,43 +1,49 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euxo pipefail
 
 ROOT="$PWD"
 SRC="$ROOT/wine-src"
-TKG="$ROOT/wine-tkg"
-BUILD="$ROOT/wine-tkg/non-makepkg-builds"
-INSTALL="$BUILD/install"
+TKG="$ROOT/wine-tkg-git"
+BUILD_DIR="$TKG/non-makepkg-builds"
+INSTALL_DIR="$BUILD_DIR/install"
 
-LLVM_MINGW_PATH="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin"
-export PATH="$LLVM_MINGW_PATH:$PATH"
+# LLVM‑Mingw toolchain added to PATH via GitHub $GITHUB_PATH
+# Make sure clang/llvm‑mingw is present
+export PATH="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin:$PATH"
+export CC="clang"
+export CXX="clang++"
+export LD="lld-link"
+export NM="llvm-nm"
+export AR="llvm-ar"
+export STRIP="llvm-strip"
 
-# Copy our branch into tkg builder
+# Copy the AndreRH Wine source into wine‑tkg builder
+rm -rf "$TKG/wine"
 cp -r "$SRC" "$TKG/wine"
 
 cd "$TKG"
 
-# Optional: customize tkg config (edit wine-tkg-config.txt)
-# You can enable custom patches, disable, etc.
+# Optionally you can edit wine‑tkg config files here:
+# wine-tkg-config.txt and userpatches if needed
 
-echo "--- Start tkg build"
-# Run tkg build script
-./non-makepkg-build.sh  \
+echo "--- Running wine‑tkg build"
+# Run wine‑tkg build
+# non‑makepkg build script will generate Wine with staging + tkg patches
+./non-makepkg-build.sh \
   --enable-win64 \
   --host=arm64ec-w64-mingw32 \
-  --build=$(./config.guess) \
   --enable-archs=arm64ec,aarch64,i386 \
   --with-mingw=clang
 
-# After tkg build completes, we will package
+# After build, install and package
+cd "$BUILD_DIR"
 
-cd "$BUILD"
+mkdir -p "$INSTALL_DIR"
 
-# Make install path
-mkdir -p "$INSTALL"
+echo "--- Installing build output"
+make install DESTDIR="$INSTALL_DIR"
 
-# Install
-make install DESTDIR="$INSTALL"
-
-# Package into .wcp
+echo "--- Packaging .wcp artifact"
 mkdir -p wcp/{bin,lib/wine,share}
 
 cp -a usr/local/bin/* wcp/bin/
@@ -57,4 +63,4 @@ EOF
 
 tar -cJf "${ROOT}/${WCP_NAME}.wcp" -C wcp .
 
-echo "--- Done"
+echo "--- Build & package finished"
