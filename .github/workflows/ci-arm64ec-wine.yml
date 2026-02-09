@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-wcp:
-    name: Build Wine ARM64EC and Package .wcp
+    name: Build Wine ARM64EC and Package WCP
     runs-on: ubuntu-latest
 
     env:
@@ -24,19 +24,20 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: archlinux:latest
-          options: --privileged
+          options: |
+            --privileged
+            -v ${{ github.workspace }}:/github/workspace
           run: |
-            # Перейти в рабочую директорию репо
+            # Перейти в смонтированный каталог репо
             cd /github/workspace
 
-            # Вывести содержимое — проверка
-            echo "Contents of workspace:"
+            # Вывести для отладки содержимое
+            echo "==== Workspace contents ===="
             ls -l .
 
-            # Обновить pacman
+            # Установить зависимости
             pacman -Sy --noconfirm
 
-            # Установить зависимости
             pacman -Sy --noconfirm \
               base-devel git wget unzip tar pkgconf \
               freetype2 libpng libjpeg-turbo zlib \
@@ -44,14 +45,12 @@ jobs:
               gstreamer gst-plugins-base \
               gnutls
 
-            # Проверить наличие build.sh
-            echo "Checking build.sh:"
+            # Проверить build.sh
+            echo "==== Checking build.sh ===="
             ls -l build.sh
 
-            # Сделать исполняемым
-            chmod +x build.sh
-
             # Запустить сборку
+            chmod +x build.sh
             ./build.sh
 
       - name: Upload .wcp artifact
