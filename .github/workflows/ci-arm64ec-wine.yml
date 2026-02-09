@@ -1,71 +1,82 @@
-name: Build Wine-TKG ARM64EC
+name: Build Wine ARM64EC (AndreRH fork)
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
 
 jobs:
-  build:
+  build-arm64ec:
     runs-on: ubuntu-latest
+
     container:
       image: archlinux:latest
 
     env:
-      WCP_NAME: wine-11.1-staging-tkg-arm64ec
+      WCP_NAME: wine-arm64ec-andrerh
+      LLVM_MINGW_VER: "20260127"
+      LLVM_MINGW_URL: https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-x86_64.tar.xz
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Enable multilib repository
-        run: |
-          sed -Ei '/^#\s*\[multilib\]/{s/^#//;n;s/^#//;}' /etc/pacman.conf
-          pacman -Syy --noconfirm
+    - name: Sync time (pacman)
+      run: pacman -Sy --noconfirm
 
-      - name: Install dependencies
-        run: |
-          pacman -Sy --noconfirm \
-            base-devel git wget unzip \
-            clang lld mingw-w64-gcc \
-            cmake ninja pkgconf python \
-            vulkan-icd-loader \
-            freetype2 \
-            libx11 \
-            libpulse \
-            gtk3 \
-            libpng \
-            giflib \
-            openal \
-            gnutls \
-            libxslt \
-            sqlite \
-            libjpeg-turbo \
-            lib32-freetype2 \
-            lib32-libx11 \
-            lib32-libpng \
-            lib32-giflib \
-            lib32-openal \
-            lib32-gnutls \
-            lib32-sqlite \
-            lib32-libjpeg-turbo \
-            lib32-libxslt \
-            lib32-fontconfig \
-            lib32-mesa
+    - name: Install Arch build dependencies
+      run: |
+        pacman -Sy --noconfirm \
+          base-devel git wget unzip \
+          clang lld cmake ninja pkgconf python \
+          vulkan-icd-loader \
+          freetype2 \
+          libx11 \
+          libpulse \
+          gtk3 \
+          libpng \
+          giflib \
+          openal \
+          gnutls \
+          libxslt \
+          sqlite \
+          libjpeg-turbo \
+          opencl-icd-loader \
+          v4l-utils \
+          libxrandr \
+          libxcursor \
+          libxinerama \
+          alsa-lib \
+          alsa-plugins \
+          gst-plugins-base-libs
 
-      - name: Download llvm‑mingw toolchain
-        run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251216/llvm-mingw-20251216-ucrt-x86_64.zip
-          unzip llvm-mingw-20251216-ucrt-x86_64.zip -d llvm-mingw
-          echo "LLVM_MINGW=$(pwd)/llvm-mingw" >> $GITHUB_ENV
+    - name: Fetch LLVM‑Mingw
+      run: |
+        wget $LLVM_MINGW_URL -O llvm-mingw.tar.xz
+        tar -xf llvm-mingw.tar.xz -C /opt
+        export PATH="/opt/llvm-mingw-${LLVM_MINGW_VER}-ucrt/bin:$PATH"
 
-      - name: Prepare and build
-        run: |
-          chmod +x ./build.sh
-          ./build.sh
+    - name: Checkout AndreRH arm64ec Wine
+      run: |
+        git clone https://github.com/AndreRH/wine.git wine-anfork
+        cd wine-anfork
+        git checkout arm64ec
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.WCP_NAME }}
-          path: "*.wcp"
+    - name: Download fresh config.sub/config.guess
+      run: |
+        wget https://pastebin.com/raw/2Wbtmybz -O wine-anfork/config.sub
+        wget https://pastebin.com/raw/e155AbHi -O wine-anfork/config.guess
+
+    - name: Prepare build directory
+      run: |
+        mkdir -p wine-build
+        cd wine-build
+
+    - name: Run build script
+      run: |
+        chmod +x $GITHUB_WORKSPACE/build.sh
+        bash $GITHUB_WORKSPACE/build.sh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.WCP_NAME }}
+        path: "*.wcp"
