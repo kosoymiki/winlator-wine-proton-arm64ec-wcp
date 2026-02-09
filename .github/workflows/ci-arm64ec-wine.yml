@@ -3,58 +3,52 @@ name: Build Wine ARM64EC WCP
 on:
   push:
     branches: ["main"]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
-  build-wcp:
-    name: Build Wine ARM64EC and Package WCP
+  build-wine:
     runs-on: ubuntu-latest
-
-    env:
-      LLVM_MINGW_VER: "20251216"
-      WCP_NAME: "wine-11.1-staging-s8g1"
-
+    environment: production
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Build in Arch Linux container
-        uses: addnab/docker-run-action@v3
-        with:
-          image: archlinux:latest
-          options: |
-            --privileged
-            -v ${{ github.workspace }}:/github/workspace
-          run: |
-            # Перейти в смонтированный каталог репо
-            cd /github/workspace
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-            # Вывести для отладки содержимое
-            echo "==== Workspace contents ===="
-            ls -l .
+    - name: Setup Dockerized Arch Linux Environment
+      uses: addnab/docker-run-action@v3
+      with:
+        image: archlinux:latest
+        options: --privileged
+        docker-run-options: |
+          -v "${{ github.workspace }}:/github/workspace"
+          -e LLVM_MINGW_VER="20251216"
+          -e WCP_NAME="wine-11.1-staging-s8g1"
+        run: |
+          set -eux
 
-            # Установить зависимости
-            pacman -Sy --noconfirm
+          # Перейти в репо
+          cd /github/workspace
 
-            pacman -Sy --noconfirm \
-              base-devel git wget unzip tar pkgconf \
-              freetype2 libpng libjpeg-turbo zlib \
-              libx11 libxext libxrandr libxinerama libxi libxcursor \
-              gstreamer gst-plugins-base \
-              gnutls
+          # Обновление системы
+          pacman -Sy --noconfirm
 
-            # Проверить build.sh
-            echo "==== Checking build.sh ===="
-            ls -l build.sh
+          # Установка зависимостей
+          pacman -Sy --noconfirm \
+            base-devel git wget unzip tar pkgconf \
+            freetype2 libpng libjpeg-turbo zlib \
+            libx11 libxext libxrandr libxinerama libxi libxcursor \
+            gstreamer gst-plugins-base \
+            gnutls
 
-            # Запустить сборку
-            chmod +x build.sh
-            ./build.sh
+          # Проверка окружения
+          echo "=== Pacman dependencies installed ==="
+          echo "=== LLVM_MINGW_VER=$LLVM_MINGW_VER"
+          echo "=== WCP_NAME=$WCP_NAME"
 
-      - name: Upload .wcp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.WCP_NAME }}.wcp
-          path: "*.wcp"
+          # Проверка /github/workspace
+          echo "--- Workspace ---"
+          ls -l .
+
+          # Запуск нашего скрипта сборки
+          chmod +x build.sh
+          ./build.sh
