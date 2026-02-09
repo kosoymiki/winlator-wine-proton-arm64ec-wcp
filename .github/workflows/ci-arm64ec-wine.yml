@@ -8,7 +8,6 @@ on:
 jobs:
   build-arm64ec:
     runs-on: ubuntu-latest
-
     container:
       image: archlinux:latest
 
@@ -17,56 +16,54 @@ jobs:
       WCP_NAME: "wine-arm64ec-staging-tkg"
 
     steps:
-      - name: Initialize pacman keys
-        run: |
-          pacman-key --init
-          pacman-key --populate archlinux
-          pacman -Sy --noconfirm
+    - name: Initialize pacman keys
+      run: |
+        pacman-key --init
+        pacman-key --populate archlinux
+        pacman -Sy --noconfirm
 
-      - name: Install build & Wine deps
-        run: |
-          pacman -Sy --noconfirm \
-            base-devel git wget unzip tar pkgconf \
-            cmake ninja python \
-            freetype2 libx11 libpulse gtk3 \
-            libpng libjpeg-turbo gnutls \
-            libxslt sqlite openal v4l-utils \
-            libxrandr libxcursor libxinerama \
-            alsa-lib alsa-plugins gst-plugins-base \
-            # mingw‑w64 cross tool packages \
-            mingw-w64-gcc mingw-w64-headers mingw-w64-crt mingw-w64-winpthreads
+    - name: Install build prerequisites
+      run: |
+        pacman -Sy --noconfirm \
+          base-devel git wget unzip tar pkgconf \
+          cmake ninja python \
+          freetype2 libx11 libpulse gtk3 \
+          libpng libjpeg-turbo gnutls \
+          libxslt sqlite openal v4l-utils \
+          libxrandr libxcursor libxinerama \
+          alsa-lib alsa-plugins gst-plugins-base
 
-      - name: Checkout main source repo
-        uses: actions/checkout@v4
+    - name: Checkout main source
+      uses: actions/checkout@v4
 
-      - name: Checkout wine-tkg-git
-        uses: actions/checkout@v4
-        with:
-          repository: Frogging-Family/wine-tkg-git
-          path: wine-tkg-git
+    - name: Checkout wine‑tkg‑git
+      uses: actions/checkout@v4
+      with:
+        repository: Frogging-Family/wine-tkg-git
+        path: wine-tkg-git
 
-      - name: Download LLVM-Mingw cross toolchain
-        run: |
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-ubuntu-22.04-x86_64.tar.xz -O /tmp/llvm-mingw.tar.xz
-          mkdir -p /opt/llvm-mingw
-          tar -xJf /tmp/llvm-mingw.tar.xz -C /opt/llvm-mingw --strip-components=1
+    - name: Download LLVM‑MinGW cross toolchain
+      run: |
+        wget https://github.com/mstorsjo/llvm-mingw/releases/download/${{ env.LLVM_MINGW_VER }}/llvm-mingw-${{ env.LLVM_MINGW_VER }}-ucrt-ubuntu-22.04-x86_64.tar.xz -O /tmp/llvm-mingw.tar.xz
+        mkdir -p /opt/llvm-mingw
+        tar -xJf /tmp/llvm-mingw.tar.xz -C /opt/llvm-mingw --strip-components=1
 
-      - name: Add LLVM toolchain to PATH
-        run: echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
+    - name: Add LLVM‑MinGW to PATH
+      run: echo "/opt/llvm-mingw/bin" >> $GITHUB_PATH
 
-      - name: Verify LLVM‑MinGW
-        run: |
-          clang --version
-          lld --version
-          lld-link --version || true
+    - name: Verify toolchain
+      run: |
+        clang --version
+        lld --version
+        lld-link --version || true
 
-      - name: Run build script
-        run: |
-          chmod +x ./build.sh
-          ./build.sh
+    - name: Run build script
+      run: |
+        chmod +x ./build.sh
+        ./build.sh
 
-      - name: Upload .wcp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.WCP_NAME }}
-          path: "*.wcp"
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.WCP_NAME }}
+        path: "*.wcp"
