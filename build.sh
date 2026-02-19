@@ -5,21 +5,18 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
 : "${LLVM_MINGW_VER:=20251216}"
-: "${WCP_NAME:=wine-11.1-staging-s8g1}"
+: "${WCP_NAME:=wine-11.1-arm64ec}"
 : "${WCP_OUTPUT_DIR:=$ROOT/dist}"
 : "${TOOLCHAIN_DIR:=$ROOT/.cache/llvm-mingw}"
+: "${WINE_SRC_DIR:=$ROOT/wine-src}"
+: "${WINE_GIT_URL:=https://github.com/AndreRH/wine.git}"
+: "${WINE_GIT_REF:=arm64ec}"
+: "${WINE_JOBS:=$(nproc)}"
+: "${WINE_HOST_TRIPLE:=aarch64-w64-mingw32}"
 
 mkdir -p "$WCP_OUTPUT_DIR" "$TOOLCHAIN_DIR"
 
-rm -rf repo-wine-tkg-git wine-tkg-src wcp wine-src
-
-# 1) Clone wine-tkg sources.
-git clone --depth=1 https://github.com/Frogging-Family/wine-tkg-git.git repo-wine-tkg-git
-mkdir -p wine-tkg-src
-mv repo-wine-tkg-git/wine-tkg-git wine-tkg-src/
-rm -rf repo-wine-tkg-git
-
-# 2) Download llvm-mingw toolchain into cache directory.
+# 1) Download llvm-mingw toolchain into cache directory.
 LLVM_TAR="llvm-mingw-${LLVM_MINGW_VER}-ucrt-ubuntu-22.04-x86_64.tar.xz"
 LLVM_URL="https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VER}/${LLVM_TAR}"
 LLVM_DST="${TOOLCHAIN_DIR}/${LLVM_MINGW_VER}"
@@ -33,71 +30,73 @@ if [[ ! -x "${LLVM_BIN}/clang" ]]; then
 
   rm -rf "$LLVM_DST"
   mkdir -p "$LLVM_DST"
-  LLVM_SHARED_DIR="${tmpdir}/llvm-mingw-${LLVM_MINGW_VER}-ucrt-ubuntu-22.04-x86_64/shared"
-  if [[ ! -d "$LLVM_SHARED_DIR" ]]; then
-    echo "ERROR: llvm-mingw shared directory was not found: $LLVM_SHARED_DIR" >&2
+
+  LLVM_EXTRACTED_DIR="${tmpdir}/llvm-mingw-${LLVM_MINGW_VER}-ucrt-ubuntu-22.04-x86_64"
+  if [[ ! -d "$LLVM_EXTRACTED_DIR" ]]; then
+    echo "ERROR: llvm-mingw extracted directory was not found: $LLVM_EXTRACTED_DIR" >&2
     exit 1
   fi
 
-  mv "${LLVM_SHARED_DIR}/"* "$LLVM_DST/"
+  # Release layout differs between versions:
+  # - some archives place toolchain files under ./shared
+  # - others place them directly at the root
+  LLVM_CONTENT_DIR="$LLVM_EXTRACTED_DIR"
+  if [[ -d "${LLVM_EXTRACTED_DIR}/shared" ]]; then
+    LLVM_CONTENT_DIR="${LLVM_EXTRACTED_DIR}/shared"
+  fi
+
+  if [[ ! -x "${LLVM_CONTENT_DIR}/bin/clang" ]]; then
+    echo "ERROR: clang not found after extraction at ${LLVM_CONTENT_DIR}/bin/clang" >&2
+    exit 1
+  fi
+
+  cp -a "${LLVM_CONTENT_DIR}/." "$LLVM_DST/"
 fi
 
 export PATH="${LLVM_BIN}:$PATH"
 
-# 3) Clone Wine sources and checkout arm64ec branch.
-git clone --depth=1 https://github.com/AndreRH/wine.git wine-src
-pushd wine-src >/dev/null
-git fetch --depth=1 origin arm64ec
-git checkout -B arm64ec origin/arm64ec
-popd >/dev/null
-
-# 4) Configure wine-tkg toggles.
-CFG="wine-tkg-src/wine-tkg-git/customization.cfg"
-if [[ ! -f "$CFG" ]]; then
-  echo "ERROR: customization.cfg not found at $CFG" >&2
-  exit 1
+# 2) Prepare Wine sources (local first, clone only when missing).
+if [[ ! -d "$WINE_SRC_DIR/.git" ]]; then
+  echo "Wine source repo not found at $WINE_SRC_DIR, cloning $WINE_GIT_URL"
+  git clone --depth=1 --branch "$WINE_GIT_REF" "$WINE_GIT_URL" "$WINE_SRC_DIR"
+else
+  echo "Using existing wine sources at $WINE_SRC_DIR"
 fi
 
-set_cfg_bool() {
-  local key="$1"
-  local val="$2"
-  if grep -qE "^${key}=" "$CFG"; then
-    sed -i -E "s|^${key}=\"[^\"]*\"|${key}=\"${val}\"|" "$CFG"
-  else
-    echo "${key}=\"${val}\"" >> "$CFG"
-  fi
-}
+pushd "$WINE_SRC_DIR" >/dev/null
+if git show-ref --verify --quiet "refs/remotes/origin/${WINE_GIT_REF}"; then
+  git checkout -B "$WINE_GIT_REF" "origin/${WINE_GIT_REF}"
+else
+  git checkout "$WINE_GIT_REF" 2>/dev/null || true
+fi
+popd >/dev/null
 
-set_cfg_bool "_use_staging" "true"
-set_cfg_bool "_use_fsync" "true"
-set_cfg_bool "_use_esync" "true"
-set_cfg_bool "_use_vulkan" "true"
-
-# 5) Cross-compilation environment.
+# 3) Cross-compilation environment.
 export CC="clang --target=arm64ec-w64-windows-gnu"
 export CXX="clang++ --target=arm64ec-w64-windows-gnu"
 export AR="llvm-ar"
 export RANLIB="llvm-ranlib"
 export STRIP="llvm-strip"
-export WINECPU="arm64"
 export CFLAGS="-O2 -pipe"
 export CXXFLAGS="-O2 -pipe"
 export LDFLAGS=""
 
-export _CUSTOM_GIT_URL="file://${ROOT}/wine-src"
-export _LOCAL_PRESET="1"
+BUILD_DIR="$ROOT/build-arm64ec"
+STAGING="$ROOT/stage"
+rm -rf "$BUILD_DIR" "$STAGING"
+mkdir -p "$BUILD_DIR" "$STAGING"
 
-# 6) Build and install.
-pushd wine-tkg-src/wine-tkg-git >/dev/null
-./non-makepkg-build.sh --cross
+# 4) Configure, build and install Wine directly (no wine-tkg).
+pushd "$BUILD_DIR" >/dev/null
+"$WINE_SRC_DIR/configure" \
+  --host="$WINE_HOST_TRIPLE" \
+  --prefix=/usr
 
-STAGING="$(pwd)/../wcp/install"
-rm -rf "$STAGING"
-mkdir -p "$STAGING"
-make -C non-makepkg-builds install DESTDIR="$STAGING"
+make -j"$WINE_JOBS"
+make install DESTDIR="$STAGING"
 popd >/dev/null
 
-# 7) Package WCP.
+# 5) Package WCP.
 pushd "$STAGING" >/dev/null
 rm -rf wcp
 mkdir -p wcp/{bin,lib,share,info}
@@ -110,22 +109,22 @@ fi
 
 ln -sf wine64 wcp/bin/wine || true
 
-cat > wcp/info/info.json <<EOF
+cat > wcp/info/info.json <<EOF_JSON
 {
-  "name": "Wine 11.1 staging (ARM64EC)",
+  "name": "Wine ARM64EC",
   "os": "windows",
   "arch": "arm64",
-  "version": "11.1-staging",
-  "features": ["staging", "fsync", "esync", "vulkan"],
+  "version": "11.1-arm64ec",
+  "features": ["direct-build"],
   "built": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 }
-EOF
+EOF_JSON
 
-cat > wcp/bin/env.sh <<'EOF'
+cat > wcp/bin/env.sh <<'EOF_ENV'
 #!/bin/sh
 export WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
 exec "$(dirname "$0")/wine64" "$@"
-EOF
+EOF_ENV
 chmod +x wcp/bin/env.sh
 
 WCP_PATH="${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp"
