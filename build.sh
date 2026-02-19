@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd "${ROOT}"
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "${ROOT_DIR}"
 
-exec bash ci/ci-build.sh "$@"
+exec bash "${ROOT_DIR}/ci/ci-build.sh" "$@"
