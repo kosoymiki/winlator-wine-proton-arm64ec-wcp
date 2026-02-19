@@ -13,7 +13,7 @@ on:
       llvm_mingw_ver:
         description: "llvm-mingw version tag"
         required: false
-        default: "20251216"
+        default: "20260210"
 
 concurrency:
   group: wcp-${{ github.workflow }}-${{ github.ref }}
@@ -24,14 +24,14 @@ permissions:
 
 env:
   WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-staging-s8g1' }}
-  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20251216' }}
+  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_OUTPUT_DIR: ${{ github.workspace }}/dist
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
 
 jobs:
   build:
     name: Build WCP (ARM64EC)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
 
     container:
@@ -53,7 +53,9 @@ jobs:
           set -euxo pipefail
           pacman -Syu --noconfirm
           pacman -S --noconfirm --needed \
-            git wget unzip tar pkgconf \
+            bash curl git python wget unzip tar pkgconf \
+            cmake ninja rsync \
+            zstd file binutils \
             freetype2 gnu-free-fonts \
             glib2 gstreamer \
             libxslt libxml2 \
