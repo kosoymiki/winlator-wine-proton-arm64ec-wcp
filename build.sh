@@ -94,6 +94,72 @@ fi
 
 ln -sf wine64 wcp/bin/wine || true
 
+mkdir -p wcp/share/winetools
+
+# Build winetools layer: helper launcher + manifest + linking snapshot.
+cat > wcp/bin/winetools <<'EOF_WINETOOLS'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SELF_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MANIFEST="${SELF_DIR}/../share/winetools/manifest.txt"
+
+usage() {
+  cat <<'EOF_USAGE'
+Usage: winetools <command> [args]
+Commands:
+  list                List known wine tools from manifest
+  run <tool> [args]   Run selected tool from current bin directory
+  info                Show winetools metadata files
+EOF_USAGE
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  list)
+    [[ -f "$MANIFEST" ]] && cat "$MANIFEST" || echo "manifest not found: $MANIFEST"
+    ;;
+  run)
+    tool="${2:-}"
+    [[ -n "$tool" ]] || { echo "missing tool name" >&2; usage; exit 2; }
+    shift 2
+    exec "${SELF_DIR}/${tool}" "$@"
+    ;;
+  info)
+    echo "manifest: ${SELF_DIR}/../share/winetools/manifest.txt"
+    echo "linking : ${SELF_DIR}/../share/winetools/linking-report.txt"
+    ;;
+  *)
+    usage
+    ;;
+esac
+EOF_WINETOOLS
+chmod +x wcp/bin/winetools
+
+TOOLS_MANIFEST="wcp/share/winetools/manifest.txt"
+: > "$TOOLS_MANIFEST"
+for tool in wine wine64 wineserver winecfg wineboot regedit winedbg msiexec notepad explorer; do
+  if [[ -x "wcp/bin/$tool" ]]; then
+    printf '%s\n' "$tool" >> "$TOOLS_MANIFEST"
+  fi
+done
+
+LINK_REPORT="wcp/share/winetools/linking-report.txt"
+{
+  echo "# winetools linking report"
+  echo "generated_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  echo
+  for bin in wcp/bin/wine wcp/bin/wine64 wcp/bin/wineserver; do
+    if [[ -e "$bin" ]]; then
+      echo "## $bin"
+      file "$bin" || true
+      if command -v readelf >/dev/null 2>&1; then
+        readelf -d "$bin" 2>/dev/null | sed -n '1,40p' || true
+      fi
+      echo
+    fi
+  done
+} > "$LINK_REPORT"
+
 cat > wcp/info/info.json <<EOF_JSON
 {
   "name": "Wine ARM64EC",
