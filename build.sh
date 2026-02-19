@@ -67,21 +67,29 @@ export CXXFLAGS="-O2 -pipe"
 export LDFLAGS=""
 
 BUILD_DIR="$ROOT/build-arm64ec"
+TOOLS_BUILD_DIR="$ROOT/build-tools"
 STAGING="$ROOT/stage"
-rm -rf "$BUILD_DIR" "$STAGING"
-mkdir -p "$BUILD_DIR" "$STAGING"
+rm -rf "$BUILD_DIR" "$TOOLS_BUILD_DIR" "$STAGING"
+mkdir -p "$BUILD_DIR" "$TOOLS_BUILD_DIR" "$STAGING"
 
-# 4) Configure, build and install Wine directly (no wine-tkg).
+# 4) Build native Wine tools first (required for cross-compilation).
+pushd "$TOOLS_BUILD_DIR" >/dev/null
+"$WINE_SRC_DIR/configure"
+make -j"$WINE_JOBS" tools
+popd >/dev/null
+
+# 5) Configure, build and install cross Wine binaries.
 pushd "$BUILD_DIR" >/dev/null
 "$WINE_SRC_DIR/configure" \
   --host=arm64ec-w64-windows-gnu \
+  --with-wine-tools="$TOOLS_BUILD_DIR" \
   --prefix=/usr
 
 make -j"$WINE_JOBS"
 make install DESTDIR="$STAGING"
 popd >/dev/null
 
-# 5) Package WCP.
+# 6) Package WCP.
 pushd "$STAGING" >/dev/null
 rm -rf wcp
 mkdir -p wcp/{bin,lib,share,info}
