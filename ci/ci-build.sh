@@ -183,12 +183,12 @@ mkdir -p "${WCP_ROOT}/share/winetools"
   done
 } > "${WCP_ROOT}/share/winetools/linking-report.txt"
 
-if [[ ! -f "${ROOT}/prefixPack.txz" ]]; then
-  echo "ERROR: prefixPack.txz не найден в корне репозитория." >&2
-  echo "       В CI я его не генерирую (это отдельная задача). Положите готовый prefixPack.txz рядом с ci/." >&2
-  exit 1
+if [[ -f "${ROOT}/prefixPack.txz" ]]; then
+  cp -f "${ROOT}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
+  echo "[ok] included prefixPack.txz"
+else
+  echo "[warn] prefixPack.txz not found in repository root; building WCP without bundled prefix pack" >&2
 fi
-cp -f "${ROOT}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
 
 UTC_NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 cat > "${WCP_ROOT}/profile.json" <<EOF
