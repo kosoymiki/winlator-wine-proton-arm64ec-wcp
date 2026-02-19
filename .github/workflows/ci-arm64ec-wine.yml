@@ -1,65 +1,94 @@
-name: Build Wine ARM64EC WCP
+name: Build Wine ARM64EC (WCP)
 
 on:
   push:
     branches: ["main"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      wcp_name:
+        description: "WCP artifact name (without .wcp)"
+        required: false
+        default: "wine-11.1-staging-s8g1"
+      llvm_mingw_ver:
+        description: "llvm-mingw version tag"
+        required: false
+        default: "20251216"
+
+concurrency:
+  group: wcp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-staging-s8g1' }}
+  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20251216' }}
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/dist
+  TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
 
 jobs:
-  build-wcp:
-    name: Build Wine ARM64EC and Package WCP
+  build:
+    name: Build WCP (ARM64EC)
     runs-on: ubuntu-latest
+    timeout-minutes: 360
 
-    env:
-      LLVM_MINGW_VER: "20251216"
-      WCP_NAME: "wine-11.1-staging-s8g1"
+    container:
+      image: archlinux:base-devel
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
-
-      # 1) Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
 
-      # 2) Build using Arch Linux container
-      - name: Build in Arch Linux container
-        uses: addnab/docker-run-action@v3
+      - name: Bootstrap packages (Arch)
+        run: |
+          set -euxo pipefail
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed \
+            git wget unzip tar pkgconf \
+            freetype2 gnu-free-fonts \
+            glib2 gstreamer \
+            libxslt libxml2 \
+            libpng \
+            lcms2 \
+            libunwind \
+            gst-plugins-base-libs \
+            giflib \
+            gnutls \
+            samba \
+            sdl2
+          mkdir -p "${WCP_OUTPUT_DIR}" "${TOOLCHAIN_DIR}"
+
+      - name: Cache llvm-mingw toolchain
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          image: archlinux:latest
-          options: >
-            --privileged
-            -v ${{ github.workspace }}:/github/workspace
-          run: |
-            set -eux
+          path: ${{ env.TOOLCHAIN_DIR }}
+          key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
 
-            # Перейти в репо
-            cd /github/workspace
+      - name: Build
+        run: |
+          set -euxo pipefail
+          chmod +x build.sh
+          ./build.sh
 
-            echo "=== Workspace ==="
-            ls -l .
+      - name: Verify artifact exists
+        run: |
+          set -euxo pipefail
+          ls -lah "${WCP_OUTPUT_DIR}"
+          test -f "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp"
 
-            # Обновить pacman
-            pacman -Sy --noconfirm
-
-            # Установить зависимости
-            pacman -Sy --noconfirm \
-              base-devel git wget unzip tar pkgconf \
-              freetype2 libpng libjpeg-turbo zlib \
-              libx11 libxext libxrandr libxinerama libxi libxcursor \
-              gstreamer gst-plugins-base \
-              gnutls
-
-            echo "=== Dependencies installed ==="
-
-            # Проверить и запустить build.sh
-            chmod +x build.sh
-            ./build.sh
-
-      # 3) Upload .wcp artifact
-      - name: Upload .wcp artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload WCP artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ env.WCP_NAME }}.wcp
-          path: "*.wcp"
+          name: ${{ env.WCP_NAME }}
+          path: ${{ env.WCP_OUTPUT_DIR }}/${{ env.WCP_NAME }}.wcp
+          if-no-files-found: error
+          retention-days: 14
