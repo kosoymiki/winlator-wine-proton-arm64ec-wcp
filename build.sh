@@ -73,7 +73,10 @@ pushd "$WINE_SRC_DIR" >/dev/null
 if git show-ref --verify --quiet "refs/remotes/origin/${WINE_GIT_REF}"; then
   git checkout -B "$WINE_GIT_REF" "origin/${WINE_GIT_REF}"
 else
-  git checkout "$WINE_GIT_REF" 2>/dev/null || true
+  if ! git checkout "$WINE_GIT_REF"; then
+    echo "ERROR: unable to checkout WINE_GIT_REF='$WINE_GIT_REF' in $WINE_SRC_DIR" >&2
+    exit 1
+  fi
 fi
 popd >/dev/null
 
