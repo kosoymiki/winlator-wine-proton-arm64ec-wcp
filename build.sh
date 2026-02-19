@@ -34,24 +34,26 @@ if [[ ! -x "${LLVM_BIN}/clang" ]]; then
   rm -rf "$LLVM_DST"
   mkdir -p "$LLVM_DST"
 
-  LLVM_EXTRACT_ROOT="${tmpdir}/llvm-mingw-${LLVM_MINGW_VER}-ucrt-ubuntu-22.04-x86_64"
   LLVM_SRC_DIR=""
+  while IFS= read -r clang_path; do
+    candidate_dir="${clang_path%/bin/clang}"
+    if [[ -x "$candidate_dir/bin/clang" ]]; then
+      LLVM_SRC_DIR="$candidate_dir"
+      break
+    fi
+  done < <(find "$tmpdir" -maxdepth 10 -type f -path '*/bin/clang' -print)
 
-  if [[ -x "${LLVM_EXTRACT_ROOT}/bin/clang" ]]; then
-    LLVM_SRC_DIR="${LLVM_EXTRACT_ROOT}"
-  elif [[ -x "${LLVM_EXTRACT_ROOT}/shared/bin/clang" ]]; then
-    LLVM_SRC_DIR="${LLVM_EXTRACT_ROOT}/shared"
-  else
-    LLVM_SRC_DIR="$(find "$tmpdir" -maxdepth 4 -type f -path '*/bin/clang' -print | head -n1 | sed 's#/bin/clang$##')"
-  fi
-
-  if [[ -z "$LLVM_SRC_DIR" || ! -x "$LLVM_SRC_DIR/bin/clang" ]]; then
+  if [[ -z "$LLVM_SRC_DIR" ]]; then
     echo "ERROR: unable to locate llvm-mingw toolchain root after extraction" >&2
-    find "$tmpdir" -maxdepth 3 -type d | sed 's/^/  - /' >&2
+    find "$tmpdir" -maxdepth 4 -type d | sed 's/^/  - /' >&2
     exit 1
   fi
 
   cp -a "${LLVM_SRC_DIR}/." "$LLVM_DST/"
+  if [[ ! -x "${LLVM_DST}/bin/clang" ]]; then
+    echo "ERROR: llvm-mingw copied but clang is still missing in ${LLVM_DST}/bin" >&2
+    exit 1
+  fi
 fi
 
 export PATH="${LLVM_BIN}:$PATH"
