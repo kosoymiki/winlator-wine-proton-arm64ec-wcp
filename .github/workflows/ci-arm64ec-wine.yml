@@ -77,7 +77,16 @@ jobs:
         run: |
           set -euxo pipefail
           chmod +x build.sh
-          ./build.sh
+          ./build.sh 2>&1 | tee "${GITHUB_WORKSPACE}/build.log"
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.WCP_NAME }}-build-log
+          path: ${{ github.workspace }}/build.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Verify artifact exists
         run: |
