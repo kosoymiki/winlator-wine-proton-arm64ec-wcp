@@ -1,0 +1,75 @@
+name: build-wine-11.1-wcp
+
+on:
+  workflow_dispatch:
+    inputs:
+      wine_ref:
+        description: "Git ref в AndreRH/wine (tag/branch/commit). Пример: wine-11.1 или конкретный SHA."
+        required: true
+        default: "wine-11.1"
+      llvm_mingw_tag:
+        description: "Тег релиза mstorsjo/llvm-mingw (лучше брать тот, что уже на LLVM 22.1.0-rc3)."
+        required: true
+        default: "20260210"
+      wcp_name:
+        description: "Имя итогового пакета без расширения"
+        required: true
+        default: "Wine-11.1-arm64ec"
+      compress:
+        description: "xz или zstd"
+        required: true
+        default: "zstd"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl git jq python3 xz-utils zstd rsync file \
+            build-essential autoconf automake libtool pkg-config \
+            bison flex gettext \
+            cmake ninja-build \
+            libunwind-dev libxml2-dev zlib1g-dev \
+            libfreetype-dev libjpeg-dev libpng-dev libtiff-dev \
+            libx11-dev libxext-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxcomposite-dev libxcb1-dev \
+            libxkbcommon-dev \
+            libpulse-dev libudev-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libvulkan-dev
+
+      - name: Cache llvm-mingw
+        uses: actions/cache@v4
+        with:
+          path: .cache/llvm-mingw
+          key: llvm-mingw-${{ inputs.llvm_mingw_tag }}-${{ runner.arch }}
+
+      - name: Build WCP
+        env:
+          WINE_REF: ${{ inputs.wine_ref }}
+          LLVM_MINGW_TAG: ${{ inputs.llvm_mingw_tag }}
+          WCP_NAME: ${{ inputs.wcp_name }}
+          WCP_COMPRESS: ${{ inputs.compress }}
+          # Оптимизация именно под Snapdragon 8 Gen 1 (не используйте -mcpu=native на CI)
+          CFLAGS: "-O2 -pipe -march=armv9-a -mcpu=cortex-x2"
+          CXXFLAGS: "-O2 -pipe -march=armv9-a -mcpu=cortex-x2"
+          LDFLAGS: "-fuse-ld=lld"
+        run: |
+          bash ci/ci-build.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.wcp_name }}
+          path: out/*.wcp
+          retention-days: 14
