@@ -1,46 +1,44 @@
 # wine_11.1wcp
 
-Скрипт `build.sh` собирает Wine ARM64EC в формате WCP (архив `.wcp`) и теперь дополнительно формирует слой **winetools** — набор утилит и манифест для диагностики/запуска инструментов Wine внутри контейнера.
+Скрипты в репозитории автоматизируют сборку Wine 11.1 (ветка `arm64ec`) в формате WCP для Winlator.
 
-## Что делает сборка
+## Что реализовано
 
-1. Загружает `llvm-mingw` в локальный кэш.
-2. Подготавливает исходники Wine (локальные или `git clone`).
-3. Конфигурирует cross-сборку под `arm64ec-w64-windows-gnu`.
-4. Выполняет `make` + `make install DESTDIR=...`.
-5. Пакует WCP-структуру (`bin/lib/share/info`).
-6. Добавляет слой **winetools**:
-   - `bin/winetools` — мульти-инструмент (list/run/info),
-   - `share/winetools/manifest.txt` — перечень обнаруженных Wine-инструментов,
-   - `share/winetools/linking-report.txt` — короткий отчёт по ELF/PE линкованию и архитектуре ключевых бинарников.
+- Двухэтапная сборка Wine:
+  - `build-tools`: нативные host-утилиты (`winebuild`, `widl`, `wrc` и т.д.).
+  - `build-arm64ec`: кросс-сборка с `--enable-archs=arm64ec,aarch64,i386`.
+- Поддержка toolchain-комбинации:
+  - `llvm-mingw` (CRT/headers для MinGW/ARM64EC);
+  - `LLVM 22.1.0-rc3` (clang/lld/llvm-*).
+- Формирование WCP-структуры (`bin`, `lib`, `share`, `info`) и слоя `winetools`:
+  - `bin/winetools` (list/run/info);
+  - `share/winetools/manifest.txt`;
+  - `share/winetools/linking-report.txt`.
+- Совместимость с новым WoW64-подходом Wine 11.1:
+  - основной бинарник `bin/wine`;
+  - при необходимости создаётся `bin/wine64 -> wine`.
+- Упаковка `prefixPack.txz` и `profile.json` в итоговый `.wcp` при наличии файлов.
 
-## Рефлексивный анализ структуры WCP и линкования
-
-Ниже — вывод по логике скрипта и структуре, которую видно по вашим скриншотам (`bin`, `lib`, `share`, `prefixPack.txz`, `profile.json`, а также `lib/wine/{i386-windows,x86_64-unix,x86_64-windows}`):
-
-- **Слой runtime (bin/lib/share)** — это базовая поставка Wine. В `lib/wine` обычно лежат PE-модули Wine (DLL/EXE), а в `bin` — управляющие утилиты (`wine`, `wine64`, `wineserver`, `winecfg`, и т.д.).
-- **Слой префикса (`prefixPack.txz`)** — это снимок `WINEPREFIX` (registry + `drive_c`), который отражает состояние после первичной инициализации/предустановок. На скриншотах видны `system.reg`, `user.reg`, `userdef.reg`, `drive_c`.
-- **Слой профиля (`profile.json`)** — отдельная модель конфигурации контейнера (драйвер графики, DX wrapper, эмуляторы 32/64-bit, локаль), то есть не код Wine, а orchestration-метаданные.
-
-### Почему “линкование” критично
-
-WCP в мобильных контейнерах обычно сочетает:
-
-1. ELF-часть (хост-утилиты Linux/Android side),
-2. PE-часть (Wine Windows ABI модули),
-3. эмуляцию/трансляцию ABI (в вашем UI: FEXCore/Box64).
-
-Если связка архитектур и ABI несовместима, получаются типовые отказы:
-- PE загружается, но падение при обращении к отсутствующему thunk/bridge;
-- бинарник формально есть, но не исполняется из-за неверного динамического интерпретатора/архитектуры;
-- смешивание 32/64-бит слоёв без корректных wow64-компонентов.
-
-Поэтому в скрипт добавлен отчёт `linking-report.txt`: он фиксирует, какие бинарники реально присутствуют и как распознаются (`file`) вместе с первичными зависимостями (`readelf -d`). Это практическая проверка целостности линковочной модели.
-
-## Запуск
+## Локальная сборка
 
 ```bash
 ./build.sh
 ```
 
-Переменные можно переопределять через окружение (например `WCP_NAME`, `WCP_OUTPUT_DIR`, `WINE_SRC_DIR`, `WINE_GIT_REF`).
+Ключевые переменные окружения:
+
+- `WCP_NAME` (по умолчанию `wine-11.1-arm64ec`)
+- `WCP_OUTPUT_DIR` (по умолчанию `./dist`)
+- `WINE_SRC_DIR`, `WINE_GIT_REF`
+- `PREFIX_PACK_PATH`, `PROFILE_PATH`
+- `SKIP_FEX_BUILD` (сейчас FEX-шаг отключён по умолчанию; интеграция внешних DLL возможна отдельным этапом)
+
+## GitHub Actions
+
+Workflow: `.github/workflows/ci-arm64ec-wine.yml`
+
+Сценарий CI (`scripts/ci-build.sh`):
+
+1. Ставит зависимости на `ubuntu-24.04`.
+2. Запускает `./build.sh`.
+3. Публикует `dist/*.wcp` как артефакт.
