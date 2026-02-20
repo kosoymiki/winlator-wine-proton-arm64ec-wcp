@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${WCP_OUTPUT_DIR:-${ROOT_DIR}/out}"
 CACHE_DIR="${ROOT_DIR}/.cache"
-LLVM_MINGW_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
+TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
+LLVM_MINGW_DIR="${TOOLCHAIN_DIR}"
 STAGE_DIR="${ROOT_DIR}/stage"
 WCP_ROOT="${ROOT_DIR}/wcp_root"
 WINE_SRC_DIR="${ROOT_DIR}/wine-src"
@@ -30,6 +31,8 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
 
+source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
 }
@@ -40,53 +43,6 @@ check_host_arch() {
   if [[ "${arch}" != "aarch64" && "${arch}" != "arm64" ]]; then
     fail "ARM64 host is required (aarch64/arm64). Current arch: ${arch}"
   fi
-}
-
-download_release_asset() {
-  local repo="$1" tag="$2" regex="$3" output_file="$4"
-  local api_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
-  local asset_url
-
-  log "Resolving asset from ${repo}@${tag} (${regex})"
-  asset_url="$({
-    curl -fsSL "${api_url}" | python3 -c '
-import json, re, sys
-pattern = re.compile(sys.argv[1])
-release = json.load(sys.stdin)
-for asset in release.get("assets", []):
-    name = asset.get("name", "")
-    if pattern.search(name):
-        print(asset["browser_download_url"])
-        raise SystemExit(0)
-raise SystemExit("no matching release asset")
-' "${regex}"
-  })"
-
-  curl -fL --retry 5 --retry-delay 2 -o "${output_file}" "${asset_url}"
-}
-
-ensure_llvm_mingw() {
-  if [[ -d "${LLVM_MINGW_DIR}/bin" ]]; then
-    log "Using cached llvm-mingw at ${LLVM_MINGW_DIR}"
-    return
-  fi
-
-  local tmp_archive extracted
-  mkdir -p "${CACHE_DIR}"
-  tmp_archive="${CACHE_DIR}/llvm-mingw-${LLVM_MINGW_TAG}.tar.xz"
-
-  download_release_asset \
-    "mstorsjo/llvm-mingw" \
-    "${LLVM_MINGW_TAG}" \
-    "llvm-mingw-.*-ucrt-ubuntu-.*-(aarch64|arm64)\\.tar\\.xz$" \
-    "${tmp_archive}"
-
-  tar -xJf "${tmp_archive}" -C "${CACHE_DIR}"
-  extracted="$(find "${CACHE_DIR}" -maxdepth 1 -type d -name 'llvm-mingw-*-ucrt-ubuntu-*' | head -n1)"
-  [[ -n "${extracted}" ]] || fail "Unable to locate extracted llvm-mingw directory"
-
-  rm -rf "${LLVM_MINGW_DIR}"
-  mv "${extracted}" "${LLVM_MINGW_DIR}"
 }
 
 fetch_wine_sources() {

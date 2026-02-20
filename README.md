@@ -13,6 +13,9 @@
 - `.github/workflows/ci-wine-11.1-wcp.yml` — GitHub Actions pipeline на `ubuntu-24.04-arm`.
 - `ci/ci-build.sh` — основной build/pack-скрипт.
 - `build.sh` — локальный wrapper вокруг `ci/ci-build.sh`.
+- `.github/workflows/ci-proton10-wcp.yml` — отдельный pipeline Proton GE 10 ARM64EC WCP.
+- `ci/proton10/ci-build-proton10-wcp.sh` — основной build/pack-скрипт для Proton 10.
+- `docs/PROTON10_WCP.md` — запуск и параметры Proton 10 pipeline.
 
 ## Важные требования
 
@@ -44,4 +47,3 @@
 После упаковки скрипт проверяет, что `.wcp` действительно читается как tar-архив с выбранным сжатием (`xz` или `zstd`).
 
 Итоговый `profile.json` генерируется в формате Winlator/Cmod (`type`, `versionName`, `versionCode`, `description`, `wine.binPath/libPath/prefixPack`).
-

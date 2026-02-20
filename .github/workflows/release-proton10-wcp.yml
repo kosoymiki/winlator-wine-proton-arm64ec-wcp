@@ -1,0 +1,77 @@
+name: Release Proton 10 ARM64EC WCP
+
+on:
+  push:
+    tags: ["proton10-wcp-*"]
+
+permissions:
+  contents: write
+
+env:
+  RUNNER_LABELS: ${{ vars.RUNNER_LABELS || '["ubuntu-24.04-arm"]' }}
+  CACHE_DIR: ${{ github.workspace }}/.cache/proton10
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/out
+  VALVE_WINE_REF: 986bda11d3e569813ec0f86e56ef94d7c384da04
+  PROTON_GE_REF: GE-Proton10-32
+  LLVM_MINGW_TAG: "20260210"
+  WCP_COMPRESS: xz
+  WCP_NAME: proton-10-arm64ec
+  TARGET_HOST: aarch64-linux-gnu
+
+jobs:
+  release:
+    runs-on: ${{ fromJSON(env.RUNNER_LABELS) }}
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl git python3 tar xz-utils zstd rsync file binutils \
+            build-essential autoconf automake libtool pkg-config bison flex gettext \
+            cmake ninja-build \
+            libunwind-dev libxml2-dev zlib1g-dev \
+            libfreetype-dev libjpeg-dev libpng-dev libtiff-dev \
+            libx11-dev libxext-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxcomposite-dev libxcb1-dev \
+            libxkbcommon-dev \
+            libpulse-dev libudev-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libvulkan-dev
+
+      - name: Cache llvm-mingw/toolchain cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: proton10-release-llvm-mingw-${{ env.LLVM_MINGW_TAG }}-${{ runner.arch }}
+
+      - name: Build Proton 10 ARM64EC WCP
+        run: |
+          set -euxo pipefail
+          bash ci/proton10/ci-build-proton10-wcp.sh
+
+      - name: Prepare release notes
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF
+          Proton 10 ARM64EC WCP build.
+          Tag: ${{ github.ref_name }}
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          EOF
+
+      - name: Publish release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Proton 10 ARM64EC WCP (${{ github.ref_name }})
+          allowUpdates: true
+          prerelease: false
+          artifacts: out/proton-10-arm64ec.wcp,out/SHA256SUMS,out/patchlog.txt,docs/ARM64EC_PATCH_REVIEW.md
+          artifactErrorsFailBuild: true
+          bodyFile: RELEASE_NOTES.md
