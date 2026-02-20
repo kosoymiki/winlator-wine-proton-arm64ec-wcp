@@ -44,3 +44,14 @@
 После упаковки скрипт проверяет, что `.wcp` действительно читается как tar-архив с выбранным сжатием (`xz` или `zstd`).
 
 Итоговый `profile.json` генерируется в формате Winlator/Cmod (`type`, `versionName`, `versionCode`, `description`, `wine.binPath/libPath/prefixPack`).
+
+## Диагностика зависания контейнера Winlator
+
+Если приложение зависает на `Starting up...`, используйте пошаговый гайд: `docs/winlator-container-hang-debug.md`.
+
+Для анализа списка crashreport variation-кодов используйте локальный инструмент:
+
+```bash
+python3 tools/analyze_variations.py --codes "a1-b1,a2-b2"
+```
+

@@ -70,7 +70,16 @@ jobs:
           path: out/*.wcp
           retention-days: 14
 
+      - name: Prepare release notes
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF
+          Automated WCP build from ${{ github.sha }}.
+          Workflow run: ${{ github.run_id }}.
+          EOF
+
       - name: Publish to GitHub Release
+        if: github.event_name != 'pull_request'
         uses: ncipollo/release-action@v1
         with:
           tag: wcp-latest
@@ -80,6 +89,4 @@ jobs:
           artifacts: out/*.wcp
           artifactErrorsFailBuild: true
           removeArtifacts: true
-          body: |
-            Automated WCP build from `${{ github.sha }}`.
-            Workflow run: `${{ github.run_id }}`.
+          bodyFile: RELEASE_NOTES.md
