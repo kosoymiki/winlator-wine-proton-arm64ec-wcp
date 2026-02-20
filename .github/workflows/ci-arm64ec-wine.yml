@@ -9,7 +9,7 @@ on:
       wcp_name:
         description: "WCP artifact name (without .wcp)"
         required: false
-        default: "wine-11.1-staging-s8g1"
+        default: "wine-11.1-arm64ec"
       llvm_mingw_ver:
         description: "llvm-mingw version tag"
         required: false
@@ -20,10 +20,10 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 env:
-  WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-staging-s8g1' }}
+  WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-arm64ec' }}
   LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_OUTPUT_DIR: ${{ github.workspace }}/dist
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
@@ -92,3 +92,24 @@ jobs:
           path: ${{ env.WCP_OUTPUT_DIR }}/${{ env.WCP_NAME }}.wcp
           if-no-files-found: error
           retention-days: 14
+
+      - name: Prepare release notes
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF
+          Automated WCP build from `${{ github.sha }}`.
+          Workflow run: `${{ github.run_id }}`.
+          EOF
+
+      - name: Publish to GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: wcp-latest
+          name: WCP Latest Build
+          allowUpdates: true
+          prerelease: true
+          artifacts: ${{ env.WCP_OUTPUT_DIR }}/${{ env.WCP_NAME }}.wcp
+          artifactErrorsFailBuild: true
+          removeArtifacts: true
+          bodyFile: RELEASE_NOTES.md
