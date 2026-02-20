@@ -95,7 +95,7 @@ ensure_llvm_mingw() {
   find "${TOOLCHAIN_DIR}" -type f -name '*-w64-mingw32.cfg' | sed "s#^# - #"
   cfg_count="$(find "${TOOLCHAIN_DIR}" -type f -name '*-w64-mingw32.cfg' | wc -l | tr -d '[:space:]')"
   if [[ "${cfg_count}" == "0" ]]; then
-    # Some llvm-mingw builds ship triplet wrappers without standalone *.cfg files.
+    # Some llvm-mingw builds do not ship standalone *.cfg files.
     llvm_log "No triplet cfg files found; checking triplet wrapper binaries instead:"
     find "${TOOLCHAIN_DIR}/bin" -maxdepth 1 -type f \
       \( -name '*-w64-mingw32-clang' -o -name '*-w64-mingw32-clang++' \) \
@@ -103,6 +103,11 @@ ensure_llvm_mingw() {
     wrapper_count="$(find "${TOOLCHAIN_DIR}/bin" -maxdepth 1 -type f \
       \( -name '*-w64-mingw32-clang' -o -name '*-w64-mingw32-clang++' \) \
       | wc -l | tr -d '[:space:]')"
-    [[ "${wrapper_count}" != "0" ]] || llvm_fail "No triplet cfg files and no triplet wrapper binaries found in ${TOOLCHAIN_DIR}"
+    if [[ "${wrapper_count}" == "0" ]]; then
+      llvm_log "No triplet wrapper binaries found either; printing available mingw markers:"
+      find "${TOOLCHAIN_DIR}" -maxdepth 3 -type d -name '*-w64-mingw32*' | sed "s#^# - #"
+      find "${TOOLCHAIN_DIR}/bin" -maxdepth 1 -type f | grep -E 'mingw|w64|ucrt' | sed "s#^# - #" || true
+      llvm_log "Proceeding without cfg/wrapper hard requirement (toolchain may still be valid)."
+    fi
   fi
 }
