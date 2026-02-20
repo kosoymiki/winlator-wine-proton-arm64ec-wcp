@@ -44,3 +44,4 @@
 После упаковки скрипт проверяет, что `.wcp` действительно читается как tar-архив с выбранным сжатием (`xz` или `zstd`).
 
 Итоговый `profile.json` генерируется в формате Winlator/Cmod (`type`, `versionName`, `versionCode`, `description`, `wine.binPath/libPath/prefixPack`).
+

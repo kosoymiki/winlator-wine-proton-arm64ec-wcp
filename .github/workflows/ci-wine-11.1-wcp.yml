@@ -21,7 +21,7 @@ on:
         default: "zstd"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -60,10 +60,6 @@ jobs:
           LLVM_MINGW_TAG: ${{ inputs.llvm_mingw_tag }}
           WCP_NAME: ${{ inputs.wcp_name }}
           WCP_COMPRESS: ${{ inputs.compress }}
-          # Оптимизация именно под Snapdragon 8 Gen 1 (не используйте -mcpu=native на CI)
-          CFLAGS: "-O2 -pipe -march=armv9-a -mcpu=cortex-x2"
-          CXXFLAGS: "-O2 -pipe -march=armv9-a -mcpu=cortex-x2"
-          LDFLAGS: "-fuse-ld=lld"
         run: |
           bash ci/ci-build.sh
 
@@ -73,3 +69,24 @@ jobs:
           name: ${{ inputs.wcp_name }}
           path: out/*.wcp
           retention-days: 14
+
+      - name: Prepare release notes
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF
+          Automated WCP build from ${{ github.sha }}.
+          Workflow run: ${{ github.run_id }}.
+          EOF
+
+      - name: Publish to GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: wcp-latest
+          name: WCP Latest Build
+          allowUpdates: true
+          prerelease: true
+          artifacts: out/*.wcp
+          artifactErrorsFailBuild: true
+          removeArtifacts: true
+          bodyFile: RELEASE_NOTES.md
