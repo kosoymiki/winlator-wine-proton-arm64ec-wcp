@@ -13,11 +13,17 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 
 : "${WINE_REPO:=https://github.com/AndreRH/wine.git}"
 : "${WINE_BRANCH:=arm64ec}"
-: "${WINE_REF:=wine-11.1}"
+: "${WINE_REF:=arm64ec}"
 : "${HANGOVER_REPO:=https://github.com/AndreRH/hangover.git}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
-: "${WCP_COMPRESS:=zstd}"
+: "${WCP_COMPRESS:=xz}"
+: "${WCP_VERSION_NAME:=11.1-arm64ec}"
+: "${WCP_VERSION_CODE:=0}"
+: "${WCP_DESCRIPTION:=Wine 11.1 arm64ec for newer cmod versions}"
+: "${FEX_SOURCE_MODE:=auto}"
+: "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
+: "${REQUIRE_PREFIX_PACK:=1}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -83,11 +89,24 @@ ensure_llvm_mingw() {
 
 fetch_wine_sources() {
   rm -rf "${WINE_SRC_DIR}"
-  git clone --filter=blob:none "${WINE_REPO}" "${WINE_SRC_DIR}"
+  git clone --filter=blob:none --branch "${WINE_BRANCH}" --single-branch "${WINE_REPO}" "${WINE_SRC_DIR}"
   pushd "${WINE_SRC_DIR}" >/dev/null
-  git checkout "${WINE_BRANCH}"
   git fetch --tags --force
-  git checkout "${WINE_REF}"
+
+  # Strict default: build from arm64ec branch. If WINE_REF is provided, use it only
+  # when the ref exists in origin (branch/tag/commit).
+  if [[ "${WINE_REF}" == "${WINE_BRANCH}" ]]; then
+    git checkout "${WINE_BRANCH}"
+  elif git rev-parse --verify --quiet "refs/remotes/origin/${WINE_REF}" >/dev/null; then
+    git checkout -B "${WINE_REF}" "refs/remotes/origin/${WINE_REF}"
+  elif git rev-parse --verify --quiet "refs/tags/${WINE_REF}" >/dev/null; then
+    git checkout "refs/tags/${WINE_REF}"
+  elif git rev-parse --verify --quiet "${WINE_REF}^{commit}" >/dev/null; then
+    git checkout "${WINE_REF}"
+  else
+    fail "WINE_REF '${WINE_REF}' not found in ${WINE_REPO}. Use arm64ec branch or a valid ref."
+  fi
+
   popd >/dev/null
 }
 
@@ -107,17 +126,54 @@ build_wine() {
   popd >/dev/null
 }
 
+
+ensure_arm64ec_api_set_compat() {
+  # Some llvm-mingw releases miss libapi-ms-win-core-processthreads-l1-1-3.a,
+  # while upstream build files may still request it indirectly.
+  local libdir compat target candidate
+  for libdir in \
+    "${LLVM_MINGW_DIR}/arm64ec-w64-mingw32/lib" \
+    "${LLVM_MINGW_DIR}/aarch64-w64-mingw32/lib"; do
+    [[ -d "${libdir}" ]] || continue
+
+    compat="${libdir}/libapi-ms-win-core-processthreads-l1-1-3.a"
+    [[ -e "${compat}" ]] && continue
+
+    target=""
+    for candidate in \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-4.a" \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-2.a" \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-1.a" \
+      "${libdir}/libkernel32.a"; do
+      if [[ -e "${candidate}" ]]; then
+        target="${candidate}"
+        break
+      fi
+    done
+
+    if [[ -n "${target}" ]]; then
+      ln -s "$(basename "${target}")" "${compat}" || true
+      log "Created API-set compatibility alias: ${compat} -> $(basename "${target}")"
+    fi
+  done
+}
+
 build_fex_dlls() {
   rm -rf "${HANGOVER_SRC_DIR}"
   git clone --recursive --filter=blob:none "${HANGOVER_REPO}" "${HANGOVER_SRC_DIR}"
 
   mkdir -p "${HANGOVER_SRC_DIR}/fex/build_ec"
   pushd "${HANGOVER_SRC_DIR}/fex/build_ec" >/dev/null
+  # Keep ARM64EC link flags minimal; api-ms import lib may be absent in some llvm-mingw builds.
   cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_TOOLCHAIN_FILE=../Data/CMake/toolchain_mingw.cmake \
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=arm64ec-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
+    -DCMAKE_SHARED_LINKER_FLAGS="-lkernel32" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-lkernel32" \
     ..
   make -j"$(nproc)" arm64ecfex
   popd >/dev/null
@@ -129,6 +185,8 @@ build_fex_dlls() {
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=aarch64-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
     ..
   make -j"$(nproc)" wow64fex
   popd >/dev/null
@@ -136,6 +194,58 @@ build_fex_dlls() {
   mkdir -p "${STAGE_DIR}/usr/lib/wine/aarch64-windows"
   cp -f "${HANGOVER_SRC_DIR}/fex/build_ec/Bin/libarm64ecfex.dll" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/"
   cp -f "${HANGOVER_SRC_DIR}/fex/build_pe/Bin/libwow64fex.dll" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/"
+}
+
+extract_fex_dlls_from_prebuilt_wcp() {
+  local tmp_root archive dll_ec dll_pe
+  tmp_root="${CACHE_DIR}/prebuilt-fex"
+  archive="${tmp_root}/fexcore.wcp"
+
+  rm -rf "${tmp_root}"
+  mkdir -p "${tmp_root}/extract"
+  log "Downloading prebuilt FEX package: ${FEX_WCP_URL}"
+  curl -fL --retry 5 --retry-delay 2 -o "${archive}" "${FEX_WCP_URL}"
+
+  if tar --zstd -xf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
+  elif tar -xJf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
+  elif tar -xf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
+  else
+    fail "Unable to extract prebuilt FEX package: ${archive}"
+  fi
+
+  dll_ec="$(find "${tmp_root}/extract" -type f -name 'libarm64ecfex.dll' | head -n1 || true)"
+  dll_pe="$(find "${tmp_root}/extract" -type f -name 'libwow64fex.dll' | head -n1 || true)"
+
+  [[ -n "${dll_ec}" ]] || fail "libarm64ecfex.dll not found in prebuilt FEX package"
+  [[ -n "${dll_pe}" ]] || fail "libwow64fex.dll not found in prebuilt FEX package"
+
+  mkdir -p "${STAGE_DIR}/usr/lib/wine/aarch64-windows"
+  cp -f "${dll_ec}" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/libarm64ecfex.dll"
+  cp -f "${dll_pe}" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/libwow64fex.dll"
+  log "Using prebuilt FEX DLLs from ${FEX_WCP_URL}"
+}
+
+install_fex_dlls() {
+  case "${FEX_SOURCE_MODE}" in
+    prebuilt)
+      extract_fex_dlls_from_prebuilt_wcp
+      ;;
+    build)
+      build_fex_dlls
+      ;;
+    auto)
+      if ! extract_fex_dlls_from_prebuilt_wcp; then
+        log "Prebuilt FEX package failed, falling back to local FEX build"
+        build_fex_dlls
+      fi
+      ;;
+    *)
+      fail "FEX_SOURCE_MODE must be one of: auto, prebuilt, build"
+      ;;
+  esac
 }
 
 compose_wcp_tree() {
@@ -203,8 +313,10 @@ WINETOOLS
   if [[ -f "${ROOT_DIR}/prefixPack.txz" ]]; then
     cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
     log "included prefixPack.txz"
+  elif [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
+    fail "prefixPack.txz is required but missing in repository root"
   else
-    log "prefixPack.txz is missing, proceeding without bundled prefix"
+    log "prefixPack.txz is missing, proceeding without bundled prefix (REQUIRE_PREFIX_PACK=0)"
   fi
 
   local utc_now
@@ -213,24 +325,72 @@ WINETOOLS
   mkdir -p "${WCP_ROOT}/info"
   cat > "${WCP_ROOT}/profile.json" <<EOF_PROFILE
 {
-  "name": "Wine 11.1 ARM64EC",
-  "version": "11.1-arm64ec",
-  "built_utc": "${utc_now}",
-  "features": ["wow64", "arm64ec", "fex"],
-  "notes": "profile.json is required by WCP. Adjust runtime settings for your Winlator fork here."
+  "type": "Wine",
+  "versionName": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
+  "files": [],
+  "wine": {
+    "binPath": "bin",
+    "libPath": "lib",
+    "prefixPack": "prefixPack.txz"
+  }
 }
 EOF_PROFILE
 
   cat > "${WCP_ROOT}/info/info.json" <<EOF_INFO
 {
-  "name": "Wine 11.1 ARM64EC",
-  "os": "windows",
-  "arch": "arm64",
-  "version": "11.1-arm64ec",
-  "features": ["wow64", "arm64ec", "fex"],
+  "name": "${WCP_NAME}",
+  "type": "Wine",
+  "version": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
   "built": "${utc_now}"
 }
 EOF_INFO
+}
+
+
+validate_wcp_tree() {
+  local required_paths=(
+    "${WCP_ROOT}/bin"
+    "${WCP_ROOT}/bin/wine"
+    "${WCP_ROOT}/bin/wineserver"
+    "${WCP_ROOT}/lib"
+    "${WCP_ROOT}/lib/wine"
+    "${WCP_ROOT}/lib/wine/aarch64-unix"
+    "${WCP_ROOT}/lib/wine/aarch64-windows"
+    "${WCP_ROOT}/lib/wine/i386-windows"
+    "${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
+    "${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
+    "${WCP_ROOT}/share"
+    "${WCP_ROOT}/profile.json"
+  )
+
+  local p
+  for p in "${required_paths[@]}"; do
+    [[ -e "${p}" ]] || fail "WCP layout is incomplete, missing: ${p#${WCP_ROOT}/}"
+  done
+
+  local required_unix_modules=(
+    "ntdll.so"
+    "win32u.so"
+    "ws2_32.so"
+    "opengl32.so"
+    "secur32.so"
+    "winevulkan.so"
+  )
+
+  local mod
+  for mod in "${required_unix_modules[@]}"; do
+    [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/${mod}" ]] || fail "Wine unix module missing: lib/wine/aarch64-unix/${mod}"
+  done
+
+  if [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
+    [[ -f "${WCP_ROOT}/prefixPack.txz" ]] || fail "WCP layout is incomplete, missing: prefixPack.txz"
+  fi
+
+  log "WCP layout validation passed"
 }
 
 pack_wcp() {
@@ -251,6 +411,15 @@ pack_wcp() {
       ;;
   esac
   popd >/dev/null
+
+  case "${WCP_COMPRESS}" in
+    xz)
+      tar -tJf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid xz tar archive"
+      ;;
+    zstd)
+      tar --zstd -tf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid zstd tar archive"
+      ;;
+  esac
 
   log "built artifact: ${out_wcp}"
   ls -lh "${out_wcp}"
@@ -274,6 +443,7 @@ main() {
 
   check_host_arch
   ensure_llvm_mingw
+  ensure_arm64ec_api_set_compat
 
   export PATH="${LLVM_MINGW_DIR}/bin:${PATH}"
   log "clang: $(command -v clang)"
@@ -281,8 +451,9 @@ main() {
 
   fetch_wine_sources
   build_wine
-  build_fex_dlls
+  install_fex_dlls
   compose_wcp_tree
+  validate_wcp_tree
   pack_wcp
 }
 
