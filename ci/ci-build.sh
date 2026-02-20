@@ -310,9 +310,11 @@ WINETOOLS
     done
   } > "${WCP_ROOT}/share/winetools/linking-report.txt"
 
+  local has_prefix_pack="0"
   if [[ -f "${ROOT_DIR}/prefixPack.txz" ]]; then
     cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
     log "included prefixPack.txz"
+    has_prefix_pack="1"
   elif [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
     fail "prefixPack.txz is required but missing in repository root"
   else
@@ -332,8 +334,11 @@ WINETOOLS
   "files": [],
   "wine": {
     "binPath": "bin",
-    "libPath": "lib",
-    "prefixPack": "prefixPack.txz"
+    "libPath": "lib"$(
+      if [[ "${has_prefix_pack}" == "1" ]]; then
+        printf ',\n    "prefixPack": "prefixPack.txz"'
+      fi
+    )
   }
 }
 EOF_PROFILE
