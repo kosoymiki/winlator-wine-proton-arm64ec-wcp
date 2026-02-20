@@ -28,9 +28,17 @@
 
 Полезные переменные окружения:
 
-- `WINE_REF` (по умолчанию `wine-11.1`)
+- `WINE_REF` (по умолчанию `arm64ec`)
 - `LLVM_MINGW_TAG` (по умолчанию `20260210`)
 - `WCP_NAME` (по умолчанию `Wine-11.1-arm64ec`)
-- `WCP_COMPRESS` (`xz` или `zstd`, по умолчанию `zstd`)
+- `WCP_VERSION_NAME` (по умолчанию `10-arm64ec`, поле `profile.json`)
+- `WCP_VERSION_CODE` (по умолчанию `0`, поле `profile.json`)
+- `WCP_DESCRIPTION` (описание для Winlator Content Info; по умолчанию: `Proton 10 arm64ec for newer cmod versions`)
+- `FEX_SOURCE_MODE` (`auto`, `prebuilt`, `build`; по умолчанию `auto`)
+- `FEX_WCP_URL` (URL prebuilt `.wcp` для извлечения `libarm64ecfex.dll`/`libwow64fex.dll`)
+- `REQUIRE_PREFIX_PACK` (`1` или `0`; по умолчанию `1`, чтобы WCP не был `Content is incomplete`)
+- `WCP_COMPRESS` (`xz` или `zstd`, по умолчанию `xz`)
 
 Итоговый артефакт создаётся в `out/*.wcp`.
+
+Итоговый `profile.json` генерируется в формате Winlator/Cmod (`type`, `versionName`, `versionCode`, `description`, `wine.binPath/libPath/prefixPack`).
