@@ -131,6 +131,8 @@ build_fex_dlls() {
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=arm64ec-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
     ..
   make -j"$(nproc)" arm64ecfex
   popd >/dev/null
@@ -142,6 +144,8 @@ build_fex_dlls() {
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=aarch64-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
     ..
   make -j"$(nproc)" wow64fex
   popd >/dev/null
