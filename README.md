@@ -31,9 +31,9 @@
 - `WINE_REF` (по умолчанию `arm64ec`)
 - `LLVM_MINGW_TAG` (по умолчанию `20260210`)
 - `WCP_NAME` (по умолчанию `Wine-11.1-arm64ec`)
-- `WCP_VERSION_NAME` (по умолчанию `11.1-arm64ec`, поле `profile.json`)
+- `WCP_VERSION_NAME` (по умолчанию `10-arm64ec`, поле `profile.json`)
 - `WCP_VERSION_CODE` (по умолчанию `0`, поле `profile.json`)
-- `WCP_DESCRIPTION` (описание для Winlator Content Info; по умолчанию указывает на bionic package)
+- `WCP_DESCRIPTION` (описание для Winlator Content Info; по умолчанию: `Proton 10 arm64ec for newer cmod versions`)
 - `WCP_COMPRESS` (`xz` или `zstd`, по умолчанию `zstd`)
 
 Итоговый артефакт создаётся в `out/*.wcp`.

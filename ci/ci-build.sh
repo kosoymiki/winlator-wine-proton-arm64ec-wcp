@@ -18,9 +18,9 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
 : "${WCP_COMPRESS:=zstd}"
-: "${WCP_VERSION_NAME:=11.1-arm64ec}"
+: "${WCP_VERSION_NAME:=10-arm64ec}"
 : "${WCP_VERSION_CODE:=0}"
-: "${WCP_DESCRIPTION:=Wine 11.1 arm64ec bionic package for newer cmod versions}"
+: "${WCP_DESCRIPTION:=Proton 10 arm64ec for newer cmod versions}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
