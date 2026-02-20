@@ -14,6 +14,10 @@ LOG_DIR="${OUT_DIR}/logs"
 : "${VALVE_WINE_REPO:=https://github.com/ValveSoftware/wine.git}"
 : "${VALVE_WINE_REF:=986bda11d3e569813ec0f86e56ef94d7c384da04}"
 : "${ARM64EC_TOPIC_REGEX:=arm64ec|wow64|hangover|aarch64|arm64|woa}"
+: "${ARM64EC_FILE_GLOB_1:=*arm64*}"
+: "${ARM64EC_FILE_GLOB_2:=*wow64*}"
+: "${ARM64EC_FILE_GLOB_3:=*hangover*}"
+: "${ARM64EC_EXCLUDE_SUBJECT_REGEX:=^ntdll: (Store special environment variables with a UNIX_|Set the environment variables for Unix child processes from their UNIX_|Treat all the XDG_)}"
 : "${ARM64EC_MAX_COMMITS:=120}"
 
 log() { printf '[proton10][review] %s\n' "$*"; }
@@ -43,6 +47,7 @@ infer_purpose() {
 main() {
   local andre_dir series_ref base_ref merge_base commit_count today
   local full_series_file subject_hits_file path_hits_file selected_set_file filtered_count total_count
+  local selected_filtered_file hash subject
 
   require_cmd git
   require_cmd awk
@@ -79,9 +84,24 @@ main() {
   # Build only the arm64ec-specific delta, not the full upstream replay.
   git rev-list --no-merges --reverse "${base_ref}..${series_ref}" > "${full_series_file}"
   git rev-list --no-merges --reverse --regexp-ignore-case --grep="${ARM64EC_TOPIC_REGEX}" "${base_ref}..${series_ref}" > "${subject_hits_file}" || true
-  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" -- loader dlls/ntdll dlls/wow64 server tools > "${path_hits_file}" || true
+  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" -- \
+    "${ARM64EC_FILE_GLOB_1}" \
+    "${ARM64EC_FILE_GLOB_2}" \
+    "${ARM64EC_FILE_GLOB_3}" > "${path_hits_file}" || true
 
   cat "${subject_hits_file}" "${path_hits_file}" | sed '/^$/d' | sort -u > "${selected_set_file}"
+  selected_filtered_file="${selected_set_file}.filtered"
+  : > "${selected_filtered_file}"
+  while IFS= read -r hash; do
+    [[ -n "${hash}" ]] || continue
+    subject="$(git show -s --format='%s' "${hash}")"
+    if printf '%s\n' "${subject}" | grep -Eiq "${ARM64EC_EXCLUDE_SUBJECT_REGEX}"; then
+      continue
+    fi
+    printf '%s\n' "${hash}" >> "${selected_filtered_file}"
+  done < "${selected_set_file}"
+  mv -f "${selected_filtered_file}" "${selected_set_file}"
+
   if [[ -s "${selected_set_file}" ]]; then
     awk 'NR==FNR { keep[$1]=1; next } keep[$1] { print $1 }' "${selected_set_file}" "${full_series_file}" > "${SERIES_FILE}"
   else
@@ -108,6 +128,9 @@ main() {
     printf -- '- Valve base repo: `%s`\n' "${VALVE_WINE_REPO}"
     printf -- '- Valve base ref: `%s`\n' "${VALVE_WINE_REF}"
     printf -- '- Merge base (arm64ec vs source base): `%s`\n' "${merge_base}"
+    printf -- '- Topic regex: `%s`\n' "${ARM64EC_TOPIC_REGEX}"
+    printf -- '- File globs: `%s`, `%s`, `%s`\n' "${ARM64EC_FILE_GLOB_1}" "${ARM64EC_FILE_GLOB_2}" "${ARM64EC_FILE_GLOB_3}"
+    printf -- '- Exclude subject regex: `%s`\n' "${ARM64EC_EXCLUDE_SUBJECT_REGEX}"
     printf -- '- Commits in full range: `%s`\n' "${total_count}"
     printf -- '- Commits after topic/path filtering: `%s`\n' "${filtered_count}"
     printf -- '- Max commits limit: `%s`\n' "${ARM64EC_MAX_COMMITS}"
