@@ -13,7 +13,7 @@ on:
       llvm_mingw_ver:
         description: "llvm-mingw version tag"
         required: false
-        default: "20251216"
+        default: "20260210"
 
 concurrency:
   group: wcp-${{ github.workflow }}-${{ github.ref }}
@@ -24,18 +24,15 @@ permissions:
 
 env:
   WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-staging-s8g1' }}
-  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20251216' }}
+  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_OUTPUT_DIR: ${{ github.workspace }}/dist
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
 
 jobs:
   build:
     name: Build WCP (ARM64EC)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
-
-    container:
-      image: archlinux:base-devel
 
     defaults:
       run:
@@ -48,23 +45,26 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Bootstrap packages (Arch)
+      - name: Bootstrap packages (Ubuntu)
         run: |
           set -euxo pipefail
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm --needed \
-            git wget unzip tar pkgconf \
-            freetype2 gnu-free-fonts \
-            glib2 gstreamer \
-            libxslt libxml2 \
-            libpng \
-            lcms2 \
-            libunwind \
-            gst-plugins-base-libs \
-            giflib \
-            gnutls \
-            samba \
-            sdl2
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bash curl git python3 wget unzip tar pkg-config \
+            cmake ninja-build rsync \
+            zstd file binutils nasm \
+            build-essential \
+            libfreetype-dev fonts-dejavu-core \
+            libglib2.0-dev gstreamer1.0-tools \
+            libxslt1-dev libxml2-dev \
+            libpng-dev \
+            liblcms2-dev \
+            libunwind-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgif-dev \
+            libgnutls28-dev \
+            libsmbclient-dev \
+            libsdl2-dev
           mkdir -p "${WCP_OUTPUT_DIR}" "${TOOLCHAIN_DIR}"
 
       - name: Cache llvm-mingw toolchain

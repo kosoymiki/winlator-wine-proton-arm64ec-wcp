@@ -13,11 +13,14 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 
 : "${WINE_REPO:=https://github.com/AndreRH/wine.git}"
 : "${WINE_BRANCH:=arm64ec}"
-: "${WINE_REF:=wine-11.1}"
+: "${WINE_REF:=arm64ec}"
 : "${HANGOVER_REPO:=https://github.com/AndreRH/hangover.git}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
 : "${WCP_COMPRESS:=zstd}"
+: "${WCP_VERSION_NAME:=11.1-arm64ec}"
+: "${WCP_VERSION_CODE:=0}"
+: "${WCP_DESCRIPTION:=Wine 11.1 arm64ec bionic package for newer cmod versions}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -83,11 +86,24 @@ ensure_llvm_mingw() {
 
 fetch_wine_sources() {
   rm -rf "${WINE_SRC_DIR}"
-  git clone --filter=blob:none "${WINE_REPO}" "${WINE_SRC_DIR}"
+  git clone --filter=blob:none --branch "${WINE_BRANCH}" --single-branch "${WINE_REPO}" "${WINE_SRC_DIR}"
   pushd "${WINE_SRC_DIR}" >/dev/null
-  git checkout "${WINE_BRANCH}"
   git fetch --tags --force
-  git checkout "${WINE_REF}"
+
+  # Strict default: build from arm64ec branch. If WINE_REF is provided, use it only
+  # when the ref exists in origin (branch/tag/commit).
+  if [[ "${WINE_REF}" == "${WINE_BRANCH}" ]]; then
+    git checkout "${WINE_BRANCH}"
+  elif git rev-parse --verify --quiet "refs/remotes/origin/${WINE_REF}" >/dev/null; then
+    git checkout -B "${WINE_REF}" "refs/remotes/origin/${WINE_REF}"
+  elif git rev-parse --verify --quiet "refs/tags/${WINE_REF}" >/dev/null; then
+    git checkout "refs/tags/${WINE_REF}"
+  elif git rev-parse --verify --quiet "${WINE_REF}^{commit}" >/dev/null; then
+    git checkout "${WINE_REF}"
+  else
+    fail "WINE_REF '${WINE_REF}' not found in ${WINE_REPO}. Use arm64ec branch or a valid ref."
+  fi
+
   popd >/dev/null
 }
 
@@ -118,6 +134,10 @@ build_fex_dlls() {
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=arm64ec-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
+    -DCMAKE_SHARED_LINKER_FLAGS="-lapi-ms-win-core-processthreads-l1-1-3 -lkernel32" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-lapi-ms-win-core-processthreads-l1-1-3 -lkernel32" \
     ..
   make -j"$(nproc)" arm64ecfex
   popd >/dev/null
@@ -129,6 +149,8 @@ build_fex_dlls() {
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=aarch64-w64-mingw32 \
     -DBUILD_TESTS=False \
+    -DENABLE_TESTS=OFF \
+    -DUNIT_TESTS=OFF \
     ..
   make -j"$(nproc)" wow64fex
   popd >/dev/null
@@ -213,21 +235,26 @@ WINETOOLS
   mkdir -p "${WCP_ROOT}/info"
   cat > "${WCP_ROOT}/profile.json" <<EOF_PROFILE
 {
-  "name": "Wine 11.1 ARM64EC",
-  "version": "11.1-arm64ec",
-  "built_utc": "${utc_now}",
-  "features": ["wow64", "arm64ec", "fex"],
-  "notes": "profile.json is required by WCP. Adjust runtime settings for your Winlator fork here."
+  "type": "Wine",
+  "versionName": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
+  "files": [],
+  "wine": {
+    "binPath": "bin",
+    "libPath": "lib",
+    "prefixPack": "prefixPack.txz"
+  }
 }
 EOF_PROFILE
 
   cat > "${WCP_ROOT}/info/info.json" <<EOF_INFO
 {
-  "name": "Wine 11.1 ARM64EC",
-  "os": "windows",
-  "arch": "arm64",
-  "version": "11.1-arm64ec",
-  "features": ["wow64", "arm64ec", "fex"],
+  "name": "${WCP_NAME}",
+  "type": "Wine",
+  "version": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
   "built": "${utc_now}"
 }
 EOF_INFO
