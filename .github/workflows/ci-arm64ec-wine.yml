@@ -34,9 +34,6 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
 
-    container:
-      image: archlinux:base-devel
-
     defaults:
       run:
         shell: bash
@@ -48,25 +45,26 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Bootstrap packages (Arch)
+      - name: Bootstrap packages (Ubuntu)
         run: |
           set -euxo pipefail
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm --needed \
-            bash curl git python wget unzip tar pkgconf \
-            cmake ninja rsync \
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bash curl git python3 wget unzip tar pkg-config \
+            cmake ninja-build rsync \
             zstd file binutils \
-            freetype2 gnu-free-fonts \
-            glib2 gstreamer \
-            libxslt libxml2 \
-            libpng \
-            lcms2 \
-            libunwind \
-            gst-plugins-base-libs \
-            giflib \
-            gnutls \
-            samba \
-            sdl2
+            build-essential \
+            libfreetype-dev fonts-dejavu-core \
+            libglib2.0-dev gstreamer1.0-tools \
+            libxslt1-dev libxml2-dev \
+            libpng-dev \
+            liblcms2-dev \
+            libunwind-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libgif-dev \
+            libgnutls28-dev \
+            libsmbclient-dev \
+            libsdl2-dev
           mkdir -p "${WCP_OUTPUT_DIR}" "${TOOLCHAIN_DIR}"
 
       - name: Cache llvm-mingw toolchain
