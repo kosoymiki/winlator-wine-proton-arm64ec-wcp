@@ -10,6 +10,7 @@ LOG_DIR="${OUT_DIR}/logs"
 
 : "${ANDRE_WINE_REPO:=https://github.com/AndreRH/wine.git}"
 : "${ANDRE_ARM64EC_REF:=arm64ec}"
+: "${ANDRE_BASE_REF:=master}"
 : "${VALVE_WINE_REPO:=https://github.com/ValveSoftware/wine.git}"
 : "${VALVE_WINE_REF:=986bda11d3e569813ec0f86e56ef94d7c384da04}"
 : "${ARM64EC_TOPIC_REGEX:=arm64ec|wow64|hangover|aarch64|arm64|woa}"
@@ -40,7 +41,7 @@ infer_purpose() {
 }
 
 main() {
-  local andre_dir series_ref merge_base commit_count today
+  local andre_dir series_ref base_ref merge_base commit_count today
   local full_series_file subject_hits_file path_hits_file selected_set_file filtered_count total_count
 
   require_cmd git
@@ -57,6 +58,7 @@ main() {
   pushd "${andre_dir}" >/dev/null
 
   git fetch --force --no-tags origin "${ANDRE_ARM64EC_REF}"
+  git fetch --force --no-tags origin "${ANDRE_BASE_REF}"
   if git remote get-url valve >/dev/null 2>&1; then
     git remote set-url valve "${VALVE_WINE_REPO}"
   else
@@ -65,17 +67,19 @@ main() {
   git fetch --force --no-tags valve "${VALVE_WINE_REF}:refs/tmp/valve-base"
 
   series_ref="refs/remotes/origin/${ANDRE_ARM64EC_REF}"
-  merge_base="$(git merge-base "${series_ref}" "refs/tmp/valve-base" || true)"
-  [[ -n "${merge_base}" ]] || fail "Unable to compute merge-base between ${ANDRE_ARM64EC_REF} and ${VALVE_WINE_REF}"
+  base_ref="refs/remotes/origin/${ANDRE_BASE_REF}"
+  merge_base="$(git merge-base "${series_ref}" "${base_ref}" || true)"
+  [[ -n "${merge_base}" ]] || fail "Unable to compute merge-base between ${ANDRE_ARM64EC_REF} and ${ANDRE_BASE_REF}"
 
   full_series_file="${OUT_DIR}/arm64ec-series.full.txt"
   subject_hits_file="${OUT_DIR}/arm64ec-series.subject.txt"
   path_hits_file="${OUT_DIR}/arm64ec-series.paths.txt"
   selected_set_file="${OUT_DIR}/arm64ec-series.selected.txt"
 
-  git rev-list --no-merges --reverse "${merge_base}..${series_ref}" > "${full_series_file}"
-  git rev-list --no-merges --reverse --regexp-ignore-case --grep="${ARM64EC_TOPIC_REGEX}" "${merge_base}..${series_ref}" > "${subject_hits_file}" || true
-  git rev-list --no-merges --reverse "${merge_base}..${series_ref}" -- loader dlls/ntdll dlls/wow64 server tools > "${path_hits_file}" || true
+  # Build only the arm64ec-specific delta, not the full upstream replay.
+  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" > "${full_series_file}"
+  git rev-list --no-merges --reverse --regexp-ignore-case --grep="${ARM64EC_TOPIC_REGEX}" "${base_ref}..${series_ref}" > "${subject_hits_file}" || true
+  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" -- loader dlls/ntdll dlls/wow64 server tools > "${path_hits_file}" || true
 
   cat "${subject_hits_file}" "${path_hits_file}" | sed '/^$/d' | sort -u > "${selected_set_file}"
   if [[ -s "${selected_set_file}" ]]; then
@@ -100,9 +104,10 @@ main() {
     printf 'Generated at: `%s`\n\n' "${today}"
     printf -- '- Source repo: `%s`\n' "${ANDRE_WINE_REPO}"
     printf -- '- Source ref: `%s`\n' "${ANDRE_ARM64EC_REF}"
+    printf -- '- Source base ref: `%s`\n' "${ANDRE_BASE_REF}"
     printf -- '- Valve base repo: `%s`\n' "${VALVE_WINE_REPO}"
     printf -- '- Valve base ref: `%s`\n' "${VALVE_WINE_REF}"
-    printf -- '- Merge base: `%s`\n' "${merge_base}"
+    printf -- '- Merge base (arm64ec vs source base): `%s`\n' "${merge_base}"
     printf -- '- Commits in full range: `%s`\n' "${total_count}"
     printf -- '- Commits after topic/path filtering: `%s`\n' "${filtered_count}"
     printf -- '- Max commits limit: `%s`\n' "${ARM64EC_MAX_COMMITS}"
