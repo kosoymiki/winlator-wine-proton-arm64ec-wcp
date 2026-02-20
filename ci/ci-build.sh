@@ -17,12 +17,13 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${HANGOVER_REPO:=https://github.com/AndreRH/hangover.git}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
-: "${WCP_COMPRESS:=zstd}"
-: "${WCP_VERSION_NAME:=10-arm64ec}"
+: "${WCP_COMPRESS:=xz}"
+: "${WCP_VERSION_NAME:=11.1-arm64ec}"
 : "${WCP_VERSION_CODE:=0}"
-: "${WCP_DESCRIPTION:=Proton 10 arm64ec for newer cmod versions}"
+: "${WCP_DESCRIPTION:=Wine 11.1 arm64ec for newer cmod versions}"
 : "${FEX_SOURCE_MODE:=auto}"
 : "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
+: "${REQUIRE_PREFIX_PACK:=1}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -209,6 +210,8 @@ extract_fex_dlls_from_prebuilt_wcp() {
     :
   elif tar -xJf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
     :
+  elif tar -xf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
   else
     fail "Unable to extract prebuilt FEX package: ${archive}"
   fi
@@ -310,8 +313,10 @@ WINETOOLS
   if [[ -f "${ROOT_DIR}/prefixPack.txz" ]]; then
     cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
     log "included prefixPack.txz"
+  elif [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
+    fail "prefixPack.txz is required but missing in repository root"
   else
-    log "prefixPack.txz is missing, proceeding without bundled prefix"
+    log "prefixPack.txz is missing, proceeding without bundled prefix (REQUIRE_PREFIX_PACK=0)"
   fi
 
   local utc_now
@@ -345,6 +350,49 @@ EOF_PROFILE
 EOF_INFO
 }
 
+
+validate_wcp_tree() {
+  local required_paths=(
+    "${WCP_ROOT}/bin"
+    "${WCP_ROOT}/bin/wine"
+    "${WCP_ROOT}/bin/wineserver"
+    "${WCP_ROOT}/lib"
+    "${WCP_ROOT}/lib/wine"
+    "${WCP_ROOT}/lib/wine/aarch64-unix"
+    "${WCP_ROOT}/lib/wine/aarch64-windows"
+    "${WCP_ROOT}/lib/wine/i386-windows"
+    "${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
+    "${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
+    "${WCP_ROOT}/share"
+    "${WCP_ROOT}/profile.json"
+  )
+
+  local p
+  for p in "${required_paths[@]}"; do
+    [[ -e "${p}" ]] || fail "WCP layout is incomplete, missing: ${p#${WCP_ROOT}/}"
+  done
+
+  local required_unix_modules=(
+    "ntdll.so"
+    "win32u.so"
+    "ws2_32.so"
+    "opengl32.so"
+    "secur32.so"
+    "winevulkan.so"
+  )
+
+  local mod
+  for mod in "${required_unix_modules[@]}"; do
+    [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/${mod}" ]] || fail "Wine unix module missing: lib/wine/aarch64-unix/${mod}"
+  done
+
+  if [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
+    [[ -f "${WCP_ROOT}/prefixPack.txz" ]] || fail "WCP layout is incomplete, missing: prefixPack.txz"
+  fi
+
+  log "WCP layout validation passed"
+}
+
 pack_wcp() {
   mkdir -p "${OUT_DIR}"
   local out_wcp
@@ -363,6 +411,15 @@ pack_wcp() {
       ;;
   esac
   popd >/dev/null
+
+  case "${WCP_COMPRESS}" in
+    xz)
+      tar -tJf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid xz tar archive"
+      ;;
+    zstd)
+      tar --zstd -tf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid zstd tar archive"
+      ;;
+  esac
 
   log "built artifact: ${out_wcp}"
   ls -lh "${out_wcp}"
@@ -396,6 +453,7 @@ main() {
   build_wine
   install_fex_dlls
   compose_wcp_tree
+  validate_wcp_tree
   pack_wcp
 }
 
