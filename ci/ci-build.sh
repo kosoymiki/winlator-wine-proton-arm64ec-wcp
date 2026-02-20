@@ -24,6 +24,8 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${FEX_SOURCE_MODE:=auto}"
 : "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
 : "${REQUIRE_PREFIX_PACK:=1}"
+: "${FEX_BUILD_TYPE:=Release}"
+: "${STRIP_STAGE:=1}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -165,7 +167,7 @@ build_fex_dlls() {
   mkdir -p "${HANGOVER_SRC_DIR}/fex/build_ec"
   pushd "${HANGOVER_SRC_DIR}/fex/build_ec" >/dev/null
   # Keep ARM64EC link flags minimal; api-ms import lib may be absent in some llvm-mingw builds.
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  cmake -DCMAKE_BUILD_TYPE="${FEX_BUILD_TYPE}" \
     -DCMAKE_TOOLCHAIN_FILE=../Data/CMake/toolchain_mingw.cmake \
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=arm64ec-w64-mingw32 \
@@ -180,7 +182,7 @@ build_fex_dlls() {
 
   mkdir -p "${HANGOVER_SRC_DIR}/fex/build_pe"
   pushd "${HANGOVER_SRC_DIR}/fex/build_pe" >/dev/null
-  cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  cmake -DCMAKE_BUILD_TYPE="${FEX_BUILD_TYPE}" \
     -DCMAKE_TOOLCHAIN_FILE=../Data/CMake/toolchain_mingw.cmake \
     -DENABLE_LTO=False \
     -DMINGW_TRIPLE=aarch64-w64-mingw32 \
@@ -248,6 +250,22 @@ install_fex_dlls() {
   esac
 }
 
+
+strip_stage_payload() {
+  [[ "${STRIP_STAGE}" == "1" ]] || return
+
+  local strip_cmd
+  strip_cmd="$(command -v llvm-strip || command -v strip || true)"
+  [[ -n "${strip_cmd}" ]] || { log "No strip tool found, skipping payload stripping"; return; }
+
+  log "Stripping ELF payload to reduce runtime memory/storage footprint (${strip_cmd})"
+  while IFS= read -r -d '' f; do
+    if file -b "${f}" | grep -q '^ELF '; then
+      "${strip_cmd}" --strip-unneeded "${f}" >/dev/null 2>&1 || true
+    fi
+  done < <(find "${STAGE_DIR}/usr" -type f -print0)
+}
+
 compose_wcp_tree() {
   rm -rf "${WCP_ROOT}"
   mkdir -p "${WCP_ROOT}"
@@ -310,9 +328,11 @@ WINETOOLS
     done
   } > "${WCP_ROOT}/share/winetools/linking-report.txt"
 
+  local has_prefix_pack="0"
   if [[ -f "${ROOT_DIR}/prefixPack.txz" ]]; then
     cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
     log "included prefixPack.txz"
+    has_prefix_pack="1"
   elif [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
     fail "prefixPack.txz is required but missing in repository root"
   else
@@ -332,8 +352,11 @@ WINETOOLS
   "files": [],
   "wine": {
     "binPath": "bin",
-    "libPath": "lib",
-    "prefixPack": "prefixPack.txz"
+    "libPath": "lib"$(
+      if [[ "${has_prefix_pack}" == "1" ]]; then
+        printf ',\n    "prefixPack": "prefixPack.txz"'
+      fi
+    )
   }
 }
 EOF_PROFILE
@@ -452,6 +475,7 @@ main() {
   fetch_wine_sources
   build_wine
   install_fex_dlls
+  strip_stage_payload
   compose_wcp_tree
   validate_wcp_tree
   pack_wcp
