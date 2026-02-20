@@ -8,19 +8,19 @@ permissions:
   contents: write
 
 env:
-  RUNNER_LABELS: ${{ vars.RUNNER_LABELS || '["ubuntu-24.04-arm"]' }}
-  CACHE_DIR: ${{ github.workspace }}/.cache/proton10
+  CACHE_DIR: ${{ github.workspace }}/.cache
+  TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
   WCP_OUTPUT_DIR: ${{ github.workspace }}/out
   VALVE_WINE_REF: 986bda11d3e569813ec0f86e56ef94d7c384da04
   PROTON_GE_REF: GE-Proton10-32
-  LLVM_MINGW_TAG: "20260210"
+  LLVM_MINGW_VER: "20260210"
   WCP_COMPRESS: xz
   WCP_NAME: proton-10-arm64ec
   TARGET_HOST: aarch64-linux-gnu
 
 jobs:
   release:
-    runs-on: ${{ fromJSON(env.RUNNER_LABELS) }}
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
 
     steps:
@@ -44,11 +44,11 @@ jobs:
             libgstreamer-plugins-base1.0-dev \
             libvulkan-dev
 
-      - name: Cache llvm-mingw/toolchain cache
-        uses: actions/cache@v4
+      - name: Cache llvm-mingw toolchain
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ env.CACHE_DIR }}
-          key: proton10-release-llvm-mingw-${{ env.LLVM_MINGW_TAG }}-${{ runner.arch }}
+          path: ${{ env.TOOLCHAIN_DIR }}
+          key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
 
       - name: Build Proton 10 ARM64EC WCP
         run: |

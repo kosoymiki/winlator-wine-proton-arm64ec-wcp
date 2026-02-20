@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="${WCP_OUTPUT_DIR:-${ROOT_DIR}/out}"
-CACHE_DIR="${CACHE_DIR:-${ROOT_DIR}/.cache/proton10}"
+CACHE_DIR="${CACHE_DIR:-${ROOT_DIR}/.cache}"
 WORK_DIR="${WORK_DIR:-${ROOT_DIR}/work/proton10}"
 LOG_DIR="${OUT_DIR}/logs"
 STAGE_DIR="${WORK_DIR}/stage"
@@ -29,7 +29,7 @@ SERIES_FILE="${ARM64EC_SERIES_FILE:-${OUT_DIR}/arm64ec-series.txt}"
 : "${WCP_DESCRIPTION:=Proton 10 ARM64EC for Winlator (Valve base + ARM64EC series + GE patches)}"
 : "${PATCHLOG_FALSE_POSITIVE_REGEX:=0 errors|0 failures|without errors}"
 
-TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/toolchain/llvm-mingw-${LLVM_MINGW_TAG}}"
+TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 export TOOLCHAIN_DIR
 export CACHE_DIR
 export LLVM_MINGW_TAG
