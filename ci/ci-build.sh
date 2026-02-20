@@ -18,6 +18,11 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
 : "${WCP_COMPRESS:=zstd}"
+: "${WCP_VERSION_NAME:=10-arm64ec}"
+: "${WCP_VERSION_CODE:=0}"
+: "${WCP_DESCRIPTION:=Proton 10 arm64ec for newer cmod versions}"
+: "${FEX_SOURCE_MODE:=auto}"
+: "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -120,12 +125,45 @@ build_wine() {
   popd >/dev/null
 }
 
+
+ensure_arm64ec_api_set_compat() {
+  # Some llvm-mingw releases miss libapi-ms-win-core-processthreads-l1-1-3.a,
+  # while upstream build files may still request it indirectly.
+  local libdir compat target candidate
+  for libdir in \
+    "${LLVM_MINGW_DIR}/arm64ec-w64-mingw32/lib" \
+    "${LLVM_MINGW_DIR}/aarch64-w64-mingw32/lib"; do
+    [[ -d "${libdir}" ]] || continue
+
+    compat="${libdir}/libapi-ms-win-core-processthreads-l1-1-3.a"
+    [[ -e "${compat}" ]] && continue
+
+    target=""
+    for candidate in \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-4.a" \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-2.a" \
+      "${libdir}/libapi-ms-win-core-processthreads-l1-1-1.a" \
+      "${libdir}/libkernel32.a"; do
+      if [[ -e "${candidate}" ]]; then
+        target="${candidate}"
+        break
+      fi
+    done
+
+    if [[ -n "${target}" ]]; then
+      ln -s "$(basename "${target}")" "${compat}" || true
+      log "Created API-set compatibility alias: ${compat} -> $(basename "${target}")"
+    fi
+  done
+}
+
 build_fex_dlls() {
   rm -rf "${HANGOVER_SRC_DIR}"
   git clone --recursive --filter=blob:none "${HANGOVER_REPO}" "${HANGOVER_SRC_DIR}"
 
   mkdir -p "${HANGOVER_SRC_DIR}/fex/build_ec"
   pushd "${HANGOVER_SRC_DIR}/fex/build_ec" >/dev/null
+  # Keep ARM64EC link flags minimal; api-ms import lib may be absent in some llvm-mingw builds.
   cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_TOOLCHAIN_FILE=../Data/CMake/toolchain_mingw.cmake \
     -DENABLE_LTO=False \
@@ -133,6 +171,8 @@ build_fex_dlls() {
     -DBUILD_TESTS=False \
     -DENABLE_TESTS=OFF \
     -DUNIT_TESTS=OFF \
+    -DCMAKE_SHARED_LINKER_FLAGS="-lkernel32" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-lkernel32" \
     ..
   make -j"$(nproc)" arm64ecfex
   popd >/dev/null
@@ -153,6 +193,56 @@ build_fex_dlls() {
   mkdir -p "${STAGE_DIR}/usr/lib/wine/aarch64-windows"
   cp -f "${HANGOVER_SRC_DIR}/fex/build_ec/Bin/libarm64ecfex.dll" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/"
   cp -f "${HANGOVER_SRC_DIR}/fex/build_pe/Bin/libwow64fex.dll" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/"
+}
+
+extract_fex_dlls_from_prebuilt_wcp() {
+  local tmp_root archive dll_ec dll_pe
+  tmp_root="${CACHE_DIR}/prebuilt-fex"
+  archive="${tmp_root}/fexcore.wcp"
+
+  rm -rf "${tmp_root}"
+  mkdir -p "${tmp_root}/extract"
+  log "Downloading prebuilt FEX package: ${FEX_WCP_URL}"
+  curl -fL --retry 5 --retry-delay 2 -o "${archive}" "${FEX_WCP_URL}"
+
+  if tar --zstd -xf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
+  elif tar -xJf "${archive}" -C "${tmp_root}/extract" >/dev/null 2>&1; then
+    :
+  else
+    fail "Unable to extract prebuilt FEX package: ${archive}"
+  fi
+
+  dll_ec="$(find "${tmp_root}/extract" -type f -name 'libarm64ecfex.dll' | head -n1 || true)"
+  dll_pe="$(find "${tmp_root}/extract" -type f -name 'libwow64fex.dll' | head -n1 || true)"
+
+  [[ -n "${dll_ec}" ]] || fail "libarm64ecfex.dll not found in prebuilt FEX package"
+  [[ -n "${dll_pe}" ]] || fail "libwow64fex.dll not found in prebuilt FEX package"
+
+  mkdir -p "${STAGE_DIR}/usr/lib/wine/aarch64-windows"
+  cp -f "${dll_ec}" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/libarm64ecfex.dll"
+  cp -f "${dll_pe}" "${STAGE_DIR}/usr/lib/wine/aarch64-windows/libwow64fex.dll"
+  log "Using prebuilt FEX DLLs from ${FEX_WCP_URL}"
+}
+
+install_fex_dlls() {
+  case "${FEX_SOURCE_MODE}" in
+    prebuilt)
+      extract_fex_dlls_from_prebuilt_wcp
+      ;;
+    build)
+      build_fex_dlls
+      ;;
+    auto)
+      if ! extract_fex_dlls_from_prebuilt_wcp; then
+        log "Prebuilt FEX package failed, falling back to local FEX build"
+        build_fex_dlls
+      fi
+      ;;
+    *)
+      fail "FEX_SOURCE_MODE must be one of: auto, prebuilt, build"
+      ;;
+  esac
 }
 
 compose_wcp_tree() {
@@ -230,21 +320,26 @@ WINETOOLS
   mkdir -p "${WCP_ROOT}/info"
   cat > "${WCP_ROOT}/profile.json" <<EOF_PROFILE
 {
-  "name": "Wine 11.1 ARM64EC",
-  "version": "11.1-arm64ec",
-  "built_utc": "${utc_now}",
-  "features": ["wow64", "arm64ec", "fex"],
-  "notes": "profile.json is required by WCP. Adjust runtime settings for your Winlator fork here."
+  "type": "Wine",
+  "versionName": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
+  "files": [],
+  "wine": {
+    "binPath": "bin",
+    "libPath": "lib",
+    "prefixPack": "prefixPack.txz"
+  }
 }
 EOF_PROFILE
 
   cat > "${WCP_ROOT}/info/info.json" <<EOF_INFO
 {
-  "name": "Wine 11.1 ARM64EC",
-  "os": "windows",
-  "arch": "arm64",
-  "version": "11.1-arm64ec",
-  "features": ["wow64", "arm64ec", "fex"],
+  "name": "${WCP_NAME}",
+  "type": "Wine",
+  "version": "${WCP_VERSION_NAME}",
+  "versionCode": ${WCP_VERSION_CODE},
+  "description": "${WCP_DESCRIPTION}",
   "built": "${utc_now}"
 }
 EOF_INFO
@@ -291,6 +386,7 @@ main() {
 
   check_host_arch
   ensure_llvm_mingw
+  ensure_arm64ec_api_set_compat
 
   export PATH="${LLVM_MINGW_DIR}/bin:${PATH}"
   log "clang: $(command -v clang)"
@@ -298,7 +394,7 @@ main() {
 
   fetch_wine_sources
   build_wine
-  build_fex_dlls
+  install_fex_dlls
   compose_wcp_tree
   pack_wcp
 }
