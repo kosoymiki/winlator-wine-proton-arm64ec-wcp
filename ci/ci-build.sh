@@ -13,7 +13,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 
 : "${WINE_REPO:=https://github.com/AndreRH/wine.git}"
 : "${WINE_BRANCH:=arm64ec}"
-: "${WINE_REF:=wine-11.1}"
+: "${WINE_REF:=arm64ec}"
 : "${HANGOVER_REPO:=https://github.com/AndreRH/hangover.git}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${WCP_NAME:=Wine-11.1-arm64ec}"
@@ -83,11 +83,24 @@ ensure_llvm_mingw() {
 
 fetch_wine_sources() {
   rm -rf "${WINE_SRC_DIR}"
-  git clone --filter=blob:none "${WINE_REPO}" "${WINE_SRC_DIR}"
+  git clone --filter=blob:none --branch "${WINE_BRANCH}" --single-branch "${WINE_REPO}" "${WINE_SRC_DIR}"
   pushd "${WINE_SRC_DIR}" >/dev/null
-  git checkout "${WINE_BRANCH}"
   git fetch --tags --force
-  git checkout "${WINE_REF}"
+
+  # Strict default: build from arm64ec branch. If WINE_REF is provided, use it only
+  # when the ref exists in origin (branch/tag/commit).
+  if [[ "${WINE_REF}" == "${WINE_BRANCH}" ]]; then
+    git checkout "${WINE_BRANCH}"
+  elif git rev-parse --verify --quiet "refs/remotes/origin/${WINE_REF}" >/dev/null; then
+    git checkout -B "${WINE_REF}" "refs/remotes/origin/${WINE_REF}"
+  elif git rev-parse --verify --quiet "refs/tags/${WINE_REF}" >/dev/null; then
+    git checkout "refs/tags/${WINE_REF}"
+  elif git rev-parse --verify --quiet "${WINE_REF}^{commit}" >/dev/null; then
+    git checkout "${WINE_REF}"
+  else
+    fail "WINE_REF '${WINE_REF}' not found in ${WINE_REPO}. Use arm64ec branch or a valid ref."
+  fi
+
   popd >/dev/null
 }
 
