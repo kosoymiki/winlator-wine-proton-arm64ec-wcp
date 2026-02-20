@@ -51,7 +51,7 @@ ensure_llvm_mingw() {
   : "${CACHE_DIR:=${PWD}/.cache}"
   : "${TOOLCHAIN_DIR:=${CACHE_DIR}/toolchain/llvm-mingw-${LLVM_MINGW_TAG}}"
 
-  local tmp_archive extracted cfg_count
+  local tmp_archive extracted cfg_count wrapper_count
 
   mkdir -p "${CACHE_DIR}" "${CACHE_DIR}/toolchain"
   tmp_archive="${CACHE_DIR}/llvm-mingw-${LLVM_MINGW_TAG}.tar.xz"
@@ -94,5 +94,15 @@ ensure_llvm_mingw() {
   llvm_log "Checking triplet cfg files:"
   find "${TOOLCHAIN_DIR}" -type f -name '*-w64-mingw32.cfg' | sed "s#^# - #"
   cfg_count="$(find "${TOOLCHAIN_DIR}" -type f -name '*-w64-mingw32.cfg' | wc -l | tr -d '[:space:]')"
-  [[ "${cfg_count}" != "0" ]] || llvm_fail "No triplet cfg files found in ${TOOLCHAIN_DIR}"
+  if [[ "${cfg_count}" == "0" ]]; then
+    # Some llvm-mingw builds ship triplet wrappers without standalone *.cfg files.
+    llvm_log "No triplet cfg files found; checking triplet wrapper binaries instead:"
+    find "${TOOLCHAIN_DIR}/bin" -maxdepth 1 -type f \
+      \( -name '*-w64-mingw32-clang' -o -name '*-w64-mingw32-clang++' \) \
+      | sed "s#^# - #"
+    wrapper_count="$(find "${TOOLCHAIN_DIR}/bin" -maxdepth 1 -type f \
+      \( -name '*-w64-mingw32-clang' -o -name '*-w64-mingw32-clang++' \) \
+      | wc -l | tr -d '[:space:]')"
+    [[ "${wrapper_count}" != "0" ]] || llvm_fail "No triplet cfg files and no triplet wrapper binaries found in ${TOOLCHAIN_DIR}"
+  fi
 }
