@@ -114,7 +114,7 @@ apply_proton_ge_patches() {
 }
 
 build_wine() {
-  local vk_xml video_xml
+  local make_vulkan_log vk_xml video_xml
 
   export PATH="${TOOLCHAIN_DIR}/bin:${PATH}"
   export CC=clang
@@ -133,13 +133,17 @@ build_wine() {
 
   if [[ ! -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]]; then
     log "Generating missing include/wine/vulkan.h via make_vulkan"
+    make_vulkan_log="${LOG_DIR}/make_vulkan.log"
     vk_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/vk.xml"
     video_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/video.xml"
     if [[ -f "${vk_xml}" && -f "${video_xml}" ]]; then
-      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" -x "${vk_xml}" -X "${video_xml}"
+      if ! python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" -x "${vk_xml}" -X "${video_xml}" >"${make_vulkan_log}" 2>&1; then
+        log "Bundled Vulkan registry parse failed; retrying with script-pinned registry download"
+        python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" >>"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
+      fi
     else
       # Fallback downloads XML into cache if bundled registry files are unavailable.
-      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan"
+      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" >"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
     fi
   fi
   [[ -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]] || fail "Missing include/wine/vulkan.h after make_vulkan"
