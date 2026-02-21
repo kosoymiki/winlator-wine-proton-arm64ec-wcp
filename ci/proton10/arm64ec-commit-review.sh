@@ -63,7 +63,7 @@ infer_purpose() {
 }
 
 main() {
-  local andre_dir series_ref base_ref merge_base commit_count today
+  local andre_dir series_ref base_ref valve_ref range_ref merge_base valve_merge_base commit_count today
   local full_series_file subject_hits_file path_hits_file selected_set_file filtered_count total_count
   local selected_filtered_file hash subject
 
@@ -96,18 +96,22 @@ main() {
 
   series_ref="refs/remotes/origin/${ANDRE_ARM64EC_REF}"
   base_ref="refs/remotes/origin/${ANDRE_BASE_REF}"
+  valve_ref="refs/tmp/valve-base"
+  range_ref="${valve_ref}..${series_ref}"
   merge_base="$(git merge-base "${series_ref}" "${base_ref}" || true)"
   [[ -n "${merge_base}" ]] || fail "Unable to compute merge-base between ${ANDRE_ARM64EC_REF} and ${ANDRE_BASE_REF}"
+  valve_merge_base="$(git merge-base "${series_ref}" "${valve_ref}" || true)"
+  [[ -n "${valve_merge_base}" ]] || fail "Unable to compute merge-base between ${ANDRE_ARM64EC_REF} and valve base ${VALVE_WINE_REF}"
 
   full_series_file="${OUT_DIR}/arm64ec-series.full.txt"
   subject_hits_file="${OUT_DIR}/arm64ec-series.subject.txt"
   path_hits_file="${OUT_DIR}/arm64ec-series.paths.txt"
   selected_set_file="${OUT_DIR}/arm64ec-series.selected.txt"
 
-  # Build only the arm64ec-specific delta, not the full upstream replay.
-  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" > "${full_series_file}"
-  git rev-list --no-merges --reverse --regexp-ignore-case --grep="${ARM64EC_TOPIC_REGEX}" "${base_ref}..${series_ref}" > "${subject_hits_file}" || true
-  git rev-list --no-merges --reverse "${base_ref}..${series_ref}" -- \
+  # Build only the arm64ec delta that is not already in the selected Valve base.
+  git rev-list --no-merges --reverse "${range_ref}" > "${full_series_file}"
+  git rev-list --no-merges --reverse --regexp-ignore-case --grep="${ARM64EC_TOPIC_REGEX}" "${range_ref}" > "${subject_hits_file}" || true
+  git rev-list --no-merges --reverse "${range_ref}" -- \
     "${ARM64EC_FILE_GLOB_1}" \
     "${ARM64EC_FILE_GLOB_2}" \
     "${ARM64EC_FILE_GLOB_3}" > "${path_hits_file}" || true
@@ -153,6 +157,8 @@ main() {
     printf -- '- Valve base repo: `%s`\n' "${VALVE_WINE_REPO}"
     printf -- '- Valve base ref: `%s`\n' "${VALVE_WINE_REF}"
     printf -- '- Merge base (arm64ec vs source base): `%s`\n' "${merge_base}"
+    printf -- '- Merge base (arm64ec vs valve base): `%s`\n' "${valve_merge_base}"
+    printf -- '- Selection range: `%s`\n' "${range_ref}"
     printf -- '- Topic regex: `%s`\n' "${ARM64EC_TOPIC_REGEX}"
     printf -- '- File globs: `%s`, `%s`, `%s`\n' "${ARM64EC_FILE_GLOB_1}" "${ARM64EC_FILE_GLOB_2}" "${ARM64EC_FILE_GLOB_3}"
     printf -- '- Exclude subject regex: `%s`\n' "${ARM64EC_EXCLUDE_SUBJECT_REGEX}"
