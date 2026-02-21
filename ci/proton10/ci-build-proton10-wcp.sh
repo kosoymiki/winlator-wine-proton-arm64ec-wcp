@@ -114,6 +114,8 @@ apply_proton_ge_patches() {
 }
 
 build_wine() {
+  local vk_xml video_xml
+
   export PATH="${TOOLCHAIN_DIR}/bin:${PATH}"
   export CC=clang
   export CXX=clang++
@@ -128,6 +130,19 @@ build_wine() {
   log "ld.lld path: $(command -v ld.lld)"
   which clang > "${LOG_DIR}/clang.which.txt"
   which ld.lld > "${LOG_DIR}/lld.which.txt"
+
+  if [[ ! -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]]; then
+    log "Generating missing include/wine/vulkan.h via make_vulkan"
+    vk_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/vk.xml"
+    video_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/video.xml"
+    if [[ -f "${vk_xml}" && -f "${video_xml}" ]]; then
+      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" -x "${vk_xml}" -X "${video_xml}"
+    else
+      # Fallback downloads XML into cache if bundled registry files are unavailable.
+      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan"
+    fi
+  fi
+  [[ -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]] || fail "Missing include/wine/vulkan.h after make_vulkan"
 
   pushd "${BUILD_WINE_DIR}" >/dev/null
   "${WINE_SRC_DIR}/configure" \
