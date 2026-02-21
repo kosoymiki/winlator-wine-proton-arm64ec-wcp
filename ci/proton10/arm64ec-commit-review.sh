@@ -111,7 +111,9 @@ main() {
   total_count="$(wc -l < "${full_series_file}" | tr -d '[:space:]')"
   filtered_count="$(wc -l < "${SERIES_FILE}" | tr -d '[:space:]')"
   if [[ "${filtered_count}" -gt "${ARM64EC_MAX_COMMITS}" ]]; then
-    tail -n "${ARM64EC_MAX_COMMITS}" "${SERIES_FILE}" > "${SERIES_FILE}.tmp"
+    # Keep the oldest commits when capping the series.
+    # This preserves bootstrap dependencies in long, linear patch stacks.
+    head -n "${ARM64EC_MAX_COMMITS}" "${SERIES_FILE}" > "${SERIES_FILE}.tmp"
     mv "${SERIES_FILE}.tmp" "${SERIES_FILE}"
   fi
 
