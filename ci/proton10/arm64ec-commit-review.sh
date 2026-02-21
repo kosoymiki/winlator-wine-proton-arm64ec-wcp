@@ -18,7 +18,7 @@ LOG_DIR="${OUT_DIR}/logs"
 : "${ARM64EC_FILE_GLOB_2:=*hangover*}"
 : "${ARM64EC_FILE_GLOB_3:=*woa*}"
 : "${ARM64EC_EXCLUDE_SUBJECT_REGEX:=^ntdll: (Store special environment variables with a UNIX_|Set the environment variables for Unix child processes from their UNIX_|Treat all the XDG_)}"
-: "${ARM64EC_MAX_COMMITS:=120}"
+: "${ARM64EC_MAX_COMMITS:=0}"
 
 log() { printf '[proton10][review] %s\n' "$*"; }
 fail() { printf '[proton10][review][error] %s\n' "$*" >&2; exit 1; }
@@ -133,9 +133,9 @@ main() {
 
   total_count="$(wc -l < "${full_series_file}" | tr -d '[:space:]')"
   filtered_count="$(wc -l < "${SERIES_FILE}" | tr -d '[:space:]')"
-  if [[ "${filtered_count}" -gt "${ARM64EC_MAX_COMMITS}" ]]; then
-    # Keep the oldest commits when capping the series.
-    # This preserves bootstrap dependencies in long, linear patch stacks.
+  if [[ "${ARM64EC_MAX_COMMITS}" -gt 0 && "${filtered_count}" -gt "${ARM64EC_MAX_COMMITS}" ]]; then
+    # Optional hard cap for emergency tuning; disabled by default.
+    # Keep oldest entries to preserve linear stack dependencies.
     head -n "${ARM64EC_MAX_COMMITS}" "${SERIES_FILE}" > "${SERIES_FILE}.tmp"
     mv "${SERIES_FILE}.tmp" "${SERIES_FILE}"
   fi
