@@ -17,7 +17,7 @@ LOG_DIR="${OUT_DIR}/logs"
 : "${ARM64EC_FILE_GLOB_1:=*arm64ec*}"
 : "${ARM64EC_FILE_GLOB_2:=*hangover*}"
 : "${ARM64EC_FILE_GLOB_3:=*woa*}"
-: "${ARM64EC_EXCLUDE_SUBJECT_REGEX:=^ntdll: (Store special environment variables with a UNIX_|Set the environment variables for Unix child processes from their UNIX_|Treat all the XDG_|Get rid of the wine_unix_to_nt_file_name syscall\\.|Get rid of the wine_nt_to_unix_file_name syscall\\.)}"
+: "${ARM64EC_EXCLUDE_SUBJECT_REGEX:=^ntdll: (Store special environment variables with a UNIX_|Set the environment variables for Unix child processes from their UNIX_|Treat all the XDG_|Get rid of the wine_unix_to_nt_file_name syscall\\.|Get rid of the wine_nt_to_unix_file_name syscall\\.|Implement NtGetNextProcess\\.)}"
 : "${ARM64EC_MAX_COMMITS:=0}"
 
 log() { printf '[proton10][review] %s\n' "$*"; }
