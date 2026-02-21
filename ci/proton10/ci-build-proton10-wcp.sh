@@ -113,6 +113,19 @@ apply_proton_ge_patches() {
   log "Proton GE patch application completed without fatal markers"
 }
 
+fix_winnt_interlocked_types() {
+  local winnt_h
+  winnt_h="${WINE_SRC_DIR}/include/winnt.h"
+  [[ -f "${winnt_h}" ]] || fail "Missing ${winnt_h}"
+
+  # With WINE_NO_LONG_TYPES on i386, LONG may be int while InterlockedOr expects long.
+  # Keep this local CI hotfix until the upstream-compatible variant is fully replayed.
+  if grep -q '^    LONG dummy;$' "${winnt_h}"; then
+    sed -i 's/^    LONG dummy;$/    long volatile dummy = 0;/' "${winnt_h}"
+    log "Applied winnt.h InterlockedOr type hotfix for WINE_NO_LONG_TYPES"
+  fi
+}
+
 build_wine() {
   local make_vulkan_log vk_xml video_xml
 
@@ -252,6 +265,7 @@ main() {
   ensure_llvm_mingw
   run_arm64ec_flow
   apply_proton_ge_patches
+  fix_winnt_interlocked_types
   build_wine
   compose_wcp_tree
   bash "${ROOT_DIR}/ci/proton10/smoke-check-wcp.sh" "${OUT_DIR}/${WCP_NAME}.wcp" "${WCP_COMPRESS}"
