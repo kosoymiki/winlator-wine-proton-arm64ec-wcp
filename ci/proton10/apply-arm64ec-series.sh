@@ -19,6 +19,17 @@ log() { printf '[proton10][cherry-pick] %s\n' "$*"; }
 fail() { printf '[proton10][cherry-pick][error] %s\n' "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"; }
 
+skip_empty_cherry_pick_if_needed() {
+  # When a commit is already effectively present, cherry-pick may stop with
+  # CHERRY_PICK_HEAD set and an otherwise clean tree.
+  git rev-parse -q --verify CHERRY_PICK_HEAD >/dev/null 2>&1 || return 1
+  if git diff --quiet && git diff --cached --quiet; then
+    git cherry-pick --skip >/dev/null 2>&1 || return 1
+    return 0
+  fi
+  return 1
+}
+
 resolve_conflicts_with_theirs() {
   local conflict_files path unresolved
 
@@ -39,7 +50,10 @@ resolve_conflicts_with_theirs() {
   unresolved="$(git diff --name-only --diff-filter=U || true)"
   [[ -z "${unresolved}" ]] || return 1
 
-  git cherry-pick --continue >/dev/null 2>&1 || return 1
+  if git cherry-pick --continue >/dev/null 2>&1; then
+    return 0
+  fi
+  skip_empty_cherry_pick_if_needed || return 1
   return 0
 }
 
@@ -88,6 +102,11 @@ main() {
     [[ -n "${hash}" ]] || continue
     log "Applying commit ${hash}"
     if ! git cherry-pick "${cherry_pick_args[@]}" "${hash}"; then
+      if skip_empty_cherry_pick_if_needed; then
+        log "Skipped empty cherry-pick for ${hash}"
+        continue
+      fi
+
       if [[ "${ARM64EC_CHERRY_PICK_STRATEGY}" == "theirs" ]] && resolve_conflicts_with_theirs; then
         log "Resolved conflicts for ${hash} via theirs-preferred fallback"
         printf '%s\n' "${hash}" >> "${resolved_file}"
