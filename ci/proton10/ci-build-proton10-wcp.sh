@@ -126,6 +126,16 @@ fix_winnt_interlocked_types() {
   fi
 }
 
+fix_winebus_sdl_stub() {
+  local bus_sdl_c
+  bus_sdl_c="${WINE_SRC_DIR}/dlls/winebus.sys/bus_sdl.c"
+  [[ -f "${bus_sdl_c}" ]] || fail "Missing ${bus_sdl_c}"
+
+  # Some Proton patchsets call is_sdl_ignored_device() from bus_udev.c even when
+  # SDL support is compiled out. Provide a fallback symbol in the #else stubs.
+  perl -0pi -e 's/#else\n\nNTSTATUS sdl_bus_init\(void \*args\)/#else\n\nBOOL is_sdl_ignored_device(WORD vid, WORD pid)\n{\n    return FALSE;\n}\n\nNTSTATUS sdl_bus_init(void *args)/' "${bus_sdl_c}"
+}
+
 build_wine() {
   local make_vulkan_log vk_xml video_xml
 
@@ -266,6 +276,7 @@ main() {
   run_arm64ec_flow
   apply_proton_ge_patches
   fix_winnt_interlocked_types
+  fix_winebus_sdl_stub
   build_wine
   compose_wcp_tree
   bash "${ROOT_DIR}/ci/proton10/smoke-check-wcp.sh" "${OUT_DIR}/${WCP_NAME}.wcp" "${WCP_COMPRESS}"
