@@ -24,6 +24,24 @@ log() { printf '[proton10][review] %s\n' "$*"; }
 fail() { printf '[proton10][review][error] %s\n' "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"; }
 
+retry_cmd() {
+  local attempts delay n
+  attempts="${RETRY_ATTEMPTS:-3}"
+  delay="${RETRY_DELAY_SEC:-5}"
+  n=1
+  while true; do
+    if "$@"; then
+      return 0
+    fi
+    if [[ "${n}" -ge "${attempts}" ]]; then
+      return 1
+    fi
+    log "Command failed (attempt ${n}/${attempts}), retrying in ${delay}s: $*"
+    sleep "${delay}"
+    n=$((n + 1))
+  done
+}
+
 infer_purpose() {
   local subject_lc files
   subject_lc="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
@@ -59,17 +77,22 @@ main() {
   rm -rf "${andre_dir}"
 
   log "Cloning ${ANDRE_WINE_REPO}"
-  git clone --filter=blob:none "${ANDRE_WINE_REPO}" "${andre_dir}"
+  retry_cmd git clone --filter=blob:none --single-branch --branch "${ANDRE_ARM64EC_REF}" \
+    "${ANDRE_WINE_REPO}" "${andre_dir}" || fail "Unable to clone ${ANDRE_WINE_REPO}"
   pushd "${andre_dir}" >/dev/null
 
-  git fetch --force --no-tags origin "${ANDRE_ARM64EC_REF}"
-  git fetch --force --no-tags origin "${ANDRE_BASE_REF}"
+  retry_cmd git fetch --force --no-tags origin \
+    "${ANDRE_ARM64EC_REF}:refs/remotes/origin/${ANDRE_ARM64EC_REF}" \
+    || fail "Unable to fetch ${ANDRE_ARM64EC_REF}"
+  retry_cmd git fetch --force --no-tags origin \
+    "${ANDRE_BASE_REF}:refs/remotes/origin/${ANDRE_BASE_REF}" \
+    || fail "Unable to fetch ${ANDRE_BASE_REF}"
   if git remote get-url valve >/dev/null 2>&1; then
     git remote set-url valve "${VALVE_WINE_REPO}"
   else
     git remote add valve "${VALVE_WINE_REPO}"
   fi
-  git fetch --force --no-tags valve "${VALVE_WINE_REF}:refs/tmp/valve-base"
+  retry_cmd git fetch --force --no-tags valve "${VALVE_WINE_REF}:refs/tmp/valve-base" || fail "Unable to fetch Valve base ${VALVE_WINE_REF}"
 
   series_ref="refs/remotes/origin/${ANDRE_ARM64EC_REF}"
   base_ref="refs/remotes/origin/${ANDRE_BASE_REF}"

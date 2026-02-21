@@ -40,6 +40,14 @@ log() { printf '[proton10] %s\n' "$*"; }
 fail() { printf '[proton10][error] %s\n' "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"; }
 
+ensure_symlink() {
+  local link_path="$1" target="$2"
+  if [[ -e "${link_path}" && ! -L "${link_path}" ]]; then
+    fail "Path exists and is not a symlink: ${link_path}"
+  fi
+  ln -sfn "${target}" "${link_path}"
+}
+
 check_host_arch() {
   local arch
   arch="$(uname -m)"
@@ -65,7 +73,7 @@ run_arm64ec_flow() {
 }
 
 apply_proton_ge_patches() {
-  local matches filtered
+  local matches filtered wine_parent
 
   log "Cloning proton-ge-custom at ${PROTON_GE_REF}"
   git clone --filter=blob:none --recurse-submodules "${PROTON_GE_REPO}" "${PROTON_GE_DIR}"
@@ -75,6 +83,10 @@ apply_proton_ge_patches() {
 
   rm -rf "${PROTON_GE_DIR}/wine"
   ln -s "${WINE_SRC_DIR}" "${PROTON_GE_DIR}/wine"
+  wine_parent="$(dirname "${WINE_SRC_DIR}")"
+  # protonprep-valve-staging.sh expects ../patches and ../wine-staging relative to ./wine.
+  ensure_symlink "${wine_parent}/patches" "${PROTON_GE_DIR}/patches"
+  ensure_symlink "${wine_parent}/wine-staging" "${PROTON_GE_DIR}/wine-staging"
 
   [[ -x "./patches/protonprep-valve-staging.sh" ]] || fail "protonprep script not found"
   ./patches/protonprep-valve-staging.sh &> "${PATCHLOG_FILE}"
