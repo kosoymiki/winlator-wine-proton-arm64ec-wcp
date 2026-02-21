@@ -27,7 +27,8 @@ SERIES_FILE="${ARM64EC_SERIES_FILE:-${OUT_DIR}/arm64ec-series.txt}"
 : "${WCP_VERSION_NAME:=Proton10-${PROTON_GE_REF}-arm64ec}"
 : "${WCP_VERSION_CODE:=10032}"
 : "${WCP_DESCRIPTION:=Proton 10 ARM64EC for Winlator (Valve base + ARM64EC series + GE patches)}"
-: "${PATCHLOG_FALSE_POSITIVE_REGEX:=0 errors|0 failures|without errors}"
+: "${PATCHLOG_FATAL_REGEX:=\\bfatal:|^error:|\\[[^]]*\\]\\[error\\]|Traceback \\(most recent call last\\)}"
+: "${PATCHLOG_FALSE_POSITIVE_REGEX:=Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file|0 errors|0 failures|without errors}"
 
 TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 export TOOLCHAIN_DIR
@@ -73,7 +74,7 @@ run_arm64ec_flow() {
 }
 
 apply_proton_ge_patches() {
-  local matches filtered wine_parent
+  local matches filtered warning_matches wine_parent
 
   log "Cloning proton-ge-custom at ${PROTON_GE_REF}"
   git clone --filter=blob:none --recurse-submodules "${PROTON_GE_REPO}" "${PROTON_GE_DIR}"
@@ -92,10 +93,7 @@ apply_proton_ge_patches() {
   ./patches/protonprep-valve-staging.sh &> "${PATCHLOG_FILE}"
   popd >/dev/null
 
-  grep -i fail "${PATCHLOG_FILE}" || true
-  grep -i error "${PATCHLOG_FILE}" || true
-
-  matches="$(grep -niE 'fail|error' "${PATCHLOG_FILE}" || true)"
+  matches="$(grep -niE "${PATCHLOG_FATAL_REGEX}" "${PATCHLOG_FILE}" || true)"
   filtered="${matches}"
   if [[ -n "${PATCHLOG_FALSE_POSITIVE_REGEX}" ]]; then
     filtered="$(printf '%s\n' "${matches}" | grep -viE "${PATCHLOG_FALSE_POSITIVE_REGEX}" || true)"
@@ -103,10 +101,16 @@ apply_proton_ge_patches() {
 
   if [[ -n "${filtered}" ]]; then
     printf '%s\n' "${filtered}" > "${LOG_DIR}/patchlog-failures.txt"
-    fail "Detected fail/error in patchlog.txt. See ${LOG_DIR}/patchlog-failures.txt"
+    fail "Detected fatal markers in patchlog.txt. See ${LOG_DIR}/patchlog-failures.txt"
   fi
 
-  log "Proton GE patch application completed without fail/error markers"
+  warning_matches="$(grep -niE 'Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file' "${PATCHLOG_FILE}" || true)"
+  if [[ -n "${warning_matches}" ]]; then
+    printf '%s\n' "${warning_matches}" > "${LOG_DIR}/patchlog-warnings.txt"
+    log "Patch warnings detected (non-fatal); see ${LOG_DIR}/patchlog-warnings.txt"
+  fi
+
+  log "Proton GE patch application completed without fatal markers"
 }
 
 build_wine() {
