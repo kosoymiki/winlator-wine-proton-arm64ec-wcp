@@ -125,18 +125,37 @@ winlator_write_glibc_wrapper() {
 set -eu
 
 self="\$0"
-self="\${self#\"}"
-self="\${self%\"}"
-self="\${self#\'}"
-self="\${self%\'}"
-bindir="\$(CDPATH= cd -- "\$(dirname -- "\${self}")" && pwd)"
+# Some Android launch paths arrive with nested quotes (e.g. ""/path/bin/wine").
+while :; do
+  case "\${self}" in
+    \\"*) self="\${self#\\"}"; continue ;;
+    \\'*) self="\${self#\\'}"; continue ;;
+    \\\\\\"*) self="\${self#\\\\\\"}"; continue ;;
+    *) ;;
+  esac
+  break
+done
+while :; do
+  case "\${self}" in
+    *\\\\\\") self="\${self%\\\\\\"}"; continue ;;
+    *\\") self="\${self%\\"}"; continue ;;
+    *\\') self="\${self%\\'}"; continue ;;
+    *) ;;
+  esac
+  break
+done
+bindir="\$(CDPATH= cd -- "\$(dirname -- "\${self}")" 2>/dev/null && pwd)" || {
+  echo "Cannot resolve launcher directory from argv0: \$0" >&2
+  exit 127
+}
 root="\$(CDPATH= cd -- "\${bindir}/.." && pwd)"
 runtime="\${root}/lib/wine/wcp-glibc-runtime"
 loader="\${runtime}/ld-linux-aarch64.so.1"
 real="\${bindir}/${real_name}"
-libpath="\${runtime}:\${root}/lib:\${root}/lib64:\${root}/lib/aarch64-linux-gnu:\${root}/lib/wine:\${root}/lib/wine/aarch64-unix"
-export PATH="\${bindir}:\${PATH}"
-export WINEDLLPATH="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\${root}/lib/wine/aarch64-unix\${WINEDLLPATH:+:\${WINEDLLPATH}}"
+libpath="\${runtime}:\${runtime}/deps:\${root}/lib:\${root}/lib64:\${root}/lib/aarch64-linux-gnu:\${root}/lib/wine:\${root}/lib/wine/aarch64-unix:\${root}/lib/wine/x86_64-unix:\${root}/usr/lib:\${root}/usr/lib64:\${root}/usr/lib/aarch64-linux-gnu"
+winedllpath="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\${root}/lib/wine/x86_64-windows:\${root}/lib/wine/aarch64-unix:\${root}/lib/wine/x86_64-unix"
+export PATH="\${bindir}:\${root}/bin:\${PATH}"
+export WINEDLLPATH="\${winedllpath}\${WINEDLLPATH:+:\${WINEDLLPATH}}"
 export LD_LIBRARY_PATH="\${libpath}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
 
 [ -x "\${loader}" ] || { echo "Missing runtime loader: \${loader}" >&2; exit 127; }
