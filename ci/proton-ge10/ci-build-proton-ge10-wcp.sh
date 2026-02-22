@@ -24,8 +24,14 @@ SERIES_FILE="${ARM64EC_SERIES_FILE:-${OUT_DIR}/arm64ec-series.txt}"
 : "${TARGET_HOST:=aarch64-linux-gnu}"
 : "${WCP_NAME:=proton-ge10-arm64ec}"
 : "${WCP_COMPRESS:=xz}"
-: "${WCP_VERSION_NAME:=ProtonGE10-${PROTON_GE_REF}-arm64ec}"
-: "${WCP_VERSION_CODE:=10032}"
+# Winlator's current parser expects versionName in numeric form and a one-digit
+# trailing versionCode in the generated Wine identifier (Wine-<ver>-<code>).
+_proton_ge_version_name="10.32-arm64ec"
+if [[ "${PROTON_GE_REF}" =~ Proton([0-9]+)-([0-9]+) ]]; then
+  _proton_ge_version_name="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}-arm64ec"
+fi
+: "${WCP_VERSION_NAME:=${_proton_ge_version_name}}"
+: "${WCP_VERSION_CODE:=0}"
 : "${WCP_DESCRIPTION:=Proton GE10 ARM64EC WCP (Valve base + ARM64EC series + GE patches)}"
 : "${WCP_PROFILE_NAME:=Proton GE10 ARM64EC}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
