@@ -128,7 +128,7 @@ run_upstream_analysis_and_fixes() {
 }
 
 build_wine() {
-  local make_vulkan_log
+  local make_vulkan_log make_vulkan_py vk_xml video_xml
   ensure_sdl2_tooling
 
   export PATH="${TOOLCHAIN_DIR}/bin:${PATH}"
@@ -146,7 +146,24 @@ build_wine() {
 
   if [[ ! -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]]; then
     make_vulkan_log="${LOG_DIR}/make_vulkan.log"
-    python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" >"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
+    make_vulkan_py="${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan"
+    vk_xml="${WINE_SRC_DIR}/dlls/winevulkan/vk.xml"
+    video_xml="${WINE_SRC_DIR}/dlls/winevulkan/video.xml"
+
+    if [[ ! -f "${vk_xml}" && -f "${WINE_SRC_DIR}/Vulkan-Headers/registry/vk.xml" ]]; then
+      vk_xml="${WINE_SRC_DIR}/Vulkan-Headers/registry/vk.xml"
+      video_xml="${WINE_SRC_DIR}/Vulkan-Headers/registry/video.xml"
+    fi
+
+    if [[ -f "${make_vulkan_py}" && -f "${vk_xml}" ]]; then
+      if [[ -f "${video_xml}" ]]; then
+        python3 "${make_vulkan_py}" -x "${vk_xml}" -X "${video_xml}" >"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
+      else
+        python3 "${make_vulkan_py}" -x "${vk_xml}" >"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
+      fi
+    else
+      log "Skipping make_vulkan bootstrap (missing script or vk.xml)"
+    fi
   fi
 
   build_wine_tools_host "${WINE_SRC_DIR}" "${BUILD_WINE_DIR}"
