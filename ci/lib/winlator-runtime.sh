@@ -134,7 +134,10 @@ root="\$(CDPATH= cd -- "\${bindir}/.." && pwd)"
 runtime="\${root}/lib/wine/wcp-glibc-runtime"
 loader="\${runtime}/ld-linux-aarch64.so.1"
 real="\${bindir}/${real_name}"
-libpath="\${runtime}:\${root}/lib:\${root}/lib/wine/aarch64-unix"
+libpath="\${runtime}:\${root}/lib:\${root}/lib64:\${root}/lib/aarch64-linux-gnu:\${root}/lib/wine:\${root}/lib/wine/aarch64-unix"
+export PATH="\${bindir}:\${PATH}"
+export WINEDLLPATH="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\${root}/lib/wine/aarch64-unix\${WINEDLLPATH:+:\${WINEDLLPATH}}"
+export LD_LIBRARY_PATH="\${libpath}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
 
 [ -x "\${loader}" ] || { echo "Missing runtime loader: \${loader}" >&2; exit 127; }
 [ -x "\${real}" ] || { echo "Missing launcher payload: \${real}" >&2; exit 127; }
@@ -147,7 +150,7 @@ EOF_WRAPPER
   fi
 
   cat >> "${launcher_path}" <<'EOF_WRAPPER'
-exec "${loader}" --library-path "${libpath}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" "${real}" "$@"
+exec "${loader}" --library-path "${LD_LIBRARY_PATH}" "${real}" "$@"
 EOF_WRAPPER
 
   chmod +x "${launcher_path}"

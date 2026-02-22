@@ -8,7 +8,7 @@ log() { printf '[protonwine10][apply-ours] %s\n' "$*"; }
 fail() { printf '[protonwine10][apply-ours][error] %s\n' "$*" >&2; exit 1; }
 
 main() {
-  local winnt_h bus_sdl_c wineboot_c
+  local winnt_h bus_sdl_c wineboot_c wdscore_spec wdscore_template
 
   [[ -d "${WINE_SRC_DIR}" ]] || fail "Missing WINE_SRC_DIR: ${WINE_SRC_DIR}"
 
@@ -77,6 +77,15 @@ static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
 path.write_text(head + marker + aarch64_block + inject + "\n#else" + rest, encoding="utf-8")
 PY
   log "Applied aarch64 xstate init fix for wineboot"
+
+  wdscore_spec="${WINE_SRC_DIR}/dlls/wdscore/wdscore.spec"
+  wdscore_template="${ROOT_DIR}/ci/protonwine10/patches/wdscore.spec"
+  [[ -f "${wdscore_spec}" ]] || fail "Missing ${wdscore_spec}"
+  [[ -f "${wdscore_template}" ]] || fail "Missing ${wdscore_template}"
+  if grep -q '^\@ stub ??' "${wdscore_spec}"; then
+    cp -f "${wdscore_template}" "${wdscore_spec}"
+    log "Replaced wdscore.spec with arm64ec-safe exports template"
+  fi
 
   log "Project-local compatibility fixes applied"
 }

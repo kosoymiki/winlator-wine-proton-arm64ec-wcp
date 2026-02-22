@@ -44,6 +44,19 @@ wcp_require_bool() {
   esac
 }
 
+wcp_validate_winlator_profile_identifier() {
+  local version_name="$1" version_code="$2"
+
+  # Winlator Ludashi currently parses installed Wine entries through
+  # Wine-<versionName>-<versionCode> and strips exactly two trailing chars
+  # from identifier, so versionCode must remain one digit.
+  [[ "${version_code}" =~ ^[0-9]$ ]] || wcp_fail "WCP_VERSION_CODE must be a single digit for Winlator compatibility (got: ${version_code})"
+
+  # Must map to regex: ^(wine|proton)-([0-9\\.]+)-?([0-9\\.]+)?-(x86|x86_64|arm64ec)$
+  [[ "${version_name}" =~ ^[0-9]+([.][0-9]+)*(-[0-9]+([.][0-9]+)*)?-(x86|x86_64|arm64ec)$ ]] || \
+    wcp_fail "WCP_VERSION_NAME must be Winlator-parseable (example: 10.32-arm64ec), got: ${version_name}"
+}
+
 wcp_check_host_arch() {
   local arch
   arch="$(uname -m)"
@@ -265,6 +278,8 @@ compose_wcp_tree_from_stage() {
   : "${WCP_NAME:=arm64ec-wcp}"
   : "${WCP_PROFILE_NAME:=${WCP_NAME}}"
   : "${WCP_PROFILE_TYPE:=Wine}"
+
+  wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
   prefix_pack_path="${PREFIX_PACK_PATH:-${ROOT_DIR}/prefixPack.txz}"
   profile_name="${WCP_PROFILE_NAME}"

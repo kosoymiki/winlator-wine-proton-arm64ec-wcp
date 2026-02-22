@@ -503,6 +503,7 @@ main() {
   require_cmd pkg-config
 
   require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+  wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
   check_host_arch
   ensure_llvm_mingw
