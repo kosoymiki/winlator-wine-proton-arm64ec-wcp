@@ -38,7 +38,7 @@ winlator_bundle_glibc_runtime() {
     "${WCP_ROOT}/bin"
     "${WCP_ROOT}/lib/wine/aarch64-unix"
   )
-  local root f dep host_path real_name
+  local root f dep host_path real_name loader_name
   local -a queue=()
   declare -A seen=()
 
@@ -79,8 +79,11 @@ winlator_bundle_glibc_runtime() {
   if [[ -z "${host_path}" ]]; then
     fail "Unable to resolve host ld-linux-aarch64.so.1 required for glibc launcher wrapping"
   fi
-  cp -a "${host_path}" "${runtime_dir}/$(basename "${host_path}")"
-  ln -sfn "$(basename "${host_path}")" "${runtime_dir}/ld-linux-aarch64.so.1"
+  loader_name="$(basename "${host_path}")"
+  cp -a "${host_path}" "${runtime_dir}/${loader_name}"
+  if [[ "${loader_name}" != "ld-linux-aarch64.so.1" ]]; then
+    ln -sfn "${loader_name}" "${runtime_dir}/ld-linux-aarch64.so.1"
+  fi
 
   # Breadth-first copy of transitive shared-library dependencies.
   queue=("${seed_sonames[@]}")
