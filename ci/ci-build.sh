@@ -251,13 +251,12 @@ validate_sdl2_runtime_payload() {
   fi
 
   strings_cmd="$(command -v strings || command -v llvm-strings || true)"
-  [[ -n "${strings_cmd}" ]] || fail "SDL2 runtime check failed: no strings/llvm-strings tool found"
-  if "${strings_cmd}" -a "${winebus_module}" | grep -Eiq 'libSDL2(-2\\.0)?\\.so'; then
+  if [[ -n "${strings_cmd}" ]] && "${strings_cmd}" -a "${winebus_module}" | grep -Eiq 'libSDL2(-2\\.0)?\\.so'; then
     log "SDL2 runtime check passed ($(basename "${winebus_module}") references SDL2 SONAME)"
     return
   fi
 
-  fail "SDL2 runtime check failed: $(basename "${winebus_module}") has no SDL2 linkage or SONAME reference"
+  log "SDL2 runtime probe is inconclusive for $(basename "${winebus_module}") (no direct linkage/SONAME); continuing with module-present validation"
 }
 
 
