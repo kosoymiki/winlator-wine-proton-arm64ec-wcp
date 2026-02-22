@@ -166,18 +166,24 @@ ensure_sdl2_tooling() {
 }
 
 validate_sdl2_runtime_payload() {
-  local winebus_module
+  local winebus_module winebus_module_dir
   if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
     return
   fi
 
-  winebus_module="${STAGE_DIR}/usr/lib/wine/aarch64-unix/winebus.sys.so"
-  [[ -f "${winebus_module}" ]] || fail "SDL2 runtime check failed: missing ${winebus_module}"
+  winebus_module_dir="${STAGE_DIR}/usr/lib/wine/aarch64-unix"
+  if [[ -f "${winebus_module_dir}/winebus.so" ]]; then
+    winebus_module="${winebus_module_dir}/winebus.so"
+  elif [[ -f "${winebus_module_dir}/winebus.sys.so" ]]; then
+    winebus_module="${winebus_module_dir}/winebus.sys.so"
+  else
+    fail "SDL2 runtime check failed: missing ${winebus_module_dir}/winebus.so (or winebus.sys.so)"
+  fi
 
   if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
-    fail "SDL2 runtime check failed: winebus.sys.so is not linked against SDL2"
+    fail "SDL2 runtime check failed: $(basename "${winebus_module}") is not linked against SDL2"
   fi
-  log "SDL2 runtime check passed (winebus.sys.so links against SDL2)"
+  log "SDL2 runtime check passed ($(basename "${winebus_module}") links against SDL2)"
 }
 
 build_wine() {
@@ -398,7 +404,9 @@ EOF_PROFILE
   [[ -d "${WCP_ROOT}/share" ]] || fail "Missing share after staging"
 
   if [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]]; then
-    [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.sys.so" ]] || fail "Missing lib/wine/aarch64-unix/winebus.sys.so in WCP root"
+    if [[ ! -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.so" && ! -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.sys.so" ]]; then
+      fail "Missing lib/wine/aarch64-unix/winebus.so (or winebus.sys.so) in WCP root"
+    fi
   fi
 
   winlator_validate_launchers

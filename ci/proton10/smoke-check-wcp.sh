@@ -53,7 +53,7 @@ if grep -qx 'bin/wine.glibc-real' "${normalized_file}"; then
 fi
 
 if [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]]; then
-  grep -qx 'lib/wine/aarch64-unix/winebus.sys.so' "${normalized_file}" || fail "Missing lib/wine/aarch64-unix/winebus.sys.so"
+  grep -Eq '^lib/wine/aarch64-unix/winebus(\.sys)?\.so$' "${normalized_file}" || fail "Missing lib/wine/aarch64-unix/winebus.so (or winebus.sys.so)"
 fi
 
 if [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]]; then

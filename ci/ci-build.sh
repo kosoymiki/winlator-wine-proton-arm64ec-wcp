@@ -231,19 +231,25 @@ ensure_sdl2_tooling() {
 }
 
 validate_sdl2_runtime_payload() {
-  local winebus_module
+  local winebus_module winebus_module_dir
   if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
     return
   fi
 
-  winebus_module="${STAGE_DIR}/usr/lib/wine/aarch64-unix/winebus.sys.so"
-  [[ -f "${winebus_module}" ]] || fail "SDL2 runtime check failed: missing ${winebus_module}"
-
-  if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
-    fail "SDL2 runtime check failed: winebus.sys.so is not linked against SDL2"
+  winebus_module_dir="${STAGE_DIR}/usr/lib/wine/aarch64-unix"
+  if [[ -f "${winebus_module_dir}/winebus.so" ]]; then
+    winebus_module="${winebus_module_dir}/winebus.so"
+  elif [[ -f "${winebus_module_dir}/winebus.sys.so" ]]; then
+    winebus_module="${winebus_module_dir}/winebus.sys.so"
+  else
+    fail "SDL2 runtime check failed: missing ${winebus_module_dir}/winebus.so (or winebus.sys.so)"
   fi
 
-  log "SDL2 runtime check passed (winebus.sys.so links against SDL2)"
+  if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
+    fail "SDL2 runtime check failed: $(basename "${winebus_module}") is not linked against SDL2"
+  fi
+
+  log "SDL2 runtime check passed ($(basename "${winebus_module}") links against SDL2)"
 }
 
 
@@ -406,7 +412,13 @@ validate_wcp_tree() {
   )
 
   if [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]]; then
-    required_unix_modules+=("winebus.sys.so")
+    if [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.so" ]]; then
+      required_unix_modules+=("winebus.so")
+    elif [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.sys.so" ]]; then
+      required_unix_modules+=("winebus.sys.so")
+    else
+      fail "Wine unix module missing: lib/wine/aarch64-unix/winebus.so (or winebus.sys.so)"
+    fi
   fi
 
   local mod

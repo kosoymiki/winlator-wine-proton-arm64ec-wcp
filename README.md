@@ -48,7 +48,7 @@ Winlator строит runtime из нескольких слоёв:
 
 ### Wine ARM64EC
 
-- Сборка проверяет SDL2 runtime path (`winebus.sys.so`)
+- Сборка проверяет SDL2 runtime path (`winebus.so`, с fallback на `winebus.sys.so`)
 - В CI принудительно включен `WCP_ENABLE_SDL2_RUNTIME=1`
 - Для `winlator-bionic` glibc-launcher (`/lib/ld-linux-aarch64.so.1`) автоматически оборачивается в Android-совместимый wrapper (`#!/system/bin/sh`) и получает bundled glibc-runtime.
 
