@@ -29,6 +29,12 @@ clone_upstream() {
   git clone --filter=blob:none "${WINLATOR_LUDASHI_REPO}" "${SRC_DIR}"
   git -C "${SRC_DIR}" fetch --tags --force
   git -C "${SRC_DIR}" checkout "${WINLATOR_LUDASHI_REF}"
+  # Ensure binary assets/submodules (adrenotools, pngs) are present.
+  if command -v git-lfs >/dev/null 2>&1; then
+    git -C "${SRC_DIR}" lfs install --local || true
+    git -C "${SRC_DIR}" lfs pull || true
+  fi
+  git -C "${SRC_DIR}" submodule update --init --recursive || true
   git -C "${SRC_DIR}" rev-parse HEAD > "${LOG_DIR}/upstream-head.txt"
 }
 
