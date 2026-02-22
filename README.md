@@ -50,6 +50,7 @@ Winlator строит runtime из нескольких слоёв:
 
 - Сборка проверяет SDL2 runtime path (`winebus.sys.so`)
 - В CI принудительно включен `WCP_ENABLE_SDL2_RUNTIME=1`
+- Для `winlator-bionic` glibc-launcher (`/lib/ld-linux-aarch64.so.1`) автоматически оборачивается в Android-совместимый wrapper (`#!/system/bin/sh`) и получает bundled glibc-runtime.
 
 ### Proton 10 ARM64EC
 
@@ -132,6 +133,20 @@ bash ci/proton10/ci-build-proton10-wcp.sh
 - `WCP_ENABLE_SDL2_RUNTIME`
 
 ## 8. Диагностика и troubleshooting
+
+### glibc vs bionic (практическая разница)
+
+- `bionic` (Android libc): ожидает `libc.so`, типичный interpreter у бинарей Android — `/system/bin/linker64`.
+- `glibc` (обычный Linux userspace): ожидает `libc.so.6`, interpreter — `/lib/ld-linux-aarch64.so.1`.
+- Если glibc-бинарь запустить напрямую в Android app-процессе без wrapper/runtime, Java получает `error=2 (No such file or directory)` даже при существующем файле (не найден ELF interpreter).
+
+Что делает pipeline для `winlator-bionic`:
+
+1. Детектирует glibc `bin/wine`/`bin/wineserver`.
+2. Кладёт реальные ELF как `bin/wine.glibc-real` и `bin/wineserver.glibc-real`.
+3. Генерирует Android-wrapper (`#!/system/bin/sh`) в `bin/wine` и `bin/wineserver`.
+4. Бандлит glibc loader + зависимые `.so` в `lib/wine/wcp-glibc-runtime/`.
+5. Валидирует, что сырой glibc launcher не остался точкой входа.
 
 ### Симптом: контейнер висит на `Starting up...`
 

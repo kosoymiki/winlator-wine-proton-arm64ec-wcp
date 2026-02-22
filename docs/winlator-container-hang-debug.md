@@ -63,6 +63,25 @@ adb logcat -d -v threadtime | grep -Ei "winlator|wineserver|wine64|fex|hangover|
 - Много `SIGKILL`/LMK рядом с зависанием -> вероятно memory pressure.
 - `Input dispatching timed out` для Winlator activity -> UI-thread/blocking call.
 - Долгий старт без падения -> проверить инициализацию контейнера/префикса, I/O latency, cold-start.
+- `ProcessHelper: Cannot run program ... error=2` при существующем `bin/wine` -> обычно не найден ELF interpreter (`glibc` launcher в `bionic` runtime).
+
+### glibc/bionic mismatch (частый hidden root-cause)
+
+Проверочный маркер в логе:
+
+- `Cannot run program ".../bin/wine" ... error=2, No such file or directory`
+
+Что это значит:
+
+1. `bin/wine` есть на диске.
+2. Но бинарь собран как glibc (`/lib/ld-linux-aarch64.so.1`).
+3. Android app runtime (bionic) не может выполнить его напрямую без wrapper.
+
+Исправление в pipeline:
+
+- Входные `bin/wine` и `bin/wineserver` оборачиваются Android-скриптом (`#!/system/bin/sh`).
+- Реальные ELF сохраняются как `*.glibc-real`.
+- В пакет добавляется `lib/wine/wcp-glibc-runtime` с `ld-linux-aarch64.so.1` и зависимостями.
 
 ## 7) Частая причина для ARM64EC: неверный emulator path
 

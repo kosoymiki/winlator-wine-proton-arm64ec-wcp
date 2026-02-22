@@ -33,6 +33,7 @@ winlator_collect_needed_sonames() {
 winlator_bundle_glibc_runtime() {
   local runtime_dir="$1"
   local -a seed_sonames=()
+  local extra_sonames
   local -a elf_roots=(
     "${WCP_ROOT}/bin"
     "${WCP_ROOT}/lib/wine/aarch64-unix"
@@ -65,6 +66,13 @@ winlator_bundle_glibc_runtime() {
     "libstdc++.so.6"
     "libz.so.1"
   )
+
+  # Runtime-only symbols frequently requested via dlopen() on glibc builds.
+  : "${WCP_BIONIC_EXTRA_GLIBC_LIBS:=libnss_files.so.2 libnss_dns.so.2 libresolv.so.2 libutil.so.1 libnsl.so.1 libSDL2-2.0.so.0 libSDL2-2.0.so}"
+  extra_sonames="$(printf '%s' "${WCP_BIONIC_EXTRA_GLIBC_LIBS}" | tr ',' ' ')"
+  for dep in ${extra_sonames}; do
+    seed_sonames+=("${dep}")
+  done
 
   # Copy ELF interpreter used by glibc Wine launchers.
   host_path="$(winlator_resolve_host_lib ld-linux-aarch64.so.1 || true)"
@@ -110,7 +118,7 @@ winlator_write_glibc_wrapper() {
   local launcher_path="$1" real_name="$2" export_wineserver="$3"
 
   cat > "${launcher_path}" <<EOF_WRAPPER
-#!/usr/bin/env sh
+#!/system/bin/sh
 set -eu
 
 bindir="\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")\" && pwd)"
@@ -180,6 +188,9 @@ winlator_validate_launchers() {
   fi
 
   if [[ -f "${WCP_ROOT}/bin/wine.glibc-real" ]]; then
+    local shebang
+    shebang="$(head -n1 "${wine_bin}" || true)"
+    [[ "${shebang}" == "#!/system/bin/sh" ]] || fail "bin/wine wrapper must use #!/system/bin/sh for Android execution"
     [[ -x "${WCP_ROOT}/lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1" ]] || fail "Missing wrapped runtime loader: lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1"
   fi
 }

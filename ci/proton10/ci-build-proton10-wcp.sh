@@ -282,12 +282,17 @@ prune_external_runtime_components() {
 }
 
 emit_runtime_diagnostics() {
-  local report_txt report_json fex_ec fex_wow64
+  local report_txt report_json fex_ec fex_wow64 glibc_runtime_dir glibc_runtime_libs
 
   report_txt="${LOG_DIR}/runtime-report.txt"
   report_json="${LOG_DIR}/runtime-report.json"
   fex_ec="${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
   fex_wow64="${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
+  glibc_runtime_dir="${WCP_ROOT}/lib/wine/wcp-glibc-runtime"
+  glibc_runtime_libs="0"
+  if [[ -d "${glibc_runtime_dir}" ]]; then
+    glibc_runtime_libs="$(find "${glibc_runtime_dir}" -maxdepth 1 -type f | wc -l | tr -d '[:space:]')"
+  fi
 
   {
     echo "runtime_target=${WCP_TARGET_RUNTIME}"
@@ -295,6 +300,9 @@ emit_runtime_diagnostics() {
     echo "enable_sdl2_runtime=${WCP_ENABLE_SDL2_RUNTIME}"
     echo "has_fex_arm64ec_dll=$([[ -f "${fex_ec}" ]] && echo 1 || echo 0)"
     echo "has_fex_wow64_dll=$([[ -f "${fex_wow64}" ]] && echo 1 || echo 0)"
+    echo "has_glibc_wrapper=$([[ -f "${WCP_ROOT}/bin/wine.glibc-real" ]] && echo 1 || echo 0)"
+    echo "has_glibc_runtime_loader=$([[ -f "${glibc_runtime_dir}/ld-linux-aarch64.so.1" ]] && echo 1 || echo 0)"
+    echo "glibc_runtime_files=${glibc_runtime_libs}"
     echo
     echo "container_startup_checklist:"
     echo "- use ARM64EC wine build in Winlator container settings"
@@ -316,6 +324,9 @@ emit_runtime_diagnostics() {
   "enableSdl2Runtime": ${WCP_ENABLE_SDL2_RUNTIME},
   "hasFexArm64ecDll": $([[ -f "${fex_ec}" ]] && echo true || echo false),
   "hasFexWow64Dll": $([[ -f "${fex_wow64}" ]] && echo true || echo false),
+  "hasGlibcWrapper": $([[ -f "${WCP_ROOT}/bin/wine.glibc-real" ]] && echo true || echo false),
+  "hasGlibcRuntimeLoader": $([[ -f "${glibc_runtime_dir}/ld-linux-aarch64.so.1" ]] && echo true || echo false),
+  "glibcRuntimeFiles": ${glibc_runtime_libs},
   "diagnosticsDoc": "docs/winlator-container-hang-debug.md",
   "prunedListFile": "out/logs/pruned-components.txt"
 }
