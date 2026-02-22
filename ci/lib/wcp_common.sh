@@ -52,11 +52,30 @@ wcp_check_host_arch() {
   fi
 }
 
+wcp_ensure_configure_script() {
+  local wine_src_dir="$1"
+
+  if [[ -x "${wine_src_dir}/configure" ]]; then
+    return
+  fi
+
+  [[ -f "${wine_src_dir}/configure.ac" ]] || wcp_fail "Missing configure script and configure.ac in ${wine_src_dir}"
+  wcp_require_cmd autoreconf
+
+  wcp_log "configure is missing in ${wine_src_dir}; generating it with autoreconf -ifv"
+  pushd "${wine_src_dir}" >/dev/null
+  autoreconf -ifv
+  popd >/dev/null
+
+  [[ -f "${wine_src_dir}/configure" ]] || wcp_fail "autoreconf did not produce configure in ${wine_src_dir}"
+  chmod +x "${wine_src_dir}/configure" || true
+}
+
 build_wine_tools_host() {
   local wine_src_dir="$1" build_dir="$2"
   local -a configure_args
 
-  [[ -x "${wine_src_dir}/configure" ]] || wcp_fail "Missing configure script: ${wine_src_dir}/configure"
+  wcp_ensure_configure_script "${wine_src_dir}"
   mkdir -p "${build_dir}"
 
   pushd "${build_dir}" >/dev/null
@@ -81,7 +100,7 @@ build_wine_multiarc_arm64ec() {
   local wine_src_dir="$1" build_dir="$2" stage_dir="$3"
   local -a configure_args
 
-  [[ -x "${wine_src_dir}/configure" ]] || wcp_fail "Missing configure script: ${wine_src_dir}/configure"
+  wcp_ensure_configure_script "${wine_src_dir}"
 
   mkdir -p "${build_dir}" "${stage_dir}"
   pushd "${build_dir}" >/dev/null
