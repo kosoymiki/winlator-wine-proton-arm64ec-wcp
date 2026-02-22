@@ -1,0 +1,96 @@
+name: Build Proton 10 ARM64EC (WCP)
+
+on:
+  push:
+    branches: ["feature/proton10-wcp-valvebase"]
+  workflow_dispatch:
+    inputs:
+      proton_ge_ref:
+        description: "Pinned proton-ge-custom tag"
+        required: false
+        default: "GE-Proton10-32"
+      llvm_mingw_ver:
+        description: "llvm-mingw version tag"
+        required: false
+        default: "20260210"
+      compress:
+        description: "Compression format: xz or zst"
+        required: false
+        default: "xz"
+
+permissions:
+  contents: read
+
+env:
+  CACHE_DIR: ${{ github.workspace }}/.cache
+  TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/out
+  VALVE_WINE_REF: 986bda11d3e569813ec0f86e56ef94d7c384da04
+  PROTON_GE_REF: ${{ github.event.inputs.proton_ge_ref || 'GE-Proton10-32' }}
+  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
+  WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
+  WCP_NAME: proton-10-arm64ec
+  TARGET_HOST: aarch64-linux-gnu
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl git python3 tar xz-utils zstd rsync file binutils \
+            build-essential autoconf automake libtool pkg-config bison flex gettext \
+            cmake ninja-build \
+            libunwind-dev libxml2-dev zlib1g-dev \
+            libfreetype-dev libjpeg-dev libpng-dev libtiff-dev \
+            libx11-dev libxext-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxcomposite-dev libxcb1-dev \
+            libxkbcommon-dev \
+            libpulse-dev libudev-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libvulkan-dev
+
+      - name: Cache llvm-mingw toolchain
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.TOOLCHAIN_DIR }}
+          key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
+
+      - name: Build Proton 10 ARM64EC WCP
+        run: |
+          set -euxo pipefail
+          bash ci/proton10/ci-build-proton10-wcp.sh
+
+      - name: Upload WCP artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proton-10-arm64ec
+          path: |
+            out/proton-10-arm64ec.wcp
+            out/SHA256SUMS
+            out/patchlog.txt
+            docs/ARM64EC_PATCH_REVIEW.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proton10-diagnostics
+          path: |
+            out/logs/**
+            out/patchlog.txt
+            out/arm64ec-series.txt
+            docs/ARM64EC_PATCH_REVIEW.md
+          if-no-files-found: warn
+          retention-days: 14

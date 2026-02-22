@@ -30,6 +30,7 @@ env:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/proton10-wcp-valvebase'
     name: Build WCP (ARM64EC)
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
