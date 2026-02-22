@@ -75,10 +75,14 @@ wcp_ensure_configure_script() {
   vk_xml="dlls/winevulkan/vk.xml"
   video_xml="dlls/winevulkan/video.xml"
   if [[ -x "${make_vulkan_bin}" ]]; then
-    if [[ -f "${vk_xml}" && -f "${video_xml}" ]]; then
-      "${make_vulkan_bin}" -x "${vk_xml}" -X "${video_xml}"
+    if [[ -f "${vk_xml}" ]]; then
+      if [[ -f "${video_xml}" ]]; then
+        "${make_vulkan_bin}" -x "${vk_xml}" -X "${video_xml}"
+      else
+        "${make_vulkan_bin}" -x "${vk_xml}"
+      fi
     else
-      "${make_vulkan_bin}"
+      wcp_log "Skipping ${make_vulkan_bin}: missing ${vk_xml}"
     fi
   fi
   autoreconf -ifv
