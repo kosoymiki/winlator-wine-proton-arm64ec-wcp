@@ -63,3 +63,25 @@ adb logcat -d -v threadtime | grep -Ei "winlator|wineserver|wine64|fex|hangover|
 - Много `SIGKILL`/LMK рядом с зависанием -> вероятно memory pressure.
 - `Input dispatching timed out` для Winlator activity -> UI-thread/blocking call.
 - Долгий старт без падения -> проверить инициализацию контейнера/префикса, I/O latency, cold-start.
+
+## 7) Частая причина для ARM64EC: неверный emulator path
+
+Для ARM64EC контейнера ожидается запуск через FEX (`HODLL=libwow64fex.dll`).
+Если контейнер/ярлык фактически указывает Box64-путь, возможен вечный "Starting up...".
+
+Проверить:
+
+1. Выбран ARM64EC Wine build в параметрах контейнера.
+2. Для ARM64EC выставлен `FEXCore` в emulator selector.
+3. В логе старта есть признак FEX-пути (а не `wowbox64.dll`).
+
+## 8) Что ожидает текущий Proton WCP pipeline
+
+Начиная с текущего профиля сборки (`winlator-bionic`):
+
+- FEX/DXVK/VKD3D/Vulkan-driver payload не бандлится в WCP (их ставит Winlator как внешние WCP).
+- SDL2 runtime в Wine считается обязательным и проверяется в CI.
+- Диагностика сборки пишет:
+  - `out/logs/runtime-report.txt`
+  - `out/logs/runtime-report.json`
+  - `out/logs/pruned-components.txt`

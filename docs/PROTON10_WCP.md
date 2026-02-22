@@ -1,11 +1,26 @@
-# Proton 10 ARM64EC WCP Pipeline
+# Proton 10 ARM64EC WCP
 
-Этот pipeline собирает отдельный WCP артефакт `proton-10-arm64ec.wcp` для Winlator:
+Сборка `proton-10-arm64ec.wcp` для Winlator (bionic runtime), на базе:
 
-1. База `ValveSoftware/wine` на pinned commit `986bda11d3e569813ec0f86e56ef94d7c384da04`.
-2. Применение ARM64EC серии из `AndreRH/wine:arm64ec` через `git cherry-pick -x`.
-3. Применение Proton GE patch-system (`protonprep-valve-staging.sh`) на подготовленное дерево.
-4. Сборка Wine + упаковка WCP + smoke-check.
+- Valve Wine pinned commit.
+- ARM64EC cherry-pick серии.
+- Proton GE patch pipeline.
+
+## Build flow
+
+1. `ci/proton10/arm64ec-commit-review.sh` — отбор совместимой ARM64EC серии.
+2. `ci/proton10/apply-arm64ec-series.sh` — replay коммитов в рабочее дерево.
+3. `protonprep-valve-staging.sh` — применение Proton GE патчей.
+4. Сборка Wine (`--enable-archs=arm64ec,aarch64,i386`).
+5. Формирование WCP + smoke checks + diagnostics.
+
+## Runtime profile (важно)
+
+Pipeline ориентирован на Winlator bionic профиль:
+
+- FEX/DXVK/VKD3D/Vulkan-driver считаются внешними пакетами Winlator.
+- В WCP остаётся ядро Wine/Proton runtime.
+- SDL2 runtime проверяется как обязательный для этого профиля.
 
 ## Ключевые env vars
 
@@ -14,6 +29,19 @@
 - `PROTON_GE_REF` (default `GE-Proton10-32`)
 - `TARGET_HOST` (default `aarch64-linux-gnu`)
 - `WCP_NAME` (default `proton-10-arm64ec`)
+- `WCP_TARGET_RUNTIME` (default `winlator-bionic`)
+- `WCP_PRUNE_EXTERNAL_COMPONENTS` (`1`/`0`, default `1`)
+- `WCP_ENABLE_SDL2_RUNTIME` (`1`/`0`, default `1`)
+
+## Артефакты
+
+- `out/proton-10-arm64ec.wcp`
+- `out/SHA256SUMS`
+- `out/patchlog.txt`
+- `out/logs/runtime-report.txt`
+- `out/logs/runtime-report.json`
+- `out/logs/pruned-components.txt`
+- `docs/ARM64EC_PATCH_REVIEW.md`
 
 ## Локальный запуск
 
@@ -22,13 +50,16 @@ LLVM_MINGW_TAG=20260210 \
 WCP_COMPRESS=xz \
 PROTON_GE_REF=GE-Proton10-32 \
 TARGET_HOST=aarch64-linux-gnu \
+WCP_TARGET_RUNTIME=winlator-bionic \
+WCP_PRUNE_EXTERNAL_COMPONENTS=1 \
+WCP_ENABLE_SDL2_RUNTIME=1 \
 bash ci/proton10/ci-build-proton10-wcp.sh
 ```
 
-## Артефакты
+## Диагностика container startup
 
-- `out/proton-10-arm64ec.wcp`
-- `out/SHA256SUMS`
-- `out/patchlog.txt`
-- `docs/ARM64EC_PATCH_REVIEW.md`
-- `out/logs/**`
+Если контейнер зависает на `Starting up...`:
+
+1. Убедитесь, что container Wine — именно ARM64EC build.
+2. Для ARM64EC выберите `FEXCore` как emulator (не `Box64`).
+3. Снимите логи по гайду: `docs/winlator-container-hang-debug.md`.

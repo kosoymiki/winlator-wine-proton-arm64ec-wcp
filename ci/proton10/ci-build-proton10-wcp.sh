@@ -26,7 +26,10 @@ SERIES_FILE="${ARM64EC_SERIES_FILE:-${OUT_DIR}/arm64ec-series.txt}"
 : "${WCP_COMPRESS:=xz}"
 : "${WCP_VERSION_NAME:=Proton10-${PROTON_GE_REF}-arm64ec}"
 : "${WCP_VERSION_CODE:=10032}"
-: "${WCP_DESCRIPTION:=Proton 10 ARM64EC for Winlator (Valve base + ARM64EC series + GE patches)}"
+: "${WCP_DESCRIPTION:=Proton 10 ARM64EC for Winlator bionic (Valve base + ARM64EC series + GE patches)}"
+: "${WCP_TARGET_RUNTIME:=winlator-bionic}"
+: "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
+: "${WCP_ENABLE_SDL2_RUNTIME:=1}"
 : "${PATCHLOG_FATAL_REGEX:=\\bfatal:|^error:|\\[[^]]*\\]\\[error\\]|Traceback \\(most recent call last\\)}"
 : "${PATCHLOG_FALSE_POSITIVE_REGEX:=Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file|0 errors|0 failures|without errors}"
 
@@ -40,6 +43,22 @@ source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
 log() { printf '[proton10] %s\n' "$*"; }
 fail() { printf '[proton10][error] %s\n' "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"; }
+
+require_bool_flag() {
+  local flag_name="$1" flag_value="$2"
+  case "${flag_value}" in
+    0|1) ;;
+    *)
+      fail "${flag_name} must be 0 or 1 (got: ${flag_value})"
+      ;;
+  esac
+}
+
+preflight_runtime_profile() {
+  [[ -n "${WCP_TARGET_RUNTIME}" ]] || fail "WCP_TARGET_RUNTIME must not be empty"
+  require_bool_flag WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
+  require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+}
 
 ensure_symlink() {
   local link_path="$1" target="$2"
@@ -136,8 +155,34 @@ fix_winebus_sdl_stub() {
   perl -0pi -e 's/#else\n\nNTSTATUS sdl_bus_init\(void \*args\)/#else\n\nBOOL is_sdl_ignored_device(WORD vid, WORD pid)\n{\n    return FALSE;\n}\n\nNTSTATUS sdl_bus_init(void *args)/' "${bus_sdl_c}"
 }
 
+ensure_sdl2_tooling() {
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
+    return
+  fi
+
+  require_cmd pkg-config
+  pkg-config --exists sdl2 || fail "SDL2 development files are missing (pkg-config sdl2 failed)"
+}
+
+validate_sdl2_runtime_payload() {
+  local winebus_module
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
+    return
+  fi
+
+  winebus_module="${STAGE_DIR}/usr/lib/wine/aarch64-unix/winebus.sys.so"
+  [[ -f "${winebus_module}" ]] || fail "SDL2 runtime check failed: missing ${winebus_module}"
+
+  if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
+    fail "SDL2 runtime check failed: winebus.sys.so is not linked against SDL2"
+  fi
+  log "SDL2 runtime check passed (winebus.sys.so links against SDL2)"
+}
+
 build_wine() {
   local make_vulkan_log vk_xml video_xml
+
+  ensure_sdl2_tooling
 
   export PATH="${TOOLCHAIN_DIR}/bin:${PATH}"
   export CC=clang
@@ -183,8 +228,97 @@ build_wine() {
   fi
   make -j"$(nproc)"
   make install DESTDIR="${STAGE_DIR}"
+  validate_sdl2_runtime_payload
   [[ -f "config.log" ]] && cp -f "config.log" "${LOG_DIR}/wine-config.log"
   popd >/dev/null
+}
+
+prune_external_runtime_components() {
+  local prune_log hit path
+  if [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" != "1" ]]; then
+    : > "${LOG_DIR}/pruned-components.txt"
+    log "External component pruning is disabled (WCP_PRUNE_EXTERNAL_COMPONENTS=0)"
+    return
+  fi
+
+  prune_log="${LOG_DIR}/pruned-components.txt"
+  : > "${prune_log}"
+
+  # Winlator bionic typically provisions these as separate WCP content packages.
+  local prune_paths=(
+    "lib/wine/aarch64-windows/libarm64ecfex.dll"
+    "lib/wine/aarch64-windows/libwow64fex.dll"
+    "lib/wine/i386-windows/libwow64fex.dll"
+    "lib/wine/fexcore"
+    "lib/fexcore"
+    "share/fexcore"
+    "lib/wine/dxvk"
+    "lib/wine/vkd3d"
+    "lib/wine/vk3d"
+    "lib/dxvk"
+    "lib/vkd3d"
+    "share/dxvk"
+    "share/vkd3d"
+    "share/vulkan/icd.d"
+    "share/vulkan/implicit_layer.d"
+    "share/vulkan/explicit_layer.d"
+  )
+
+  hit=0
+  for path in "${prune_paths[@]}"; do
+    if [[ -e "${WCP_ROOT}/${path}" ]]; then
+      rm -rf "${WCP_ROOT:?}/${path}"
+      printf '%s\n' "${path}" >> "${prune_log}"
+      hit=1
+    fi
+  done
+
+  if [[ "${hit}" == "1" ]]; then
+    log "Pruned external runtime payloads (see ${prune_log})"
+  else
+    log "No external runtime payloads matched prune list"
+  fi
+}
+
+emit_runtime_diagnostics() {
+  local report_txt report_json fex_ec fex_wow64
+
+  report_txt="${LOG_DIR}/runtime-report.txt"
+  report_json="${LOG_DIR}/runtime-report.json"
+  fex_ec="${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
+  fex_wow64="${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
+
+  {
+    echo "runtime_target=${WCP_TARGET_RUNTIME}"
+    echo "prune_external_components=${WCP_PRUNE_EXTERNAL_COMPONENTS}"
+    echo "enable_sdl2_runtime=${WCP_ENABLE_SDL2_RUNTIME}"
+    echo "has_fex_arm64ec_dll=$([[ -f "${fex_ec}" ]] && echo 1 || echo 0)"
+    echo "has_fex_wow64_dll=$([[ -f "${fex_wow64}" ]] && echo 1 || echo 0)"
+    echo
+    echo "container_startup_checklist:"
+    echo "- use ARM64EC wine build in Winlator container settings"
+    echo "- for ARM64EC containers set emulator to FEXCore (not Box64)"
+    echo "- if startup still hangs, collect logs from docs/winlator-container-hang-debug.md"
+    echo
+    echo "pruned_entries:"
+    if [[ -s "${LOG_DIR}/pruned-components.txt" ]]; then
+      sed 's/^/- /' "${LOG_DIR}/pruned-components.txt"
+    else
+      echo "- none"
+    fi
+  } > "${report_txt}"
+
+  cat > "${report_json}" <<EOF_REPORT
+{
+  "runtimeTarget": "${WCP_TARGET_RUNTIME}",
+  "pruneExternalComponents": ${WCP_PRUNE_EXTERNAL_COMPONENTS},
+  "enableSdl2Runtime": ${WCP_ENABLE_SDL2_RUNTIME},
+  "hasFexArm64ecDll": $([[ -f "${fex_ec}" ]] && echo true || echo false),
+  "hasFexWow64Dll": $([[ -f "${fex_wow64}" ]] && echo true || echo false),
+  "diagnosticsDoc": "docs/winlator-container-hang-debug.md",
+  "prunedListFile": "out/logs/pruned-components.txt"
+}
+EOF_REPORT
 }
 
 compose_wcp_tree() {
@@ -193,6 +327,8 @@ compose_wcp_tree() {
   rsync -a "${STAGE_DIR}/usr/" "${WCP_ROOT}/"
   [[ -f "${ROOT_DIR}/prefixPack.txz" ]] || fail "prefixPack.txz is required but missing in repository root"
   cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
+
+  prune_external_runtime_components
 
   mkdir -p "${WCP_ROOT}/winetools" "${WCP_ROOT}/share/winetools"
   cat > "${WCP_ROOT}/winetools/manifest.txt" <<'MANIFEST'
@@ -230,6 +366,11 @@ MANIFEST
     "libPath": "lib",
     "prefixPack": "prefixPack.txz"
   },
+  "runtime": {
+    "target": "${WCP_TARGET_RUNTIME}",
+    "sdl2Required": $([[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]] && echo true || echo false),
+    "externalPayloadsManagedByHost": $([[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]] && echo true || echo false)
+  },
   "built": "${utc_now}"
 }
 EOF_PROFILE
@@ -238,6 +379,12 @@ EOF_PROFILE
   [[ -f "${WCP_ROOT}/bin/wineserver" ]] || fail "Missing bin/wineserver after staging"
   [[ -d "${WCP_ROOT}/lib/wine" ]] || fail "Missing lib/wine after staging"
   [[ -d "${WCP_ROOT}/share" ]] || fail "Missing share after staging"
+
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]]; then
+    [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.sys.so" ]] || fail "Missing lib/wine/aarch64-unix/winebus.sys.so in WCP root"
+  fi
+
+  emit_runtime_diagnostics
 
   out_wcp="${OUT_DIR}/${WCP_NAME}.wcp"
   case "${WCP_COMPRESS}" in
@@ -268,8 +415,11 @@ main() {
   require_cmd make
   require_cmd grep
   require_cmd sed
+  require_cmd perl
+  require_cmd pkg-config
   [[ -n "${TARGET_HOST}" ]] || fail "TARGET_HOST must be set"
 
+  preflight_runtime_profile
   check_host_arch
   prepare_layout
   ensure_llvm_mingw

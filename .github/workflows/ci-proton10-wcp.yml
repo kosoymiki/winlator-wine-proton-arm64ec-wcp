@@ -19,7 +19,7 @@ on:
         default: "xz"
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   CACHE_DIR: ${{ github.workspace }}/.cache
@@ -31,6 +31,9 @@ env:
   WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
   WCP_NAME: proton-10-arm64ec
   TARGET_HOST: aarch64-linux-gnu
+  WCP_TARGET_RUNTIME: winlator-bionic
+  WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
+  WCP_ENABLE_SDL2_RUNTIME: "1"
 
 jobs:
   build:
@@ -56,6 +59,7 @@ jobs:
             libxkbcommon-dev \
             libpulse-dev libudev-dev \
             libgstreamer-plugins-base1.0-dev \
+            libsdl2-dev \
             libvulkan-dev
 
       - name: Cache llvm-mingw toolchain
@@ -94,3 +98,27 @@ jobs:
             docs/ARM64EC_PATCH_REVIEW.md
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Prepare release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF
+          Unified WCP release artifact update (Proton 10 ARM64EC).
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          Runtime: ${{ env.WCP_TARGET_RUNTIME }}
+          EOF
+
+      - name: Attach Proton artifact to unified release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: wcp-latest
+          name: WCP Latest Build
+          allowUpdates: true
+          prerelease: true
+          removeArtifacts: false
+          artifacts: out/proton-10-arm64ec.wcp,out/SHA256SUMS,out/patchlog.txt,out/logs/runtime-report.txt,out/logs/runtime-report.json
+          artifactErrorsFailBuild: true
+          bodyFile: RELEASE_NOTES.md

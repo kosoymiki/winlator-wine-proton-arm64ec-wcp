@@ -17,6 +17,9 @@ env:
   WCP_COMPRESS: xz
   WCP_NAME: proton-10-arm64ec
   TARGET_HOST: aarch64-linux-gnu
+  WCP_TARGET_RUNTIME: winlator-bionic
+  WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
+  WCP_ENABLE_SDL2_RUNTIME: "1"
 
 jobs:
   release:
@@ -42,6 +45,7 @@ jobs:
             libxkbcommon-dev \
             libpulse-dev libudev-dev \
             libgstreamer-plugins-base1.0-dev \
+            libsdl2-dev \
             libvulkan-dev
 
       - name: Cache llvm-mingw toolchain
@@ -72,6 +76,6 @@ jobs:
           name: Proton 10 ARM64EC WCP (${{ github.ref_name }})
           allowUpdates: true
           prerelease: false
-          artifacts: out/proton-10-arm64ec.wcp,out/SHA256SUMS,out/patchlog.txt,docs/ARM64EC_PATCH_REVIEW.md
+          artifacts: out/proton-10-arm64ec.wcp,out/SHA256SUMS,out/patchlog.txt,docs/ARM64EC_PATCH_REVIEW.md,out/logs/runtime-report.txt,out/logs/runtime-report.json
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md
