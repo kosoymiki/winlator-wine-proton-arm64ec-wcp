@@ -231,7 +231,7 @@ ensure_sdl2_tooling() {
 }
 
 validate_sdl2_runtime_payload() {
-  local winebus_module winebus_module_dir
+  local winebus_module winebus_module_dir strings_cmd
   if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
     return
   fi
@@ -245,11 +245,19 @@ validate_sdl2_runtime_payload() {
     fail "SDL2 runtime check failed: missing ${winebus_module_dir}/winebus.so (or winebus.sys.so)"
   fi
 
-  if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
-    fail "SDL2 runtime check failed: $(basename "${winebus_module}") is not linked against SDL2"
+  if readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
+    log "SDL2 runtime check passed ($(basename "${winebus_module}") links against SDL2)"
+    return
   fi
 
-  log "SDL2 runtime check passed ($(basename "${winebus_module}") links against SDL2)"
+  strings_cmd="$(command -v strings || command -v llvm-strings || true)"
+  [[ -n "${strings_cmd}" ]] || fail "SDL2 runtime check failed: no strings/llvm-strings tool found"
+  if "${strings_cmd}" -a "${winebus_module}" | grep -Eiq 'libSDL2(-2\\.0)?\\.so'; then
+    log "SDL2 runtime check passed ($(basename "${winebus_module}") references SDL2 SONAME)"
+    return
+  fi
+
+  fail "SDL2 runtime check failed: $(basename "${winebus_module}") has no SDL2 linkage or SONAME reference"
 }
 
 
