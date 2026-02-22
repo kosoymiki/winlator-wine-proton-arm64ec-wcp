@@ -52,9 +52,69 @@ wcp_check_host_arch() {
   fi
 }
 
+wcp_try_bootstrap_winevulkan() {
+  local wine_src_dir="$1"
+  local log_file="${2:-}"
+  if [[ "$#" -ge 2 ]]; then
+    shift 2
+  else
+    shift "$#"
+  fi
+
+  local make_vulkan_py vk_xml video_xml search_dir
+  local -a search_roots cmd
+
+  [[ -d "${wine_src_dir}" ]] || wcp_fail "wine source directory not found: ${wine_src_dir}"
+  [[ -f "${wine_src_dir}/include/wine/vulkan.h" ]] && return 0
+
+  make_vulkan_py="${wine_src_dir}/dlls/winevulkan/make_vulkan"
+  if [[ ! -f "${make_vulkan_py}" ]]; then
+    wcp_log "Skipping make_vulkan bootstrap: missing ${make_vulkan_py}"
+    return 0
+  fi
+
+  search_roots=(
+    "${wine_src_dir}/dlls/winevulkan"
+    "${wine_src_dir}/Vulkan-Headers/registry"
+  )
+  for search_dir in "$@"; do
+    [[ -n "${search_dir}" ]] || continue
+    search_roots+=(
+      "${search_dir}/dlls/winevulkan"
+      "${search_dir}/Vulkan-Headers/registry"
+      "${search_dir}"
+    )
+  done
+
+  vk_xml=""
+  video_xml=""
+  for search_dir in "${search_roots[@]}"; do
+    if [[ -f "${search_dir}/vk.xml" ]]; then
+      vk_xml="${search_dir}/vk.xml"
+      [[ -f "${search_dir}/video.xml" ]] && video_xml="${search_dir}/video.xml"
+      break
+    fi
+  done
+
+  if [[ -z "${vk_xml}" ]]; then
+    wcp_log "Skipping make_vulkan bootstrap: vk.xml not found in known registry paths"
+    return 0
+  fi
+
+  wcp_require_cmd python3
+  cmd=(python3 "${make_vulkan_py}" -x "${vk_xml}")
+  [[ -n "${video_xml}" ]] && cmd+=(-X "${video_xml}")
+
+  if [[ -n "${log_file}" ]]; then
+    mkdir -p "$(dirname -- "${log_file}")"
+    "${cmd[@]}" >"${log_file}" 2>&1 || wcp_fail "make_vulkan failed; see ${log_file}"
+  else
+    "${cmd[@]}"
+  fi
+}
+
 wcp_ensure_configure_script() {
   local wine_src_dir="$1"
-  local make_vulkan_bin vk_xml video_xml
 
   if [[ -x "${wine_src_dir}/configure" ]]; then
     return
@@ -71,20 +131,7 @@ wcp_ensure_configure_script() {
   if [[ -x tools/make_specfiles ]]; then
     tools/make_specfiles
   fi
-  make_vulkan_bin="dlls/winevulkan/make_vulkan"
-  vk_xml="dlls/winevulkan/vk.xml"
-  video_xml="dlls/winevulkan/video.xml"
-  if [[ -x "${make_vulkan_bin}" ]]; then
-    if [[ -f "${vk_xml}" ]]; then
-      if [[ -f "${video_xml}" ]]; then
-        "${make_vulkan_bin}" -x "${vk_xml}" -X "${video_xml}"
-      else
-        "${make_vulkan_bin}" -x "${vk_xml}"
-      fi
-    else
-      wcp_log "Skipping ${make_vulkan_bin}: missing ${vk_xml}"
-    fi
-  fi
+  wcp_try_bootstrap_winevulkan "${wine_src_dir}"
   autoreconf -ifv
   popd >/dev/null
 

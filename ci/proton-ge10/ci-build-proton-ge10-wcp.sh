@@ -190,7 +190,7 @@ prune_external_runtime_components() {
 }
 
 build_wine() {
-  local make_vulkan_log vk_xml video_xml
+  local make_vulkan_log
 
   ensure_sdl2_tooling
 
@@ -207,18 +207,8 @@ build_wine() {
   log "clang path: $(command -v clang)"
   log "ld.lld path: $(command -v ld.lld)"
 
-  if [[ ! -f "${WINE_SRC_DIR}/include/wine/vulkan.h" ]]; then
-    make_vulkan_log="${LOG_DIR}/make_vulkan.log"
-    vk_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/vk.xml"
-    video_xml="${PROTON_GE_DIR}/Vulkan-Headers/registry/video.xml"
-    if [[ -f "${vk_xml}" && -f "${video_xml}" ]]; then
-      if ! python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" -x "${vk_xml}" -X "${video_xml}" >"${make_vulkan_log}" 2>&1; then
-        python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" >>"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
-      fi
-    else
-      python3 "${WINE_SRC_DIR}/dlls/winevulkan/make_vulkan" >"${make_vulkan_log}" 2>&1 || fail "make_vulkan failed; see ${make_vulkan_log}"
-    fi
-  fi
+  make_vulkan_log="${LOG_DIR}/make_vulkan.log"
+  wcp_try_bootstrap_winevulkan "${WINE_SRC_DIR}" "${make_vulkan_log}" "${PROTON_GE_DIR}"
 
   build_wine_tools_host "${WINE_SRC_DIR}" "${BUILD_WINE_DIR}"
   build_wine_multiarc_arm64ec "${WINE_SRC_DIR}" "${BUILD_WINE_DIR}" "${STAGE_DIR}"

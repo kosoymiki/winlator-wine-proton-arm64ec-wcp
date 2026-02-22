@@ -82,8 +82,14 @@ fetch_wine_sources() {
 }
 
 build_wine() {
+  local make_vulkan_log
+
   ensure_sdl2_tooling
   export TARGET_HOST
+
+  wcp_ensure_configure_script "${WINE_SRC_DIR}"
+  make_vulkan_log="${OUT_DIR}/logs/make_vulkan.log"
+  wcp_try_bootstrap_winevulkan "${WINE_SRC_DIR}" "${make_vulkan_log}"
 
   rm -rf "${BUILD_WINE_DIR}" "${STAGE_DIR}"
   mkdir -p "${BUILD_WINE_DIR}" "${STAGE_DIR}"
