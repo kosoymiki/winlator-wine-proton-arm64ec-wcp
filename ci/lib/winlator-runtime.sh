@@ -124,8 +124,8 @@ winlator_write_glibc_wrapper() {
 #!/system/bin/sh
 set -eu
 
-bindir="\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")\" && pwd)"
-root="\$(CDPATH= cd -- \"\${bindir}/..\" && pwd)"
+bindir="\$(CDPATH= cd -- "\$(dirname -- "\$0")" && pwd)"
+root="\$(CDPATH= cd -- "\${bindir}/.." && pwd)"
 runtime="\${root}/lib/wine/wcp-glibc-runtime"
 loader="\${runtime}/ld-linux-aarch64.so.1"
 real="\${bindir}/${real_name}"
