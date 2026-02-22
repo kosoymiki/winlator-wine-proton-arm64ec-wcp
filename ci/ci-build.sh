@@ -27,6 +27,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${REQUIRE_PREFIX_PACK:=1}"
 : "${FEX_BUILD_TYPE:=Release}"
 : "${STRIP_STAGE:=1}"
+: "${WCP_ENABLE_SDL2_RUNTIME:=1}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -35,6 +36,16 @@ source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
+}
+
+require_bool_flag() {
+  local flag_name="$1" flag_value="$2"
+  case "${flag_value}" in
+    0|1) ;;
+    *)
+      fail "${flag_name} must be 0 or 1 (got: ${flag_value})"
+      ;;
+  esac
 }
 
 check_host_arch() {
@@ -69,6 +80,8 @@ fetch_wine_sources() {
 }
 
 build_wine() {
+  ensure_sdl2_tooling
+
   rm -rf "${BUILD_WINE_DIR}" "${STAGE_DIR}"
   mkdir -p "${BUILD_WINE_DIR}" "${STAGE_DIR}"
 
@@ -81,6 +94,7 @@ build_wine() {
 
   make -j"$(nproc)"
   make install DESTDIR="${STAGE_DIR}"
+  validate_sdl2_runtime_payload
   popd >/dev/null
 }
 
@@ -204,6 +218,31 @@ install_fex_dlls() {
       fail "FEX_SOURCE_MODE must be one of: auto, prebuilt, build"
       ;;
   esac
+}
+
+ensure_sdl2_tooling() {
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
+    return
+  fi
+
+  require_cmd pkg-config
+  pkg-config --exists sdl2 || fail "SDL2 development files are missing (pkg-config sdl2 failed)"
+}
+
+validate_sdl2_runtime_payload() {
+  local winebus_module
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" != "1" ]]; then
+    return
+  fi
+
+  winebus_module="${STAGE_DIR}/usr/lib/wine/aarch64-unix/winebus.sys.so"
+  [[ -f "${winebus_module}" ]] || fail "SDL2 runtime check failed: missing ${winebus_module}"
+
+  if ! readelf -d "${winebus_module}" | grep -Eiq 'NEEDED.*SDL2'; then
+    fail "SDL2 runtime check failed: winebus.sys.so is not linked against SDL2"
+  fi
+
+  log "SDL2 runtime check passed (winebus.sys.so links against SDL2)"
 }
 
 
@@ -360,6 +399,10 @@ validate_wcp_tree() {
     "winevulkan.so"
   )
 
+  if [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]]; then
+    required_unix_modules+=("winebus.sys.so")
+  fi
+
   local mod
   for mod in "${required_unix_modules[@]}"; do
     [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/${mod}" ]] || fail "Wine unix module missing: lib/wine/aarch64-unix/${mod}"
@@ -419,6 +462,9 @@ main() {
   fi
   require_cmd file
   require_cmd readelf
+  require_cmd pkg-config
+
+  require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
 
   check_host_arch
   ensure_llvm_mingw

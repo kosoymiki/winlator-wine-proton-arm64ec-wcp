@@ -46,6 +46,7 @@ jobs:
             libxkbcommon-dev \
             libpulse-dev libudev-dev \
             libgstreamer-plugins-base1.0-dev \
+            libsdl2-dev \
             libvulkan-dev
 
       - name: Cache llvm-mingw
@@ -60,6 +61,7 @@ jobs:
           LLVM_MINGW_TAG: ${{ inputs.llvm_mingw_tag }}
           WCP_NAME: ${{ inputs.wcp_name }}
           WCP_COMPRESS: ${{ inputs.compress }}
+          WCP_ENABLE_SDL2_RUNTIME: "1"
         run: |
           bash ci/ci-build.sh
 
