@@ -1,113 +1,176 @@
-# Winlator Proton ARM64EC WCP
+# winlator-wine-proton-arm64ec-wcp
 
-Recommended canonical project name: `winlator-proton-arm64ec-wcp`.
+Сборочная база для `.wcp` пакетов под Winlator:
 
-This repository builds Winlator-compatible `.wcp` packages for ARM64EC scenarios, with focus on Proton 10.
+- `Wine ARM64EC` пакет
+- `Proton 10 ARM64EC` пакет
 
-## RU: Обзор
+Репозиторий ориентирован на практическую задачу: получить **рабочие пакеты для Winlator на Android/ARM64**, где контейнеры запускают Windows-приложения через Wine/Proton с ARM64EC/WoW64-сценарием.
 
-Репозиторий содержит два направления:
+## 1. Что решает проект
 
-1. `Wine 11.1 ARM64EC` (legacy/auxiliary flow).
-2. `Proton 10 ARM64EC` (основной flow для Winlator bionic).
+Winlator строит runtime из нескольких слоёв:
 
-### Что важно сейчас
+1. Linux userspace в контейнере
+2. Wine runtime (unix+windows dll/so)
+3. Эмуляторный слой (`FEXCore` или `Box64`, в зависимости от пути запуска)
+4. Графический/DirectX слой (часто отдельными контент-пакетами)
 
-- Основная цель: стабильный `proton-10-arm64ec.wcp`.
-- Для ветки Proton CI не запускает параллельную сборку Wine 11.1.
-- Для Winlator bionic профиль сборки считает внешними пакетами:
-  - FEX
-  - DXVK
-  - VKD3D
-  - Vulkan-driver payload
+Этот репозиторий делает предсказуемую и воспроизводимую сборку именно слоя Wine/Proton в формате `WCP`.
 
-### Структура
+## 2. Как это работает в Winlator (коротко)
 
-- `ci/proton10/ci-build-proton10-wcp.sh` — основной Proton build+pack.
-- `ci/proton10/smoke-check-wcp.sh` — smoke checks готового WCP.
-- `docs/PROTON10_WCP.md` — подробности по Proton pipeline.
-- `docs/winlator-container-hang-debug.md` — triage зависания `Starting up...`.
-- `.github/workflows/ci-proton10-wcp.yml` — CI Proton.
-- `.github/workflows/release-proton10-wcp.yml` — tag release Proton.
-- `.github/workflows/ci-arm64ec-wine.yml` — Wine 11.1 pipeline (legacy/support).
-- `ci/maintenance/cleanup-branches.sh` — safe cleanup branch script (dry-run by default).
+### ARM64EC путь
 
-### Proton runtime policy (bionic)
+1. Winlator запускает wine-бинарь из контейнера
+2. Для WoW64 маршрута выбирается DLL-эмулятор (обычно через `HODLL`)
+3. При `FEXCore` ожидается `libwow64fex.dll`
+4. При `Box64` используется `wowbox64.dll`
+
+### Почему это важно
+
+Если контейнер с ARM64EC runtime настроен не на тот emulator path, можно получить вечный `Starting up...` без явного краша.
+
+## 3. Структура репозитория
+
+- `ci/ci-build.sh` — сборка Wine ARM64EC WCP
+- `ci/proton10/ci-build-proton10-wcp.sh` — сборка Proton 10 ARM64EC WCP
+- `ci/proton10/smoke-check-wcp.sh` — smoke-проверка готового Proton WCP
+- `ci/maintenance/cleanup-branches.sh` — безопасная очистка веток
+- `.github/workflows/ci-arm64ec-wine.yml` — основной CI Wine ARM64EC
+- `.github/workflows/ci-proton10-wcp.yml` — CI Proton 10 ARM64EC
+- `.github/workflows/release-proton10-wcp.yml` — tag-релиз Proton
+- `.github/workflows/ci-wine-11.1-wcp.yml` — ручной legacy workflow Wine 11.1
+- `docs/winlator-container-hang-debug.md` — runbook по зависаниям контейнера
+- `docs/PROTON10_WCP.md` — детали Proton pipeline
+
+## 4. Политика пакетов (текущая)
+
+### Wine ARM64EC
+
+- Сборка проверяет SDL2 runtime path (`winebus.sys.so`)
+- В CI принудительно включен `WCP_ENABLE_SDL2_RUNTIME=1`
+
+### Proton 10 ARM64EC
+
+Профиль: `winlator-bionic`
 
 - `WCP_TARGET_RUNTIME=winlator-bionic`
 - `WCP_PRUNE_EXTERNAL_COMPONENTS=1`
 - `WCP_ENABLE_SDL2_RUNTIME=1`
 
-Pipeline:
+Это означает:
 
-1. Проверяет SDL2 toolchain/runtime.
-2. При упаковке удаляет внешние payload-компоненты (FEX/DXVK/VKD3D/Vulkan layers).
-3. Пишет diagnostics в `out/logs/runtime-report.*`.
+1. SDL2 в runtime обязателен
+2. Host-managed payload (FEX/DXVK/VKD3D/Vulkan layers) не дублируется в WCP
+3. Пишутся diagnostics:
+   - `out/logs/runtime-report.txt`
+   - `out/logs/runtime-report.json`
+   - `out/logs/pruned-components.txt`
 
-### Локальный запуск Proton
+## 5. CI/CD и релизы
+
+### Автоматические ветки/события
+
+- `ci-arm64ec-wine.yml` запускается на `push main` и `pull_request`
+- `ci-proton10-wcp.yml` запускается на `push feature/proton10-wcp-valvebase` и `workflow_dispatch`
+
+### Unified prerelease
+
+Оба пайплайна могут публиковать артефакты в `wcp-latest` (GitHub prerelease), без удаления существующих артефактов при апдейте.
+
+### Что обычно попадает в релиз
+
+- `wine-11.1-arm64ec.wcp`
+- `proton-10-arm64ec.wcp`
+- checksums/diagnostics (в зависимости от workflow)
+
+## 6. Локальный запуск
+
+### Wine ARM64EC
+
+```bash
+LLVM_MINGW_TAG=20260210 \
+WCP_NAME=wine-11.1-arm64ec \
+WCP_COMPRESS=xz \
+WCP_ENABLE_SDL2_RUNTIME=1 \
+bash ci/ci-build.sh
+```
+
+### Proton 10 ARM64EC
 
 ```bash
 LLVM_MINGW_TAG=20260210 \
 PROTON_GE_REF=GE-Proton10-32 \
 WCP_COMPRESS=xz \
+WCP_NAME=proton-10-arm64ec \
 WCP_TARGET_RUNTIME=winlator-bionic \
 WCP_PRUNE_EXTERNAL_COMPONENTS=1 \
 WCP_ENABLE_SDL2_RUNTIME=1 \
 bash ci/proton10/ci-build-proton10-wcp.sh
 ```
 
-### Branch cleanup (safe mode)
+## 7. Контракт по переменным окружения
 
-Dry-run:
+### Общие
+
+- `LLVM_MINGW_TAG` — версия llvm-mingw
+- `WCP_NAME` — имя итогового пакета
+- `WCP_COMPRESS` — `xz`/`zstd` (или `xz`/`zst` в proton script)
+
+### Wine
+
+- `WINE_REF` — ref в `AndreRH/wine`
+- `WCP_ENABLE_SDL2_RUNTIME` — `1`/`0`
+
+### Proton
+
+- `VALVE_WINE_REF`
+- `PROTON_GE_REF`
+- `WCP_TARGET_RUNTIME`
+- `WCP_PRUNE_EXTERNAL_COMPONENTS`
+- `WCP_ENABLE_SDL2_RUNTIME`
+
+## 8. Диагностика и troubleshooting
+
+### Симптом: контейнер висит на `Starting up...`
+
+Порядок проверки:
+
+1. Wine build в контейнере действительно ARM64EC
+2. Для ARM64EC выбран корректный emulator path (`FEXCore` при ожидаемом FEX-маршруте)
+3. Снять лог-пакет по `docs/winlator-container-hang-debug.md`
+4. Сверить `HODLL` путь в логах старта
+
+### Симптом: CI собрался, но runtime нестабилен
+
+1. Проверить `runtime-report.txt/json`
+2. Проверить что не удалены критичные runtime-файлы при pruning
+3. Проверить совместимость Winlator version / container presets
+
+## 9. Управление ветками
+
+Скрипт безопасной очистки:
 
 ```bash
 bash ci/maintenance/cleanup-branches.sh
 ```
 
-Apply local cleanup:
+Применить очистку:
 
 ```bash
 bash ci/maintenance/cleanup-branches.sh --apply
 ```
 
-Apply local + remote cleanup (merged branches only):
+С удалением merged remote веток:
 
 ```bash
 bash ci/maintenance/cleanup-branches.sh --apply --remote
 ```
 
-## EN: Overview
+## 10. Практические принципы проекта
 
-This repo builds ARM64EC WCP packages for Winlator, with Proton 10 as the primary target.
-
-### Current direction
-
-- Proton 10 ARM64EC is the primary production track.
-- Wine 11.1 flow remains as legacy/support.
-- Proton branch avoids parallel Wine 11.1 CI builds.
-
-### Runtime packaging policy
-
-For Winlator bionic runtime profile:
-
-- external components are expected from host-installed WCPs:
-  - FEX
-  - DXVK
-  - VKD3D
-  - Vulkan driver/layer payloads
-- package keeps Wine/Proton core runtime only.
-- SDL2 linkage is treated as mandatory and validated during build.
-
-### CI/Release behavior
-
-- `ci-proton10-wcp.yml` builds Proton artifacts and attaches them to unified pre-release `wcp-latest`.
-- `ci-arm64ec-wine.yml` also attaches artifacts to `wcp-latest` (without removing existing artifacts).
-- `release-proton10-wcp.yml` produces tag-based Proton releases (`proton10-wcp-*`).
-
-### Troubleshooting
-
-If Winlator hangs on `Starting up...`:
-
-1. Verify container uses ARM64EC Wine build.
-2. Ensure emulator selection is `FEXCore` for ARM64EC container path.
-3. Collect logs with `docs/winlator-container-hang-debug.md`.
+1. Воспроизводимость важнее «магии»
+2. Любая сборка должна оставлять читаемую диагностику
+3. Runtime-контракт с Winlator должен быть явным и проверяемым
+4. Никаких скрытых зависимостей от локальной машины
