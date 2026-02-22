@@ -385,7 +385,7 @@ smoke_check_wcp() {
 
   list_file="$(mktemp)"
   normalized_file="$(mktemp)"
-  trap 'rm -f "${list_file}" "${normalized_file}"' RETURN
+  trap 'rm -f "${list_file:-}" "${normalized_file:-}"' RETURN
 
   case "${wcp_compress}" in
     xz)
