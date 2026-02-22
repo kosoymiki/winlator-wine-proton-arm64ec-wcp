@@ -28,6 +28,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${FEX_BUILD_TYPE:=Release}"
 : "${STRIP_STAGE:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
+: "${WCP_TARGET_RUNTIME:=winlator-bionic}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
