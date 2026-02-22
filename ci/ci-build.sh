@@ -33,6 +33,7 @@ log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
 
 source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
+source "${ROOT_DIR}/ci/lib/winlator-runtime.sh"
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
@@ -265,6 +266,7 @@ compose_wcp_tree() {
   rm -rf "${WCP_ROOT}"
   mkdir -p "${WCP_ROOT}"
   rsync -a "${STAGE_DIR}/usr/" "${WCP_ROOT}/"
+  winlator_wrap_glibc_launchers
 
   if [[ -f "${WCP_ROOT}/bin/wine" && ! -e "${WCP_ROOT}/bin/wine64" ]]; then
     ln -s wine "${WCP_ROOT}/bin/wine64"
@@ -308,7 +310,11 @@ WINETOOLS
   mkdir -p "${WCP_ROOT}/share/winetools"
   {
     echo "== ELF (Unix launchers) =="
-    for f in "${WCP_ROOT}/bin/wine" "${WCP_ROOT}/bin/wineserver"; do
+    for f in \
+      "${WCP_ROOT}/bin/wine" \
+      "${WCP_ROOT}/bin/wineserver" \
+      "${WCP_ROOT}/bin/wine.glibc-real" \
+      "${WCP_ROOT}/bin/wineserver.glibc-real"; do
       [[ -e "$f" ]] || continue
       echo "--- $f"
       file "$f" || true
@@ -412,6 +418,7 @@ validate_wcp_tree() {
     [[ -f "${WCP_ROOT}/prefixPack.txz" ]] || fail "WCP layout is incomplete, missing: prefixPack.txz"
   fi
 
+  winlator_validate_launchers
   log "WCP layout validation passed"
 }
 

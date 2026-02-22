@@ -39,6 +39,7 @@ export CACHE_DIR
 export LLVM_MINGW_TAG
 
 source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
+source "${ROOT_DIR}/ci/lib/winlator-runtime.sh"
 
 log() { printf '[proton10] %s\n' "$*"; }
 fail() { printf '[proton10][error] %s\n' "$*" >&2; exit 1; }
@@ -329,6 +330,7 @@ compose_wcp_tree() {
   cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
 
   prune_external_runtime_components
+  winlator_wrap_glibc_launchers
 
   mkdir -p "${WCP_ROOT}/winetools" "${WCP_ROOT}/share/winetools"
   cat > "${WCP_ROOT}/winetools/manifest.txt" <<'MANIFEST'
@@ -343,7 +345,11 @@ MANIFEST
 
   {
     echo "== ELF (Unix launchers) =="
-    for f in "${WCP_ROOT}/bin/wine" "${WCP_ROOT}/bin/wineserver"; do
+    for f in \
+      "${WCP_ROOT}/bin/wine" \
+      "${WCP_ROOT}/bin/wineserver" \
+      "${WCP_ROOT}/bin/wine.glibc-real" \
+      "${WCP_ROOT}/bin/wineserver.glibc-real"; do
       [[ -e "${f}" ]] || continue
       echo "--- ${f}"
       file "${f}" || true
@@ -384,6 +390,7 @@ EOF_PROFILE
     [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/winebus.sys.so" ]] || fail "Missing lib/wine/aarch64-unix/winebus.sys.so in WCP root"
   fi
 
+  winlator_validate_launchers
   emit_runtime_diagnostics
 
   out_wcp="${OUT_DIR}/${WCP_NAME}.wcp"
