@@ -1,6 +1,6 @@
-# Proton 10 ARM64EC WCP
+# Proton GE10 ARM64EC WCP
 
-Сборка `proton-10-arm64ec.wcp` для Winlator (bionic runtime), на базе:
+Сборка `proton-ge10-arm64ec.wcp` для Winlator (bionic runtime), на базе:
 
 - Valve Wine pinned commit.
 - ARM64EC cherry-pick серии.
@@ -28,19 +28,17 @@ Pipeline ориентирован на Winlator bionic профиль:
 - `WCP_COMPRESS` (`xz` или `zst`, default `xz`)
 - `PROTON_GE_REF` (default `GE-Proton10-32`)
 - `TARGET_HOST` (default `aarch64-linux-gnu`)
-- `WCP_NAME` (default `proton-10-arm64ec`)
+- `WCP_NAME` (default `proton-ge10-arm64ec`)
 - `WCP_TARGET_RUNTIME` (default `winlator-bionic`)
 - `WCP_PRUNE_EXTERNAL_COMPONENTS` (`1`/`0`, default `1`)
 - `WCP_ENABLE_SDL2_RUNTIME` (`1`/`0`, default `1`)
 
 ## Артефакты
 
-- `out/proton-10-arm64ec.wcp`
-- `out/SHA256SUMS`
-- `out/patchlog.txt`
-- `out/logs/runtime-report.txt`
-- `out/logs/runtime-report.json`
-- `out/logs/pruned-components.txt`
+- `out/proton-ge10/proton-ge10-arm64ec.wcp`
+- `out/proton-ge10/SHA256SUMS`
+- `out/proton-ge10/patchlog.txt`
+- `out/proton-ge10/logs/*`
 - `docs/ARM64EC_PATCH_REVIEW.md`
 
 ## Локальный запуск
@@ -50,10 +48,12 @@ LLVM_MINGW_TAG=20260210 \
 WCP_COMPRESS=xz \
 PROTON_GE_REF=GE-Proton10-32 \
 TARGET_HOST=aarch64-linux-gnu \
+WCP_NAME=proton-ge10-arm64ec \
+WCP_OUTPUT_DIR=out/proton-ge10 \
 WCP_TARGET_RUNTIME=winlator-bionic \
 WCP_PRUNE_EXTERNAL_COMPONENTS=1 \
 WCP_ENABLE_SDL2_RUNTIME=1 \
-bash ci/proton10/ci-build-proton10-wcp.sh
+bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 ```
 
 ## Диагностика container startup

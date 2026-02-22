@@ -1,4 +1,4 @@
-name: build-wine-11.1-wcp
+name: Legacy Build Wine 11.1 ARM64EC (WCP)
 
 on:
   workflow_dispatch:
@@ -14,11 +14,11 @@ on:
       wcp_name:
         description: "Имя итогового пакета без расширения"
         required: true
-        default: "Wine-11.1-arm64ec"
+        default: "wine-11.1-arm64ec"
       compress:
-        description: "xz или zstd"
+        description: "xz или zst"
         required: true
-        default: "zstd"
+        default: "xz"
 
 permissions:
   contents: write
@@ -61,6 +61,8 @@ jobs:
           LLVM_MINGW_TAG: ${{ inputs.llvm_mingw_tag }}
           WCP_NAME: ${{ inputs.wcp_name }}
           WCP_COMPRESS: ${{ inputs.compress }}
+          WCP_OUTPUT_DIR: ${{ github.workspace }}/out/wine
+          TARGET_HOST: aarch64-linux-gnu
           WCP_ENABLE_SDL2_RUNTIME: "1"
         run: |
           bash ci/ci-build.sh
@@ -69,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.wcp_name }}
-          path: out/*.wcp
+          path: out/wine/${{ inputs.wcp_name }}.wcp
           retention-days: 14
 
       - name: Prepare release notes
@@ -88,7 +90,7 @@ jobs:
           name: WCP Latest Build
           allowUpdates: true
           prerelease: true
-          artifacts: out/*.wcp
+          artifacts: out/wine/${{ inputs.wcp_name }}.wcp,out/wine/SHA256SUMS
           artifactErrorsFailBuild: true
           removeArtifacts: true
           bodyFile: RELEASE_NOTES.md

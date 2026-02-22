@@ -1,19 +1,29 @@
-name: Build Wine ARM64EC (WCP)
+name: Build Wine 11.1 ARM64EC (WCP)
 
 on:
   push:
     branches: ["main"]
-  pull_request:
+    paths:
+      - "build.sh"
+      - "ci/ci-build.sh"
+      - "ci/lib/**"
+      - ".github/workflows/ci-arm64ec-wine.yml"
+      - "docs/**"
+      - "prefixPack.txz"
   workflow_dispatch:
     inputs:
-      wcp_name:
-        description: "WCP artifact name (without .wcp)"
+      wine_ref:
+        description: "Git ref in AndreRH/wine"
         required: false
-        default: "wine-11.1-arm64ec"
+        default: "wine-11.1"
       llvm_mingw_ver:
         description: "llvm-mingw version tag"
         required: false
         default: "20260210"
+      compress:
+        description: "Compression: xz or zst"
+        required: false
+        default: "xz"
 
 concurrency:
   group: wcp-${{ github.workflow }}-${{ github.ref }}
@@ -23,29 +33,23 @@ permissions:
   contents: write
 
 env:
-  WCP_NAME: ${{ github.event.inputs.wcp_name || 'wine-11.1-arm64ec' }}
+  WCP_NAME: wine-11.1-arm64ec
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/out/wine
+  WINE_REF: ${{ github.event.inputs.wine_ref || 'wine-11.1' }}
   LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
-  WCP_OUTPUT_DIR: ${{ github.workspace }}/dist
+  WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
+  TARGET_HOST: aarch64-linux-gnu
   WCP_ENABLE_SDL2_RUNTIME: "1"
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || github.head_ref != 'feature/proton10-wcp-valvebase'
-    name: Build WCP (ARM64EC)
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
 
-    defaults:
-      run:
-        shell: bash
-
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 1
-          persist-credentials: false
+        uses: actions/checkout@v4
 
       - name: Bootstrap packages (Ubuntu)
         run: |
@@ -70,38 +74,44 @@ jobs:
           mkdir -p "${WCP_OUTPUT_DIR}" "${TOOLCHAIN_DIR}"
 
       - name: Cache llvm-mingw toolchain
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@v4
         with:
           path: ${{ env.TOOLCHAIN_DIR }}
           key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
 
-      - name: Build
+      - name: Build Wine 11.1 ARM64EC WCP
         run: |
           set -euxo pipefail
           chmod +x build.sh
           ./build.sh
 
-      - name: Verify artifact exists
+      - name: Verify outputs
         run: |
           set -euxo pipefail
           ls -lah "${WCP_OUTPUT_DIR}"
           test -f "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp"
+          test -f "${WCP_OUTPUT_DIR}/SHA256SUMS"
 
       - name: Upload WCP artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.WCP_NAME }}
-          path: ${{ env.WCP_OUTPUT_DIR }}/${{ env.WCP_NAME }}.wcp
+          name: wine-11.1-arm64ec
+          path: |
+            out/wine/wine-11.1-arm64ec.wcp
+            out/wine/SHA256SUMS
+            out/wine/logs/**
           if-no-files-found: error
           retention-days: 14
 
       - name: Prepare release notes
+        if: github.event_name != 'pull_request'
         run: |
           set -euxo pipefail
-          cat > RELEASE_NOTES.md <<EOF
-          Automated WCP build from ${{ github.sha }}.
-          Workflow run: ${{ github.run_id }}.
-          EOF
+          cat > RELEASE_NOTES.md <<EOF_NOTES
+          Wine 11.1 ARM64EC WCP
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          EOF_NOTES
 
       - name: Publish to GitHub Release
         if: github.event_name != 'pull_request'
@@ -111,7 +121,7 @@ jobs:
           name: WCP Latest Build
           allowUpdates: true
           prerelease: true
-          artifacts: ${{ env.WCP_OUTPUT_DIR }}/${{ env.WCP_NAME }}.wcp
-          artifactErrorsFailBuild: true
           removeArtifacts: false
+          artifacts: out/wine/wine-11.1-arm64ec.wcp,out/wine/SHA256SUMS
+          artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

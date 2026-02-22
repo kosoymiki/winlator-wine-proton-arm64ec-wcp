@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT_DIR="${WCP_OUTPUT_DIR:-${ROOT_DIR}/out}"
+OUT_DIR="${WCP_OUTPUT_DIR:-${ROOT_DIR}/out/wine}"
 CACHE_DIR="${ROOT_DIR}/.cache"
 TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 LLVM_MINGW_DIR="${TOOLCHAIN_DIR}"
@@ -17,11 +17,12 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WINE_REF:=arm64ec}"
 : "${HANGOVER_REPO:=https://github.com/AndreRH/hangover.git}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
-: "${WCP_NAME:=Wine-11.1-arm64ec}"
+: "${WCP_NAME:=wine-11.1-arm64ec}"
 : "${WCP_COMPRESS:=xz}"
 : "${WCP_VERSION_NAME:=11.1-arm64ec}"
 : "${WCP_VERSION_CODE:=0}"
 : "${WCP_DESCRIPTION:=Wine 11.1 arm64ec for newer cmod versions}"
+: "${TARGET_HOST:=aarch64-linux-gnu}"
 : "${FEX_SOURCE_MODE:=auto}"
 : "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
 : "${REQUIRE_PREFIX_PACK:=1}"
@@ -33,8 +34,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
 
-source "${ROOT_DIR}/ci/lib/llvm-mingw.sh"
-source "${ROOT_DIR}/ci/lib/winlator-runtime.sh"
+source "${ROOT_DIR}/ci/lib/wcp_common.sh"
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
@@ -83,6 +83,7 @@ fetch_wine_sources() {
 
 build_wine() {
   ensure_sdl2_tooling
+  export TARGET_HOST
 
   rm -rf "${BUILD_WINE_DIR}" "${STAGE_DIR}"
   mkdir -p "${BUILD_WINE_DIR}" "${STAGE_DIR}"
@@ -93,6 +94,10 @@ build_wine() {
     --disable-tests \
     --with-mingw=clang \
     --enable-archs=arm64ec,aarch64,i386
+
+  if [[ -f config.log ]] && ! grep -Eq 'arm64ec' config.log; then
+    fail "configure did not include ARM64EC target support"
+  fi
 
   make -j"$(nproc)"
   make install DESTDIR="${STAGE_DIR}"
@@ -452,11 +457,11 @@ pack_wcp() {
     xz)
       tar -cJf "${out_wcp}" .
       ;;
-    zstd)
-      tar -cf - . | zstd -T0 -19 -o "${out_wcp}"
+    zst|zstd)
+      tar --zstd -cf "${out_wcp}" .
       ;;
     *)
-      fail "WCP_COMPRESS must be xz or zstd"
+      fail "WCP_COMPRESS must be xz or zst"
       ;;
   esac
   popd >/dev/null
@@ -465,7 +470,7 @@ pack_wcp() {
     xz)
       tar -tJf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid xz tar archive"
       ;;
-    zstd)
+    zst|zstd)
       tar --zstd -tf "${out_wcp}" >/dev/null || fail "Packed WCP is not a valid zstd tar archive"
       ;;
   esac
@@ -484,7 +489,7 @@ main() {
   require_cmd make
   require_cmd tar
   require_cmd rsync
-  if [[ "${WCP_COMPRESS}" == "zstd" ]]; then
+  if [[ "${WCP_COMPRESS}" == "zstd" || "${WCP_COMPRESS}" == "zst" ]]; then
     require_cmd zstd
   fi
   require_cmd file
@@ -500,6 +505,8 @@ main() {
   export PATH="${LLVM_MINGW_DIR}/bin:${PATH}"
   log "clang: $(command -v clang)"
   log "ld.lld: $(command -v ld.lld || true)"
+  clang --version | sed -n '1,2p'
+  ld.lld --version | sed -n '1,2p'
 
   fetch_wine_sources
   build_wine
@@ -508,6 +515,7 @@ main() {
   compose_wcp_tree
   validate_wcp_tree
   pack_wcp
+  smoke_check_wcp "${OUT_DIR}/${WCP_NAME}.wcp" "${WCP_COMPRESS}"
 }
 
 main "$@"

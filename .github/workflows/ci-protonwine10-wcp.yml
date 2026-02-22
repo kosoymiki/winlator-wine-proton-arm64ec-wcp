@@ -1,0 +1,135 @@
+name: Build ProtonWine10 GameNative ARM64EC (WCP)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ci/protonwine10/**"
+      - "ci/lib/**"
+      - ".github/workflows/ci-protonwine10-wcp.yml"
+      - "docs/**"
+      - "prefixPack.txz"
+  workflow_dispatch:
+    inputs:
+      protonwine_ref:
+        description: "Pinned GameNative/proton-wine ref"
+        required: false
+        default: "e7dbb4a10b85c1e8d505068d36249127d8b7fe79"
+      android_support_ref:
+        description: "Pinned sidaodomorro/proton-wine ref"
+        required: false
+        default: "47e79a66652afae9fd0e521b03736d1e6536ac5a"
+      llvm_mingw_ver:
+        description: "llvm-mingw version tag"
+        required: false
+        default: "20260210"
+      compress:
+        description: "Compression format: xz or zst"
+        required: false
+        default: "xz"
+
+concurrency:
+  group: wcp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  CACHE_DIR: ${{ github.workspace }}/.cache
+  TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/out/protonwine10
+  PROTONWINE_REF: ${{ github.event.inputs.protonwine_ref || 'e7dbb4a10b85c1e8d505068d36249127d8b7fe79' }}
+  ANDROID_SUPPORT_REF: ${{ github.event.inputs.android_support_ref || '47e79a66652afae9fd0e521b03736d1e6536ac5a' }}
+  LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
+  WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
+  WCP_NAME: protonwine10-gamenative-arm64ec
+  TARGET_HOST: aarch64-linux-gnu
+  WCP_TARGET_RUNTIME: winlator-bionic
+  WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
+  WCP_ENABLE_SDL2_RUNTIME: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates curl git python3 tar xz-utils zstd rsync file binutils \
+            build-essential autoconf automake libtool pkg-config bison flex gettext \
+            cmake ninja-build \
+            libunwind-dev libxml2-dev zlib1g-dev \
+            libfreetype-dev libjpeg-dev libpng-dev libtiff-dev \
+            libx11-dev libxext-dev libxrandr-dev libxi-dev \
+            libxcursor-dev libxinerama-dev libxcomposite-dev libxcb1-dev \
+            libxkbcommon-dev \
+            libpulse-dev libudev-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libsdl2-dev \
+            libvulkan-dev
+
+      - name: Cache llvm-mingw toolchain
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TOOLCHAIN_DIR }}
+          key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
+
+      - name: Build ProtonWine10 GameNative ARM64EC WCP
+        run: |
+          set -euxo pipefail
+          bash ci/protonwine10/ci-build-protonwine10-wcp.sh
+
+      - name: Upload WCP artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: protonwine10-gamenative-arm64ec
+          path: |
+            out/protonwine10/protonwine10-gamenative-arm64ec.wcp
+            out/protonwine10/SHA256SUMS
+            docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: protonwine10-diagnostics
+          path: |
+            out/protonwine10/logs/**
+            out/protonwine10/android-support-series.txt
+            docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Prepare release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF_NOTES
+          ProtonWine10 GameNative ARM64EC WCP
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          EOF_NOTES
+
+      - name: Attach ProtonWine10 artifact to release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: wcp-latest
+          name: WCP Latest Build
+          allowUpdates: true
+          prerelease: true
+          removeArtifacts: false
+          artifacts: out/protonwine10/protonwine10-gamenative-arm64ec.wcp,out/protonwine10/SHA256SUMS,docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md
+          artifactErrorsFailBuild: true
+          bodyFile: RELEASE_NOTES.md

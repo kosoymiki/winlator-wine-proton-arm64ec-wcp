@@ -1,6 +1,15 @@
-name: Legacy Proton GE10 ARM64EC (Compat)
+name: Build Proton GE10 ARM64EC (WCP)
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ci/proton-ge10/**"
+      - "ci/proton10/**"
+      - "ci/lib/**"
+      - ".github/workflows/ci-proton-ge10-wcp.yml"
+      - "docs/**"
+      - "prefixPack.txz"
   workflow_dispatch:
     inputs:
       proton_ge_ref:
@@ -16,6 +25,10 @@ on:
         required: false
         default: "xz"
 
+concurrency:
+  group: wcp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -23,6 +36,7 @@ env:
   CACHE_DIR: ${{ github.workspace }}/.cache
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
   WCP_OUTPUT_DIR: ${{ github.workspace }}/out/proton-ge10
+  VALVE_WINE_REF: 986bda11d3e569813ec0f86e56ef94d7c384da04
   PROTON_GE_REF: ${{ github.event.inputs.proton_ge_ref || 'GE-Proton10-32' }}
   LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
@@ -65,18 +79,56 @@ jobs:
           path: ${{ env.TOOLCHAIN_DIR }}
           key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
 
-      - name: Build Proton GE10 ARM64EC WCP (legacy entrypoint)
+      - name: Build Proton GE10 ARM64EC WCP
         run: |
           set -euxo pipefail
-          bash ci/proton10/ci-build-proton10-wcp.sh
+          bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 
       - name: Upload WCP artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: proton-ge10-arm64ec-legacy
+          name: proton-ge10-arm64ec
           path: |
             out/proton-ge10/proton-ge10-arm64ec.wcp
             out/proton-ge10/SHA256SUMS
+            out/proton-ge10/patchlog.txt
+            docs/ARM64EC_PATCH_REVIEW.md
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proton-ge10-diagnostics
+          path: |
+            out/proton-ge10/logs/**
+            out/proton-ge10/patchlog.txt
+            out/proton-ge10/arm64ec-series.txt
+            docs/ARM64EC_PATCH_REVIEW.md
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Prepare release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF_NOTES
+          Proton GE10 ARM64EC WCP
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          EOF_NOTES
+
+      - name: Attach Proton GE10 artifact to release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: wcp-latest
+          name: WCP Latest Build
+          allowUpdates: true
+          prerelease: true
+          removeArtifacts: false
+          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS,out/proton-ge10/patchlog.txt
+          artifactErrorsFailBuild: true
+          bodyFile: RELEASE_NOTES.md

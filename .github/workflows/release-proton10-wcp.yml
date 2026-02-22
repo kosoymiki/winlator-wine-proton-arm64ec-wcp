@@ -1,4 +1,4 @@
-name: Release Proton 10 ARM64EC WCP
+name: Release Proton GE10 ARM64EC WCP
 
 on:
   push:
@@ -10,12 +10,12 @@ permissions:
 env:
   CACHE_DIR: ${{ github.workspace }}/.cache
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
-  WCP_OUTPUT_DIR: ${{ github.workspace }}/out
+  WCP_OUTPUT_DIR: ${{ github.workspace }}/out/proton-ge10
   VALVE_WINE_REF: 986bda11d3e569813ec0f86e56ef94d7c384da04
   PROTON_GE_REF: GE-Proton10-32
   LLVM_MINGW_VER: "20260210"
   WCP_COMPRESS: xz
-  WCP_NAME: proton-10-arm64ec
+  WCP_NAME: proton-ge10-arm64ec
   TARGET_HOST: aarch64-linux-gnu
   WCP_TARGET_RUNTIME: winlator-bionic
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
@@ -54,7 +54,7 @@ jobs:
           path: ${{ env.TOOLCHAIN_DIR }}
           key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
 
-      - name: Build Proton 10 ARM64EC WCP
+      - name: Build Proton GE10 ARM64EC WCP
         run: |
           set -euxo pipefail
           bash ci/proton10/ci-build-proton10-wcp.sh
@@ -63,7 +63,7 @@ jobs:
         run: |
           set -euxo pipefail
           cat > RELEASE_NOTES.md <<EOF
-          Proton 10 ARM64EC WCP build.
+          Proton GE10 ARM64EC WCP build.
           Tag: ${{ github.ref_name }}
           Commit: ${{ github.sha }}
           Workflow run: ${{ github.run_id }}
@@ -73,9 +73,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: Proton 10 ARM64EC WCP (${{ github.ref_name }})
+          name: Proton GE10 ARM64EC WCP (${{ github.ref_name }})
           allowUpdates: true
           prerelease: false
-          artifacts: out/proton-10-arm64ec.wcp,out/SHA256SUMS,out/patchlog.txt,docs/ARM64EC_PATCH_REVIEW.md,out/logs/runtime-report.txt,out/logs/runtime-report.json
+          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS,out/proton-ge10/patchlog.txt,docs/ARM64EC_PATCH_REVIEW.md
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

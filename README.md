@@ -1,191 +1,132 @@
 # winlator-wine-proton-arm64ec-wcp
 
-Сборочная база для `.wcp` пакетов под Winlator:
+Репозиторий собирает **три независимых ARM64EC WCP-пакета** для Winlator:
 
-- `Wine ARM64EC` пакет
-- `Proton 10 ARM64EC` пакет
+1. `wine-11.1-arm64ec`
+2. `proton-ge10-arm64ec`
+3. `protonwine10-gamenative-arm64ec`
 
-Репозиторий ориентирован на практическую задачу: получить **рабочие пакеты для Winlator на Android/ARM64**, где контейнеры запускают Windows-приложения через Wine/Proton с ARM64EC/WoW64-сценарием.
+Все пайплайны ориентированы на Android/Winlator runtime и строго держат мульти-арх слой Wine:
 
-## 1. Что решает проект
+- `--with-mingw=clang`
+- `--enable-archs=arm64ec,aarch64,i386`
 
-Winlator строит runtime из нескольких слоёв:
+Если ARM64EC слой не собрался — сборка должна падать.
 
-1. Linux userspace в контейнере
-2. Wine runtime (unix+windows dll/so)
-3. Эмуляторный слой (`FEXCore` или `Box64`, в зависимости от пути запуска)
-4. Графический/DirectX слой (часто отдельными контент-пакетами)
+## Пакеты
 
-Этот репозиторий делает предсказуемую и воспроизводимую сборку именно слоя Wine/Proton в формате `WCP`.
+| Пакет | WCP_NAME | OUT_DIR | Build Script |
+|---|---|---|---|
+| Wine 11.1 ARM64EC | `wine-11.1-arm64ec` | `out/wine` | `ci/ci-build.sh` |
+| Proton GE10 ARM64EC | `proton-ge10-arm64ec` | `out/proton-ge10` | `ci/proton-ge10/ci-build-proton-ge10-wcp.sh` |
+| ProtonWine10 GameNative ARM64EC | `protonwine10-gamenative-arm64ec` | `out/protonwine10` | `ci/protonwine10/ci-build-protonwine10-wcp.sh` |
 
-## 2. Как это работает в Winlator (коротко)
+## Ключевые требования WCP
 
-### ARM64EC путь
+- Формат: `.wcp` (tar-архив)
+- Компрессия: `xz` или `zst` (`WCP_COMPRESS`, default `xz`)
+- В корне WCP обязательно:
+  - `prefixPack.txz`
+  - `profile.json`
+- Обязательные слои внутри `lib/wine/`:
+  - `aarch64-unix/`
+  - `aarch64-windows/`
+  - `i386-windows/`
+- Для Android/bionic профиля включён wrapper glibc-launcher через `ci/lib/winlator-runtime.sh`.
 
-1. Winlator запускает wine-бинарь из контейнера
-2. Для WoW64 маршрута выбирается DLL-эмулятор (обычно через `HODLL`)
-3. При `FEXCore` ожидается `libwow64fex.dll`
-4. При `Box64` используется `wowbox64.dll`
+## Общие переменные окружения
 
-### Почему это важно
+- `LLVM_MINGW_TAG` (default `20260210`)
+- `TARGET_HOST` (default `aarch64-linux-gnu`)
+- `WCP_COMPRESS` (`xz`/`zst`)
+- `WCP_TARGET_RUNTIME` (обычно `winlator-bionic`)
 
-Если контейнер с ARM64EC runtime настроен не на тот emulator path, можно получить вечный `Starting up...` без явного краша.
+## Локальный запуск
 
-## 3. Структура репозитория
-
-- `ci/ci-build.sh` — сборка Wine ARM64EC WCP
-- `ci/proton10/ci-build-proton10-wcp.sh` — сборка Proton 10 ARM64EC WCP
-- `ci/proton10/smoke-check-wcp.sh` — smoke-проверка готового Proton WCP
-- `ci/maintenance/cleanup-branches.sh` — безопасная очистка веток
-- `.github/workflows/ci-arm64ec-wine.yml` — основной CI Wine ARM64EC
-- `.github/workflows/ci-proton10-wcp.yml` — CI Proton 10 ARM64EC
-- `.github/workflows/release-proton10-wcp.yml` — tag-релиз Proton
-- `.github/workflows/ci-wine-11.1-wcp.yml` — ручной legacy workflow Wine 11.1
-- `docs/winlator-container-hang-debug.md` — runbook по зависаниям контейнера
-- `docs/PROTON10_WCP.md` — детали Proton pipeline
-
-## 4. Политика пакетов (текущая)
-
-### Wine ARM64EC
-
-- Сборка проверяет SDL2 runtime path (`winebus.so`, с fallback на `winebus.sys.so`)
-- В CI принудительно включен `WCP_ENABLE_SDL2_RUNTIME=1`
-- Для `winlator-bionic` glibc-launcher (`/lib/ld-linux-aarch64.so.1`) автоматически оборачивается в Android-совместимый wrapper (`#!/system/bin/sh`) и получает bundled glibc-runtime.
-
-### Proton 10 ARM64EC
-
-Профиль: `winlator-bionic`
-
-- `WCP_TARGET_RUNTIME=winlator-bionic`
-- `WCP_PRUNE_EXTERNAL_COMPONENTS=1`
-- `WCP_ENABLE_SDL2_RUNTIME=1`
-
-Это означает:
-
-1. SDL2 в runtime обязателен
-2. Host-managed payload (FEX/DXVK/VKD3D/Vulkan layers) не дублируется в WCP
-3. Пишутся diagnostics:
-   - `out/logs/runtime-report.txt`
-   - `out/logs/runtime-report.json`
-   - `out/logs/pruned-components.txt`
-
-## 5. CI/CD и релизы
-
-### Автоматические ветки/события
-
-- `ci-arm64ec-wine.yml` запускается на `push main` и `pull_request`
-- `ci-proton10-wcp.yml` запускается на `push feature/proton10-wcp-valvebase` и `workflow_dispatch`
-
-### Unified prerelease
-
-Оба пайплайна могут публиковать артефакты в `wcp-latest` (GitHub prerelease), без удаления существующих артефактов при апдейте.
-
-### Что обычно попадает в релиз
-
-- `wine-11.1-arm64ec.wcp`
-- `proton-10-arm64ec.wcp`
-- checksums/diagnostics (в зависимости от workflow)
-
-## 6. Локальный запуск
-
-### Wine ARM64EC
+### Wine 11.1 ARM64EC
 
 ```bash
 LLVM_MINGW_TAG=20260210 \
+TARGET_HOST=aarch64-linux-gnu \
 WCP_NAME=wine-11.1-arm64ec \
+WCP_OUTPUT_DIR=out/wine \
 WCP_COMPRESS=xz \
 WCP_ENABLE_SDL2_RUNTIME=1 \
 bash ci/ci-build.sh
 ```
 
-### Proton 10 ARM64EC
+### Proton GE10 ARM64EC
 
 ```bash
 LLVM_MINGW_TAG=20260210 \
+TARGET_HOST=aarch64-linux-gnu \
 PROTON_GE_REF=GE-Proton10-32 \
+WCP_NAME=proton-ge10-arm64ec \
+WCP_OUTPUT_DIR=out/proton-ge10 \
 WCP_COMPRESS=xz \
-WCP_NAME=proton-10-arm64ec \
 WCP_TARGET_RUNTIME=winlator-bionic \
 WCP_PRUNE_EXTERNAL_COMPONENTS=1 \
 WCP_ENABLE_SDL2_RUNTIME=1 \
-bash ci/proton10/ci-build-proton10-wcp.sh
+bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 ```
 
-## 7. Контракт по переменным окружения
-
-### Общие
-
-- `LLVM_MINGW_TAG` — версия llvm-mingw
-- `WCP_NAME` — имя итогового пакета
-- `WCP_COMPRESS` — `xz`/`zstd` (или `xz`/`zst` в proton script)
-
-### Wine
-
-- `WINE_REF` — ref в `AndreRH/wine`
-- `WCP_ENABLE_SDL2_RUNTIME` — `1`/`0`
-
-### Proton
-
-- `VALVE_WINE_REF`
-- `PROTON_GE_REF`
-- `WCP_TARGET_RUNTIME`
-- `WCP_PRUNE_EXTERNAL_COMPONENTS`
-- `WCP_ENABLE_SDL2_RUNTIME`
-
-## 8. Диагностика и troubleshooting
-
-### glibc vs bionic (практическая разница)
-
-- `bionic` (Android libc): ожидает `libc.so`, типичный interpreter у бинарей Android — `/system/bin/linker64`.
-- `glibc` (обычный Linux userspace): ожидает `libc.so.6`, interpreter — `/lib/ld-linux-aarch64.so.1`.
-- Если glibc-бинарь запустить напрямую в Android app-процессе без wrapper/runtime, Java получает `error=2 (No such file or directory)` даже при существующем файле (не найден ELF interpreter).
-
-Что делает pipeline для `winlator-bionic`:
-
-1. Детектирует glibc `bin/wine`/`bin/wineserver`.
-2. Кладёт реальные ELF как `bin/wine.glibc-real` и `bin/wineserver.glibc-real`.
-3. Генерирует Android-wrapper (`#!/system/bin/sh`) в `bin/wine` и `bin/wineserver`.
-4. Бандлит glibc loader + зависимые `.so` в `lib/wine/wcp-glibc-runtime/`.
-5. Валидирует, что сырой glibc launcher не остался точкой входа.
-
-### Симптом: контейнер висит на `Starting up...`
-
-Порядок проверки:
-
-1. Wine build в контейнере действительно ARM64EC
-2. Для ARM64EC выбран корректный emulator path (`FEXCore` при ожидаемом FEX-маршруте)
-3. Снять лог-пакет по `docs/winlator-container-hang-debug.md`
-4. Сверить `HODLL` путь в логах старта
-
-### Симптом: CI собрался, но runtime нестабилен
-
-1. Проверить `runtime-report.txt/json`
-2. Проверить что не удалены критичные runtime-файлы при pruning
-3. Проверить совместимость Winlator version / container presets
-
-## 9. Управление ветками
-
-Скрипт безопасной очистки:
+### ProtonWine10 GameNative ARM64EC
 
 ```bash
-bash ci/maintenance/cleanup-branches.sh
+LLVM_MINGW_TAG=20260210 \
+TARGET_HOST=aarch64-linux-gnu \
+PROTONWINE_REF=e7dbb4a10b85c1e8d505068d36249127d8b7fe79 \
+ANDROID_SUPPORT_REF=47e79a66652afae9fd0e521b03736d1e6536ac5a \
+WCP_NAME=protonwine10-gamenative-arm64ec \
+WCP_OUTPUT_DIR=out/protonwine10 \
+WCP_COMPRESS=xz \
+WCP_TARGET_RUNTIME=winlator-bionic \
+WCP_PRUNE_EXTERNAL_COMPONENTS=1 \
+WCP_ENABLE_SDL2_RUNTIME=1 \
+bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 ```
 
-Применить очистку:
+## CI Workflows
 
-```bash
-bash ci/maintenance/cleanup-branches.sh --apply
-```
+- `/.github/workflows/ci-arm64ec-wine.yml`
+  - Build Wine 11.1 ARM64EC WCP
+- `/.github/workflows/ci-proton-ge10-wcp.yml`
+  - Build Proton GE10 ARM64EC WCP
+- `/.github/workflows/ci-protonwine10-wcp.yml`
+  - Build ProtonWine10 GameNative ARM64EC WCP
+- `/.github/workflows/ci-proton10-wcp.yml`
+  - Legacy compatibility entrypoint (manual)
 
-С удалением merged remote веток:
+Каждый основной workflow публикует:
 
-```bash
-bash ci/maintenance/cleanup-branches.sh --apply --remote
-```
+- `${OUT_DIR}/${WCP_NAME}.wcp`
+- `${OUT_DIR}/SHA256SUMS`
+- диагностические логи (включая review/inspect для protonwine10)
 
-## 10. Практические принципы проекта
+и добавляет артефакт в общий релиз `wcp-latest`.
 
-1. Воспроизводимость важнее «магии»
-2. Любая сборка должна оставлять читаемую диагностику
-3. Runtime-контракт с Winlator должен быть явным и проверяемым
-4. Никаких скрытых зависимостей от локальной машины
+## ProtonWine10 Android-support pipeline
+
+Скрипты:
+
+- `ci/protonwine10/inspect-upstreams.sh`
+- `ci/protonwine10/android-support-review.sh`
+- `ci/protonwine10/apply-upstream-fixes.sh`
+- `ci/protonwine10/apply-our-fixes.sh`
+
+Review-файл: `docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md`
+
+## Структура CI-библиотек
+
+- `ci/lib/llvm-mingw.sh` — toolchain download/validate
+- `ci/lib/winlator-runtime.sh` — bionic/glibc launcher wrapper + runtime libs
+- `ci/lib/wcp_common.sh` — общие функции сборки/валидации/упаковки WCP
+
+## Диагностика Winlator контейнера
+
+Если контейнер зависает на `Starting up...`:
+
+1. Проверить, что выбран ARM64EC пакет.
+2. Для ARM64EC в Winlator выбирать `FEXCore` в emulator runner.
+3. Снять логи по `docs/winlator-container-hang-debug.md`.
+4. Проверить runtime-слои в WCP (`aarch64-unix`, `aarch64-windows`, `i386-windows`).
