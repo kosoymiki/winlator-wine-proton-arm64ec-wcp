@@ -48,6 +48,7 @@ inspect_upstream() {
 
 apply_patches() {
   bash "${ROOT_DIR}/ci/winlator/apply-repo-patches.sh" "${SRC_DIR}" "${ROOT_DIR}/ci/winlator/patches"
+  bash "${ROOT_DIR}/ci/winlator/assets-fixes/remove-broken-anim.sh" "${SRC_DIR}"
   git -C "${SRC_DIR}" diff --stat > "${LOG_DIR}/patch-diffstat.log"
   git -C "${SRC_DIR}" diff > "${LOG_DIR}/patch.diff"
 }
