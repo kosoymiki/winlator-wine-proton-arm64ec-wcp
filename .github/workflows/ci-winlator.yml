@@ -1,0 +1,100 @@
+name: Build Winlator Ludashi ARM64EC Fork
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ci/winlator/**"
+      - ".github/workflows/ci-winlator.yml"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      winlator_ref:
+        description: "Winlator Ludashi git ref"
+        required: false
+        default: "winlator_bionic"
+      runtime_release_tag:
+        description: "Release tag containing runtime WCP assets"
+        required: false
+        default: "wcp-latest"
+
+concurrency:
+  group: winlator-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  WINLATOR_OUTPUT_DIR: ${{ github.workspace }}/out/winlator
+  WINLATOR_LUDASHI_REPO: https://github.com/StevenMXZ/Winlator-Ludashi.git
+  WINLATOR_LUDASHI_REF: ${{ github.event.inputs.winlator_ref || 'winlator_bionic' }}
+  RUNTIME_RELEASE_REPO: ${{ github.repository }}
+  RUNTIME_RELEASE_TAG: ${{ github.event.inputs.runtime_release_tag || 'wcp-latest' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          set -euxo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;35.0.0" \
+            "ndk;29.0.14206865" \
+            "cmake;3.22.1"
+
+      - name: Install host build deps
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bash curl git python3 tar xz-utils zstd unzip zip rsync file
+
+      - name: Build Winlator Ludashi fork APK
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euxo pipefail
+          bash ci/winlator/ci-build-winlator-ludashi.sh
+
+      - name: Upload Winlator artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: winlator-ludashi-arm64ec-fork
+          path: |
+            out/winlator/*.apk
+            out/winlator/SHA256SUMS
+            out/winlator/logs/**
+            docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to Winlator release
+        if: github.event_name != 'pull_request'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: winlator-latest
+          name: Winlator ARM64EC Fork Latest
+          allowUpdates: true
+          prerelease: true
+          removeArtifacts: false
+          artifacts: out/winlator/*.apk,out/winlator/SHA256SUMS,docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
+          artifactErrorsFailBuild: true

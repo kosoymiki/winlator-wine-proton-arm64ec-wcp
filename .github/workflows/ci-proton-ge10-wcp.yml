@@ -114,6 +114,8 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           set -euxo pipefail
+          cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
+          cp "${WCP_OUTPUT_DIR}/patchlog.txt" "${WCP_OUTPUT_DIR}/patchlog-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
           Proton GE10 ARM64EC WCP
           Commit: ${{ github.sha }}
@@ -129,6 +131,6 @@ jobs:
           allowUpdates: true
           prerelease: true
           removeArtifacts: false
-          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS,out/proton-ge10/patchlog.txt
+          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS-proton-ge10-arm64ec.txt,out/proton-ge10/patchlog-proton-ge10-arm64ec.txt
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

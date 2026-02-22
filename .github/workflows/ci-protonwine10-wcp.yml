@@ -115,6 +115,8 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           set -euxo pipefail
+          cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
+          cp docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md "docs/PROTONWINE_ANDROID_SUPPORT_REVIEW-${WCP_NAME}.md"
           cat > RELEASE_NOTES.md <<EOF_NOTES
           ProtonWine10 GameNative ARM64EC WCP
           Commit: ${{ github.sha }}
@@ -130,6 +132,6 @@ jobs:
           allowUpdates: true
           prerelease: true
           removeArtifacts: false
-          artifacts: out/protonwine10/protonwine10-gamenative-arm64ec.wcp,out/protonwine10/SHA256SUMS,docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md
+          artifacts: out/protonwine10/protonwine10-gamenative-arm64ec.wcp,out/protonwine10/SHA256SUMS-protonwine10-gamenative-arm64ec.txt,docs/PROTONWINE_ANDROID_SUPPORT_REVIEW-protonwine10-gamenative-arm64ec.md
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

@@ -1,10 +1,11 @@
 # winlator-wine-proton-arm64ec-wcp
 
-Репозиторий собирает **три независимых ARM64EC WCP-пакета** для Winlator:
+Репозиторий собирает **три независимых ARM64EC WCP-пакета** для Winlator и отдельный **fork Winlator Ludashi APK** с вшитыми runtime:
 
 1. `wine-11.1-arm64ec`
 2. `proton-ge10-arm64ec`
 3. `protonwine10-gamenative-arm64ec`
+4. `winlator-ludashi-arm64ec-fork-<sha>.apk` (встроенные runtime, без ручного импорта WCP в приложении)
 
 Все пайплайны ориентированы на Android/Winlator runtime и строго держат мульти-арх слой Wine:
 
@@ -20,6 +21,10 @@
 | Wine 11.1 ARM64EC | `wine-11.1-arm64ec` | `out/wine` | `ci/ci-build.sh` |
 | Proton GE10 ARM64EC | `proton-ge10-arm64ec` | `out/proton-ge10` | `ci/proton-ge10/ci-build-proton-ge10-wcp.sh` |
 | ProtonWine10 GameNative ARM64EC | `protonwine10-gamenative-arm64ec` | `out/protonwine10` | `ci/protonwine10/ci-build-protonwine10-wcp.sh` |
+
+| Android APK | Артефакт | OUT_DIR | Build Script |
+|---|---|---|---|
+| Winlator Ludashi Fork | `winlator-ludashi-arm64ec-fork-<upstream_sha>.apk` | `out/winlator` | `ci/winlator/ci-build-winlator-ludashi.sh` |
 
 ## Ключевые требования WCP
 
@@ -86,6 +91,23 @@ WCP_ENABLE_SDL2_RUNTIME=1 \
 bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 ```
 
+### Winlator Ludashi Fork APK (embedded runtime)
+
+```bash
+WINLATOR_LUDASHI_REF=winlator_bionic \
+RUNTIME_RELEASE_REPO=kosoymiki/winlator-wine-proton-arm64ec-wcp \
+RUNTIME_RELEASE_TAG=wcp-latest \
+WINLATOR_OUTPUT_DIR=out/winlator \
+bash ci/winlator/ci-build-winlator-ludashi.sh
+```
+
+Скрипт:
+- подтягивает актуальный upstream Winlator Ludashi,
+- делает рефлексивный отчет по upstream-коммитам в `docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md`,
+- применяет наши патчи (`ci/winlator/patches/*.patch`),
+- преобразует наши runtime-артефакты в `app/src/main/assets/*.txz`,
+- собирает APK.
+
 ## CI Workflows
 
 - `/.github/workflows/ci-arm64ec-wine.yml`
@@ -94,6 +116,8 @@ bash ci/protonwine10/ci-build-protonwine10-wcp.sh
   - Build Proton GE10 ARM64EC WCP
 - `/.github/workflows/ci-protonwine10-wcp.yml`
   - Build ProtonWine10 GameNative ARM64EC WCP
+- `/.github/workflows/ci-winlator.yml`
+  - Build Winlator Ludashi ARM64EC fork APK (embedded runtime)
 - `/.github/workflows/ci-proton10-wcp.yml`
   - Legacy compatibility entrypoint (manual)
 
@@ -130,3 +154,9 @@ Review-файл: `docs/PROTONWINE_ANDROID_SUPPORT_REVIEW.md`
 2. Для ARM64EC в Winlator выбирать `FEXCore` в emulator runner.
 3. Снять логи по `docs/winlator-container-hang-debug.md`.
 4. Проверить runtime-слои в WCP (`aarch64-unix`, `aarch64-windows`, `i386-windows`).
+
+Для live-логов с устройства через adb:
+
+```bash
+bash ci/winlator/adb-logcat-winlator.sh 192.168.0.144:5555
+```

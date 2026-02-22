@@ -107,6 +107,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           set -euxo pipefail
+          cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
           Wine 11.1 ARM64EC WCP
           Commit: ${{ github.sha }}
@@ -122,6 +123,6 @@ jobs:
           allowUpdates: true
           prerelease: true
           removeArtifacts: false
-          artifacts: out/wine/wine-11.1-arm64ec.wcp,out/wine/SHA256SUMS
+          artifacts: out/wine/wine-11.1-arm64ec.wcp,out/wine/SHA256SUMS-wine-11.1-arm64ec.txt
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md
