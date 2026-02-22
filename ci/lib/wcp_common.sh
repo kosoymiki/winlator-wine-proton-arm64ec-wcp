@@ -54,6 +54,7 @@ wcp_check_host_arch() {
 
 wcp_ensure_configure_script() {
   local wine_src_dir="$1"
+  local make_vulkan_bin vk_xml video_xml
 
   if [[ -x "${wine_src_dir}/configure" ]]; then
     return
@@ -64,6 +65,22 @@ wcp_ensure_configure_script() {
 
   wcp_log "configure is missing in ${wine_src_dir}; generating it with autoreconf -ifv"
   pushd "${wine_src_dir}" >/dev/null
+  if [[ -x tools/make_requests ]]; then
+    tools/make_requests
+  fi
+  if [[ -x tools/make_specfiles ]]; then
+    tools/make_specfiles
+  fi
+  make_vulkan_bin="dlls/winevulkan/make_vulkan"
+  vk_xml="dlls/winevulkan/vk.xml"
+  video_xml="dlls/winevulkan/video.xml"
+  if [[ -x "${make_vulkan_bin}" ]]; then
+    if [[ -f "${vk_xml}" && -f "${video_xml}" ]]; then
+      "${make_vulkan_bin}" -x "${vk_xml}" -X "${video_xml}"
+    else
+      "${make_vulkan_bin}"
+    fi
+  fi
   autoreconf -ifv
   popd >/dev/null
 
