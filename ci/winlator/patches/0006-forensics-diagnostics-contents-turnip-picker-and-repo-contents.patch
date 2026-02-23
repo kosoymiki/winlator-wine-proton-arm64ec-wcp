@@ -1,0 +1,2802 @@
+From 05c881e96f56a6b07074f19884b4f59185bef6f4 Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Tue, 24 Feb 2026 02:08:55 +0300
+Subject: [PATCH 1/2] forensics diagnostics contents channels and turnip
+ version picker
+
+---
+ .../winlator/cmod/AdrenotoolsFragment.java    | 279 +++++++++---
+ .../com/winlator/cmod/ContentsFragment.java   | 144 ++++--
+ .../winlator/cmod/DiagnosticsFragment.java    | 117 +++++
+ .../java/com/winlator/cmod/MainActivity.java  |  15 +-
+ .../winlator/cmod/XServerDisplayActivity.java | 411 +++++++++++-------
+ .../cmod/container/ContainerDiscovery.java    | 104 +++++
+ .../container/ContainerForensicSnapshot.java  |  39 ++
+ .../cmod/container/ContainerManager.java      | 185 +++++---
+ .../cmod/container/ContainerNormalizer.java   | 174 ++++++++
+ .../cmod/contentdialog/ContentInfoDialog.java |  28 +-
+ .../cmod/contents/ContentProfile.java         |  59 ++-
+ .../cmod/contents/ContentsManager.java        |  58 ++-
+ .../winlator/cmod/core/ForensicLogger.java    | 238 ++++++++++
+ .../GuestProgramLauncherComponent.java        | 130 ++++--
+ app/src/main/res/layout/content_list_item.xml |  57 +--
+ .../main/res/layout/diagnostics_fragment.xml  |  61 +++
+ app/src/main/res/menu/main_menu.xml           |  13 +-
+ app/src/main/res/values/strings.xml           |  45 +-
+ 18 files changed, 1721 insertions(+), 436 deletions(-)
+ create mode 100644 app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
+ create mode 100644 app/src/main/java/com/winlator/cmod/container/ContainerDiscovery.java
+ create mode 100644 app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java
+ create mode 100644 app/src/main/java/com/winlator/cmod/container/ContainerNormalizer.java
+ create mode 100644 app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
+ create mode 100644 app/src/main/res/layout/diagnostics_fragment.xml
+
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 20f9ba4..8698096 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -1,146 +1,301 @@
+ package com.winlator.cmod;
+ 
+ import android.app.Activity;
++import android.app.AlertDialog;
+ import android.content.Intent;
+ import android.net.Uri;
+-import com.winlator.cmod.R;
+-
+ import android.os.Bundle;
++import android.text.format.DateFormat;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.ImageButton;
+ import android.widget.TextView;
++
++import androidx.annotation.NonNull;
+ import androidx.appcompat.app.AppCompatActivity;
+ import androidx.fragment.app.Fragment;
+ import androidx.recyclerview.widget.DividerItemDecoration;
+ import androidx.recyclerview.widget.LinearLayoutManager;
+ import androidx.recyclerview.widget.RecyclerView;
++
+ import com.winlator.cmod.contentdialog.ContentDialog;
+ import com.winlator.cmod.contents.AdrenotoolsManager;
+ import com.winlator.cmod.contents.Downloader;
+ import com.winlator.cmod.core.AppUtils;
++import com.winlator.cmod.core.DownloadProgressDialog;
++import com.winlator.cmod.core.FileUtils;
++
+ import org.json.JSONArray;
+ import org.json.JSONObject;
++
++import java.io.BufferedInputStream;
+ import java.io.File;
++import java.io.FileOutputStream;
++import java.io.InputStream;
++import java.io.OutputStream;
++import java.net.URL;
++import java.net.URLConnection;
+ import java.util.ArrayList;
++import java.util.Date;
+ 
+ public class AdrenotoolsFragment extends Fragment {
+-    
++    private static final String TURNIP_RELEASES_API =
++            "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases?per_page=30";
++    private static final String TURNIP_RELEASES_CACHE_FILE = "turnip_releases_cache.json";
++    private static final long TURNIP_RELEASES_CACHE_TTL_MS = 15L * 60L * 1000L;
++
+     private AdrenotoolsManager adrenotoolsManager;
+     private RecyclerView recyclerView;
+-    
+-    @Override 
++
++    @Override
+     public void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+-        this.adrenotoolsManager = new AdrenotoolsManager(getActivity());
++        adrenotoolsManager = new AdrenotoolsManager(getActivity());
+     }
+-    
++
+     @Override
+     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+-        ViewGroup layout = (ViewGroup)inflater.inflate(R.layout.adrenotools_fragment, container, false);
++        ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.adrenotools_fragment, container, false);
+         recyclerView = layout.findViewById(R.id.RecyclerView);
+         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
+         recyclerView.setAdapter(new DriversAdapter(adrenotoolsManager.enumarateInstalledDrivers()));
++
+         View btInstallDriver = layout.findViewById(R.id.BTInstallDriver);
+-        btInstallDriver.setOnClickListener((v) -> {
++        btInstallDriver.setOnClickListener(v -> {
+             ContentDialog.confirm(getContext(), getString(R.string.install_drivers_message) + " " + getString(R.string.install_drivers_warning), () -> {
+                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                 intent.setType("*/*");
+-                getActivity().startActivityFromFragment(this, intent, MainActivity.OPEN_FILE_REQUEST_CODE);               
++                getActivity().startActivityFromFragment(this, intent, MainActivity.OPEN_FILE_REQUEST_CODE);
+             });
+         });
++
+         View btFetchLatestDriver = layout.findViewById(R.id.BTFetchLatestDriver);
+-        btFetchLatestDriver.setOnClickListener((v) -> fetchLatestDriver());
++        btFetchLatestDriver.setOnClickListener(v -> openTurnipVersionPicker(false));
+         return layout;
+     }
+-    
++
+     @Override
+     public void onViewCreated(View view, Bundle savedInstanceState) {
+         super.onViewCreated(view, savedInstanceState);
+         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.adrenotools_gpu_drivers);
+     }
+-    
++
+     @Override
+     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+         if (requestCode == MainActivity.OPEN_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+             Uri uri = data.getData();
+             String driver = adrenotoolsManager.installDriver(uri);
+-            if (!driver.isEmpty())
+-                ((DriversAdapter)recyclerView.getAdapter()).addItem(driver);
++            if (!driver.isEmpty()) {
++                DriversAdapter adapter = (DriversAdapter) recyclerView.getAdapter();
++                if (adapter != null) adapter.addItem(driver);
++            }
+         }
+-     }       
++    }
++
++    private void openTurnipVersionPicker(boolean forceRefresh) {
++        if (!isAdded() || getActivity() == null) return;
++        DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
++        progressDialog.show(R.string.loading_turnip_versions);
+ 
+-    private void fetchLatestDriver() {
+-        AppUtils.showToast(getContext(), R.string.downloading_file);
+         new Thread(() -> {
+             try {
+-                String api = "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases/latest";
+-                String json = Downloader.downloadString(api);
+-                if (json == null) throw new IllegalStateException("empty api response");
+-
+-                JSONObject root = new JSONObject(json);
+-                JSONArray assets = root.getJSONArray("assets");
+-                ArrayList<String> names = new ArrayList<>();
+-                ArrayList<String> urls = new ArrayList<>();
+-                for (int i = 0; i < assets.length(); i++) {
+-                    JSONObject asset = assets.getJSONObject(i);
+-                    String name = asset.optString("name", "");
+-                    String url = asset.optString("browser_download_url", "");
+-                    if (name.endsWith(".zip") && !url.isEmpty()) {
+-                        names.add(name);
+-                        urls.add(url);
++                ArrayList<TurnipAssetItem> items = loadTurnipAssetItems(forceRefresh);
++                if (!isAdded() || getActivity() == null) return;
++                getActivity().runOnUiThread(() -> {
++                    progressDialog.close();
++                    if (items.isEmpty()) {
++                        AppUtils.showToast(getContext(), R.string.no_items_to_display);
++                        return;
+                     }
+-                }
+-                if (names.isEmpty()) throw new IllegalStateException("no zip assets");
+ 
+-                if (!isAdded() || getActivity() == null) return;
+-                getActivity().runOnUiThread(() -> new android.app.AlertDialog.Builder(getContext())
+-                        .setTitle(R.string.fetch_latest_turnip)
+-                        .setItems(names.toArray(new String[0]), (dialog, which) -> downloadAndInstall(urls.get(which)))
+-                        .setNegativeButton(android.R.string.cancel, null)
+-                        .show());
++                    String[] labels = new String[items.size()];
++                    for (int i = 0; i < items.size(); i++) labels[i] = items.get(i).label;
++
++                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
++                            .setTitle(R.string.turnip_choose_version)
++                            .setItems(labels, (dialog, which) -> downloadAndInstall(items.get(which)))
++                            .setNegativeButton(android.R.string.cancel, null);
++                    builder.setNeutralButton(R.string.refresh, (dialog, which) -> openTurnipVersionPicker(true));
++                    builder.show();
++                });
+             } catch (Exception e) {
+                 if (!isAdded() || getActivity() == null) return;
+-                getActivity().runOnUiThread(() -> AppUtils.showToast(getContext(), R.string.unable_to_install_content));
++                getActivity().runOnUiThread(() -> {
++                    progressDialog.close();
++                    AppUtils.showToast(getContext(), R.string.unable_to_fetch_turnip_versions);
++                });
+             }
+         }).start();
+     }
+ 
+-    private void downloadAndInstall(String url) {
++    private ArrayList<TurnipAssetItem> loadTurnipAssetItems(boolean forceRefresh) throws Exception {
++        String json = null;
++        File cacheFile = new File(requireContext().getCacheDir(), TURNIP_RELEASES_CACHE_FILE);
++
++        if (!forceRefresh && cacheFile.isFile()) {
++            long age = System.currentTimeMillis() - cacheFile.lastModified();
++            if (age >= 0 && age <= TURNIP_RELEASES_CACHE_TTL_MS) {
++                json = FileUtils.readString(cacheFile);
++            }
++        }
++
++        if (json == null || json.trim().isEmpty()) {
++            json = Downloader.downloadString(TURNIP_RELEASES_API);
++            if (json == null || json.trim().isEmpty()) throw new IllegalStateException("empty turnip releases response");
++            FileUtils.writeString(cacheFile, json);
++        }
++
++        JSONArray releases = new JSONArray(json);
++        ArrayList<TurnipAssetItem> items = new ArrayList<>();
++        for (int i = 0; i < releases.length(); i++) {
++            JSONObject release = releases.getJSONObject(i);
++            String releaseName = release.optString("name", release.optString("tag_name", "release"));
++            String tagName = release.optString("tag_name", "");
++            String publishedAt = release.optString("published_at", "");
++            boolean prerelease = release.optBoolean("prerelease", false);
++            JSONArray assets = release.optJSONArray("assets");
++            if (assets == null) continue;
++
++            for (int j = 0; j < assets.length(); j++) {
++                JSONObject asset = assets.getJSONObject(j);
++                String assetName = asset.optString("name", "");
++                String url = asset.optString("browser_download_url", "");
++                if (assetName.isEmpty() || url.isEmpty()) continue;
++                if (!assetName.toLowerCase().endsWith(".zip")) continue;
++
++                TurnipAssetItem item = new TurnipAssetItem();
++                item.releaseName = releaseName;
++                item.tagName = tagName;
++                item.assetName = assetName;
++                item.downloadUrl = url;
++                item.publishedAt = publishedAt;
++                item.prerelease = prerelease;
++                item.label = buildTurnipLabel(item, i == 0);
++                items.add(item);
++            }
++        }
++        return items;
++    }
++
++    private String buildTurnipLabel(TurnipAssetItem item, boolean firstReleaseInList) {
++        String channel;
++        if (firstReleaseInList) channel = getString(R.string.turnip_channel_latest);
++        else if (item.prerelease) channel = getString(R.string.channel_beta);
++        else channel = getString(R.string.channel_stable);
++
++        String date = item.publishedAt;
++        if (date != null && date.length() >= 10) {
++            date = date.substring(0, 10);
++        } else {
++            date = DateFormat.format("yyyy-MM-dd", new Date()).toString();
++        }
++
++        String releaseLabel = !item.releaseName.isEmpty() ? item.releaseName : item.tagName;
++        return channel + " • " + date + " • " + releaseLabel + "\n" + item.assetName;
++    }
++
++    private void downloadAndInstall(TurnipAssetItem item) {
++        if (!isAdded() || getActivity() == null) return;
++
++        DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
++        progressDialog.show(R.string.downloading_file);
++
+         new Thread(() -> {
++            File out = null;
+             try {
+                 if (!isAdded() || getContext() == null) return;
+-                File out = new File(getContext().getCacheDir(), "turnip-selected.zip");
+-                if (!Downloader.downloadFile(url, out)) throw new IllegalStateException("download failed");
++                out = new File(getContext().getCacheDir(),
++                        "turnip_" + System.currentTimeMillis() + "_" + sanitizeFilename(item.assetName));
++                downloadFileWithProgress(item.downloadUrl, out, progress -> {
++                    if (!isAdded() || getActivity() == null) return;
++                    getActivity().runOnUiThread(() -> progressDialog.setProgress(progress));
++                });
+ 
+                 String driver = adrenotoolsManager.installDriver(out);
+                 if (!isAdded() || getActivity() == null) return;
++                String installedDriver = driver;
+                 getActivity().runOnUiThread(() -> {
+-                    if (!driver.isEmpty()) {
++                    progressDialog.close();
++                    if (!installedDriver.isEmpty()) {
+                         DriversAdapter adapter = (DriversAdapter) recyclerView.getAdapter();
+-                        if (adapter != null) adapter.addItem(driver);
++                        if (adapter != null) adapter.addItem(installedDriver);
+                         AppUtils.showToast(getContext(), R.string.content_installed_success);
+                     } else {
+-                        AppUtils.showToast(getContext(), R.string.unable_to_install_content);
++                        AppUtils.showToast(getContext(), R.string.turnip_install_failed_or_exists);
+                     }
+                 });
+             } catch (Exception e) {
+                 if (!isAdded() || getActivity() == null) return;
+-                getActivity().runOnUiThread(() -> AppUtils.showToast(getContext(), R.string.unable_to_install_content));
++                getActivity().runOnUiThread(() -> {
++                    progressDialog.close();
++                    AppUtils.showToast(getContext(), R.string.turnip_download_failed);
++                });
++            } finally {
++                if (out != null && out.exists()) {
++                    // Keep cache clean; installed payload is copied by AdrenotoolsManager.
++                    //noinspection ResultOfMethodCallIgnored
++                    out.delete();
++                }
+             }
+         }).start();
+     }
+-    
++
++    private void downloadFileWithProgress(String address, File file, ProgressCallback progressCallback) throws Exception {
++        URLConnection connection = new URL(address).openConnection();
++        connection.connect();
++        int contentLength = connection.getContentLength();
++
++        try (InputStream input = new BufferedInputStream(connection.getInputStream());
++             OutputStream output = new FileOutputStream(file)) {
++            byte[] data = new byte[8192];
++            long total = 0;
++            int count;
++            int lastProgress = -1;
++            while ((count = input.read(data)) != -1) {
++                output.write(data, 0, count);
++                total += count;
++                if (contentLength > 0) {
++                    int progress = (int) ((total * 100L) / contentLength);
++                    if (progress != lastProgress) {
++                        lastProgress = progress;
++                        progressCallback.onProgress(progress);
++                    }
++                }
++            }
++            progressCallback.onProgress(100);
++            output.flush();
++        }
++    }
++
++    private String sanitizeFilename(String name) {
++        if (name == null || name.isEmpty()) return "driver.zip";
++        return name.replaceAll("[^a-zA-Z0-9._-]", "_");
++    }
++
++    private interface ProgressCallback {
++        void onProgress(int progress);
++    }
++
++    private static class TurnipAssetItem {
++        String releaseName;
++        String tagName;
++        String assetName;
++        String downloadUrl;
++        String publishedAt;
++        boolean prerelease;
++        String label;
++    }
++
+     private class DriversAdapter extends RecyclerView.Adapter<DriversAdapter.ViewHolder> {
+-        private ArrayList<String> driversList;
++        private final ArrayList<String> driversList;
+ 
+         public class ViewHolder extends RecyclerView.ViewHolder {
+-            private TextView tvName;
+-            private TextView tvVersion;
+-            private ImageButton btMenu;
++            private final TextView tvName;
++            private final TextView tvVersion;
++            private final ImageButton btMenu;
+ 
+             public ViewHolder(View v) {
+                 super(v);
+@@ -149,39 +304,37 @@ public class AdrenotoolsFragment extends Fragment {
+                 btMenu = v.findViewById(R.id.BTMenu);
+             }
+         }
+-        
++
+         public DriversAdapter(ArrayList<String> driversList) {
+             this.driversList = driversList;
+         }
+-        
++
+         @Override
+         public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+             View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.adrenotools_list_item, viewGroup, false);
+             return new ViewHolder(view);
+         }
+-        
++
+         @Override
+         public void onBindViewHolder(ViewHolder viewHolder, final int position) {
+             viewHolder.tvName.setText(adrenotoolsManager.getDriverName(driversList.get(position)));
+             viewHolder.tvVersion.setText(adrenotoolsManager.getDriverVersion(driversList.get(position)));
+-            viewHolder.btMenu.setOnClickListener((v) -> {
+-                removeAtIndex(position);
+-            });
++            viewHolder.btMenu.setOnClickListener(v -> removeAtIndex(position));
+         }
+-        
++
+         public void addItem(String item) {
+             if (driversList.contains(item)) return;
+             driversList.add(item);
+             notifyItemInserted(getItemCount() - 1);
+         }
+-        
++
+         public void removeAtIndex(int index) {
+             String deletedDriver = driversList.remove(index);
+             adrenotoolsManager.removeDriver(deletedDriver);
+             notifyItemRemoved(index);
+             notifyItemRangeChanged(index, getItemCount());
+         }
+-        
++
+         @Override
+         public int getItemCount() {
+             return driversList.size();
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index 726d2be..37beb41 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -1,5 +1,5 @@
+ package com.winlator.cmod;
+-
++
+ import android.annotation.SuppressLint;
+ import android.app.Activity;
+ import android.content.Intent;
+@@ -43,8 +43,9 @@ import com.winlator.cmod.core.FileUtils;
+ import com.winlator.cmod.core.PreloaderDialog;
+ 
+ import java.io.File;
+-import java.util.ArrayList;
+-import java.util.List;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
+ import java.util.concurrent.Executors;
+ 
+ public class ContentsFragment extends Fragment {
+@@ -135,7 +136,7 @@ public class ContentsFragment extends Fragment {
+     private void updateContentTypeSpinner(Spinner spinner) {
+         List<String> typeList = new ArrayList<>();
+         for (ContentProfile.ContentType type : allowedTypes)
+-            typeList.add(type.toString());
++            typeList.add(getDisplayTypeLabel(type));
+         spinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, typeList));
+ 
+         // Set the popup background based on the theme
+@@ -160,7 +161,6 @@ public class ContentsFragment extends Fragment {
+     private void initAllowedTypes() {
+         allowedTypes.clear();
+         for (ContentProfile.ContentType type : ContentProfile.ContentType.values()) {
+-            if (type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+             if (type == ContentProfile.ContentType.CONTENT_TYPE_BOX64) continue;
+             if (type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64) continue;
+             allowedTypes.add(type);
+@@ -174,18 +174,66 @@ public class ContentsFragment extends Fragment {
+             if (json == null || !isAdded() || getActivity() == null)
+                 return;
+             getActivity().runOnUiThread(() -> {
+-                manager.setRemoteProfiles(json, showBeta, true);
++                manager.setRemoteProfiles(json, showBeta, false);
+                 loadContentList();
+             });
+         }).start();
+     }
+-
+-    private void updateContentsListView() {
+-        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
+-        if (profiles.isEmpty()) {
+-            recyclerView.setVisibility(View.GONE);
+-            emptyText.setVisibility(View.VISIBLE);
+-        }
++
++    private String getDisplayTypeLabel(ContentProfile.ContentType type) {
++        if (type == ContentProfile.ContentType.CONTENT_TYPE_WINE) return getString(R.string.wine_proton);
++        return type.toString();
++    }
++
++    private String getDisplayCategory(ContentProfile profile) {
++        String display = profile.getDisplayCategory();
++        return (display == null || display.isEmpty()) ? getDisplayTypeLabel(profile.type) : display;
++    }
++
++    private String getChannelLabel(ContentProfile profile) {
++        return switch (profile.getChannel()) {
++            case ContentProfile.CHANNEL_BETA -> getString(R.string.channel_beta);
++            case ContentProfile.CHANNEL_NIGHTLY -> getString(R.string.channel_nightly);
++            default -> getString(R.string.channel_stable);
++        };
++    }
++
++    private String getDeliveryLabel(ContentProfile profile) {
++        String delivery = profile.getDelivery();
++        if (ContentProfile.DELIVERY_EMBEDDED.equals(delivery)) return getString(R.string.package_source_embedded);
++        if (profile.isRemoteDownloadable()) return getString(R.string.package_source_online);
++        return getString(R.string.package_source_installed);
++    }
++
++    private String buildProfileTitleLine(ContentProfile profile) {
++        return getDisplayCategory(profile) + " • " + profile.verName;
++    }
++
++    private String buildProfileMetaLine(ContentProfile profile) {
++        return getString(R.string.version_code) + ": " + profile.verCode
++                + " • " + getChannelLabel(profile)
++                + " • " + getDeliveryLabel(profile);
++    }
++
++    private String buildProfileSourceLine(ContentProfile profile) {
++        if (profile.sourceRepo != null && !profile.sourceRepo.isEmpty()) {
++            String line = getString(R.string.package_source_repo_prefix) + " " + profile.sourceRepo;
++            if (profile.releaseTag != null && !profile.releaseTag.isEmpty()) line += " • " + profile.releaseTag;
++            if (profile.remoteUrl != null && profile.remoteUrl.toLowerCase(Locale.US).contains("/releases/download/")) {
++                line += " • " + getString(R.string.package_source_github_release);
++            }
++            return line;
++        }
++        if (profile.isRemoteDownloadable()) return getString(R.string.package_source_online_not_embedded);
++        return "";
++    }
++
++    private void updateContentsListView() {
++        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
++        if (profiles == null || profiles.isEmpty()) {
++            recyclerView.setVisibility(View.GONE);
++            emptyText.setVisibility(View.VISIBLE);
++        }
+     }
+ 
+     @Override
+@@ -240,7 +288,8 @@ public class ContentsFragment extends Fragment {
+                                 boolean flashAfter = currentContentType == profile.type;
+                                 if (allowedTypes.contains(profile.type)) {
+                                     currentContentType = profile.type;
+-                                    AppUtils.setSpinnerSelectionFromValue(sContentType, currentContentType.toString());
++                                    int index = allowedTypes.indexOf(currentContentType);
++                                    if (index >= 0) sContentType.setSelection(index);
+                                 }
+                                 if (flashAfter) loadContentList();
+                             });
+@@ -257,12 +306,12 @@ public class ContentsFragment extends Fragment {
+         }
+     }
+ 
+-    private void loadContentList() {
+-        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
+-        if (profiles.isEmpty()) {
+-            emptyText.setVisibility(View.VISIBLE);
+-            recyclerView.setVisibility(View.GONE);
+-        } else {
++    private void loadContentList() {
++        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
++        if (profiles == null || profiles.isEmpty()) {
++            emptyText.setVisibility(View.VISIBLE);
++            recyclerView.setVisibility(View.GONE);
++        } else {
+             emptyText.setVisibility(View.GONE);
+             recyclerView.setVisibility(View.VISIBLE);
+             recyclerView.setAdapter(new ContentItemAdapter(profiles));
+@@ -272,25 +321,27 @@ public class ContentsFragment extends Fragment {
+     private class ContentItemAdapter extends RecyclerView.Adapter<ContentItemAdapter.ViewHolder> {
+         private final List<ContentProfile> data;
+ 
+-        private static class ViewHolder extends RecyclerView.ViewHolder {
+-            private final ImageView ivIcon;
+-            private final TextView tvVersionName;
+-            private final TextView tvVersionCode;
+-            private final ImageButton ibMenu;
+-            private final ImageButton ibDownload;
+-            private final ProgressBar progressBar;
++        private static class ViewHolder extends RecyclerView.ViewHolder {
++            private final ImageView ivIcon;
++            private final TextView tvVersionName;
++            private final TextView tvVersionCode;
++            private final TextView tvSource;
++            private final ImageButton ibMenu;
++            private final ImageButton ibDownload;
++            private final ProgressBar progressBar;
+ 
+             public ViewHolder(@NonNull View view) {
+                 super(view);
+ 
+-                ivIcon = view.findViewById(R.id.IVIcon);
+-                tvVersionName = view.findViewById(R.id.TVVersionName);
+-                tvVersionCode = view.findViewById(R.id.TVVersionCode);
+-                ibMenu = view.findViewById(R.id.BTMenu);
+-                ibDownload = view.findViewById(R.id.BTDownload);
+-                progressBar = view.findViewById(R.id.Progress);
+-            }
+-        }
++                ivIcon = view.findViewById(R.id.IVIcon);
++                tvVersionName = view.findViewById(R.id.TVVersionName);
++                tvVersionCode = view.findViewById(R.id.TVVersionCode);
++                tvSource = view.findViewById(R.id.TVSource);
++                ibMenu = view.findViewById(R.id.BTMenu);
++                ibDownload = view.findViewById(R.id.BTDownload);
++                progressBar = view.findViewById(R.id.Progress);
++            }
++        }
+ 
+         public ContentItemAdapter(List<ContentProfile> data) {
+             this.data = data;
+@@ -319,9 +370,12 @@ public class ContentsFragment extends Fragment {
+             };
+             holder.ivIcon.setBackground(getContext().getDrawable(iconId));
+ 
+-            holder.tvVersionName.setText(getContext().getString(R.string.version) + ": " + profile.verName);
+-            holder.tvVersionCode.setText(getContext().getString(R.string.version_code) + ": " + profile.verCode);
+-            holder.ibMenu.setVisibility(profile.remoteUrl == null ? View.VISIBLE : View.GONE);
++            holder.tvVersionName.setText(buildProfileTitleLine(profile));
++            holder.tvVersionCode.setText(buildProfileMetaLine(profile));
++            String sourceLine = buildProfileSourceLine(profile);
++            holder.tvSource.setText(sourceLine);
++            holder.tvSource.setVisibility(sourceLine.isEmpty() ? View.GONE : View.VISIBLE);
++            holder.ibMenu.setVisibility(profile.isRemoteDownloadable() ? View.GONE : View.VISIBLE);
+             holder.ibMenu.setOnClickListener(v -> {
+                 PopupMenu selectionMenu = new PopupMenu(getContext(), holder.ibMenu);
+                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+@@ -350,19 +404,19 @@ public class ContentsFragment extends Fragment {
+                 });
+                 selectionMenu.show();
+             });
+-            holder.ibDownload.setVisibility((profile.remoteUrl != null) && (holder.progressBar.getVisibility() == View.GONE) ? View.VISIBLE : View.GONE);
++            holder.ibDownload.setVisibility(profile.isRemoteDownloadable() && (holder.progressBar.getVisibility() == View.GONE) ? View.VISIBLE : View.GONE);
+             holder.ibDownload.setOnClickListener(v -> {
+                 holder.ibDownload.setVisibility(View.GONE);
+                 holder.progressBar.setVisibility(View.VISIBLE);
+ 
+                 Intent intent = new Intent();
+                 intent.setData(Uri.parse(profile.remoteUrl));
+-                new Thread(() -> {
+-                    long timestamp = System.currentTimeMillis();
+-                    File output = new File(getContext().getCacheDir(), "temp_" + timestamp);
+-                    if (Downloader.downloadFile(profile.remoteUrl, output)) {
+-                        intent.setData(Uri.parse(output.getAbsolutePath()));
+-                    }
++                new Thread(() -> {
++                    long timestamp = System.currentTimeMillis();
++                    File output = new File(getContext().getCacheDir(), "content_" + timestamp + ".wcp");
++                    if (Downloader.downloadFile(profile.remoteUrl, output)) {
++                        intent.setData(Uri.parse(output.getAbsolutePath()));
++                    }
+                     getActivity().runOnUiThread(() -> {
+                         holder.progressBar.setVisibility(View.GONE);
+                         holder.ibDownload.setVisibility(View.VISIBLE);
+diff --git a/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java b/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
+new file mode 100644
+index 0000000..d973e2b
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
+@@ -0,0 +1,117 @@
++package com.winlator.cmod;
++
++import android.content.Intent;
++import android.os.Bundle;
++import android.text.TextUtils;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.Button;
++import android.widget.EditText;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++import androidx.appcompat.app.AppCompatActivity;
++import androidx.fragment.app.Fragment;
++
++import com.winlator.cmod.container.ContainerDiscovery;
++import com.winlator.cmod.container.ContainerManager;
++import com.winlator.cmod.core.ForensicLogger;
++
++public class DiagnosticsFragment extends Fragment {
++    private EditText etContainerId;
++    private TextView tvResult;
++
++    @Nullable
++    @Override
++    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
++        return inflater.inflate(R.layout.diagnostics_fragment, container, false);
++    }
++
++    @Override
++    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
++        super.onViewCreated(view, savedInstanceState);
++        etContainerId = view.findViewById(R.id.ETContainerId);
++        tvResult = view.findViewById(R.id.TVResult);
++
++        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(R.string.diagnostics);
++
++        Button btRunDirect = view.findViewById(R.id.BTRunDirectXServer);
++        Button btValidateParser = view.findViewById(R.id.BTValidateContainersParser);
++        Button btShowLastTrace = view.findViewById(R.id.BTShowLastForensicTrace);
++
++        btRunDirect.setOnClickListener(v -> runDirectXServerForensic());
++        btValidateParser.setOnClickListener(v -> validateContainersParser());
++        btShowLastTrace.setOnClickListener(v -> showLastForensicTrace());
++    }
++
++    private void runDirectXServerForensic() {
++        Integer containerId = parseContainerId();
++        if (containerId == null || containerId <= 0) {
++            toast(R.string.diagnostics_invalid_container_id);
++            return;
++        }
++
++        String traceId = ForensicLogger.newTraceId();
++        Intent intent = new Intent(requireContext(), XServerDisplayActivity.class);
++        intent.putExtra("container_id", containerId);
++        intent.putExtra("forensic_mode", true);
++        intent.putExtra("forensic_trace_id", traceId);
++        intent.putExtra("forensic_route_source", "direct_diag_ui");
++        intent.putExtra("forensic_skip_playtime", true);
++        startActivity(intent);
++
++        String message = getString(R.string.diagnostics_direct_launch_started, containerId, traceId);
++        tvResult.setText(message);
++        ForensicLogger.logEvent(requireContext(), "info", "ROUTE_DIAG_UI_START", traceId, "diagnostics_ui",
++                "Diagnostics UI requested direct XServer launch",
++                ForensicLogger.fields("container_id", containerId, "route", "direct_diag_ui"));
++    }
++
++    private void validateContainersParser() {
++        ContainerManager manager = new ContainerManager(requireContext());
++        ContainerDiscovery.LoadReport report = manager.getLastLoadReport();
++
++        StringBuilder sb = new StringBuilder();
++        sb.append(getString(R.string.diagnostics_parser_summary)).append('\n');
++        sb.append(report.toSummaryString());
++
++        if (!report.warnings.isEmpty()) {
++            sb.append("\n\n").append(getString(R.string.diagnostics_parser_warnings)).append('\n');
++            int limit = Math.min(report.warnings.size(), 8);
++            for (int i = 0; i < limit; i++) sb.append("- ").append(report.warnings.get(i)).append('\n');
++            if (report.warnings.size() > limit) {
++                sb.append("... +").append(report.warnings.size() - limit).append('\n');
++            }
++        }
++
++        tvResult.setText(sb.toString().trim());
++        ForensicLogger.logEvent(requireContext(), "info", "PARSER_DIAG_UI_VALIDATE", ForensicLogger.newTraceId(), "diagnostics_ui",
++                "Diagnostics UI validated container parser",
++                report.toJson());
++    }
++
++    private void showLastForensicTrace() {
++        String summary = ForensicLogger.describeLatestTrace(requireContext());
++        tvResult.setText(summary);
++        toast(R.string.diagnostics_trace_summary_loaded);
++    }
++
++    @Nullable
++    private Integer parseContainerId() {
++        String text = etContainerId != null ? etContainerId.getText().toString().trim() : "";
++        if (TextUtils.isEmpty(text)) return null;
++        try {
++            return Integer.parseInt(text);
++        }
++        catch (NumberFormatException e) {
++            return null;
++        }
++    }
++
++    private void toast(int stringId) {
++        Toast.makeText(requireContext(), stringId, Toast.LENGTH_SHORT).show();
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/MainActivity.java b/app/src/main/java/com/winlator/cmod/MainActivity.java
+index 020d9e8..45c00c0 100644
+--- a/app/src/main/java/com/winlator/cmod/MainActivity.java
++++ b/app/src/main/java/com/winlator/cmod/MainActivity.java
+@@ -251,12 +251,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
+             case R.id.main_menu_contents:
+                 show(new ContentsFragment(), false);  // Forward animation
+                 break;
+-            case R.id.main_menu_adrenotools_gpu_drivers:
+-                show(new AdrenotoolsFragment(), false);
+-                break;
+-            case R.id.main_menu_settings:
+-                show(new SettingsFragment(), false);  // Forward animation
+-                break;
++            case R.id.main_menu_adrenotools_gpu_drivers:
++                show(new AdrenotoolsFragment(), false);
++                break;
++            case R.id.main_menu_diagnostics:
++                show(new DiagnosticsFragment(), false);
++                break;
++            case R.id.main_menu_settings:
++                show(new SettingsFragment(), false);  // Forward animation
++                break;
+             case R.id.main_menu_about:
+                 showAboutDialog();
+                 break;
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 540722c..b7bbcbe 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -48,10 +48,12 @@ import androidx.core.view.GravityCompat;
+ import androidx.drawerlayout.widget.DrawerLayout;
+ import androidx.preference.PreferenceManager;
+ 
+-import com.google.android.material.navigation.NavigationView;
+-import com.winlator.cmod.container.Container;
+-import com.winlator.cmod.container.ContainerManager;
+-import com.winlator.cmod.container.Shortcut;
++import com.google.android.material.navigation.NavigationView;
++import com.winlator.cmod.container.Container;
++import com.winlator.cmod.container.ContainerForensicSnapshot;
++import com.winlator.cmod.container.ContainerManager;
++import com.winlator.cmod.container.ContainerNormalizer;
++import com.winlator.cmod.container.Shortcut;
+ import com.winlator.cmod.contentdialog.ContentDialog;
+ import com.winlator.cmod.contentdialog.DXVKConfigDialog;
+ import com.winlator.cmod.contentdialog.DebugDialog;
+@@ -66,6 +68,7 @@ import com.winlator.cmod.core.DefaultVersion;
+ import com.winlator.cmod.core.EnvVars;
+ import com.winlator.cmod.core.FileDebugLogger;
+ import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.ForensicLogger;
+ import com.winlator.cmod.core.GPUInformation;
+ import com.winlator.cmod.core.KeyValueSet;
+ import com.winlator.cmod.core.OnExtractFileListener;
+@@ -191,13 +194,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     // Playtime stats tracking
+     private long startTime;
+-    private SharedPreferences playtimePrefs;
+-    private String shortcutName;
+-    private Handler handler;
+-    private Runnable savePlaytimeRunnable;
+-    private static final long SAVE_INTERVAL_MS = 1000;
+-
+-    private Handler  timeoutHandler = new Handler(Looper.getMainLooper());
++    private SharedPreferences playtimePrefs;
++    private String shortcutName;
++    private Handler handler;
++    private Runnable savePlaytimeRunnable;
++    private static final long SAVE_INTERVAL_MS = 1000;
++    private String forensicTraceId;
++    private String forensicRouteSource = "";
++    private boolean forensicMode = false;
++    private boolean forensicSkipPlaytime = false;
++    private ContainerNormalizer.NormalizationResult runtimeNormalization;
++
++    private Handler  timeoutHandler = new Handler(Looper.getMainLooper());
+     private Runnable hideControlsRunnable;
+ 
+     private boolean isDarkMode;
+@@ -244,39 +252,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         }
+     };
+ 
+-    private float pickHighestRefreshRate() {
+-    	android.view.Display display = getWindowManager().getDefaultDisplay();
+-    	android.view.Display.Mode[] modes = display.getSupportedModes();
+-    	
+-    	float maxRefresh = 0f;
+-    	
+-    	for (android.view.Display.Mode mode : modes) {
+-			if (mode.getRefreshRate() > maxRefresh)
+-    	    	maxRefresh = mode.getRefreshRate();
+-    	}
+-
+-    	Log.d("XServerDisplayActivity", "Picking refresh rate " + maxRefresh);
+-
+-    	return maxRefresh;
+-    }
+-
+ 
+     @Override
+     public void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         AppUtils.hideSystemUI(this);
+         AppUtils.keepScreenOn(this);
+-
+-        android.view.WindowManager.LayoutParams params = getWindow().getAttributes();
+-        params.preferredRefreshRate = pickHighestRefreshRate();
+-        getWindow().setAttributes(params);
+-        
+         setContentView(R.layout.xserver_display_activity);
+ 
+-        preloaderDialog = new PreloaderDialog(this);
+-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+-
+-        cursorLock = preferences.getBoolean("cursor_lock", false);
++        preloaderDialog = new PreloaderDialog(this);
++        preferences = PreferenceManager.getDefaultSharedPreferences(this);
++        initForensicIntentState(getIntent());
++
++        cursorLock = preferences.getBoolean("cursor_lock", false);
+ 
+         // Check for Dark Mode
+         isDarkMode = preferences.getBoolean("dark_mode", false);
+@@ -323,14 +311,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         // Initialize handler for periodic saving
+         handler = new Handler(Looper.getMainLooper());
+-        savePlaytimeRunnable = new Runnable() {
+-            @Override
+-            public void run() {
+-                savePlaytimeData();
+-                handler.postDelayed(this, SAVE_INTERVAL_MS);
+-            }
+-        };
+-        handler.postDelayed(savePlaytimeRunnable, SAVE_INTERVAL_MS);
++        savePlaytimeRunnable = new Runnable() {
++            @Override
++            public void run() {
++                savePlaytimeData();
++                handler.postDelayed(this, SAVE_INTERVAL_MS);
++            }
++        };
++        if (!forensicSkipPlaytime) {
++            handler.postDelayed(savePlaytimeRunnable, SAVE_INTERVAL_MS);
++        }
+ 
+ 
+         // Handler and Runnable to manage timeout for hiding controls
+@@ -378,15 +368,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             }
+         });
+ 
+-        imageFs = ImageFs.find(this);
+-
+-        String screenSize = Container.DEFAULT_SCREEN_SIZE;
+-        containerManager = new ContainerManager(this);
+-        container = containerManager.getContainerById(getIntent().getIntExtra("container_id", 0));
+-
+-        // Log shortcut_path
+-        String shortcutPath = getIntent().getStringExtra("shortcut_path");
+-        Log.d("XServerDisplayActivity", "Shortcut Path: " + shortcutPath);
++        imageFs = ImageFs.find(this);
++
++        String screenSize = Container.DEFAULT_SCREEN_SIZE;
++        containerManager = new ContainerManager(this);
++        ForensicLogger.logEvent(this, "info", "PARSER_MANAGER_INIT", forensicTraceId, "activity_init",
++                "ContainerManager initialized",
++                ForensicLogger.fields(
++                        "route", forensicRouteSource,
++                        "parser_summary", containerManager.getLastLoadReport().toSummaryString(),
++                        "containers_loaded", containerManager.getContainers().size()));
++        container = containerManager.getContainerById(getIntent().getIntExtra("container_id", 0));
++
++        // Log shortcut_path
++        String shortcutPath = getIntent().getStringExtra("shortcut_path");
++        Log.d("XServerDisplayActivity", "Shortcut Path: " + shortcutPath);
+ 
+ 
+         // Determine container ID
+@@ -399,15 +395,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+ 
+         // If container_id is 0, read from the .desktop file
+-        if (containerId == 0 && shortcutPath != null && !shortcutPath.isEmpty()) {
+-            File shortcutFile = new File(shortcutPath);
+-            containerId = parseContainerIdFromDesktopFile(shortcutFile);
+-            Log.d("XServerDisplayActivity", "Parsed Container ID from .desktop file: " + containerId);
+-        }
+-
+-        // Initialize playtime tracking
+-        playtimePrefs = getSharedPreferences("playtime_stats", MODE_PRIVATE);
+-        shortcutName = getIntent().getStringExtra("shortcut_name");
++        if (containerId == 0 && shortcutPath != null && !shortcutPath.isEmpty()) {
++            File shortcutFile = new File(shortcutPath);
++            containerId = parseContainerIdFromDesktopFile(shortcutFile);
++            Log.d("XServerDisplayActivity", "Parsed Container ID from .desktop file: " + containerId);
++        }
++        forensicRouteSource = resolveForensicRouteSource(getIntent(), shortcutPath, containerId, forensicRouteSource);
++        ForensicLogger.logEvent(this, "info", "ROUTE_RESOLVED", forensicTraceId, "activity_init",
++                "Resolved launch route and container id",
++                ForensicLogger.fields(
++                        "route", forensicRouteSource,
++                        "container_id", containerId,
++                        "shortcut_path", shortcutPath,
++                        "forensic_mode", forensicMode,
++                        "forensic_skip_playtime", forensicSkipPlaytime));
++
++        // Initialize playtime tracking
++        playtimePrefs = getSharedPreferences("playtime_stats", MODE_PRIVATE);
++        shortcutName = getIntent().getStringExtra("shortcut_name");
+ 
+         // Ensure shortcutPath is not null before proceeding
+         if (shortcutPath != null && !shortcutPath.isEmpty()) {
+@@ -422,25 +427,44 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         // Increment play count at the start of a session
+         incrementPlayCount();
+ 
+-        // Log the final container_id
+-        Log.d("XServerDisplayActivity", "Final Container ID: " + containerId);
+-
+-        // Retrieve the container and check if it's null
+-        container = containerManager.getContainerById(containerId);
+-
+-        if (container == null) {
+-            Log.e("XServerDisplayActivity", "Failed to retrieve container with ID: " + containerId);
+-            finish();  // Gracefully exit the activity to avoid crashing
+-            return;
+-        }
+-
+-        containerManager.activateContainer(container);
+-
+-        if (shortcutPath != null && !shortcutPath.isEmpty()) {
+-            shortcut = new Shortcut(container, new File(shortcutPath));
+-        }
+-
+-        taskAffinityMask = (short) ProcessHelper.getAffinityMask(container.getCPUList(true));
++        // Log the final container_id
++        Log.d("XServerDisplayActivity", "Final Container ID: " + containerId);
++
++        // Retrieve the container and check if it's null
++        container = containerManager.getContainerById(containerId);
++
++        if (container == null) {
++            Log.e("XServerDisplayActivity", "Failed to retrieve container with ID: " + containerId);
++            ForensicLogger.warn(this, "ROUTE_CONTAINER_NOT_FOUND", forensicTraceId, "activity_init",
++                    "Container not found for resolved id",
++                    ForensicLogger.fields("route", forensicRouteSource, "container_id", containerId, "shortcut_path", shortcutPath));
++            finish();  // Gracefully exit the activity to avoid crashing
++            return;
++        }
++
++        if (shortcutPath != null && !shortcutPath.isEmpty()) {
++            shortcut = new Shortcut(container, new File(shortcutPath));
++        }
++
++        runtimeNormalization = ContainerNormalizer.normalizeForLaunch(container, shortcut);
++        if (runtimeNormalization.hasDrift()) {
++            ForensicLogger.logEvent(this, "warn", "RUNTIME_DRIFT_DETECTED", forensicTraceId, "activity_init",
++                    "Runtime configuration drift detected; applying in-memory normalization",
++                    ForensicLogger.fields(
++                            "route", forensicRouteSource,
++                            "container_id", container.id,
++                            "changed_fields", runtimeNormalization.changedFieldsJson()));
++            ForensicLogger.logEvent(this, "info", "RUNTIME_NORMALIZATION_APPLIED", forensicTraceId, "activity_init",
++                    "In-memory normalization prepared (no .container write)",
++                    runtimeNormalization.toJson());
++        }
++        ForensicLogger.logEvent(this, "info", "RUNTIME_SNAPSHOT_READY", forensicTraceId, "activity_init",
++                "Container forensic snapshot created",
++                ContainerForensicSnapshot.create(container, shortcut, runtimeNormalization, forensicRouteSource));
++
++        containerManager.activateContainer(container);
++
++        taskAffinityMask = (short) ProcessHelper.getAffinityMask(container.getCPUList(true));
+         taskAffinityMaskWoW64 = (short) ProcessHelper.getAffinityMask(container.getCPUListWoW64(true));
+ 
+         if (shortcut != null) {
+@@ -452,13 +476,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String wmClass = shortcut != null ? shortcut.getExtra("wmClass", "") : "";
+         Log.d("XServerDisplayActivity", "Startup wmClass: " + wmClass);
+ 
+-        firstTimeBoot = container.getExtra("appVersion").isEmpty();
+-
+-        String wineVersion = container.getWineVersion();
+-        wineInfo = WineInfo.fromIdentifier(this, contentsManager, wineVersion);
+-
+-        imageFs.setWinePath(wineInfo.path);
+-
++        firstTimeBoot = container.getExtra("appVersion").isEmpty();
++
++        String wineVersion = runtimeNormalization != null ? runtimeNormalization.wineVersion : container.getWineVersion();
++        wineInfo = WineInfo.fromIdentifier(this, contentsManager, wineVersion);
++        ForensicLogger.logEvent(this, "info", "RUNTIME_WINEINFO_RESOLVED", forensicTraceId, "activity_init",
++                "Wine runtime resolved",
++                ForensicLogger.fields(
++                        "route", forensicRouteSource,
++                        "container_id", container.id,
++                        "wine_version", wineVersion,
++                        "wine_identifier", wineInfo != null ? wineInfo.identifier() : "",
++                        "wine_path", wineInfo != null ? wineInfo.path : ""));
++
++        imageFs.setWinePath(wineInfo.path);
++
+         ProcessHelper.removeAllDebugCallbacks();
+         if (enableLogs) {
+             LogView.setFilename(getExecutable());
+@@ -473,21 +505,28 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         if (preferences.getBoolean("enable_turnip_logs", false)) {
+             ProcessHelper.addDebugCallback(new FileDebugLogger(this, "turnip"));
+         }
+-
+-        graphicsDriver = container.getGraphicsDriver();
+-        String graphicsDriverConfig = container.getGraphicsDriverConfig();
+-        audioDriver = container.getAudioDriver();
+-        emulator = container.getEmulator();
+-        midiSoundFont = container.getMIDISoundFont();
+-        dxwrapper = container.getDXWrapper();
+-        String dxwrapperConfig = container.getDXWrapperConfig();
+-        screenSize = container.getScreenSize();
+-        winHandler.setInputType((byte) container.getInputType());
+-        lc_all = container.getLC_ALL();
+-
+-        // Log the entire intent to verify the extras
+-        Intent intent = getIntent();
+-        Log.d("XServerDisplayActivity", "Intent Extras: " + intent.getExtras());
++
++        graphicsDriver = runtimeNormalization != null ? runtimeNormalization.graphicsDriver : container.getGraphicsDriver();
++        String graphicsDriverConfig = container.getGraphicsDriverConfig();
++        audioDriver = runtimeNormalization != null ? runtimeNormalization.audioDriver : container.getAudioDriver();
++        emulator = runtimeNormalization != null ? runtimeNormalization.emulator : container.getEmulator();
++        midiSoundFont = container.getMIDISoundFont();
++        dxwrapper = runtimeNormalization != null ? runtimeNormalization.dxwrapper : container.getDXWrapper();
++        String dxwrapperConfig = runtimeNormalization != null ? runtimeNormalization.dxwrapperConfig : container.getDXWrapperConfig();
++        screenSize = container.getScreenSize();
++        winHandler.setInputType((byte) container.getInputType());
++        lc_all = runtimeNormalization != null ? runtimeNormalization.lcAll : container.getLC_ALL();
++
++        // Log the entire intent to verify the extras
++        Intent intent = getIntent();
++        Log.d("XServerDisplayActivity", "Intent Extras: " + intent.getExtras());
++        ForensicLogger.logEvent(this, "info", "ROUTE_INTENT_EXTRAS", forensicTraceId, "activity_init",
++                "Intent extras captured",
++                ForensicLogger.fields(
++                        "route", forensicRouteSource,
++                        "container_id", container.id,
++                        "shortcut_path", shortcutPath,
++                        "shortcut_name", shortcutName));
+ 
+         if (shortcut != null) {
+             graphicsDriver = shortcut.getExtra("graphicsDriver", container.getGraphicsDriver());
+@@ -757,14 +796,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME);
+         }
+ 
+-        if (environment != null) {
+-            xServerView.onResume();
+-            environment.onResume();
+-        }
+-        startTime = System.currentTimeMillis();
+-        handler.postDelayed(savePlaytimeRunnable, SAVE_INTERVAL_MS);
+-        ProcessHelper.resumeAllWineProcesses();
+-    }
++        if (environment != null) {
++            xServerView.onResume();
++            environment.onResume();
++        }
++        startTime = System.currentTimeMillis();
++        if (!forensicSkipPlaytime) {
++            handler.postDelayed(savePlaytimeRunnable, SAVE_INTERVAL_MS);
++        }
++        ProcessHelper.resumeAllWineProcesses();
++    }
+ 
+     @Override
+     public void onPause() {
+@@ -791,9 +832,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     }
+ 
+ 
+-    private void savePlaytimeData() {
+-        long endTime = System.currentTimeMillis();
+-        long playtime = endTime - startTime;
++    private void savePlaytimeData() {
++        if (forensicSkipPlaytime || playtimePrefs == null) return;
++        long endTime = System.currentTimeMillis();
++        long playtime = endTime - startTime;
+ 
+         // Ensure that playtime is not negative
+         if (playtime < 0) {
+@@ -813,12 +855,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     }
+ 
+ 
+-    private void incrementPlayCount() {
+-        SharedPreferences.Editor editor = playtimePrefs.edit();
+-        String playCountKey = shortcutName + "_play_count";
+-        int playCount = playtimePrefs.getInt(playCountKey, 0) + 1;
+-        editor.putInt(playCountKey, playCount);
+-        editor.apply();
++    private void incrementPlayCount() {
++        if (forensicSkipPlaytime || playtimePrefs == null) return;
++        SharedPreferences.Editor editor = playtimePrefs.edit();
++        String playCountKey = shortcutName + "_play_count";
++        int playCount = playtimePrefs.getInt(playCountKey, 0) + 1;
++        editor.putInt(playCountKey, playCount);
++        editor.apply();
+     }
+ 
+     private void exit() {
+@@ -1090,20 +1133,27 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             if (Byte.parseByte(startupSelection) == Container.STARTUP_SELECTION_AGGRESSIVE) {
+                 winHandler.killProcess("services.exe");
+             }
+-            guestProgramLauncherComponent.setContainer(this.container);
+-            guestProgramLauncherComponent.setWineInfo(this.wineInfo);
+-
+-            String guestExecutable = "wine explorer /desktop=shell," + xServer.screenInfo + " " + getWineStartCommand();
+-
+-            guestProgramLauncherComponent.setGuestExecutable(guestExecutable);
+-
+-            envVars.putAll(container.getEnvVars());
+-
+-            if (shortcut != null) envVars.putAll(shortcut.getExtra("envVars"));
+-
+-            if (!envVars.has("WINEESYNC")) {
+-                envVars.put("WINEESYNC", "1");
+-            }
++            guestProgramLauncherComponent.setContainer(this.container);
++            guestProgramLauncherComponent.setWineInfo(this.wineInfo);
++            guestProgramLauncherComponent.setForensicMode(forensicMode);
++            guestProgramLauncherComponent.setForensicTraceId(forensicTraceId);
++            guestProgramLauncherComponent.setForensicRouteSource(forensicRouteSource);
++            if (runtimeNormalization != null) {
++                guestProgramLauncherComponent.setEmulatorOverride(runtimeNormalization.emulator);
++                guestProgramLauncherComponent.setBox64VersionOverride(runtimeNormalization.box64Version);
++                guestProgramLauncherComponent.setFexcoreVersionOverride(runtimeNormalization.fexcoreVersion);
++            }
++
++            String guestExecutable = "wine explorer /desktop=shell," + xServer.screenInfo + " " + getWineStartCommand();
++
++            guestProgramLauncherComponent.setGuestExecutable(guestExecutable);
++
++            if (runtimeNormalization != null) envVars.putAll(runtimeNormalization.envVars);
++            else envVars.putAll(container.getEnvVars());
++
++            if (!envVars.has("WINEESYNC")) {
++                envVars.put("WINEESYNC", "1");
++            }
+ 
+             ArrayList<String> bindingPaths = new ArrayList<>();
+             for (String[] drive : container.drivesIterator()) {
+@@ -1112,18 +1162,22 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+             guestProgramLauncherComponent.setBindingPaths(bindingPaths.toArray(new String[0]));
+ 
+-            guestProgramLauncherComponent.setBox64Preset(
+-                    shortcut != null
+-                            ? shortcut.getExtra("box64Preset", container.getBox64Preset())
+-                            : container.getBox64Preset()
+-            );
+-
+-            guestProgramLauncherComponent.setFEXCorePreset(
+-                    shortcut != null
+-                            ? shortcut.getExtra("fexcorePreset", container.getFEXCorePreset())
+-                            : container.getFEXCorePreset()
+-            );
+-        }
++            guestProgramLauncherComponent.setBox64Preset(
++                    runtimeNormalization != null
++                            ? runtimeNormalization.box64Preset
++                            : shortcut != null
++                                    ? shortcut.getExtra("box64Preset", container.getBox64Preset())
++                                    : container.getBox64Preset()
++            );
++
++            guestProgramLauncherComponent.setFEXCorePreset(
++                    runtimeNormalization != null
++                            ? runtimeNormalization.fexcorePreset
++                            : shortcut != null
++                                    ? shortcut.getExtra("fexcorePreset", container.getFEXCorePreset())
++                                    : container.getFEXCorePreset()
++            );
++        }
+ 
+         // Merge overrideEnvVars if present
+         if (overrideEnvVars != null) {
+@@ -1164,12 +1218,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             );
+         }
+ 
+-        // Pass final envVars to the launcher
+-        guestProgramLauncherComponent.setEnvVars(envVars);
+-        guestProgramLauncherComponent.setTerminationCallback((status) -> exit());
+-
+-        // Add the launcher to our environment
+-        environment.addComponent(guestProgramLauncherComponent);
++        // Pass final envVars to the launcher
++        guestProgramLauncherComponent.setEnvVars(envVars);
++        guestProgramLauncherComponent.setTerminationCallback((status) -> exit());
++        ForensicLogger.logEvent(this, "info", "LAUNCH_ENV_PREPARED", forensicTraceId, "setup_xenvironment",
++                "XEnvironment launch env prepared",
++                ForensicLogger.fields(
++                        "route", forensicRouteSource,
++                        "container_id", container != null ? container.id : 0,
++                        "env_hash", ForensicLogger.hashEnvVars(envVars),
++                        "wine_path", imageFs.getWinePath(),
++                        "dxwrapper", dxwrapper,
++                        "dxwrapper_config_hash", ForensicLogger.sha256Hex(String.valueOf(dxwrapperConfig))));
++
++        // Add the launcher to our environment
++        environment.addComponent(guestProgramLauncherComponent);
+ 
+         // Start all environment components (XServer, Audio, etc.)
+         environment.startEnvironmentComponents();
+@@ -1485,12 +1548,44 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         touchpadView.setSensitivity(profile.getCursorSpeed() * globalCursorSpeed);
+         touchpadView.setPointerButtonRightEnabled(false);
+ 
+-        inputControlsView.invalidate();
+-    }
+-
+-    private void hideInputControls() {
+-        inputControlsView.setShowTouchscreenControls(true);
+-        inputControlsView.setVisibility(View.GONE);
++        inputControlsView.invalidate();
++    }
++
++    private void initForensicIntentState(Intent intent) {
++        if (intent == null) return;
++
++        forensicMode = intent.getBooleanExtra("forensic_mode", false);
++        forensicSkipPlaytime = intent.getBooleanExtra("forensic_skip_playtime", false);
++        forensicTraceId = intent.getStringExtra("forensic_trace_id");
++        if (forensicTraceId == null || forensicTraceId.trim().isEmpty()) {
++            if (forensicMode) forensicTraceId = ForensicLogger.newTraceId();
++        }
++        forensicRouteSource = intent.getStringExtra("forensic_route_source");
++        if (forensicRouteSource == null) forensicRouteSource = "";
++
++        ForensicLogger.logEvent(this, "info", "ROUTE_INTENT_RECEIVED", forensicTraceId, "activity_init",
++                "XServerDisplayActivity received intent",
++                ForensicLogger.fields(
++                        "forensic_mode", forensicMode,
++                        "forensic_skip_playtime", forensicSkipPlaytime,
++                        "forensic_route_source", forensicRouteSource,
++                        "container_id_extra", intent.getIntExtra("container_id", 0),
++                        "shortcut_path", intent.getStringExtra("shortcut_path")));
++    }
++
++    private static String resolveForensicRouteSource(Intent intent, String shortcutPath, int containerId, String currentRoute) {
++        if (currentRoute != null && !currentRoute.trim().isEmpty()) return currentRoute;
++        if (intent != null && intent.getBooleanExtra("forensic_mode", false) && containerId > 0) {
++            return "direct_diag_adb";
++        }
++        if (shortcutPath != null && !shortcutPath.isEmpty()) return "shortcut";
++        if (containerId > 0) return "main_activity";
++        return "unknown";
++    }
++
++    private void hideInputControls() {
++        inputControlsView.setShowTouchscreenControls(true);
++        inputControlsView.setVisibility(View.GONE);
+         inputControlsView.setProfile(null);
+ 
+         touchpadView.setSensitivity(globalCursorSpeed);
+diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerDiscovery.java b/app/src/main/java/com/winlator/cmod/container/ContainerDiscovery.java
+new file mode 100644
+index 0000000..3034d29
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/container/ContainerDiscovery.java
+@@ -0,0 +1,104 @@
++package com.winlator.cmod.container;
++
++import com.winlator.cmod.xenvironment.ImageFs;
++
++import org.json.JSONArray;
++import org.json.JSONException;
++import org.json.JSONObject;
++
++import java.util.ArrayList;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++public final class ContainerDiscovery {
++    private static final Pattern CANONICAL_CONTAINER_DIR =
++            Pattern.compile("^" + Pattern.quote(ImageFs.USER) + "-([1-9][0-9]*)$");
++
++    private ContainerDiscovery() {}
++
++    public static ParseResult parseContainerDirName(String dirName) {
++        ParseResult result = new ParseResult(dirName);
++        if (dirName == null || dirName.isEmpty()) {
++            result.reason = "empty_name";
++            return result;
++        }
++        if (!dirName.startsWith(ImageFs.USER + "-")) {
++            result.reason = "not_container_prefix";
++            return result;
++        }
++
++        Matcher matcher = CANONICAL_CONTAINER_DIR.matcher(dirName);
++        if (!matcher.matches()) {
++            String suffix = dirName.substring((ImageFs.USER + "-").length());
++            if (suffix.isEmpty()) result.reason = "empty_suffix";
++            else if (!suffix.matches("[0-9]+")) result.reason = "non_numeric_suffix";
++            else if (suffix.startsWith("0")) result.reason = "leading_zero";
++            else result.reason = "invalid_format";
++            return result;
++        }
++
++        try {
++            result.id = Integer.parseInt(matcher.group(1));
++            result.valid = true;
++            return result;
++        }
++        catch (NumberFormatException e) {
++            result.reason = "invalid_id";
++            return result;
++        }
++    }
++
++    public static final class ParseResult {
++        public final String dirName;
++        public boolean valid = false;
++        public int id = 0;
++        public String reason = "";
++
++        private ParseResult(String dirName) {
++            this.dirName = dirName;
++        }
++    }
++
++    public static final class LoadReport {
++        public int scannedDirectories;
++        public int validContainers;
++        public int ignoredDirectories;
++        public int missingConfig;
++        public int invalidConfig;
++        public int duplicateIds;
++        public int parseExceptions;
++        public final ArrayList<String> warnings = new ArrayList<>();
++
++        public void addWarning(String warning) {
++            warnings.add(warning);
++        }
++
++        public String toSummaryString() {
++            return "scanned=" + scannedDirectories
++                    + ", valid=" + validContainers
++                    + ", ignored=" + ignoredDirectories
++                    + ", missingConfig=" + missingConfig
++                    + ", invalidConfig=" + invalidConfig
++                    + ", duplicateIds=" + duplicateIds
++                    + ", parseExceptions=" + parseExceptions;
++        }
++
++        public JSONObject toJson() {
++            JSONObject obj = new JSONObject();
++            try {
++                obj.put("scanned_directories", scannedDirectories);
++                obj.put("valid_containers", validContainers);
++                obj.put("ignored_directories", ignoredDirectories);
++                obj.put("missing_config", missingConfig);
++                obj.put("invalid_config", invalidConfig);
++                obj.put("duplicate_ids", duplicateIds);
++                obj.put("parse_exceptions", parseExceptions);
++                JSONArray arr = new JSONArray();
++                for (String warning : warnings) arr.put(warning);
++                obj.put("warnings", arr);
++            }
++            catch (JSONException ignored) {}
++            return obj;
++        }
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java b/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java
+new file mode 100644
+index 0000000..5395885
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java
+@@ -0,0 +1,39 @@
++package com.winlator.cmod.container;
++
++import com.winlator.cmod.core.ForensicLogger;
++
++import org.json.JSONException;
++import org.json.JSONObject;
++
++public final class ContainerForensicSnapshot {
++    private ContainerForensicSnapshot() {}
++
++    public static JSONObject create(Container container, Shortcut shortcut, ContainerNormalizer.NormalizationResult normalized, String routeSource) {
++        JSONObject obj = new JSONObject();
++        try {
++            obj.put("container_id", container != null ? container.id : 0);
++            obj.put("container_name", container != null ? container.getName() : "");
++            obj.put("container_dir", container != null && container.getRootDir() != null ? container.getRootDir().getAbsolutePath() : "");
++            obj.put("route", routeSource == null ? "" : routeSource);
++            obj.put("shortcut_path", shortcut != null && shortcut.file != null ? shortcut.file.getAbsolutePath() : "");
++
++            if (normalized != null) {
++                obj.put("wine_version", normalized.wineVersion);
++                obj.put("emulator", normalized.emulator);
++                obj.put("graphics_driver", normalized.graphicsDriver);
++                obj.put("audio_driver", normalized.audioDriver);
++                obj.put("dxwrapper", normalized.dxwrapper);
++                obj.put("dxwrapper_config_hash", ForensicLogger.sha256Hex(normalized.dxwrapperConfig));
++                obj.put("env_hash", ForensicLogger.sha256Hex(normalized.envVars));
++                obj.put("box64_preset", normalized.box64Preset);
++                obj.put("fexcore_preset", normalized.fexcorePreset);
++                obj.put("box64_version", normalized.box64Version);
++                obj.put("fexcore_version", normalized.fexcoreVersion);
++                obj.put("lc_all", normalized.lcAll);
++                obj.put("runtime_drift_fields", normalized.changedFieldsJson());
++            }
++        }
++        catch (JSONException ignored) {}
++        return obj;
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
+index a634f8c..dd76baf 100644
+--- a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
++++ b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
+@@ -3,16 +3,17 @@ package com.winlator.cmod.container;
+ import android.content.Context;
+ import android.os.Handler;
+ import android.os.Looper;
+-import android.util.Log;
+-
+-import com.winlator.cmod.R;
+-import com.winlator.cmod.contents.ContentsManager;
+-import com.winlator.cmod.core.Callback;
+-import com.winlator.cmod.core.FileUtils;
+-import com.winlator.cmod.core.MSLink;
+-import com.winlator.cmod.core.OnExtractFileListener;
+-import com.winlator.cmod.core.TarCompressorUtils;
+-import com.winlator.cmod.core.WineInfo;
++import android.util.Log;
++
++import com.winlator.cmod.R;
++import com.winlator.cmod.contents.ContentsManager;
++import com.winlator.cmod.core.Callback;
++import com.winlator.cmod.core.ForensicLogger;
++import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.MSLink;
++import com.winlator.cmod.core.OnExtractFileListener;
++import com.winlator.cmod.core.TarCompressorUtils;
++import com.winlator.cmod.core.WineInfo;
+ import com.winlator.cmod.xenvironment.ImageFs;
+ 
+ import java.util.Arrays;
+@@ -20,18 +21,21 @@ import java.util.Arrays;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+-import java.io.File;
+-import java.util.ArrayList;
+-import java.util.Comparator;
+-import java.util.concurrent.Executors;
++import java.io.File;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.Set;
++import java.util.concurrent.Executors;
+ 
+ public class ContainerManager {
+     private final ArrayList<Container> containers = new ArrayList<>();
+     private int maxContainerId = 0;
+-    private final File homeDir;
+-    private final Context context;
+-
+-    private boolean isInitialized = false; // New flag to track initialization
++    private final File homeDir;
++    private final Context context;
++    private ContainerDiscovery.LoadReport lastLoadReport = new ContainerDiscovery.LoadReport();
++
++    private boolean isInitialized = false; // New flag to track initialization
+ 
+     public ContainerManager(Context context) {
+         this.context = context;
+@@ -46,38 +50,119 @@ public class ContainerManager {
+         return isInitialized;
+     }
+ 
+-    public ArrayList<Container> getContainers() {
+-        return containers;
+-    }
+-
+-    // Load containers from the home directory
+-    private void loadContainers() {
+-        containers.clear();
+-        maxContainerId = 0;
+-
+-        try {
+-            File[] files = homeDir.listFiles();
+-            if (files != null) {
+-                for (File file : files) {
+-                    if (file.isDirectory()) {
+-                        if (file.getName().startsWith(ImageFs.USER + "-")) {
+-                            Container container = new Container(
+-                                    Integer.parseInt(file.getName().replace(ImageFs.USER + "-", "")), this
+-                            );
+-
+-                            container.setRootDir(new File(homeDir, ImageFs.USER + "-" + container.id));
+-                            JSONObject data = new JSONObject(FileUtils.readString(container.getConfigFile()));
+-                            container.loadData(data);
+-                            containers.add(container);
+-                            maxContainerId = Math.max(maxContainerId, container.id);
+-                        }
+-                    }
+-                }
+-            }
+-        } catch (JSONException | NullPointerException e) {
+-            Log.e("ContainerManager", "Error loading containers", e);
+-        }
+-    }
++    public ArrayList<Container> getContainers() {
++        return containers;
++    }
++
++    public ContainerDiscovery.LoadReport getLastLoadReport() {
++        return lastLoadReport;
++    }
++
++    public ContainerDiscovery.LoadReport reloadContainers() {
++        loadContainers();
++        return lastLoadReport;
++    }
++
++    // Load containers from the home directory
++    private void loadContainers() {
++        containers.clear();
++        maxContainerId = 0;
++        lastLoadReport = new ContainerDiscovery.LoadReport();
++        Set<Integer> seenIds = new HashSet<>();
++
++        File[] files = homeDir.listFiles();
++        if (files == null) {
++            ForensicLogger.warn(context, "PARSER_HOME_LIST_NULL", null, "container_discovery",
++                    "homeDir.listFiles() returned null",
++                    ForensicLogger.fields("home_dir", homeDir.getAbsolutePath()));
++            return;
++        }
++
++        for (File file : files) {
++            if (!file.isDirectory()) continue;
++            lastLoadReport.scannedDirectories++;
++
++            ContainerDiscovery.ParseResult parsed = ContainerDiscovery.parseContainerDirName(file.getName());
++            if (!parsed.valid) {
++                if (file.getName().startsWith(ImageFs.USER + "-")) {
++                    lastLoadReport.ignoredDirectories++;
++                    String warning = "invalid_name:" + file.getName() + ":" + parsed.reason;
++                    lastLoadReport.addWarning(warning);
++                    ForensicLogger.warn(context, "PARSER_DIR_IGNORED", null, "container_discovery",
++                            "Ignoring invalid container directory name",
++                            ForensicLogger.fields(
++                                    "container_dir", file.getAbsolutePath(),
++                                    "dir_name", file.getName(),
++                                    "reason", parsed.reason));
++                }
++                continue;
++            }
++
++            if (!seenIds.add(parsed.id)) {
++                lastLoadReport.duplicateIds++;
++                String warning = "duplicate_container_id:" + parsed.id + ":" + file.getName();
++                lastLoadReport.addWarning(warning);
++                ForensicLogger.warn(context, "PARSER_DUPLICATE_CONTAINER_ID", null, "container_discovery",
++                        "Duplicate container id ignored",
++                        ForensicLogger.fields(
++                                "container_id", parsed.id,
++                                "container_dir", file.getAbsolutePath(),
++                                "dir_name", file.getName()));
++                continue;
++            }
++
++            try {
++                Container container = new Container(parsed.id, this);
++                container.setRootDir(file);
++
++                File configFile = container.getConfigFile();
++                if (!configFile.isFile()) {
++                    lastLoadReport.missingConfig++;
++                    String warning = "missing_config:" + file.getName();
++                    lastLoadReport.addWarning(warning);
++                    ForensicLogger.warn(context, "PARSER_CONTAINER_MISSING_CONFIG", null, "container_discovery",
++                            "Container directory missing .container file",
++                            ForensicLogger.fields(
++                                    "container_id", parsed.id,
++                                    "container_dir", file.getAbsolutePath(),
++                                    "config_path", configFile.getAbsolutePath()));
++                    continue;
++                }
++
++                String rawConfig = FileUtils.readString(configFile);
++                JSONObject data = new JSONObject(rawConfig);
++                container.loadData(data);
++                containers.add(container);
++                lastLoadReport.validContainers++;
++                maxContainerId = Math.max(maxContainerId, container.id);
++            }
++            catch (JSONException | NullPointerException e) {
++                lastLoadReport.invalidConfig++;
++                lastLoadReport.addWarning("config_json_error:" + file.getName());
++                Log.e("ContainerManager", "Error loading container config: " + file.getAbsolutePath(), e);
++                ForensicLogger.error(context, "PARSER_CONTAINER_CONFIG_ERROR", null, "container_discovery",
++                        "Container config could not be parsed", e,
++                        ForensicLogger.fields(
++                                "container_id", parsed.id,
++                                "container_dir", file.getAbsolutePath(),
++                                "config_path", new File(file, ".container").getAbsolutePath()));
++            }
++            catch (RuntimeException e) {
++                lastLoadReport.parseExceptions++;
++                lastLoadReport.addWarning("parse_exception:" + file.getName() + ":" + e.getClass().getSimpleName());
++                Log.e("ContainerManager", "Unexpected error loading container: " + file.getAbsolutePath(), e);
++                ForensicLogger.error(context, "PARSER_CONTAINER_RUNTIME_ERROR", null, "container_discovery",
++                        "Unexpected exception while loading container", e,
++                        ForensicLogger.fields(
++                                "container_id", parsed.id,
++                                "container_dir", file.getAbsolutePath()));
++            }
++        }
++
++        ForensicLogger.logEvent(context, "info", "PARSER_LOAD_SUMMARY", null, "container_discovery",
++                "Container discovery completed",
++                lastLoadReport.toJson());
++    }
+ 
+ 
+     public Context getContext() {
+diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerNormalizer.java b/app/src/main/java/com/winlator/cmod/container/ContainerNormalizer.java
+new file mode 100644
+index 0000000..d9292d0
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/container/ContainerNormalizer.java
+@@ -0,0 +1,174 @@
++package com.winlator.cmod.container;
++
++import com.winlator.cmod.box64.Box64Preset;
++import com.winlator.cmod.core.EnvVars;
++import com.winlator.cmod.core.WineInfo;
++import com.winlator.cmod.fexcore.FEXCorePreset;
++
++import org.json.JSONArray;
++import org.json.JSONException;
++import org.json.JSONObject;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++
++public final class ContainerNormalizer {
++    private ContainerNormalizer() {}
++
++    public static NormalizationResult normalizeForLaunch(Container container, Shortcut shortcut) {
++        NormalizationResult result = new NormalizationResult();
++        if (container == null) return result;
++
++        result.containerId = container.id;
++        result.rawWineVersion = safe(container.getWineVersion());
++        result.rawGraphicsDriver = safe(container.getGraphicsDriver());
++        result.rawAudioDriver = safe(container.getAudioDriver());
++        result.rawEmulator = safe(resolveShortcutOverride(shortcut, "emulator", container.getEmulator()));
++        result.rawDxwrapper = safe(container.getDXWrapper());
++        result.rawDxwrapperConfig = safe(container.getDXWrapperConfig());
++        result.rawEnvVars = safe(resolveShortcutAppendEnvVars(container, shortcut));
++        result.rawBox64Preset = safe(resolveShortcutOverride(shortcut, "box64Preset", container.getBox64Preset()));
++        result.rawFexcorePreset = safe(resolveShortcutOverride(shortcut, "fexcorePreset", container.getFEXCorePreset()));
++        result.rawBox64Version = safe(resolveShortcutOverride(shortcut, "box64Version", container.getBox64Version()));
++        result.rawFexcoreVersion = safe(container.getFEXCoreVersion());
++        result.rawLcAll = safe(container.getLC_ALL());
++
++        result.wineVersion = fallback(result.rawWineVersion, WineInfo.MAIN_WINE_VERSION.identifier());
++        result.graphicsDriver = fallback(result.rawGraphicsDriver, Container.DEFAULT_GRAPHICS_DRIVER);
++        result.audioDriver = fallback(result.rawAudioDriver, Container.DEFAULT_AUDIO_DRIVER);
++        result.emulator = fallback(result.rawEmulator, Container.DEFAULT_EMULATOR);
++        result.dxwrapper = fallback(result.rawDxwrapper, Container.DEFAULT_DXWRAPPER);
++        result.dxwrapperConfig = fallback(result.rawDxwrapperConfig, Container.DEFAULT_DXWRAPPERCONFIG);
++        result.envVars = normalizeEnvVarsString(result.rawEnvVars);
++        result.box64Preset = fallback(result.rawBox64Preset, Box64Preset.COMPATIBILITY);
++        result.fexcorePreset = fallback(result.rawFexcorePreset, FEXCorePreset.INTERMEDIATE);
++        result.box64Version = trimToEmpty(result.rawBox64Version);
++        result.fexcoreVersion = trimToEmpty(result.rawFexcoreVersion);
++        result.lcAll = trimToEmpty(result.rawLcAll);
++
++        result.noteChange("wineVersion", result.rawWineVersion, result.wineVersion);
++        result.noteChange("graphicsDriver", result.rawGraphicsDriver, result.graphicsDriver);
++        result.noteChange("audioDriver", result.rawAudioDriver, result.audioDriver);
++        result.noteChange("emulator", result.rawEmulator, result.emulator);
++        result.noteChange("dxwrapper", result.rawDxwrapper, result.dxwrapper);
++        result.noteChange("dxwrapperConfig", result.rawDxwrapperConfig, result.dxwrapperConfig);
++        result.noteChange("envVars", result.rawEnvVars, result.envVars);
++        result.noteChange("box64Preset", result.rawBox64Preset, result.box64Preset);
++        result.noteChange("fexcorePreset", result.rawFexcorePreset, result.fexcorePreset);
++        result.noteChange("box64Version", result.rawBox64Version, result.box64Version);
++        result.noteChange("fexcoreVersion", result.rawFexcoreVersion, result.fexcoreVersion);
++        result.noteChange("lc_all", result.rawLcAll, result.lcAll);
++
++        return result;
++    }
++
++    private static String resolveShortcutAppendEnvVars(Container container, Shortcut shortcut) {
++        String base = safe(container.getEnvVars());
++        if (shortcut == null) return base;
++        String extra = safe(shortcut.getExtra("envVars"));
++        if (extra.isEmpty()) return base;
++        return (base + " " + extra).trim();
++    }
++
++    private static String resolveShortcutOverride(Shortcut shortcut, String key, String fallback) {
++        if (shortcut == null) return fallback;
++        return shortcut.getExtra(key, fallback);
++    }
++
++    public static String normalizeEnvVarsString(String envVarsValue) {
++        String value = trimToEmpty(envVarsValue);
++        if (value.isEmpty()) return "";
++
++        EnvVars envVars = new EnvVars();
++        try {
++            envVars.putAll(value);
++        }
++        catch (Exception e) {
++            // Fallback to raw value if parsing fails; caller will still see drift as empty diff.
++            return value;
++        }
++
++        String[] arr = envVars.toStringArray();
++        Arrays.sort(arr);
++        return String.join(" ", arr).trim();
++    }
++
++    private static String fallback(String value, String fallback) {
++        String out = trimToEmpty(value);
++        return out.isEmpty() ? trimToEmpty(fallback) : out;
++    }
++
++    private static String safe(String value) {
++        return value == null ? "" : value;
++    }
++
++    private static String trimToEmpty(String value) {
++        return value == null ? "" : value.trim();
++    }
++
++    public static final class NormalizationResult {
++        public int containerId;
++        public String rawWineVersion = "";
++        public String rawGraphicsDriver = "";
++        public String rawAudioDriver = "";
++        public String rawEmulator = "";
++        public String rawDxwrapper = "";
++        public String rawDxwrapperConfig = "";
++        public String rawEnvVars = "";
++        public String rawBox64Preset = "";
++        public String rawFexcorePreset = "";
++        public String rawBox64Version = "";
++        public String rawFexcoreVersion = "";
++        public String rawLcAll = "";
++
++        public String wineVersion = "";
++        public String graphicsDriver = "";
++        public String audioDriver = "";
++        public String emulator = "";
++        public String dxwrapper = "";
++        public String dxwrapperConfig = "";
++        public String envVars = "";
++        public String box64Preset = "";
++        public String fexcorePreset = "";
++        public String box64Version = "";
++        public String fexcoreVersion = "";
++        public String lcAll = "";
++
++        private final ArrayList<String> changedFields = new ArrayList<>();
++
++        private void noteChange(String field, String raw, String normalized) {
++            if (!safe(raw).equals(safe(normalized))) changedFields.add(field);
++        }
++
++        public boolean hasDrift() {
++            return !changedFields.isEmpty();
++        }
++
++        public JSONArray changedFieldsJson() {
++            JSONArray arr = new JSONArray();
++            for (String name : changedFields) arr.put(name);
++            return arr;
++        }
++
++        public String changedFieldsSummary() {
++            return changedFields.isEmpty() ? "" : String.join(",", changedFields);
++        }
++
++        public JSONObject toJson() {
++            JSONObject obj = new JSONObject();
++            try {
++                obj.put("container_id", containerId);
++                obj.put("changed_fields", changedFieldsJson());
++                obj.put("wine_version", wineVersion);
++                obj.put("emulator", emulator);
++                obj.put("dxwrapper", dxwrapper);
++                obj.put("dxwrapper_config_hash", com.winlator.cmod.core.ForensicLogger.sha256Hex(dxwrapperConfig));
++                obj.put("env_hash", com.winlator.cmod.core.ForensicLogger.sha256Hex(envVars));
++                obj.put("box64_preset", box64Preset);
++                obj.put("fexcore_preset", fexcorePreset);
++            }
++            catch (JSONException ignored) {}
++            return obj;
++        }
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java b/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
+index ea9be65..349c112 100644
+--- a/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
++++ b/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
+@@ -14,7 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
+ import com.winlator.cmod.R;
+ import com.winlator.cmod.contents.ContentProfile;
+ 
+-import java.util.List;
++import java.util.Collections;
++import java.util.List;
+ 
+ public class ContentInfoDialog extends ContentDialog {
+     public ContentInfoDialog(Context context, ContentProfile profile) {
+@@ -28,11 +29,26 @@ public class ContentInfoDialog extends ContentDialog {
+         TextView tvDescription = findViewById(R.id.TVDesc);
+         RecyclerView recyclerView = findViewById(R.id.recyclerView);
+ 
+-        tvType.setText(profile.type.toString());
+-        tvVersion.setText(profile.verName);
+-        tvVersionCode.setText(String.valueOf(profile.verCode));
+-        tvDescription.setText(profile.desc);
+-        recyclerView.setAdapter(new ContentInfoFileAdapter(profile.fileList));
++        tvType.setText(profile.getDisplayCategory());
++        tvVersion.setText(profile.verName);
++        tvVersionCode.setText(String.valueOf(profile.verCode));
++        StringBuilder descBuilder = new StringBuilder();
++        if (profile.desc != null && !profile.desc.isEmpty()) descBuilder.append(profile.desc);
++        if (profile.channel != null && !profile.channel.isEmpty()) {
++            if (descBuilder.length() > 0) descBuilder.append("\n\n");
++            descBuilder.append("Channel: ").append(profile.getChannel());
++        }
++        if (profile.delivery != null && !profile.delivery.isEmpty()) {
++            descBuilder.append("\nDelivery: ").append(profile.getDelivery());
++        }
++        if (profile.sourceRepo != null && !profile.sourceRepo.isEmpty()) {
++            descBuilder.append("\nSource: ").append(profile.sourceRepo);
++        }
++        if (profile.releaseTag != null && !profile.releaseTag.isEmpty()) {
++            descBuilder.append("\nRelease tag: ").append(profile.releaseTag);
++        }
++        tvDescription.setText(descBuilder.toString());
++        recyclerView.setAdapter(new ContentInfoFileAdapter(profile.fileList == null ? Collections.emptyList() : profile.fileList));
+         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
+ 
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentProfile.java b/app/src/main/java/com/winlator/cmod/contents/ContentProfile.java
+index 65b9474..b55681e 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentProfile.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentProfile.java
+@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
+ 
+ import java.util.List;
+ 
+-public class ContentProfile {
++public class ContentProfile {
+     public static final String MARK_TYPE = "type";
+     public static final String MARK_VERSION_NAME = "versionName";
+     public static final String MARK_VERSION_CODE = "versionCode";
+@@ -12,12 +12,22 @@ public class ContentProfile {
+     public static final String MARK_FILE_LIST = "files";
+     public static final String MARK_FILE_SOURCE = "source";
+     public static final String MARK_FILE_TARGET = "target";
+-    public static final String MARK_WINE = "wine";
+-    public static final String MARK_WINE_BINPATH = "binPath";
+-    public static final String MARK_WINE_LIBPATH = "libPath";
+-    public static final String MARK_WINE_PREFIX_PACK = "prefixPack";
+-
+-    public enum ContentType {
++    public static final String MARK_WINE = "wine";
++    public static final String MARK_WINE_BINPATH = "binPath";
++    public static final String MARK_WINE_LIBPATH = "libPath";
++    public static final String MARK_WINE_PREFIX_PACK = "prefixPack";
++    public static final String MARK_CHANNEL = "channel";
++    public static final String MARK_DELIVERY = "delivery";
++    public static final String MARK_DISPLAY_CATEGORY = "displayCategory";
++    public static final String MARK_SOURCE_REPO = "sourceRepo";
++    public static final String MARK_RELEASE_TAG = "releaseTag";
++    public static final String CHANNEL_STABLE = "stable";
++    public static final String CHANNEL_BETA = "beta";
++    public static final String CHANNEL_NIGHTLY = "nightly";
++    public static final String DELIVERY_REMOTE = "remote";
++    public static final String DELIVERY_EMBEDDED = "embedded";
++
++    public enum ContentType {
+         CONTENT_TYPE_WINE("Wine"),
+         CONTENT_TYPE_DXVK("DXVK"),
+         CONTENT_TYPE_VKD3D("VKD3D"),
+@@ -57,6 +67,35 @@ public class ContentProfile {
+     public List<ContentFile> fileList;
+     public String wineLibPath;
+     public String wineBinPath;
+-    public String winePrefixPack;
+-    public String remoteUrl;
+-}
++    public String winePrefixPack;
++    public String remoteUrl;
++    public String channel = CHANNEL_STABLE;
++    public String delivery = "";
++    public String displayCategory = "";
++    public String sourceRepo = "";
++    public String releaseTag = "";
++
++    public String getChannel() {
++        if (channel == null || channel.trim().isEmpty()) return CHANNEL_STABLE;
++        return channel.trim().toLowerCase();
++    }
++
++    public String getDelivery() {
++        return delivery == null ? "" : delivery.trim().toLowerCase();
++    }
++
++    public String getDisplayCategory() {
++        if (displayCategory != null && !displayCategory.trim().isEmpty()) return displayCategory.trim();
++        if (type == ContentType.CONTENT_TYPE_WINE) return "Wine/Proton";
++        return type != null ? type.toString() : "";
++    }
++
++    public boolean isBetaLike() {
++        String ch = getChannel();
++        return CHANNEL_BETA.equals(ch) || CHANNEL_NIGHTLY.equals(ch);
++    }
++
++    public boolean isRemoteDownloadable() {
++        return remoteUrl != null && !remoteUrl.trim().isEmpty();
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index 4223106..3e5d93b 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -22,9 +22,9 @@ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
+ 
+-public class ContentsManager {
+-    public static final String PROFILE_NAME = "profile.json";
+-    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/contents.json";
++public class ContentsManager {
++    public static final String PROFILE_NAME = "profile.json";
++    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/kosoymiki/winlator-wine-proton-arm64ec-wcp/main/contents/contents.json";
+     public static final String[] DXVK_TRUST_FILES = {"${system32}/d3d8.dll", "${system32}/d3d9.dll", "${system32}/d3d10.dll", "${system32}/d3d10_1.dll",
+             "${system32}/d3d10core.dll", "${system32}/d3d11.dll", "${system32}/dxgi.dll", "${syswow64}/d3d8.dll", "${syswow64}/d3d9.dll", "${syswow64}/d3d10.dll",
+             "${syswow64}/d3d10_1.dll", "${syswow64}/d3d10core.dll", "${syswow64}/d3d11.dll", "${syswow64}/dxgi.dll"};
+@@ -107,6 +107,11 @@ public class ContentsManager {
+                     remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
+                     remoteProfile.verName = object.getString("verName");
+                     remoteProfile.verCode = object.getInt("verCode");
++                    remoteProfile.desc = object.optString("description", "");
++                    remoteProfile.displayCategory = object.optString(ContentProfile.MARK_DISPLAY_CATEGORY, "");
++                    remoteProfile.sourceRepo = object.optString(ContentProfile.MARK_SOURCE_REPO, "");
++                    remoteProfile.releaseTag = object.optString(ContentProfile.MARK_RELEASE_TAG, "");
++                    remoteProfile.delivery = object.optString(ContentProfile.MARK_DELIVERY, ContentProfile.DELIVERY_REMOTE);
+ 
+                     if (remoteProfile.type == null) continue;
+                     if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+@@ -117,10 +122,13 @@ public class ContentsManager {
+ 
+                     String verName = remoteProfile.verName != null ? remoteProfile.verName.toLowerCase() : "";
+                     String remoteUrl = remoteProfile.remoteUrl != null ? remoteProfile.remoteUrl.toLowerCase() : "";
+-                    boolean isBeta = object.optBoolean("beta", false)
+-                            || verName.contains("beta")
+-                            || verName.contains("nightly")
+-                            || remoteUrl.contains("nightly");
++                    String channel = object.optString(ContentProfile.MARK_CHANNEL, "").trim().toLowerCase();
++                    if (channel.isEmpty()) {
++                        channel = deriveLegacyChannel(object, verName, remoteUrl);
++                    }
++                    remoteProfile.channel = channel;
++                    boolean isBeta = ContentProfile.CHANNEL_BETA.equals(channel)
++                            || ContentProfile.CHANNEL_NIGHTLY.equals(channel);
+                     if (!includeBeta && isBeta) continue;
+ 
+                     remoteProfiles.add(remoteProfile);
+@@ -259,10 +267,10 @@ public class ContentsManager {
+         callback.onSucceed(profile);
+     }
+ 
+-    public ContentProfile readProfile(File file) {
+-        try {
+-            ContentProfile profile = new ContentProfile();
+-            JSONObject profileJSONObject = new JSONObject(FileUtils.readString(file));
++    public ContentProfile readProfile(File file) {
++        try {
++            ContentProfile profile = new ContentProfile();
++            JSONObject profileJSONObject = new JSONObject(FileUtils.readString(file));
+             String typeName = profileJSONObject.getString(ContentProfile.MARK_TYPE);
+             String verName = profileJSONObject.getString(ContentProfile.MARK_VERSION_NAME);
+             int verCode = profileJSONObject.getInt(ContentProfile.MARK_VERSION_CODE);
+@@ -286,14 +294,26 @@ public class ContentsManager {
+ 
+             profile.type = ContentProfile.ContentType.getTypeByName(typeName);
+             profile.verName = verName;
+-            profile.verCode = verCode;
+-            profile.desc = desc;
+-            profile.fileList = fileList;
+-            return profile;
+-        } catch (Exception e) {
+-            return null;
+-        }
+-    }
++            profile.verCode = verCode;
++            profile.desc = desc;
++            profile.fileList = fileList;
++            profile.channel = profileJSONObject.optString(ContentProfile.MARK_CHANNEL, ContentProfile.CHANNEL_STABLE);
++            profile.delivery = profileJSONObject.optString(ContentProfile.MARK_DELIVERY, "");
++            profile.displayCategory = profileJSONObject.optString(ContentProfile.MARK_DISPLAY_CATEGORY, "");
++            profile.sourceRepo = profileJSONObject.optString(ContentProfile.MARK_SOURCE_REPO, "");
++            profile.releaseTag = profileJSONObject.optString(ContentProfile.MARK_RELEASE_TAG, "");
++            return profile;
++        } catch (Exception e) {
++            return null;
++        }
++    }
++
++    private String deriveLegacyChannel(JSONObject object, String verName, String remoteUrl) {
++        if (object.optBoolean("beta", false)) return ContentProfile.CHANNEL_BETA;
++        if (verName.contains("nightly") || remoteUrl.contains("nightly")) return ContentProfile.CHANNEL_NIGHTLY;
++        if (verName.contains("beta") || remoteUrl.contains("beta")) return ContentProfile.CHANNEL_BETA;
++        return ContentProfile.CHANNEL_STABLE;
++    }
+ 
+     public List<ContentProfile> getProfiles(ContentProfile.ContentType type) {
+         if (profilesMap != null)
+diff --git a/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java b/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
+new file mode 100644
+index 0000000..76a8f4e
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
+@@ -0,0 +1,238 @@
++package com.winlator.cmod.core;
++
++import android.content.Context;
++import android.text.format.DateFormat;
++import android.util.Log;
++
++import org.json.JSONArray;
++import org.json.JSONException;
++import org.json.JSONObject;
++
++import java.io.BufferedReader;
++import java.io.BufferedWriter;
++import java.io.File;
++import java.io.FileReader;
++import java.io.FileWriter;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Date;
++import java.util.Locale;
++
++public final class ForensicLogger {
++    private static final String TAG = "ForensicLogger";
++    private static final Object FILE_LOCK = new Object();
++
++    private ForensicLogger() {}
++
++    public static String newTraceId() {
++        long now = System.currentTimeMillis();
++        int salt = (int) (Math.random() * 0xffff);
++        return String.format(Locale.US, "tr-%x-%04x", now, salt);
++    }
++
++    public static void info(Context context, String eventId, String traceId, String stage, String message) {
++        logEvent(context, "info", eventId, traceId, stage, message, null);
++    }
++
++    public static void warn(Context context, String eventId, String traceId, String stage, String message, JSONObject fields) {
++        logEvent(context, "warn", eventId, traceId, stage, message, fields);
++    }
++
++    public static void error(Context context, String eventId, String traceId, String stage, String message, Throwable error, JSONObject fields) {
++        JSONObject merged = new JSONObject();
++        if (fields != null) {
++            JSONArray names = fields.names();
++            if (names != null) {
++                for (int i = 0; i < names.length(); i++) {
++                    String key = names.optString(i, "");
++                    if (key.isEmpty()) continue;
++                    try {
++                        merged.put(key, fields.opt(key));
++                    }
++                    catch (JSONException ignored) {}
++                }
++            }
++        }
++        if (error != null) {
++            try {
++                merged.put("error_class", error.getClass().getName());
++                merged.put("error_detail", String.valueOf(error.getMessage()));
++            }
++            catch (JSONException ignored) {}
++        }
++        logEvent(context, "error", eventId, traceId, stage, message, merged);
++    }
++
++    public static void logEvent(Context context, String severity, String eventId, String traceId, String stage, String message, JSONObject fields) {
++        JSONObject obj = new JSONObject();
++        try {
++            obj.put("ts", DateFormat.format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", new Date()).toString());
++            obj.put("event_id", sanitize(eventId));
++            obj.put("severity", sanitize(severity));
++            obj.put("trace_id", traceId == null ? JSONObject.NULL : traceId);
++            obj.put("stage", stage == null ? JSONObject.NULL : stage);
++            obj.put("message", message == null ? "" : message);
++
++            if (fields != null) {
++                JSONArray names = fields.names();
++                if (names != null) {
++                    for (int i = 0; i < names.length(); i++) {
++                        String key = names.optString(i, "");
++                        if (key.isEmpty()) continue;
++                        obj.put(key, fields.opt(key));
++                    }
++                }
++            }
++        }
++        catch (JSONException e) {
++            Log.e(TAG, "Failed to build forensic event", e);
++            return;
++        }
++
++        String line = obj.toString();
++        logcat(severity, line);
++        if (context == null) return;
++
++        synchronized (FILE_LOCK) {
++            File out = getCurrentLogFile(context);
++            try (BufferedWriter writer = new BufferedWriter(new FileWriter(out, true))) {
++                writer.write(line);
++                writer.newLine();
++            }
++            catch (IOException e) {
++                Log.e(TAG, "Failed writing forensic jsonl", e);
++            }
++        }
++    }
++
++    public static JSONObject fields(Object... keyValues) {
++        JSONObject obj = new JSONObject();
++        if (keyValues == null) return obj;
++        for (int i = 0; i + 1 < keyValues.length; i += 2) {
++            String key = String.valueOf(keyValues[i]);
++            Object value = keyValues[i + 1];
++            try {
++                obj.put(key, value == null ? JSONObject.NULL : value);
++            }
++            catch (JSONException ignored) {}
++        }
++        return obj;
++    }
++
++    public static String hashEnvVars(EnvVars envVars) {
++        if (envVars == null || envVars.isEmpty()) return "";
++        String[] values = envVars.toStringArray();
++        Arrays.sort(values);
++        return sha256Hex(String.join("\n", values));
++    }
++
++    public static String sha256Hex(String value) {
++        return sha256Hex(value != null ? value.getBytes(StandardCharsets.UTF_8) : new byte[0]);
++    }
++
++    public static String sha256Hex(byte[] value) {
++        try {
++            MessageDigest digest = MessageDigest.getInstance("SHA-256");
++            byte[] out = digest.digest(value);
++            StringBuilder sb = new StringBuilder(out.length * 2);
++            for (byte b : out) sb.append(String.format(Locale.US, "%02x", b));
++            return sb.toString();
++        }
++        catch (NoSuchAlgorithmException e) {
++            return "";
++        }
++    }
++
++    public static File getForensicsDir(Context context) {
++        File dir = new File(WinlatorLogUtils.getLogsDir(context), "forensics");
++        if (!dir.exists()) dir.mkdirs();
++        return dir;
++    }
++
++    public static File getCurrentLogFile(Context context) {
++        String fileName = "forensics_" + DateFormat.format("yyyy-MM-dd", new Date()) + ".jsonl";
++        return new File(getForensicsDir(context), fileName);
++    }
++
++    public static File getLatestLogFile(Context context) {
++        File dir = getForensicsDir(context);
++        File[] files = dir.listFiles((d, name) -> name.endsWith(".jsonl"));
++        if (files == null || files.length == 0) return null;
++        File latest = files[0];
++        for (File file : files) {
++            if (file.lastModified() > latest.lastModified()) latest = file;
++        }
++        return latest;
++    }
++
++    public static String describeLatestTrace(Context context) {
++        File file = getLatestLogFile(context);
++        if (file == null || !file.isFile()) return "No forensic trace file found.";
++
++        String lastLine = null;
++        ArrayList<String> lastLines = new ArrayList<>();
++        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
++            String line;
++            while ((line = reader.readLine()) != null) {
++                if (line.trim().isEmpty()) continue;
++                lastLine = line;
++                if (lastLines.size() == 5) lastLines.remove(0);
++                lastLines.add(line);
++            }
++        }
++        catch (IOException e) {
++            return "Failed reading forensic log: " + e.getMessage();
++        }
++
++        if (lastLine == null) return "Forensic log is empty: " + file.getAbsolutePath();
++        try {
++            JSONObject obj = new JSONObject(lastLine);
++            return "file=" + file.getName()
++                    + ", event=" + obj.optString("event_id", "?")
++                    + ", trace=" + obj.optString("trace_id", "")
++                    + ", stage=" + obj.optString("stage", "")
++                    + ", msg=" + obj.optString("message", "");
++        }
++        catch (JSONException e) {
++            return "Latest forensic line is not JSON (" + file.getName() + "): " + lastLine;
++        }
++    }
++
++    public static JSONObject snapshotFields(JSONObject base, String prefix, JSONObject source) {
++        JSONObject out = base != null ? base : new JSONObject();
++        if (source == null) return out;
++        JSONArray names = source.names();
++        if (names == null) return out;
++        for (int i = 0; i < names.length(); i++) {
++            String key = names.optString(i, "");
++            if (key.isEmpty()) continue;
++            try {
++                out.put(prefix + key, source.opt(key));
++            }
++            catch (JSONException ignored) {}
++        }
++        return out;
++    }
++
++    private static void logcat(String severity, String line) {
++        switch (severity == null ? "info" : severity.toLowerCase(Locale.US)) {
++            case "warn":
++                Log.w(TAG, line);
++                break;
++            case "error":
++                Log.e(TAG, line);
++                break;
++            default:
++                Log.i(TAG, line);
++                break;
++        }
++    }
++
++    private static String sanitize(String value) {
++        return value == null ? "" : value;
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 6abd663..c4dba41 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -14,12 +14,13 @@ import com.winlator.cmod.box64.Box64PresetManager;
+ import com.winlator.cmod.container.Container;
+ import com.winlator.cmod.container.Shortcut;
+ import com.winlator.cmod.contents.ContentProfile;
+-import com.winlator.cmod.contents.ContentsManager;
+-import com.winlator.cmod.core.Callback;
+-import com.winlator.cmod.core.EnvVars;
+-import com.winlator.cmod.core.FileUtils;
+-import com.winlator.cmod.core.GPUInformation;
+-import com.winlator.cmod.core.KeyValueSet;
++import com.winlator.cmod.contents.ContentsManager;
++import com.winlator.cmod.core.Callback;
++import com.winlator.cmod.core.EnvVars;
++import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.ForensicLogger;
++import com.winlator.cmod.core.GPUInformation;
++import com.winlator.cmod.core.KeyValueSet;
+ import com.winlator.cmod.core.ProcessHelper;
+ import com.winlator.cmod.core.TarCompressorUtils;
+ import com.winlator.cmod.core.WinlatorLogUtils;
+@@ -55,9 +56,15 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+     private Callback<Integer> terminationCallback;
+     private static final Object lock = new Object();
+     private final ContentsManager contentsManager;
+-    private final ContentProfile wineProfile;
+-    private Container container;
+-    private final Shortcut shortcut;
++    private final ContentProfile wineProfile;
++    private Container container;
++    private final Shortcut shortcut;
++    private String forensicTraceId;
++    private String forensicRouteSource = "";
++    private boolean forensicMode;
++    private String emulatorOverride;
++    private String box64VersionOverride;
++    private String fexcoreVersionOverride;
+ 
+     public void setWineInfo(WineInfo wineInfo) {
+         this.wineInfo = wineInfo;
+@@ -66,18 +73,26 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return this.wineInfo;
+     }
+ 
+-    public Container getContainer() { return this.container; }
+-    public void setContainer(Container container) { this.container = container; }
++    public Container getContainer() { return this.container; }
++    public void setContainer(Container container) { this.container = container; }
++    public void setForensicTraceId(String forensicTraceId) { this.forensicTraceId = forensicTraceId; }
++    public void setForensicRouteSource(String forensicRouteSource) { this.forensicRouteSource = forensicRouteSource != null ? forensicRouteSource : ""; }
++    public void setForensicMode(boolean forensicMode) { this.forensicMode = forensicMode; }
++    public void setEmulatorOverride(String emulatorOverride) { this.emulatorOverride = emulatorOverride; }
++    public void setBox64VersionOverride(String box64VersionOverride) { this.box64VersionOverride = box64VersionOverride; }
++    public void setFexcoreVersionOverride(String fexcoreVersionOverride) { this.fexcoreVersionOverride = fexcoreVersionOverride; }
+ 
+     private void extractBox64Files() {
+         ImageFs imageFs = environment.getImageFs();
+         Context context = environment.getContext();
+ 
+         // Fallback to default if the shared preference is not set or is empty
+-        String box64Version = container.getBox64Version();
+-
+-        if (shortcut != null)
+-            box64Version = shortcut.getExtra("box64Version", shortcut.container.getBox64Version());
++        String box64Version = !isEmpty(box64VersionOverride) ? box64VersionOverride : container.getBox64Version();
++
++        if (shortcut != null)
++            box64Version = shortcut.getExtra("box64Version", shortcut.container.getBox64Version());
++        if (!isEmpty(box64VersionOverride))
++            box64Version = box64VersionOverride;
+ 
+         Log.d("GuestProgramLauncherComponent", "box64Version: " + box64Version);
+ 
+@@ -106,12 +121,16 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         File system32dir = new File(rootDir + "/home/xuser/.wine/drive_c/windows/system32");
+         boolean containerDataChanged = false;
+ 
+-        String wowbox64Version = container.getBox64Version();
+-        String fexcoreVersion = container.getFEXCoreVersion();
+-
+-        if (shortcut != null) {
+-            wowbox64Version = shortcut.getExtra("box64Version", shortcut.container.getBox64Version());
+-        }
++        String wowbox64Version = !isEmpty(box64VersionOverride) ? box64VersionOverride : container.getBox64Version();
++        String fexcoreVersion = !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container.getFEXCoreVersion();
++
++        if (shortcut != null) {
++            wowbox64Version = shortcut.getExtra("box64Version", shortcut.container.getBox64Version());
++        }
++        if (!isEmpty(box64VersionOverride))
++            wowbox64Version = box64VersionOverride;
++        if (!isEmpty(fexcoreVersionOverride))
++            fexcoreVersion = fexcoreVersionOverride;
+ 
+         Log.d("GuestProgramLauncherComponent", "box64Version in use: " + wowbox64Version);
+         Log.d("GuestProgramLauncherComponent", "fexcoreVersion in use: " + fexcoreVersion);
+@@ -351,9 +370,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             envVars.putAll(this.envVars);
+         }
+ 
+-        String emulator = container.getEmulator();
++        String emulator = !isEmpty(emulatorOverride) ? emulatorOverride : container.getEmulator();
+         if (shortcut != null)
+             emulator = shortcut.getExtra("emulator", container.getEmulator());
++        if (!isEmpty(emulatorOverride))
++            emulator = emulatorOverride;
+ 
+         if (enableFexLogs && emulator != null && emulator.equalsIgnoreCase("fexcore")) {
+             File fexLogFile = WinlatorLogUtils.createTimestampedLogFile(context, "fex_runtime");
+@@ -384,19 +405,44 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+ 
+         // **Maybe remove this: Set execute permissions for box64 if necessary (Glibc/Proot artifact)
+         File box64File = new File(rootDir, "/usr/bin/box64");
+-        if (box64File.exists()) {
+-            FileUtils.chmod(box64File, 0755);
+-        }
+-
+-        return ProcessHelper.exec(command, envVars.toStringArray(), rootDir, (status) -> {
+-            synchronized (lock) {
+-                pid = -1;
+-            }
+-
+-            if (terminationCallback != null)
+-                terminationCallback.call(status);
+-        });
+-    }
++        if (box64File.exists()) {
++            FileUtils.chmod(box64File, 0755);
++        }
++
++        if (forensicMode || !isEmpty(forensicTraceId)) {
++            ForensicLogger.logEvent(context, "info", "LAUNCH_EXEC_SUBMIT", forensicTraceId, "launcher",
++                    "Submitting guest process execution",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "wine_version", container != null ? container.getWineVersion() : "",
++                            "wine_path", imageFs.getWinePath(),
++                            "emulator", emulator,
++                            "box64_preset", box64Preset,
++                            "fexcore_preset", fexcorePreset,
++                            "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
++                            "fexcore_version", !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container != null ? container.getFEXCoreVersion() : "",
++                            "command", command,
++                            "env_hash", ForensicLogger.hashEnvVars(envVars)));
++        }
++
++        return ProcessHelper.exec(command, envVars.toStringArray(), rootDir, (status) -> {
++            synchronized (lock) {
++                pid = -1;
++            }
++
++            if (forensicMode || !isEmpty(forensicTraceId)) {
++                ForensicLogger.logEvent(context, "info", "LAUNCH_EXEC_EXIT", forensicTraceId, "launcher",
++                        "Guest process exited",
++                        ForensicLogger.fields(
++                                "container_id", container != null ? container.id : 0,
++                                "route", forensicRouteSource,
++                                "exit_status", status));
++            }
++            if (terminationCallback != null)
++                terminationCallback.call(status);
++        });
++    }
+ 
+     private void addBox64EnvVars(EnvVars envVars, boolean enableLogs) {
+         envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
+@@ -418,9 +464,13 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         }
+     }
+ 
+-    public void resumeProcess() {
+-        synchronized (lock) {
+-            if (pid != -1) ProcessHelper.resumeProcess(pid);
+-        }
+-    }
++    public void resumeProcess() {
++        synchronized (lock) {
++            if (pid != -1) ProcessHelper.resumeProcess(pid);
++        }
++    }
++
++    private static boolean isEmpty(String value) {
++        return value == null || value.trim().isEmpty();
++    }
+ }
+diff --git a/app/src/main/res/layout/content_list_item.xml b/app/src/main/res/layout/content_list_item.xml
+index 0266ba9..03dff69 100644
+--- a/app/src/main/res/layout/content_list_item.xml
++++ b/app/src/main/res/layout/content_list_item.xml
+@@ -17,31 +17,38 @@
+         android:layout_marginBottom="8dp"
+         app:tint="@color/colorPrimaryDark" />
+ 
+-    <LinearLayout
+-        android:layout_width="0dp"
+-        android:layout_weight="1"
+-        android:layout_height="match_parent"
+-        android:layout_gravity="center"
+-        android:orientation="vertical">
+-
+-        <TextView
+-            android:id="@+id/TVVersionName"
+-            android:layout_width="match_parent"
+-            android:layout_height="0dp"
+-            android:layout_weight="1"
+-            android:layout_gravity="center"
+-            android:gravity="start|center"
+-            android:maxLines="1" />
+-
+-        <TextView
+-            android:id="@+id/TVVersionCode"
+-            android:layout_width="match_parent"
+-            android:layout_height="0dp"
+-            android:layout_weight="1"
+-            android:layout_gravity="center"
+-            android:gravity="start|center"
+-            android:maxLines="1" />
+-    </LinearLayout>
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_weight="1"
++        android:layout_height="wrap_content"
++        android:layout_gravity="center"
++        android:orientation="vertical">
++
++        <TextView
++            android:id="@+id/TVVersionName"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center"
++            android:gravity="start|center"
++            android:maxLines="1" />
++
++        <TextView
++            android:id="@+id/TVVersionCode"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_gravity="center"
++            android:gravity="start|center"
++            android:maxLines="1" />
++
++        <TextView
++            android:id="@+id/TVSource"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:alpha="0.85"
++            android:maxLines="1"
++            android:textSize="12sp"
++            android:visibility="gone" />
++    </LinearLayout>
+ 
+     <ImageButton
+         android:id="@+id/BTMenu"
+diff --git a/app/src/main/res/layout/diagnostics_fragment.xml b/app/src/main/res/layout/diagnostics_fragment.xml
+new file mode 100644
+index 0000000..2497e1b
+--- /dev/null
++++ b/app/src/main/res/layout/diagnostics_fragment.xml
+@@ -0,0 +1,61 @@
++<?xml version="1.0" encoding="utf-8"?>
++<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:fillViewport="true">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:padding="16dp">
++
++        <TextView
++            android:id="@+id/TVHint"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:text="@string/diagnostics_hint"
++            android:textSize="14sp" />
++
++        <EditText
++            android:id="@+id/ETContainerId"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="12dp"
++            android:hint="@string/diagnostics_container_id_hint"
++            android:inputType="number"
++            android:maxLines="1" />
++
++        <Button
++            android:id="@+id/BTRunDirectXServer"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="12dp"
++            android:text="@string/diagnostics_run_direct_xserver" />
++
++        <Button
++            android:id="@+id/BTValidateContainersParser"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:text="@string/diagnostics_validate_parser" />
++
++        <Button
++            android:id="@+id/BTShowLastForensicTrace"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:text="@string/diagnostics_show_last_trace" />
++
++        <TextView
++            android:id="@+id/TVResult"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="16dp"
++            android:background="#12000000"
++            android:padding="12dp"
++            android:text="@string/diagnostics_waiting"
++            android:textIsSelectable="true"
++            android:textSize="13sp" />
++    </LinearLayout>
++</ScrollView>
+diff --git a/app/src/main/res/menu/main_menu.xml b/app/src/main/res/menu/main_menu.xml
+index 59e56ce..fdde3bd 100644
+--- a/app/src/main/res/menu/main_menu.xml
++++ b/app/src/main/res/menu/main_menu.xml
+@@ -5,9 +5,10 @@
+         <item android:icon="@drawable/icon_shortcut" android:id="@+id/main_menu_shortcuts" android:title="@string/shortcuts" />
+         <item android:icon="@drawable/icon_container" android:id="@+id/main_menu_containers" android:title="@string/containers" />
+         <item android:icon="@drawable/icon_input_controls" android:id="@+id/main_menu_input_controls" android:title="@string/input_controls" />
+-        <item android:icon="@drawable/icon_open" android:id="@+id/main_menu_contents" android:title="@string/contents"/>
+-        <item android:icon="@drawable/icon_open" android:id="@+id/main_menu_adrenotools_gpu_drivers" android:title="@string/adrenotools_gpu_drivers"/>
+-        <item android:icon="@drawable/icon_settings" android:id="@+id/main_menu_settings" android:title="@string/settings" />
+-        <item android:icon="@drawable/icon_about" android:id="@+id/main_menu_about" android:title="@string/about" />
+-    </group>
+-</menu>
+\ No newline at end of file
++        <item android:icon="@drawable/icon_open" android:id="@+id/main_menu_contents" android:title="@string/contents"/>
++        <item android:icon="@drawable/icon_open" android:id="@+id/main_menu_adrenotools_gpu_drivers" android:title="@string/adrenotools_gpu_drivers"/>
++        <item android:icon="@drawable/icon_debug" android:id="@+id/main_menu_diagnostics" android:title="@string/diagnostics" />
++        <item android:icon="@drawable/icon_settings" android:id="@+id/main_menu_settings" android:title="@string/settings" />
++        <item android:icon="@drawable/icon_about" android:id="@+id/main_menu_about" android:title="@string/about" />
++    </group>
++</menu>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 6430791..cc5d1a4 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -312,9 +312,10 @@
+     <string name="do_you_want_to_restore_default_profile">Do you want to restore default profile?</string>
+     <string name="simulate_touch_screen">Simulate touch screen</string>
+     <string name="install_content">Install Content</string>
+-    <string name="content_type">Content Type</string>
+-    <string name="contents">Contents</string>
+-    <string name="do_you_want_to_install_content">Do you want to install additional content?</string>
++    <string name="content_type">Content Type</string>
++    <string name="contents">Contents</string>
++    <string name="wine_proton">Wine/Proton</string>
++    <string name="do_you_want_to_install_content">Do you want to install additional content?</string>
+     <string name="pls_make_sure_content_trustworthy">Contents contain executable files. Unsafe executable files may compromise your data or device security. Before installing, PLEASE make sure that the additional content you are installing is trustworthy.</string>
+     <string name="content_suffix_is_wcp_packed_xz_zst">The content files have the .wcp extension and are compressed using either xz or zst formats.</string>
+     <string name="installing_content">Installing Content…</string>
+@@ -343,7 +344,7 @@
+     <string name="reinstall_imagefs">Reinstall Imagefs</string>
+     <string name="do_you_want_to_reinstall_imagefs">Do you want to reinstall imagefs? This operation will restore system files, your containers won\'t be changed.</string>
+     <string name="unable_to_remove_content_since_container_using">Unable to remove this content, because a container is currently using this Wine.</string>
+-    <string name="get_more_contents_form_github">You can access https://github.com/longjunyu2/winlator/releases to get more contents.</string>
++    <string name="get_more_contents_form_github">You can access our repository releases for Winlator CMOD Aero.so content packages (Wine/Proton and tools).</string>
+     <string name="setup_failed">Setup failed</string>
+     <string name="graphics_driver_configuration">Graphics Driver Configuration</string>
+     <string name="select_graphics_driver_version">Select Graphics Driver Version:</string>
+@@ -615,8 +616,24 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="install_drivers">Install Drivers</string>
+     <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>
+     <string name="install_drivers_warning">Be warned that because of limitations of current PC emulators, Qualcomm Drivers may not work on chipsets below 8 Gen2 without getting patched.</string>
+-    <string name="fetch_latest_turnip">Download latest Turnip driver</string>
++    <string name="fetch_latest_turnip">Browse Turnip versions (latest + history)</string>
++    <string name="turnip_choose_version">Choose Turnip version</string>
++    <string name="turnip_channel_latest">Latest</string>
++    <string name="loading_turnip_versions">Loading Turnip versions…</string>
++    <string name="unable_to_fetch_turnip_versions">Unable to fetch Turnip versions.</string>
++    <string name="turnip_download_failed">Turnip download failed.</string>
++    <string name="turnip_install_failed_or_exists">Turnip install failed or version is already installed.</string>
+     <string name="show_beta_releases">Show beta / nightly builds</string>
++    <string name="channel_stable">Stable</string>
++    <string name="channel_beta">Beta</string>
++    <string name="channel_nightly">Nightly</string>
++    <string name="package_source_online">Online package</string>
++    <string name="package_source_installed">Installed locally</string>
++    <string name="package_source_embedded">Embedded package</string>
++    <string name="package_source_online_not_embedded">Downloaded on demand (not embedded in APK)</string>
++    <string name="package_source_repo_prefix">Source</string>
++    <string name="package_source_github_release">GitHub Release</string>
++    <string name="refresh">Refresh</string>
+     <string name="enable_fex_logs">Enable FEX logs</string>
+     <string name="enable_vulkan_api_dump">Enable dumping of Vulkan api calls to file.</string>
+     <string name="enable_turnip_logs">Enable Turnip/Mesa logs</string>
+@@ -636,7 +653,19 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="graphics_driver_bcn_emulation_cache">BCn Emulation Cache</string>
+     <string name="vkbasalt">vkBasalt</string>
+     <string name="vkbasalt_sharpness_effects">Sharpness Effect</string>
+-    <string name="vkbasalt_sharpness_level">Sharpness Level</string>
+-    <string name="vkbasalt_sharpness_denoise">Sharpeness Denoise</string>
+-    <string name="shutdown">Shutdown</string>
++    <string name="vkbasalt_sharpness_level">Sharpness Level</string>
++    <string name="vkbasalt_sharpness_denoise">Sharpeness Denoise</string>
++    <string name="diagnostics">Diagnostics</string>
++    <string name="diagnostics_hint">Use this screen to validate the container parser and launch XServer directly with forensic tracing.</string>
++    <string name="diagnostics_container_id_hint">Container ID (e.g. 1)</string>
++    <string name="diagnostics_run_direct_xserver">Run Direct XServer (forensic)</string>
++    <string name="diagnostics_validate_parser">Validate Containers Parser</string>
++    <string name="diagnostics_show_last_trace">Show Last Forensic Trace</string>
++    <string name="diagnostics_waiting">Waiting for a diagnostics action...</string>
++    <string name="diagnostics_parser_summary">Parser summary</string>
++    <string name="diagnostics_parser_warnings">Warnings</string>
++    <string name="diagnostics_invalid_container_id">Enter a valid container ID.</string>
++    <string name="diagnostics_trace_summary_loaded">Loaded latest forensic trace summary.</string>
++    <string name="diagnostics_direct_launch_started">Started direct forensic launch for container %1$d (trace %2$s)</string>
++    <string name="shutdown">Shutdown</string>
+ </resources>
+-- 
+2.43.0
