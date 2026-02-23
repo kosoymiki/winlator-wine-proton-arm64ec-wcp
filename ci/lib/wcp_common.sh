@@ -44,6 +44,27 @@ wcp_require_bool() {
   esac
 }
 
+wcp_json_escape() {
+  local s="${1-}"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "${s}"
+}
+
+wcp_sha256_file() {
+  local file="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "${file}" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "${file}" | awk '{print $1}'
+  else
+    wcp_fail "Neither sha256sum nor shasum is available"
+  fi
+}
+
 wcp_validate_winlator_profile_identifier() {
   local version_name="$1" version_code="$2"
 
@@ -299,6 +320,11 @@ compose_wcp_tree_from_stage() {
   : "${WCP_NAME:=arm64ec-wcp}"
   : "${WCP_PROFILE_NAME:=${WCP_NAME}}"
   : "${WCP_PROFILE_TYPE:=Wine}"
+  : "${WCP_CHANNEL:=stable}"
+  : "${WCP_DELIVERY:=remote}"
+  : "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
+  : "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
+  : "${WCP_RELEASE_TAG:=wcp-latest}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
@@ -327,6 +353,11 @@ compose_wcp_tree_from_stage() {
   "versionName": "${WCP_VERSION_NAME}",
   "versionCode": ${WCP_VERSION_CODE},
   "description": "${WCP_DESCRIPTION}",
+  "channel": "$(wcp_json_escape "${WCP_CHANNEL}")",
+  "delivery": "$(wcp_json_escape "${WCP_DELIVERY}")",
+  "displayCategory": "$(wcp_json_escape "${WCP_DISPLAY_CATEGORY}")",
+  "sourceRepo": "$(wcp_json_escape "${WCP_SOURCE_REPO}")",
+  "releaseTag": "$(wcp_json_escape "${WCP_RELEASE_TAG}")",
   "files": [],
   "wine": {
     "binPath": "bin",
@@ -339,6 +370,137 @@ compose_wcp_tree_from_stage() {
   "built": "${utc_now}"
 }
 EOF_PROFILE
+}
+
+wcp_write_forensic_manifest() {
+  local wcp_root="$1"
+  local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
+  local -a critical_paths
+  local rel hash
+
+  : "${WCP_FORENSICS_ALWAYS_ON:=1}"
+  [[ "${WCP_FORENSICS_ALWAYS_ON}" == "1" ]] || return 0
+  [[ -d "${wcp_root}" ]] || wcp_fail "WCP root not found for forensic manifest: ${wcp_root}"
+
+  forensic_root="${wcp_root}/share/wcp-forensics"
+  mkdir -p "${forensic_root}"
+  manifest_file="${forensic_root}/manifest.json"
+  source_refs_file="${forensic_root}/source-refs.json"
+  env_file="${forensic_root}/build-env.txt"
+  index_file="${forensic_root}/file-index.txt"
+  hashes_file="${forensic_root}/critical-sha256.tsv"
+  utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+  repo_commit=""
+  repo_remote=""
+  if [[ -n "${ROOT_DIR:-}" && -d "${ROOT_DIR}/.git" ]]; then
+    repo_commit="$(git -C "${ROOT_DIR}" rev-parse HEAD 2>/dev/null || true)"
+    repo_remote="$(git -C "${ROOT_DIR}" remote get-url origin 2>/dev/null || true)"
+  fi
+
+  find "${wcp_root}" -type f -printf '%P\t%s\n' | LC_ALL=C sort > "${index_file}"
+
+  critical_paths=(
+    "profile.json"
+    "bin/wine"
+    "bin/wineserver"
+    "lib/wine/aarch64-unix/ntdll.so"
+    "lib/wine/aarch64-unix/win32u.so"
+    "lib/wine/aarch64-unix/ws2_32.so"
+    "lib/wine/aarch64-unix/winevulkan.so"
+    "lib/wine/aarch64-unix/winebus.so"
+    "lib/wine/aarch64-unix/winebus.sys.so"
+    "prefixPack.txz"
+  )
+
+  : > "${hashes_file}"
+  for rel in "${critical_paths[@]}"; do
+    if [[ -f "${wcp_root}/${rel}" ]]; then
+      hash="$(wcp_sha256_file "${wcp_root}/${rel}")"
+      printf '%s\t%s\n' "${rel}" "${hash}" >> "${hashes_file}"
+    else
+      printf '%s\t%s\n' "${rel}" "MISSING" >> "${hashes_file}"
+    fi
+  done
+
+  {
+    echo "generatedAt=${utc_now}"
+    echo "WCP_NAME=${WCP_NAME:-}"
+    echo "WCP_VERSION_NAME=${WCP_VERSION_NAME:-}"
+    echo "WCP_VERSION_CODE=${WCP_VERSION_CODE:-}"
+    echo "WCP_PROFILE_NAME=${WCP_PROFILE_NAME:-}"
+    echo "WCP_PROFILE_TYPE=${WCP_PROFILE_TYPE:-Wine}"
+    echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
+    echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
+    echo "TARGET_HOST=${TARGET_HOST:-}"
+    echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
+    echo "STRIP_STAGE=${STRIP_STAGE:-}"
+  } > "${env_file}"
+
+  cat > "${source_refs_file}" <<EOF_SOURCE_REFS
+{
+  "repo": {
+    "origin": "$(wcp_json_escape "${repo_remote}")",
+    "commit": "$(wcp_json_escape "${repo_commit}")"
+  },
+  "inputs": {
+    "WINE_REPO": "$(wcp_json_escape "${WINE_REPO:-}")",
+    "WINE_BRANCH": "$(wcp_json_escape "${WINE_BRANCH:-}")",
+    "WINE_REF": "$(wcp_json_escape "${WINE_REF:-}")",
+    "VALVE_WINE_REPO": "$(wcp_json_escape "${VALVE_WINE_REPO:-}")",
+    "VALVE_WINE_REF": "$(wcp_json_escape "${VALVE_WINE_REF:-}")",
+    "ANDRE_WINE_REPO": "$(wcp_json_escape "${ANDRE_WINE_REPO:-}")",
+    "ANDRE_ARM64EC_REF": "$(wcp_json_escape "${ANDRE_ARM64EC_REF:-}")",
+    "PROTON_GE_REPO": "$(wcp_json_escape "${PROTON_GE_REPO:-}")",
+    "PROTON_GE_REF": "$(wcp_json_escape "${PROTON_GE_REF:-}")",
+    "PROTONWINE_REPO": "$(wcp_json_escape "${PROTONWINE_REPO:-}")",
+    "PROTONWINE_REF": "$(wcp_json_escape "${PROTONWINE_REF:-}")",
+    "HANGOVER_REPO": "$(wcp_json_escape "${HANGOVER_REPO:-}")",
+    "FEX_SOURCE_MODE": "$(wcp_json_escape "${FEX_SOURCE_MODE:-}")"
+  }
+}
+EOF_SOURCE_REFS
+
+  cat > "${manifest_file}" <<EOF_MANIFEST
+{
+  "schema": "wcp-forensics/v1",
+  "generatedAt": "${utc_now}",
+  "package": {
+    "name": "$(wcp_json_escape "${WCP_NAME:-}")",
+    "profileName": "$(wcp_json_escape "${WCP_PROFILE_NAME:-${WCP_NAME:-}}")",
+    "profileType": "$(wcp_json_escape "${WCP_PROFILE_TYPE:-Wine}")",
+    "versionName": "$(wcp_json_escape "${WCP_VERSION_NAME:-}")",
+    "versionCode": ${WCP_VERSION_CODE:-0},
+    "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")"
+  },
+  "files": {
+    "index": "share/wcp-forensics/file-index.txt",
+    "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
+    "buildEnv": "share/wcp-forensics/build-env.txt",
+    "sourceRefs": "share/wcp-forensics/source-refs.json"
+  }
+}
+EOF_MANIFEST
+
+  wcp_log "WCP forensic manifest written: ${forensic_root}"
+}
+
+wcp_validate_forensic_manifest() {
+  local wcp_root="$1"
+  : "${WCP_FORENSICS_ALWAYS_ON:=1}"
+  [[ "${WCP_FORENSICS_ALWAYS_ON}" == "1" ]] || return 0
+
+  local required=(
+    "${wcp_root}/share/wcp-forensics/manifest.json"
+    "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
+    "${wcp_root}/share/wcp-forensics/file-index.txt"
+    "${wcp_root}/share/wcp-forensics/build-env.txt"
+    "${wcp_root}/share/wcp-forensics/source-refs.json"
+  )
+  local p
+  for p in "${required[@]}"; do
+    [[ -f "${p}" ]] || wcp_fail "WCP forensic manifest is incomplete, missing: ${p#${wcp_root}/}"
+  done
 }
 
 validate_wcp_tree_arm64ec() {
@@ -386,6 +548,7 @@ validate_wcp_tree_arm64ec() {
   fi
 
   winlator_validate_launchers
+  wcp_validate_forensic_manifest "${wcp_root}"
   wcp_log "ARM64EC WCP tree validation passed"
 }
 
@@ -441,6 +604,11 @@ smoke_check_wcp() {
   grep -qx 'bin/wineserver' "${normalized_file}" || wcp_fail "Missing bin/wineserver"
   grep -qx 'prefixPack.txz' "${normalized_file}" || wcp_fail "Missing prefixPack.txz"
   grep -qx 'profile.json' "${normalized_file}" || wcp_fail "Missing profile.json"
+  grep -qx 'share/wcp-forensics/manifest.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/manifest.json"
+  grep -qx 'share/wcp-forensics/critical-sha256.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/critical-sha256.tsv"
+  grep -qx 'share/wcp-forensics/file-index.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/file-index.txt"
+  grep -qx 'share/wcp-forensics/build-env.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/build-env.txt"
+  grep -qx 'share/wcp-forensics/source-refs.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/source-refs.json"
   grep -q '^lib/wine/aarch64-unix/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-unix"
   grep -q '^lib/wine/aarch64-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-windows"
   grep -q '^lib/wine/i386-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/i386-windows"

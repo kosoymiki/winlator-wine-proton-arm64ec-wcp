@@ -32,6 +32,11 @@ if [[ "${PROTON_GE_REF}" =~ Proton([0-9]+)-([0-9]+) ]]; then
 fi
 : "${WCP_VERSION_NAME:=${_proton_ge_version_name}}"
 : "${WCP_VERSION_CODE:=0}"
+: "${WCP_CHANNEL:=stable}"
+: "${WCP_DELIVERY:=remote}"
+: "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
+: "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
+: "${WCP_RELEASE_TAG:=wcp-latest}"
 : "${WCP_DESCRIPTION:=Proton GE10 ARM64EC WCP (Valve base + ARM64EC series + GE patches)}"
 : "${WCP_PROFILE_NAME:=Proton GE10 ARM64EC}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
@@ -252,6 +257,7 @@ main() {
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"
   prune_external_runtime_components
+  wcp_write_forensic_manifest "${WCP_ROOT}"
   validate_wcp_tree_arm64ec "${WCP_ROOT}"
   artifact="$(pack_wcp "${WCP_ROOT}" "${OUT_DIR}" "${WCP_NAME}")"
   smoke_check_wcp "${artifact}" "${WCP_COMPRESS}"

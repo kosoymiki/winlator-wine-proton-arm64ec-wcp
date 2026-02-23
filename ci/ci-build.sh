@@ -22,6 +22,11 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_VERSION_NAME:=11-arm64ec}"
 : "${WCP_VERSION_CODE:=0}"
 : "${WCP_DESCRIPTION:=Wine 11 arm64ec for newer cmod versions}"
+: "${WCP_CHANNEL:=stable}"
+: "${WCP_DELIVERY:=remote}"
+: "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
+: "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
+: "${WCP_RELEASE_TAG:=wcp-latest}"
 : "${TARGET_HOST:=aarch64-linux-gnu}"
 : "${FEX_SOURCE_MODE:=auto}"
 : "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
@@ -379,6 +384,11 @@ WINETOOLS
   "versionName": "${WCP_VERSION_NAME}",
   "versionCode": ${WCP_VERSION_CODE},
   "description": "${WCP_DESCRIPTION}",
+  "channel": "${WCP_CHANNEL}",
+  "delivery": "${WCP_DELIVERY}",
+  "displayCategory": "${WCP_DISPLAY_CATEGORY}",
+  "sourceRepo": "${WCP_SOURCE_REPO}",
+  "releaseTag": "${WCP_RELEASE_TAG}",
   "files": [],
   "wine": {
     "binPath": "bin",
@@ -454,6 +464,7 @@ validate_wcp_tree() {
   fi
 
   winlator_validate_launchers
+  wcp_validate_forensic_manifest "${WCP_ROOT}"
   log "WCP layout validation passed"
 }
 
@@ -524,6 +535,7 @@ main() {
   install_fex_dlls
   strip_stage_payload
   compose_wcp_tree
+  wcp_write_forensic_manifest "${WCP_ROOT}"
   validate_wcp_tree
   pack_wcp
   smoke_check_wcp "${OUT_DIR}/${WCP_NAME}.wcp" "${WCP_COMPRESS}"
