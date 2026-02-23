@@ -6,7 +6,7 @@ index 57bb7ab..c6d3bc4 100644
 -tasks.register("prepareEmbeddedWineAssets") {
 -    def assetDir = new File(project.rootDir, ["app","src","main","assets"].join(File.separator))
 -    def requiredRuntimeAssets = [
--            "wine-11-arm64ec.txz",
+-            "wine-11.1-arm64ec.txz",
 -            "proton-ge10-arm64ec.txz",
 -            "protonwine10-gamenative-arm64ec.txz"
 -    ]
@@ -29,6 +29,7 @@ index 57bb7ab..c6d3bc4 100644
 -prepareEmbeddedWineAssets.dependsOn(downloadImageFS)
 -preBuild.dependsOn(prepareEmbeddedWineAssets)
 +tasks.register("prepareKotlinBuildScriptModel"){}
++preBuild.dependsOn(downloadImageFS)
 @@
 -    defaultConfig {
 -        applicationId "com.winlator.cmod"
