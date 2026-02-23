@@ -1,6 +1,8 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index 1760433..01edee4 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
-@@ -65,20 +65,6 @@
+@@ -65,56 +65,8 @@ tasks.register("downloadImageFS") {
      }
  }
  
@@ -51,19 +53,28 @@
 -    }
 -}
 -
- tasks.register("prepareKotlinBuildScriptModel"){}
+-tasks.register("prepareKotlinBuildScriptModel"){}
 -downloadProton.dependsOn(downloadImageFS)
 -preBuild.dependsOn(downloadProton)
++tasks.register("prepareKotlinBuildScriptModel"){}
 +preBuild.dependsOn(downloadImageFS)
-@@ -123,13 +109,13 @@
+ 
+ android {
+     namespace 'com.winlator.cmod'
+@@ -122,14 +74,14 @@ android {
+     compileSdk 34
      buildToolsVersion "35.0.0"
  
-     defaultConfig {
+-    defaultConfig {
 -        applicationId "com.winlator.cmod"
+-        minSdkVersion 26
+-        // We’re preserving Winlator’s request to keep targetSdkVersion at 28
+-        targetSdkVersion 28
++    defaultConfig {
 +        applicationId "by.aero.so.benchmark"
-         minSdkVersion 26
-         // We’re preserving Winlator’s request to keep targetSdkVersion at 28
-         targetSdkVersion 28
++        minSdkVersion 26
++        // We’re preserving Winlator’s request to keep targetSdkVersion at 28
++        targetSdkVersion 28
  
 -        versionCode 20
 -        versionName "7.1.4x-cmod"
@@ -72,6 +83,8 @@
  
          // External native build from Winlator
          externalNativeBuild {
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index a940cf7..9750206 100644
 --- a/app/src/main/res/values/strings.xml
 +++ b/app/src/main/res/values/strings.xml
 @@ -4,7 +4,7 @@
@@ -83,3 +96,10 @@
      <string name="run">Run</string>
      <string name="edit">Edit</string>
      <string name="remove">Remove</string>
+@@ -635,4 +635,4 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="vkbasalt_sharpness_level">Sharpness Level</string>
+     <string name="vkbasalt_sharpness_denoise">Sharpeness Denoise</string>
+     <string name="shutdown">Shutdown</string>
+-</resources>
+\ No newline at end of file
++</resources>
