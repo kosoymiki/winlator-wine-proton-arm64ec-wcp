@@ -12,7 +12,7 @@ DOC_REPORT="${WINLATOR_ANALYSIS_REPORT:-${ROOT_DIR}/docs/WINLATOR_LUDASHI_REFLEC
 : "${WINLATOR_LUDASHI_REPO:=https://github.com/StevenMXZ/Winlator-Ludashi.git}"
 : "${WINLATOR_LUDASHI_REF:=winlator_bionic}"
 : "${WINLATOR_GRADLE_TASK:=assembleDebug}"
-: "${WINLATOR_APK_BASENAME:=by.aero.so-benchmark-debug}"
+: "${WINLATOR_APK_BASENAME:=by.aero.so.benchmark-debug}"
 
 log() { printf '[winlator-ci] %s\n' "$*"; }
 fail() { printf '[winlator-ci][error] %s\n' "$*" >&2; exit 1; }

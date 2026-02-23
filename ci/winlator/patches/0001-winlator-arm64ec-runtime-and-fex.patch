@@ -1,5 +1,5 @@
 diff --git a/app/build.gradle b/app/build.gradle
-index 1760433..57bb7ab 100644
+index 1760433..5c75d20 100644
 --- a/app/build.gradle
 +++ b/app/build.gradle
 @@ -65,56 +65,36 @@ tasks.register("downloadImageFS") {
@@ -125,13 +125,15 @@ index ccb0b4a..b83cca6 100644
                  setupDXWrapperSpinner(sDXWrapper, vDXWrapperConfig, wineInfo.isArm64EC());
              }
 diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
-index 5685f35..24d4ace 100644
+index 5685f35..a0a41a1 100644
 --- a/app/src/main/java/com/winlator/cmod/container/Container.java
 +++ b/app/src/main/java/com/winlator/cmod/container/Container.java
-@@ -265,13 +265,20 @@ public class Container {
+@@ -263,15 +263,22 @@ public class Container {
  
-     public void setBox64Version(String version) { this.box64Version = version; }
+     public String getBox64Version() { return box64Version; }
  
+-    public void setBox64Version(String version) { this.box64Version = version; }
+-
 -    public void setEmulator(String emulator) {
 -        this.emulator = emulator;
 -    }
@@ -139,6 +141,8 @@ index 5685f35..24d4ace 100644
 -    public String getEmulator() {
 -        return this.emulator;
 -    }
++    public void setBox64Version(String version) { this.box64Version = version; }
++
 +    public void setEmulator(String emulator) {
 +        if (emulator == null || emulator.trim().isEmpty()) {
 +            this.emulator = DEFAULT_EMULATOR;
@@ -157,10 +161,10 @@ index 5685f35..24d4ace 100644
      public File getRootDir() {
          return rootDir;
 diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
-index 00ccdd2..59f2e26 100644
+index 00ccdd2..a634f8c 100644
 --- a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
 +++ b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
-@@ -230,12 +230,19 @@ public class ContainerManager {
+@@ -230,12 +230,18 @@ public class ContainerManager {
          return null;
      }
  
@@ -172,7 +176,6 @@ index 00ccdd2..59f2e26 100644
 -        for (File file : srcfiles) {
 +    private void extractCommonDlls(WineInfo wineInfo, String srcName, String dstName, File containerDir, OnExtractFileListener onExtractFileListener) throws JSONException {
 +        File srcDir = new File(wineInfo.path + "/lib/wine/" + srcName);
-+
 +        if (!srcDir.isDirectory()) {
 +            throw new JSONException("Missing Wine runtime directory: " + srcDir.getAbsolutePath());
 +        }
@@ -251,15 +254,13 @@ index 8775bc5..c7cfed2 100644
  
      public static boolean setSpinnerSelectionFromNumber(Spinner spinner, String number) {
 diff --git a/app/src/main/java/com/winlator/cmod/core/WineInfo.java b/app/src/main/java/com/winlator/cmod/core/WineInfo.java
-index f9cfab0..e105ce1 100644
+index f9cfab0..a953156 100644
 --- a/app/src/main/java/com/winlator/cmod/core/WineInfo.java
 +++ b/app/src/main/java/com/winlator/cmod/core/WineInfo.java
-@@ -7,18 +7,20 @@ import android.util.Log;
+@@ -9,16 +9,18 @@ import androidx.annotation.NonNull;
  
- import androidx.annotation.NonNull;
- 
--import com.winlator.cmod.R;
--import com.winlator.cmod.contents.ContentProfile;
+ import com.winlator.cmod.R;
+ import com.winlator.cmod.contents.ContentProfile;
 -import com.winlator.cmod.contents.ContentsManager;
 -import com.winlator.cmod.xenvironment.ImageFs;
 -
@@ -270,8 +271,6 @@ index f9cfab0..e105ce1 100644
 -public class WineInfo implements Parcelable {
 -    public static final WineInfo MAIN_WINE_VERSION = new WineInfo("proton","9.0", "x86_64");
 -    private static final Pattern pattern = Pattern.compile("^(wine|proton)\\-([0-9\\.]+)\\-?([0-9\\.]+)?\\-(x86|x86_64|arm64ec)$");
-+import com.winlator.cmod.R;
-+import com.winlator.cmod.contents.ContentProfile;
 +import com.winlator.cmod.contents.ContentsManager;
 +import com.winlator.cmod.xenvironment.ImageFs;
 +
@@ -287,16 +286,7 @@ index f9cfab0..e105ce1 100644
      public final String version;
      public final String type;
      public String subversion;
-@@ -95,7 +97,7 @@ public class WineInfo implements Parcelable {
-         return 0;
-     }
- 
--    public static final Parcelable.Creator<WineInfo> CREATOR = new Parcelable.Creator<WineInfo>() {
-+    public static final Parcelable.Creator<WineInfo> CREATOR = new Parcelable.Creator<WineInfo>() {
-         public WineInfo createFromParcel(Parcel in) {
-             return new WineInfo(in);
-         }
-@@ -114,41 +116,128 @@ public class WineInfo implements Parcelable {
+@@ -114,41 +116,132 @@ public class WineInfo implements Parcelable {
          dest.writeString(path);
      }
  
@@ -429,16 +419,20 @@ index f9cfab0..e105ce1 100644
 +        if (base.startsWith("proton-")) {
 +            type = "proton";
 +            version = base.substring("proton-".length());
-+        } else if (base.startsWith("proton")) {
++        }
++        else if (base.startsWith("proton")) {
 +            type = "proton";
 +            version = base.substring("proton".length());
-+        } else if (base.startsWith("wine-")) {
++        }
++        else if (base.startsWith("wine-")) {
 +            type = "wine";
 +            version = base.substring("wine-".length());
-+        } else if (base.startsWith("wine")) {
++        }
++        else if (base.startsWith("wine")) {
 +            type = "wine";
 +            version = base.substring("wine".length());
-+        } else {
++        }
++        else {
 +            type = "wine";
 +            version = base;
 +        }
@@ -464,10 +458,10 @@ index f9cfab0..e105ce1 100644
 +    }
 +}
 diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
-index d134807..af83b35 100644
+index d134807..0f52873 100644
 --- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
 +++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
-@@ -269,15 +269,26 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+@@ -269,13 +269,24 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
              envVars.put("WRAPPER_DISABLE_PLACED", "1");
          }
  
@@ -478,8 +472,6 @@ index d134807..af83b35 100644
 -        envVars.put("XDG_DATA_DIRS", rootDir.getPath() + "/usr/share");
 -        envVars.put("LD_LIBRARY_PATH", rootDir.getPath() + "/usr/lib" + ":" + "/system/lib64");
 -        envVars.put("XDG_CONFIG_DIRS", rootDir.getPath() + "/usr/etc/xdg");
--        envVars.put("GST_PLUGIN_PATH", rootDir.getPath() + "/usr/lib/gstreamer-1.0");
--        envVars.put("FONTCONFIG_PATH", rootDir.getPath() + "/usr/etc/fonts");
 +        String wineRootPath = imageFs.getWinePath();
 +        String wineBinPath = wineRootPath + "/bin";
 +        String wineLibPath = wineRootPath + "/lib";
@@ -498,11 +490,9 @@ index d134807..af83b35 100644
 +        );
 +        envVars.put("WINEDLLPATH", wineDllPath + "/aarch64-windows:" + wineDllPath + "/i386-windows:" + wineDllPath);
 +        envVars.put("XDG_CONFIG_DIRS", rootDir.getPath() + "/usr/etc/xdg");
-+        envVars.put("GST_PLUGIN_PATH", rootDir.getPath() + "/usr/lib/gstreamer-1.0");
-+        envVars.put("FONTCONFIG_PATH", rootDir.getPath() + "/usr/etc/fonts");
+         envVars.put("GST_PLUGIN_PATH", rootDir.getPath() + "/usr/lib/gstreamer-1.0");
+         envVars.put("FONTCONFIG_PATH", rootDir.getPath() + "/usr/etc/fonts");
          envVars.put("VK_LAYER_PATH", rootDir.getPath() + "/usr/share/vulkan/implicit_layer.d" + ":" + rootDir.getPath() + "/usr/share/vulkan/explicit_layer.d");
-         envVars.put("WRAPPER_LAYER_PATH", rootDir.getPath() + "/usr/lib");
-         envVars.put("WRAPPER_CACHE_PATH", rootDir.getPath() + "/usr/var/cache");
 @@ -298,12 +309,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
          envVars.put("PROTON_VIDEO_CONVERT", "0");
          envVars.put("PROTON_DEMUX", "0");
@@ -526,7 +516,7 @@ index d134807..af83b35 100644
 \ No newline at end of file
 +}
 diff --git a/app/src/main/res/values/arrays.xml b/app/src/main/res/values/arrays.xml
-index 74bd9e7..810e174 100644
+index 74bd9e7..1bf6d84 100644
 --- a/app/src/main/res/values/arrays.xml
 +++ b/app/src/main/res/values/arrays.xml
 @@ -312,10 +312,11 @@

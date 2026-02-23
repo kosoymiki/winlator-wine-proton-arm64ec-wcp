@@ -1,0 +1,1153 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index 9d1e3d1a374df21fb4465c99ebde7a627f2e2956..f7e01b91baf5d1b2efe90234b61f771c03242c96 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -108,8 +108,8 @@ android {
+         // We’re preserving Winlator’s request to keep targetSdkVersion at 28
+         targetSdkVersion 28
+ 
+-        versionCode 21
+-        versionName "7.1.4x-benchmark-debug"
++        versionCode 20
++        versionName "7.1.4x-cmod-aeroso-benchmark"
+ 
+         // External native build from Winlator
+         externalNativeBuild {
+@@ -140,7 +140,16 @@ android {
+         // If you have a release build type, add it here
+     }
+ 
+-    ndkVersion '29.0.14206865'
++    signingConfigs {
++        debug {
++            storeFile file('testkey_untrusted.jks')
++            keyAlias 'alias'
++            storePassword 'xrj45yWGLbsO7W0v'
++            keyPassword 'xrj45yWGLbsO7W0v'
++        }
++    }
++
++    ndkVersion '29.0.14206865'
+ 
+     externalNativeBuild {
+         cmake {
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index d61aada32ad4c370c2f953ca211eaa19653f66f4..9338ac2192d6c69ccf7e2835d84f0df0f2a0968b 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -38,8 +38,8 @@
+         tools:ignore="ProtectedPermissions" />
+     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+ 
+-    <application
+-        android:label="Winlator CMOD"
++    <application
++        android:label="@string/app_name"
+         android:icon="@mipmap/ic_launcher"
+         android:roundIcon="@mipmap/ic_launcher_round"
+         android:theme="@style/AppTheme"
+@@ -117,14 +117,14 @@
+             android:name=".ShortcutBroadcastReceiver"
+             android:exported="true">
+             <intent-filter>
+-                <action android:name="com.winlator.cmod.SHORTCUT_ADDED" />
++                <action android:name="com.winlator.cmod.SHORTCUT_ADDED" />
+             </intent-filter>
+         </receiver>
+ 
+         <!-- FileProvider for sharing files -->
+         <provider
+             android:name="androidx.core.content.FileProvider"
+-            android:authorities="com.winlator.cmod.tileprovider"
++            android:authorities="${applicationId}.tileprovider"
+             android:exported="false"
+             android:grantUriPermissions="true">
+             <meta-data
+@@ -135,7 +135,7 @@
+         <!-- Provider for Winlator’s DocumentProvider or similar usage -->
+         <provider
+             android:name=".core.WinlatorFilesProvider"
+-            android:authorities="com.winlator.cmod.core.WinlatorFilesProvider"
++            android:authorities="${applicationId}.core.WinlatorFilesProvider"
+             android:exported="true"
+             android:grantUriPermissions="true"
+             android:permission="android.permission.MANAGE_DOCUMENTS">
+@@ -156,8 +156,6 @@
+         <meta-data
+             android:name="android.allow_multiple_resumed_activities"
+             android:value="true" />
+-        >
+-
+-    </application>
+-</manifest>
++    </application>
++</manifest>
+ 
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index c55b78e3bde750ea9bc2447b96e84912f874c9e6..20f9ba40c449b5ddd4695f21750aca5e2c142531 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -52,9 +52,8 @@ public class AdrenotoolsFragment extends Fragment {
+                 getActivity().startActivityFromFragment(this, intent, MainActivity.OPEN_FILE_REQUEST_CODE);               
+             });
+         });
+-
+-        View btFetchLatest = layout.findViewById(R.id.BTFetchLatestDriver);
+-        btFetchLatest.setOnClickListener(v -> fetchLatestDriver());
++        View btFetchLatestDriver = layout.findViewById(R.id.BTFetchLatestDriver);
++        btFetchLatestDriver.setOnClickListener((v) -> fetchLatestDriver());
+         return layout;
+     }
+     
+@@ -80,29 +79,31 @@ public class AdrenotoolsFragment extends Fragment {
+             try {
+                 String api = "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases/latest";
+                 String json = Downloader.downloadString(api);
+-                if (json == null) throw new Exception("api null");
++                if (json == null) throw new IllegalStateException("empty api response");
++
+                 JSONObject root = new JSONObject(json);
+                 JSONArray assets = root.getJSONArray("assets");
+                 ArrayList<String> names = new ArrayList<>();
+                 ArrayList<String> urls = new ArrayList<>();
+                 for (int i = 0; i < assets.length(); i++) {
+                     JSONObject asset = assets.getJSONObject(i);
+-                    String name = asset.getString("name");
+-                    if (name.endsWith(".zip")) {
++                    String name = asset.optString("name", "");
++                    String url = asset.optString("browser_download_url", "");
++                    if (name.endsWith(".zip") && !url.isEmpty()) {
+                         names.add(name);
+-                        urls.add(asset.getString("browser_download_url"));
++                        urls.add(url);
+                     }
+                 }
+-                if (names.isEmpty()) throw new Exception("no zip asset");
++                if (names.isEmpty()) throw new IllegalStateException("no zip assets");
+ 
+-                getActivity().runOnUiThread(() -> {
+-                    new android.app.AlertDialog.Builder(getContext())
++                if (!isAdded() || getActivity() == null) return;
++                getActivity().runOnUiThread(() -> new android.app.AlertDialog.Builder(getContext())
+                         .setTitle(R.string.fetch_latest_turnip)
+                         .setItems(names.toArray(new String[0]), (dialog, which) -> downloadAndInstall(urls.get(which)))
+                         .setNegativeButton(android.R.string.cancel, null)
+-                        .show();
+-                });
++                        .show());
+             } catch (Exception e) {
++                if (!isAdded() || getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> AppUtils.showToast(getContext(), R.string.unable_to_install_content));
+             }
+         }).start();
+@@ -111,19 +112,23 @@ public class AdrenotoolsFragment extends Fragment {
+     private void downloadAndInstall(String url) {
+         new Thread(() -> {
+             try {
+-                File cacheDir = getContext().getCacheDir();
+-                File out = new File(cacheDir, "turnip-selected.zip");
+-                if (!Downloader.downloadFile(url, out)) throw new Exception("download failed");
+-                String driver = adrenotoolsManager.installDriver(Uri.fromFile(out));
++                if (!isAdded() || getContext() == null) return;
++                File out = new File(getContext().getCacheDir(), "turnip-selected.zip");
++                if (!Downloader.downloadFile(url, out)) throw new IllegalStateException("download failed");
++
++                String driver = adrenotoolsManager.installDriver(out);
++                if (!isAdded() || getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> {
+                     if (!driver.isEmpty()) {
+-                        ((DriversAdapter)recyclerView.getAdapter()).addItem(driver);
++                        DriversAdapter adapter = (DriversAdapter) recyclerView.getAdapter();
++                        if (adapter != null) adapter.addItem(driver);
+                         AppUtils.showToast(getContext(), R.string.content_installed_success);
+                     } else {
+                         AppUtils.showToast(getContext(), R.string.unable_to_install_content);
+                     }
+                 });
+             } catch (Exception e) {
++                if (!isAdded() || getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> AppUtils.showToast(getContext(), R.string.unable_to_install_content));
+             }
+         }).start();
+@@ -165,6 +170,7 @@ public class AdrenotoolsFragment extends Fragment {
+         }
+         
+         public void addItem(String item) {
++            if (driversList.contains(item)) return;
+             driversList.add(item);
+             notifyItemInserted(getItemCount() - 1);
+         }
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index c545aad782bde824842b0119806358ab5f41c574..726d2bea0a2ea38ecfabd5c080b85760fa95741a 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -12,12 +12,13 @@ import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.AdapterView;
+ import android.widget.ArrayAdapter;
+-import android.widget.ImageButton;
+-import android.widget.ImageView;
+-import android.widget.PopupMenu;
+-import android.widget.ProgressBar;
+-import android.widget.Spinner;
+-import android.widget.TextView;
++import android.widget.ImageButton;
++import android.widget.ImageView;
++import android.widget.PopupMenu;
++import android.widget.ProgressBar;
++import android.widget.Spinner;
++import android.widget.Switch;
++import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+@@ -51,10 +52,13 @@ public class ContentsFragment extends Fragment {
+     private View emptyText;
+     private ContentsManager manager;
+     SharedPreferences sp;
+-    private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
+-    private Spinner sContentType;
+-
+-    private boolean isDarkMode;
++    private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
++    private Spinner sContentType;
++    private Switch swShowBeta;
++    private boolean showBeta;
++    private final List<ContentProfile.ContentType> allowedTypes = new ArrayList<>();
++
++    private boolean isDarkMode;
+ 
+     @Override
+     public void onCreate(@Nullable Bundle savedInstanceState) {
+@@ -64,11 +68,15 @@ public class ContentsFragment extends Fragment {
+         manager.syncContents();
+         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+         showBeta = sp.getBoolean("beta_contents_enabled", false);
++        initAllowedTypes();
++        if (!allowedTypes.isEmpty()) {
++            currentContentType = allowedTypes.get(0);
++        }
+ 
+         // Initialize isDarkMode based on shared preferences or theme
+         isDarkMode = PreferenceManager.getDefaultSharedPreferences(getContext())
+                 .getBoolean("dark_mode", false);
+-    }
++    }
+ 
+     @Override
+     public void onDestroy() {
+@@ -76,24 +84,11 @@ public class ContentsFragment extends Fragment {
+         super.onDestroy();
+     }
+ 
+-    @Override
++    @Override
+     public void onResume() {
+         super.onResume();
+         reloadRemoteContents();
+     }
+-
+-    private void reloadRemoteContents() {
+-        new Thread(() -> {
+-            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
+-            String json = Downloader.downloadString(contentsURL);
+-            if (json == null)
+-                return;
+-            getActivity().runOnUiThread(() -> {
+-                manager.setRemoteProfiles(json, showBeta, true /*ignoreWine*/);
+-                loadContentList();
+-            });
+-        }).start();
+-    }
+ 
+     @Override
+     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+@@ -104,25 +99,12 @@ public class ContentsFragment extends Fragment {
+     @Nullable
+     @Override
+     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+-        ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.contents_fragment, container, false);
+-
++        ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.contents_fragment, container, false);
++
+         sContentType = layout.findViewById(R.id.SContentType);
+         updateContentTypeSpinner(sContentType);
+-        sContentType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+-            @Override
+-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+-                currentContentType = allowedTypes.get(position);
+-                loadContentList();
+-            }
+-
+-            @Override
+-            public void onNothingSelected(AdapterView<?> parent) {
+-
+-            }
+-        });
+ 
+         emptyText = layout.findViewById(R.id.TVEmptyText);
+-
+         swShowBeta = layout.findViewById(R.id.SwShowBeta);
+         swShowBeta.setChecked(showBeta);
+         swShowBeta.setOnCheckedChangeListener((buttonView, isChecked) -> {
+@@ -162,8 +144,10 @@ public class ContentsFragment extends Fragment {
+         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+             @Override
+             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+-                currentContentType = allowedTypes.get(position);
++                if (position >= 0 && position < allowedTypes.size())
++                    currentContentType = allowedTypes.get(position);
+                 updateContentsListView();
++                loadContentList();
+             }
+ 
+             @Override
+@@ -171,7 +155,30 @@ public class ContentsFragment extends Fragment {
+ 
+             }
+         });
+-    }
++    }
++
++    private void initAllowedTypes() {
++        allowedTypes.clear();
++        for (ContentProfile.ContentType type : ContentProfile.ContentType.values()) {
++            if (type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
++            if (type == ContentProfile.ContentType.CONTENT_TYPE_BOX64) continue;
++            if (type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64) continue;
++            allowedTypes.add(type);
++        }
++    }
++
++    private void reloadRemoteContents() {
++        new Thread(() -> {
++            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
++            String json = Downloader.downloadString(contentsURL);
++            if (json == null || !isAdded() || getActivity() == null)
++                return;
++            getActivity().runOnUiThread(() -> {
++                manager.setRemoteProfiles(json, showBeta, true);
++                loadContentList();
++            });
++        }).start();
++    }
+ 
+     private void updateContentsListView() {
+         List<ContentProfile> profiles = manager.getProfiles(currentContentType);
+@@ -225,17 +232,19 @@ public class ContentsFragment extends Fragment {
+                                 dialog.show();
+                             });
+ 
+-                        } else {
+-                            preloaderDialog.closeOnUiThread();
+-                            requireActivity().runOnUiThread(() -> {
+-                                ContentDialog.alert(getContext(), R.string.content_installed_success, null);
+-                                manager.syncContents();
+-                                boolean flashAfter = currentContentType == profile.type;
+-                                currentContentType = profile.type;
+-                                AppUtils.setSpinnerSelectionFromValue(sContentType, currentContentType.toString());
+-                                if (flashAfter) loadContentList();
+-                            });
+-                        }
++                        } else {
++                            preloaderDialog.closeOnUiThread();
++                            requireActivity().runOnUiThread(() -> {
++                                ContentDialog.alert(getContext(), R.string.content_installed_success, null);
++                                manager.syncContents();
++                                boolean flashAfter = currentContentType == profile.type;
++                                if (allowedTypes.contains(profile.type)) {
++                                    currentContentType = profile.type;
++                                    AppUtils.setSpinnerSelectionFromValue(sContentType, currentContentType.toString());
++                                }
++                                if (flashAfter) loadContentList();
++                            });
++                        }
+                     }
+                 };
+                 Executors.newSingleThreadExecutor().execute(() -> {
+diff --git a/app/src/main/java/com/winlator/cmod/SettingsFragment.java b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
+index b7261a6b2e995f834399ca1c33f9a7f06cb51cc6..5b8240f5ea06f5249a31fa095cceb62b7273aa8c 100644
+--- a/app/src/main/java/com/winlator/cmod/SettingsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
+@@ -269,8 +269,14 @@ public class SettingsFragment extends Fragment {
+         final ArrayList<String> wineDebugChannels = new ArrayList<>(Arrays.asList(preferences.getString("wine_debug_channels", DEFAULT_WINE_DEBUG_CHANNELS).split(",")));
+         loadWineDebugChannels(view, wineDebugChannels);
+ 
+-        final CheckBox cbEnableBox64Logs = view.findViewById(R.id.CBEnableBox64Logs);
+-        cbEnableBox64Logs.setChecked(preferences.getBoolean("enable_box64_logs", false));
++        final CheckBox cbEnableBox64Logs = view.findViewById(R.id.CBEnableBox64Logs);
++        cbEnableBox64Logs.setChecked(preferences.getBoolean("enable_box64_logs", false));
++        final CheckBox cbEnableFEXLogs = view.findViewById(R.id.CBEnableFEXLogs);
++        cbEnableFEXLogs.setChecked(preferences.getBoolean("enable_fex_logs", false));
++        final CheckBox cbEnableVulkanLogs = view.findViewById(R.id.CBEnableVulkanLogs);
++        cbEnableVulkanLogs.setChecked(preferences.getBoolean("enable_vulkan_api_dump", false));
++        final CheckBox cbEnableTurnipLogs = view.findViewById(R.id.CBEnableTurnipLogs);
++        cbEnableTurnipLogs.setChecked(preferences.getBoolean("enable_turnip_logs", false));
+ 
+         final TextView tvCursorSpeed = view.findViewById(R.id.TVCursorSpeed);
+         final SeekBar sbCursorSpeed = view.findViewById(R.id.SBCursorSpeed);
+@@ -317,10 +323,13 @@ public class SettingsFragment extends Fragment {
+             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
+             editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
+             editor.putBoolean("use_xr", cbUseXR.isChecked());
+-            editor.putFloat("cursor_speed", sbCursorSpeed.getProgress() / 100.0f);
+-            editor.putBoolean("enable_wine_debug", cbEnableWineDebug.isChecked());
+-            editor.putBoolean("enable_box64_logs", cbEnableBox64Logs.isChecked());
+-            editor.putBoolean("cursor_lock", cbCursorLock.isChecked()); // Save cursor lock state
++            editor.putFloat("cursor_speed", sbCursorSpeed.getProgress() / 100.0f);
++            editor.putBoolean("enable_wine_debug", cbEnableWineDebug.isChecked());
++            editor.putBoolean("enable_box64_logs", cbEnableBox64Logs.isChecked());
++            editor.putBoolean("enable_fex_logs", cbEnableFEXLogs.isChecked());
++            editor.putBoolean("enable_vulkan_api_dump", cbEnableVulkanLogs.isChecked());
++            editor.putBoolean("enable_turnip_logs", cbEnableTurnipLogs.isChecked());
++            editor.putBoolean("cursor_lock", cbCursorLock.isChecked()); // Save cursor lock state
+             editor.putBoolean("xinput_toggle", cbXinputToggle.isChecked()); // Save xinput toggle state
+             editor.putBoolean("enable_file_provider", cbEnableFileProvider.isChecked());
+             editor.putBoolean("open_with_android_browser", cbOpenInBrowser.isChecked());
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index a58c735707df08b95cad9a5618fa600cb6384176..540722c65984717280a29f2b2a65d4773d8bf53c 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -62,17 +62,19 @@ import com.winlator.cmod.contents.ContentProfile;
+ import com.winlator.cmod.contents.ContentsManager;
+ import com.winlator.cmod.contents.AdrenotoolsManager;
+ import com.winlator.cmod.core.AppUtils;
+-import com.winlator.cmod.core.DefaultVersion;
+-import com.winlator.cmod.core.EnvVars;
+-import com.winlator.cmod.core.FileUtils;
+-import com.winlator.cmod.core.GPUInformation;
+-import com.winlator.cmod.core.KeyValueSet;
++import com.winlator.cmod.core.DefaultVersion;
++import com.winlator.cmod.core.EnvVars;
++import com.winlator.cmod.core.FileDebugLogger;
++import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.GPUInformation;
++import com.winlator.cmod.core.KeyValueSet;
+ import com.winlator.cmod.core.OnExtractFileListener;
+ import com.winlator.cmod.core.PreloaderDialog;
+ import com.winlator.cmod.core.ProcessHelper;
+ import com.winlator.cmod.core.StringUtils;
+-import com.winlator.cmod.core.TarCompressorUtils;
+-import com.winlator.cmod.core.WineInfo;
++import com.winlator.cmod.core.TarCompressorUtils;
++import com.winlator.cmod.core.WinlatorLogUtils;
++import com.winlator.cmod.core.WineInfo;
+ import com.winlator.cmod.core.WineRegistryEditor;
+ import com.winlator.cmod.core.WineRequestHandler;
+ import com.winlator.cmod.core.WineStartMenuCreator;
+@@ -357,7 +359,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             navigationView.setBackgroundResource(R.color.content_dialog_background_dark);
+         }
+ 
+-        boolean enableLogs = preferences.getBoolean("enable_wine_debug", false) || preferences.getBoolean("enable_box64_logs", false);
++        boolean enableLogs = preferences.getBoolean("enable_wine_debug", false)
++                || preferences.getBoolean("enable_box64_logs", false)
++                || preferences.getBoolean("enable_fex_logs", false)
++                || preferences.getBoolean("enable_vulkan_api_dump", false)
++                || preferences.getBoolean("enable_turnip_logs", false);
+         Menu menu = navigationView.getMenu();
+         menu.findItem(R.id.main_menu_logs).setVisible(enableLogs);
+         if (XrActivity.isEnabled(this)) menu.findItem(R.id.main_menu_magnifier).setVisible(false);
+@@ -453,11 +459,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         imageFs.setWinePath(wineInfo.path);
+ 
+-        ProcessHelper.removeAllDebugCallbacks();
+-        if (enableLogs) {
+-            LogView.setFilename(getExecutable());
+-            ProcessHelper.addDebugCallback(debugDialog = new DebugDialog(this));
+-        }
++        ProcessHelper.removeAllDebugCallbacks();
++        if (enableLogs) {
++            LogView.setFilename(getExecutable());
++            ProcessHelper.addDebugCallback(debugDialog = new DebugDialog(this));
++        }
++        if (preferences.getBoolean("enable_fex_logs", false)) {
++            ProcessHelper.addDebugCallback(new FileDebugLogger(this, "fex"));
++        }
++        if (preferences.getBoolean("enable_vulkan_api_dump", false)) {
++            ProcessHelper.addDebugCallback(new FileDebugLogger(this, "vulkan"));
++        }
++        if (preferences.getBoolean("enable_turnip_logs", false)) {
++            ProcessHelper.addDebugCallback(new FileDebugLogger(this, "turnip"));
++        }
+ 
+         graphicsDriver = container.getGraphicsDriver();
+         String graphicsDriverConfig = container.getGraphicsDriverConfig();
+@@ -1509,10 +1524,23 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             envVars.put("MESA_VK_WSI_DEBUG", "sw");
+         }
+ 
+-        envVars.put("VK_ICD_FILENAMES", imageFs.getShareDir() + "/vulkan/icd.d/wrapper_icd.aarch64.json");
+-        envVars.put("GALLIUM_DRIVER", "zink");
+-
+-        if (firstTimeBoot) {
++        envVars.put("VK_ICD_FILENAMES", imageFs.getShareDir() + "/vulkan/icd.d/wrapper_icd.aarch64.json");
++        envVars.put("GALLIUM_DRIVER", "zink");
++        if (preferences.getBoolean("enable_vulkan_api_dump", false)) {
++            File apiDumpFile = WinlatorLogUtils.createTimestampedLogFile(this, "vulkan_api_dump");
++            String currentLayers = envVars.get("VK_INSTANCE_LAYERS");
++            String apiLayer = "VK_LAYER_LUNARG_api_dump";
++            if (currentLayers.isEmpty()) {
++                envVars.put("VK_INSTANCE_LAYERS", apiLayer);
++            } else if (!currentLayers.contains(apiLayer)) {
++                envVars.put("VK_INSTANCE_LAYERS", currentLayers + ":" + apiLayer);
++            }
++            envVars.put("VK_LUNARG_API_DUMP_FILE", "1");
++            envVars.put("VK_APIDUMP_LOG_FILENAME", apiDumpFile.getAbsolutePath());
++            envVars.put("VK_APIDUMP_FLUSH", "1");
++        }
++
++        if (firstTimeBoot) {
+             Log.d("XServerDisplayActivity", "First time container boot, re-extracting libs");
+             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/wrapper" + ".tzst", rootDir);
+             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "layers" + ".tzst", rootDir);
+@@ -1521,10 +1549,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink_dlls" + ".tzst", new File(rootDir, imageFs.WINEPREFIX + "/drive_c/windows"));
+         }
+ 
+-        if (adrenoToolsDriverId != "System") {
+-            AdrenotoolsManager adrenotoolsManager = new AdrenotoolsManager(this);
+-            adrenotoolsManager.setDriverById(envVars, imageFs, adrenoToolsDriverId);
+-        }
++        if (adrenoToolsDriverId != "System") {
++            AdrenotoolsManager adrenotoolsManager = new AdrenotoolsManager(this);
++            adrenotoolsManager.setDriverById(envVars, imageFs, adrenoToolsDriverId);
++        }
++        if (preferences.getBoolean("enable_turnip_logs", false)) {
++            File mesaLogFile = WinlatorLogUtils.createTimestampedLogFile(this, "turnip_mesa");
++            envVars.put("MESA_LOG_FILE", mesaLogFile.getAbsolutePath());
++            if (envVars.get("MESA_DEBUG").isEmpty()) {
++                envVars.put("MESA_DEBUG", "1");
++            }
++        }
+ 
+         String vulkanVersion = graphicsDriverConfig.get("vulkanVersion");
+         String vulkanVersionPatch = GPUInformation.getVulkanVersion(adrenoToolsDriverId, this).split("\\.")[2];
+@@ -1590,7 +1625,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             envVars.put("ENABLE_VKBASALT", "1");
+             envVars.put("VKBASALT_CONFIG", vkbasaltConfig);
+         }
+-    }
++    }
+ 
+     @Override
+     public boolean dispatchGenericMotionEvent(MotionEvent event) {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+index 50b33d29fa66745f1ecb14d1f3acb5b47638bdb6..06396fe69eaddd19df4f894168c987379d63fee3 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+@@ -162,44 +162,94 @@ public class AdrenotoolsManager {
+     }
+     
+     public String installDriver(Uri driverUri) {
++        try (InputStream inputStream = mContext.getContentResolver().openInputStream(driverUri)) {
++            if (inputStream == null) {
++                Log.d("AdrenotoolsManager", "Failed to install driver, content resolver returned null stream");
++                return "";
++            }
++            return installDriverFromStream(inputStream);
++        } catch (IOException e) {
++            Log.d("AdrenotoolsManager", "Failed to install driver from uri", e);
++            return "";
++        }
++    }
++
++    public String installDriver(File driverFile) {
++        try (InputStream inputStream = Files.newInputStream(driverFile.toPath())) {
++            return installDriverFromStream(inputStream);
++        } catch (IOException e) {
++            Log.d("AdrenotoolsManager", "Failed to install driver from file", e);
++            return "";
++        }
++    }
++
++    private String installDriverFromStream(InputStream inputStream) {
+         File tmpDir = new File(adrenotoolsContentDir, "tmp");
+-        if (tmpDir.exists()) tmpDir.delete();
+-        tmpDir.mkdirs();
+-        ZipInputStream zis;
+-        InputStream is;
++        if (tmpDir.exists()) FileUtils.delete(tmpDir);
++        if (!tmpDir.mkdirs()) {
++            Log.d("AdrenotoolsManager", "Failed to create temp directory for driver install");
++            return "";
++        }
++
+         String name = "";
+-        
+-        try {
+-            is = mContext.getContentResolver().openInputStream(driverUri);
+-            zis = new ZipInputStream(is);
+-            ZipEntry entry = zis.getNextEntry();
+-            while (entry != null) {
+-                File dstFile = new File(tmpDir, entry.getName());
+-                Files.copy(zis, dstFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+-                entry = zis.getNextEntry();
+-            }
+-            zis.close();
+-            if (new File(tmpDir, "meta.json").exists()) {
+-                name = getDriverName(tmpDir.getName());
+-                File dst = new File(adrenotoolsContentDir, name);
+-                if (!dst.exists() && !name.equals(""))
+-                    tmpDir.renameTo(dst);
+-                else {
+-                    name = "";
++        try (ZipInputStream zis = new ZipInputStream(inputStream)) {
++            ZipEntry entry;
++            while ((entry = zis.getNextEntry()) != null) {
++                File dstFile = getSafeZipEntryFile(tmpDir, entry);
++                if (dstFile == null) {
++                    Log.d("AdrenotoolsManager", "Rejected zip entry outside target dir: " + entry.getName());
+                     FileUtils.delete(tmpDir);
++                    return "";
+                 }
++
++                if (entry.isDirectory()) {
++                    if (!dstFile.exists() && !dstFile.mkdirs()) {
++                        Log.d("AdrenotoolsManager", "Failed to create directory: " + dstFile.getAbsolutePath());
++                        FileUtils.delete(tmpDir);
++                        return "";
++                    }
++                    continue;
++                }
++
++                File parent = dstFile.getParentFile();
++                if (parent != null && !parent.exists() && !parent.mkdirs()) {
++                    Log.d("AdrenotoolsManager", "Failed to create parent dir: " + parent.getAbsolutePath());
++                    FileUtils.delete(tmpDir);
++                    return "";
++                }
++                Files.copy(zis, dstFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+             }
+-            else {
+-                Log.d("AdrenotoolsManager", "Failed to install driver, a valid driver has not been selected");
+-                tmpDir.delete();
++
++            File metaProfile = new File(tmpDir, "meta.json");
++            if (!metaProfile.exists()) {
++                Log.d("AdrenotoolsManager", "Failed to install driver, meta.json not found");
++                FileUtils.delete(tmpDir);
++                return "";
+             }
++
++            name = getDriverName(tmpDir.getName());
++            File dst = new File(adrenotoolsContentDir, name);
++            if (name.isEmpty() || dst.exists() || !tmpDir.renameTo(dst)) {
++                Log.d("AdrenotoolsManager", "Failed to install driver, invalid name or target already exists: " + name);
++                FileUtils.delete(tmpDir);
++                return "";
++            }
++            return name;
++        } catch (IOException e) {
++            Log.d("AdrenotoolsManager", "Failed to install driver, invalid zip selected", e);
++            FileUtils.delete(tmpDir);
++            return "";
+         }
+-        catch (IOException e) {
+-            Log.d("AdrenotoolsManager", "Failed to install driver, a valid driver has not been selected");
+-            tmpDir.delete();
++    }
++
++    private File getSafeZipEntryFile(File rootDir, ZipEntry entry) throws IOException {
++        File target = new File(rootDir, entry.getName());
++        String rootPath = rootDir.getCanonicalPath() + File.separator;
++        String targetPath = target.getCanonicalPath();
++        if (!targetPath.startsWith(rootPath)) {
++            return null;
+         }
+-        
+-        return name;
++        return target;
+     }
+     
+     public void setDriverById(EnvVars envVars, ImageFs imagefs, String adrenotoolsDriverId) {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index 2bc6fddbc49bd8d042acddf548060a339c64912c..4223106f63d99145ffe4481b26630c8c8bdd734f 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -107,18 +107,21 @@ public class ContentsManager {
+                     remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
+                     remoteProfile.verName = object.getString("verName");
+                     remoteProfile.verCode = object.getInt("verCode");
+-                    boolean isBeta = object.optBoolean("beta", false)
+-                            || remoteProfile.verName.toLowerCase().contains("beta")
+-                            || remoteProfile.verName.toLowerCase().contains("nightly")
+-                            || remoteProfile.remoteUrl.toLowerCase().contains("nightly");
+ 
+-                    if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE)
+-                        continue;
++                    if (remoteProfile.type == null) continue;
++                    if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+                     if (remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_BOX64
+-                            || remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64)
+-                        continue; // arm64ec-only, skip box64/wowbox64
+-                    if (!includeBeta && isBeta)
++                            || remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64) {
+                         continue;
++                    }
++
++                    String verName = remoteProfile.verName != null ? remoteProfile.verName.toLowerCase() : "";
++                    String remoteUrl = remoteProfile.remoteUrl != null ? remoteProfile.remoteUrl.toLowerCase() : "";
++                    boolean isBeta = object.optBoolean("beta", false)
++                            || verName.contains("beta")
++                            || verName.contains("nightly")
++                            || remoteUrl.contains("nightly");
++                    if (!includeBeta && isBeta) continue;
+ 
+                     remoteProfiles.add(remoteProfile);
+                 } catch (JSONException e) {
+diff --git a/app/src/main/java/com/winlator/cmod/core/FileDebugLogger.java b/app/src/main/java/com/winlator/cmod/core/FileDebugLogger.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..215ad43066fa9398afb3737a41245736907e7870
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/core/FileDebugLogger.java
+@@ -0,0 +1,39 @@
++package com.winlator.cmod.core;
++
++import android.content.Context;
++import android.util.Log;
++
++import java.io.BufferedWriter;
++import java.io.Closeable;
++import java.io.File;
++import java.io.FileWriter;
++import java.io.IOException;
++
++public class FileDebugLogger implements Callback<String>, Closeable {
++    private final BufferedWriter writer;
++
++    public FileDebugLogger(Context context, String prefix) {
++        try {
++            File logFile = WinlatorLogUtils.createTimestampedLogFile(context, prefix);
++            writer = new BufferedWriter(new FileWriter(logFile));
++        } catch (IOException e) {
++            throw new RuntimeException("Unable to create runtime log file for " + prefix, e);
++        }
++    }
++
++    @Override
++    public synchronized void call(String line) {
++        try {
++            writer.write(line);
++            writer.newLine();
++            writer.flush();
++        } catch (IOException e) {
++            Log.e("FileDebugLogger", "Failed writing runtime log line", e);
++        }
++    }
++
++    @Override
++    public synchronized void close() throws IOException {
++        writer.close();
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/core/ProcessHelper.java b/app/src/main/java/com/winlator/cmod/core/ProcessHelper.java
+index 06c145cf423983ee1c830ac4d07776258757f989..88ee51542506ceedec460f5590d0fe16cd7496d9 100644
+--- a/app/src/main/java/com/winlator/cmod/core/ProcessHelper.java
++++ b/app/src/main/java/com/winlator/cmod/core/ProcessHelper.java
+@@ -3,9 +3,10 @@ package com.winlator.cmod.core;
+ import android.os.Process;
+ import android.util.Log;
+ 
+-import java.io.BufferedReader;
+-import java.io.File;
+-import java.io.FileInputStream;
++import java.io.BufferedReader;
++import java.io.Closeable;
++import java.io.File;
++import java.io.FileInputStream;
+ import java.io.FilenameFilter;
+ import java.io.IOException;
+ import java.io.InputStream;
+@@ -152,12 +153,22 @@ public abstract class ProcessHelper {
+         });
+     }
+ 
+-    public static void removeAllDebugCallbacks() {
+-        synchronized (debugCallbacks) {
+-            debugCallbacks.clear();
+-            Log.d("ProcessHelper", "All debug callbacks removed");
+-        }
+-    }
++    public static void removeAllDebugCallbacks() {
++        synchronized (debugCallbacks) {
++            for (Callback<String> callback : debugCallbacks) {
++                if (callback instanceof Closeable) {
++                    try {
++                        ((Closeable) callback).close();
++                    }
++                    catch (IOException e) {
++                        Log.e("ProcessHelper", "Failed closing debug callback", e);
++                    }
++                }
++            }
++            debugCallbacks.clear();
++            Log.d("ProcessHelper", "All debug callbacks removed");
++        }
++    }
+ 
+     public static void addDebugCallback(Callback<String> callback) {
+         synchronized (debugCallbacks) {
+diff --git a/app/src/main/java/com/winlator/cmod/core/WinlatorLogUtils.java b/app/src/main/java/com/winlator/cmod/core/WinlatorLogUtils.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..12a1c60a2b333e3d2b2175b55289d69dc8c3268c
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/core/WinlatorLogUtils.java
+@@ -0,0 +1,40 @@
++package com.winlator.cmod.core;
++
++import android.content.Context;
++import android.content.SharedPreferences;
++import android.net.Uri;
++import android.text.format.DateFormat;
++
++import androidx.preference.PreferenceManager;
++
++import com.winlator.cmod.SettingsFragment;
++
++import java.io.File;
++import java.util.Date;
++
++public abstract class WinlatorLogUtils {
++    public static File getLogsDir(Context context) {
++        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
++        String winlatorPath = sp.getString("winlator_path_uri", null);
++        File logsDir;
++
++        if (winlatorPath != null) {
++            Uri winlatorUri = Uri.parse(winlatorPath);
++            logsDir = new File(FileUtils.getFilePathFromUri(context, winlatorUri), "logs");
++        } else {
++            logsDir = new File(SettingsFragment.DEFAULT_WINLATOR_PATH, "logs");
++        }
++
++        if (!logsDir.exists()) {
++            logsDir.mkdirs();
++        }
++        return logsDir;
++    }
++
++    public static File createTimestampedLogFile(Context context, String prefix) {
++        String safePrefix = (prefix == null || prefix.trim().isEmpty()) ? "runtime" : prefix.trim();
++        safePrefix = safePrefix.replaceAll("[^a-zA-Z0-9._-]", "_").toLowerCase();
++        String fileName = safePrefix + "_" + DateFormat.format("yyyy-MM-dd_HH-mm-ss", new Date()) + ".txt";
++        return new File(getLogsDir(context), fileName);
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/widget/LogView.java b/app/src/main/java/com/winlator/cmod/widget/LogView.java
+index 9c0cb4d9e31d0947db199734e0929e9724909fbd..1268117dd3518a9c8095d73efcfac7b5aea4faa5 100644
+--- a/app/src/main/java/com/winlator/cmod/widget/LogView.java
++++ b/app/src/main/java/com/winlator/cmod/widget/LogView.java
+@@ -16,11 +16,12 @@ import androidx.annotation.Nullable;
+ import androidx.preference.PreferenceManager;
+ 
+ import com.winlator.cmod.R;
+-import com.winlator.cmod.SettingsFragment;
+-import com.winlator.cmod.contentdialog.DebugDialog;
+-import com.winlator.cmod.core.FileUtils;
+-import com.winlator.cmod.core.UnitUtils;
+-import com.winlator.cmod.math.Mathf;
++import com.winlator.cmod.SettingsFragment;
++import com.winlator.cmod.contentdialog.DebugDialog;
++import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.UnitUtils;
++import com.winlator.cmod.core.WinlatorLogUtils;
++import com.winlator.cmod.math.Mathf;
+ 
+ import java.io.File;
+ import java.util.ArrayList;
+@@ -189,25 +190,10 @@ public class LogView extends View {
+         fileName = file.substring(0, file.lastIndexOf("."));
+     }
+ 
+-    public static File getLogFile(Context context) {
+-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+-        String winlatorPath = sp.getString("winlator_path_uri", null);
+-        File logsDir;
+-
+-        if (winlatorPath != null) {
+-            Uri winlatorUri = Uri.parse(winlatorPath);
+-            logsDir = new File(FileUtils.getFilePathFromUri(context, winlatorUri), "logs");
+-        }
+-        else {
+-            logsDir = new File(SettingsFragment.DEFAULT_WINLATOR_PATH, "logs");
+-        }
+-
+-        if (!logsDir.exists())
+-            logsDir.mkdirs();
+-
+-        String logFile = fileName.replaceAll("\\s", "_").toLowerCase() + "_" + DateFormat.format("yyyy-MM-dd_HH-mm-ss", new Date()) + ".txt";
+-        return new File(logsDir, logFile);
+-    }
++    public static File getLogFile(Context context) {
++        String logFile = fileName.replaceAll("\\s", "_").toLowerCase() + "_" + DateFormat.format("yyyy-MM-dd_HH-mm-ss", new Date()) + ".txt";
++        return new File(WinlatorLogUtils.getLogsDir(context), logFile);
++    }
+     
+     @Override
+     public boolean onTouchEvent(MotionEvent event) {
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 0f5287317a283a07ec4f5fcb48da7ff490a59d95..6abd663602645ba89cbd1efcfa82f492c33cc9b6 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -20,9 +20,10 @@ import com.winlator.cmod.core.EnvVars;
+ import com.winlator.cmod.core.FileUtils;
+ import com.winlator.cmod.core.GPUInformation;
+ import com.winlator.cmod.core.KeyValueSet;
+-import com.winlator.cmod.core.ProcessHelper;
+-import com.winlator.cmod.core.TarCompressorUtils;
+-import com.winlator.cmod.core.WineInfo;
++import com.winlator.cmod.core.ProcessHelper;
++import com.winlator.cmod.core.TarCompressorUtils;
++import com.winlator.cmod.core.WinlatorLogUtils;
++import com.winlator.cmod.core.WineInfo;
+ import com.winlator.cmod.fexcore.FEXCoreManager;
+ import com.winlator.cmod.fexcore.FEXCorePreset;
+ import com.winlator.cmod.fexcore.FEXCorePresetManager;
+@@ -242,10 +243,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         ImageFs imageFs = environment.getImageFs();
+         File rootDir = imageFs.getRootDir();
+ 
+-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+-        boolean enableBox64Logs = preferences.getBoolean("enable_box64_logs", false);
+-        boolean openWithAndroidBrowser = preferences.getBoolean("open_with_android_browser", false);
+-        boolean shareAndroidClipboard = preferences.getBoolean("share_android_clipboard", false);
++        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
++        boolean enableBox64Logs = preferences.getBoolean("enable_box64_logs", false);
++        boolean enableFexLogs = preferences.getBoolean("enable_fex_logs", false);
++        boolean openWithAndroidBrowser = preferences.getBoolean("open_with_android_browser", false);
++        boolean shareAndroidClipboard = preferences.getBoolean("share_android_clipboard", false);
+ 
+         if (openWithAndroidBrowser)
+             envVars.put("WINE_OPEN_WITH_ANDROID_BROWSER", "1");
+@@ -349,11 +351,17 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             envVars.putAll(this.envVars);
+         }
+ 
+-        String emulator = container.getEmulator();
+-        if (shortcut != null)
+-            emulator = shortcut.getExtra("emulator", container.getEmulator());
+-
+-        // Construct the command without Box64 to the Wine executable
++        String emulator = container.getEmulator();
++        if (shortcut != null)
++            emulator = shortcut.getExtra("emulator", container.getEmulator());
++
++        if (enableFexLogs && emulator != null && emulator.equalsIgnoreCase("fexcore")) {
++            File fexLogFile = WinlatorLogUtils.createTimestampedLogFile(context, "fex_runtime");
++            envVars.put("FEX_LOG_LEVEL", "debug");
++            envVars.put("FEX_LOG_FILE", fexLogFile.getAbsolutePath());
++        }
++
++        // Construct the command without Box64 to the Wine executable
+         String command = "";
+         String overriddenCommand = envVars.get("GUEST_PROGRAM_LAUNCHER_COMMAND");
+         if (!overriddenCommand.isEmpty()) {
+diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
+index bff7584c9d681dc56dd6704d9f2396c61d70e626..11e5eff17a3b3b3faed88db8d852fd403d689c1c 100644
+--- a/app/src/main/res/layout/adrenotools_fragment.xml
++++ b/app/src/main/res/layout/adrenotools_fragment.xml
+@@ -18,14 +18,14 @@
+ 
+     <View style="@style/HorizontalLine" />
+ 
+-    <LinearLayout
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:orientation="horizontal">
+-
+-        <Button
+-            android:id="@+id/BTInstallDriver"
+-            style="@style/ButtonNeutral"
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="horizontal">
++
++        <Button
++            android:id="@+id/BTInstallDriver"
++            style="@style/ButtonNeutral"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_weight="1"
+diff --git a/app/src/main/res/layout/contents_fragment.xml b/app/src/main/res/layout/contents_fragment.xml
+index f672ceca3a1fd043e9bfa5f659b128dad0012b2b..829b7784365e4ca4df57b834d9c03a9cace4de10 100644
+--- a/app/src/main/res/layout/contents_fragment.xml
++++ b/app/src/main/res/layout/contents_fragment.xml
+@@ -21,16 +21,16 @@
+             android:id="@+id/SContentType"
+             style="@style/ComboBox"
+             android:layout_width="0dp"
+-             android:layout_height="wrap_content"
+-             android:layout_weight="1" />
++            android:layout_height="wrap_content"
++            android:layout_weight="1" />
+ 
+     </LinearLayout>
+ 
+     <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:orientation="horizontal"
+         android:gravity="center_vertical"
++        android:orientation="horizontal"
+         android:paddingTop="8dp"
+         android:paddingBottom="4dp">
+ 
+@@ -42,8 +42,7 @@
+             android:text="@string/show_beta_releases" />
+     </LinearLayout>
+ 
+-
+-     <View style="@style/HorizontalLine" />
++    <View style="@style/HorizontalLine" />
+ 
+     <androidx.recyclerview.widget.RecyclerView xmlns:app="http://schemas.android.com/apk/res-auto"
+         android:id="@+id/RecyclerView"
+@@ -78,5 +77,5 @@
+             android:layout_weight="1"
+             android:text="@string/install_content" />
+ 
+-    </LinearLayout>
++    </LinearLayout>
+ </LinearLayout>
+diff --git a/app/src/main/res/layout/settings_fragment.xml b/app/src/main/res/layout/settings_fragment.xml
+index 35e5417f963798110e52610f8381a550ad882702..597d9e583330fbc18e8df1340fa32819d16cc2ba 100644
+--- a/app/src/main/res/layout/settings_fragment.xml
++++ b/app/src/main/res/layout/settings_fragment.xml
+@@ -455,13 +455,34 @@
+ 
+                     <View style="@style/FieldSeparator" />
+ 
+-                    <CheckBox
+-                        android:id="@+id/CBEnableBox64Logs"
+-                        android:layout_width="wrap_content"
+-                        android:layout_height="wrap_content"
+-                        android:text="@string/enable_box64_logs"
+-                        android:layout_marginTop="8dp" />
+-                </LinearLayout>
++                    <CheckBox
++                        android:id="@+id/CBEnableBox64Logs"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="@string/enable_box64_logs"
++                        android:layout_marginTop="8dp" />
++
++                    <CheckBox
++                        android:id="@+id/CBEnableFEXLogs"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="@string/enable_fex_logs"
++                        android:layout_marginTop="8dp" />
++
++                    <CheckBox
++                        android:id="@+id/CBEnableVulkanLogs"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="@string/enable_vulkan_api_dump"
++                        android:layout_marginTop="8dp" />
++
++                    <CheckBox
++                        android:id="@+id/CBEnableTurnipLogs"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="@string/enable_turnip_logs"
++                        android:layout_marginTop="8dp" />
++                </LinearLayout>
+ 
+                 <TextView
+                     android:id="@+id/TVLogs"
+diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
+index 080d7ab64e50bfeddaa5a63a7633c4efee0cda91..4fd3971235e48b9dde72e2eaafb78d865aeb29d1 100644
+--- a/app/src/main/res/values/colors.xml
++++ b/app/src/main/res/values/colors.xml
+@@ -4,21 +4,21 @@
+     <color name="window_background_color">#fafafa</color>
+     <color name="colorPrimary">#0f3010</color>
+     <color name="colorPrimaryDark">#0b220c</color>
+-    <color name="colorAccent">#1c7f3a</color>
++    <color name="colorAccent">#0f9d73</color>
+     <color name="black">#000000</color>
+ 
+     <!-- Dark Theme Colors -->
+     <color name="window_background_color_dark">#121212</color>
+     <color name="colorPrimaryDarkMode">#12351a</color>
+     <color name="colorPrimaryDarkModeDark">#0a1f10</color>
+-    <color name="colorAccentDark">#29b36f</color>
++    <color name="colorAccentDark">#5de2b0</color>
+     <color name="white">#ffffff</color>
+ 
+     <!-- Additional Colors for Dark Mode -->
+     <color name="combo_box_dark">#303030</color>
+     <color name="content_dialog_background_dark">#424242</color>
+     <color name="button_neutral_dark">#37474f</color>
+-    <color name="button_positive_dark">#1e88e5</color>
++    <color name="button_positive_dark">#10b981</color>
+ 
+     <color name="abc_decor_view_status_guard">#ff000000</color>
+     <color name="abc_decor_view_status_guard_light">#ffffffff</color>
+@@ -113,7 +113,7 @@
+     <color name="mtrl_textinput_hovered_box_stroke_color">#de000000</color>
+     <color name="notification_action_color_filter">@color/androidx_core_secondary_text_default_material_light</color>
+     <color name="notification_icon_bg_color">#ff9e9e9e</color>
+-    <color name="preference_fallback_accent_color">#ff008577</color>
++    <color name="preference_fallback_accent_color">#ff0f9d73</color>
+     <color name="primary_dark_material_dark">@android:color/black</color>
+     <color name="primary_dark_material_light">@color/material_grey_600</color>
+     <color name="primary_material_dark">@color/material_grey_900</color>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 32120b41c13396807340c23e45e6f7f089b799c0..6430791c25bee2976c2256f1f3f94c99efdc76d2 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -4,7 +4,7 @@
+     <!ENTITY TERMUX_X11_APP_NAME "Winlator:X11">
+     ]>
+ <resources>
+-    <string name="app_name">by.aero.so (benchmark)</string>
++    <string name="app_name">Winlator CMOD Aero.so</string>
+     <string name="run">Run</string>
+     <string name="edit">Edit</string>
+     <string name="remove">Remove</string>
+@@ -617,7 +617,9 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="install_drivers_warning">Be warned that because of limitations of current PC emulators, Qualcomm Drivers may not work on chipsets below 8 Gen2 without getting patched.</string>
+     <string name="fetch_latest_turnip">Download latest Turnip driver</string>
+     <string name="show_beta_releases">Show beta / nightly builds</string>
++    <string name="enable_fex_logs">Enable FEX logs</string>
+     <string name="enable_vulkan_api_dump">Enable dumping of Vulkan api calls to file.</string>
++    <string name="enable_turnip_logs">Enable Turnip/Mesa logs</string>
+     <string name="dll_emulator">32bit Emulator</string>
+     <string name="open_with_android_browser">Open Android Browser in Wine</string>
+     <string name="share_android_clipboard">Share Android Clipboard with Wine</string>
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index fbc618224817870ab0e5bd7597268330048da967..88b8fda6510487b4d5487b77ab0beecbab7065f2 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -156,15 +156,18 @@
+         <item name="android:textSize">16sp</item>
+     </style>
+ 
+-    <style name="CheckBox.Dark" parent="CheckBox">
+-        <item name="colorAccent">@color/colorAccentDark</item>
+-        <item name="android:textColorSecondary">@color/colorPrimaryDark</item>
+-        <item name="android:textColor">#ffffff</item>
+-        <item name="android:textSize">16sp</item>
+-    </style>
+-
+-    <!-- Button Styles -->
+-    <style name="BaseButton">
++    <style name="CheckBox.Dark" parent="CheckBox">
++        <item name="colorAccent">@color/colorAccentDark</item>
++        <item name="android:textColorSecondary">@color/colorPrimaryDark</item>
++        <item name="android:textColor">#ffffff</item>
++        <item name="android:textSize">16sp</item>
++    </style>
++
++    <!-- Compatibility alias used by patched layouts -->
++    <style name="SwitchCompat" parent="Widget.AppCompat.CompoundButton.Switch" />
++
++    <!-- Button Styles -->
++    <style name="BaseButton">
+         <item name="android:layout_width">wrap_content</item>
+         <item name="android:layout_height">42dp</item>
+         <item name="android:focusable">true</item>
