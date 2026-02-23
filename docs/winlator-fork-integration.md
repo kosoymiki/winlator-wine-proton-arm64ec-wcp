@@ -1,6 +1,6 @@
 # Winlator Fork Integration
 
-Этот pipeline собирает APK форка Winlator Ludashi с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
+Этот pipeline собирает APK форка `Winlator CMOD Aero.so` (на базе upstream `Winlator-Ludashi`) с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
 
 ## Что делает сборка
 
@@ -8,13 +8,12 @@
 2. Генерирует upstream-обзор и рефлексивный отчёт:
    - `out/winlator/logs/inspect-upstream/*`
    - `docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md`
-3. Применяет локальные патчи:
-   - `ci/winlator/patches/0001-winlator-arm64ec-runtime-and-fex.patch`
+3. Применяет локальные патчи из `ci/winlator/patches/*.patch` (включая branding/logging/Turnip/nightly правки Aero.so).
 4. Подготавливает встроенные runtime assets:
    - `wine-11-arm64ec.txz`
    - `proton-ge10-arm64ec.txz`
    - `protonwine10-gamenative-arm64ec.txz`
-5. Собирает APK (`assembleRelease`) и публикует артефакт.
+5. Собирает APK (Gradle task через `WINLATOR_GRADLE_TASK`, по умолчанию `assembleDebug`) и публикует артефакт (package ID `by.aero.so.benchmark`).
 
 ## Ключевые фиксы в патче
 

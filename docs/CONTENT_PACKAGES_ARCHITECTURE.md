@@ -1,0 +1,41 @@
+# Content Packages Architecture (Winlator CMOD Aero.so)
+
+## Goal
+`Contents` in Winlator CMOD Aero.so must clearly separate:
+- local installed packages,
+- downloadable packages,
+- stable vs beta/nightly channels,
+without implying that our Wine/Proton packages are embedded inside the APK.
+
+## Source of truth
+- Repository file: `contents/contents.json`
+- Runtime URL in app: `raw.githubusercontent.com/<repo>/main/contents/contents.json`
+- Package assets: GitHub Releases of this repository (`wcp-v0.2b`, `wcp-latest`)
+
+## Entry model (extended, backward-compatible)
+Required legacy fields still supported:
+- `type`, `verName`, `verCode`, `remoteUrl`
+
+New/extended fields used by this fork:
+- `channel`: `stable | beta | nightly` (primary visibility filter)
+- `delivery`: `remote | embedded` (UI honesty; current WCP entries use `remote`)
+- `displayCategory`: UI label override (we use `Wine/Proton`)
+- `sourceRepo`: provenance (`owner/repo`)
+- `releaseTag`: release source (`wcp-v0.2b`, `wcp-latest`)
+
+## Filtering policy
+1. Stable entries are always visible.
+2. `Show beta / nightly` toggle controls `beta` and `nightly` entries.
+3. Legacy entries without `channel` use fallback heuristics (`beta/nightly` in metadata/URL).
+
+## Type and display mapping
+- Internal content type remains `Wine` for compatibility with Winlator internals.
+- UI display label maps `Wine` entries to `Wine/Proton`.
+- This avoids breaking existing parsing while keeping the UI accurate.
+
+## Turnip vs Contents
+- Turnip driver downloads remain upstream-sourced and are handled by `Adrenotools`.
+- Wine/Proton content packages are distributed from this repo releases and surfaced through `Contents`.
+
+## Packaging metadata propagation
+WCP build scripts inject the same metadata into `profile.json` (`channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag`) so installed packages retain provenance and channel info.
