@@ -33,6 +33,7 @@ index 6f6a8b1..d2f6df5 100644
 
         <Switch
             android:id="@+id/SwShowBeta"
+            style="@style/SwitchCompat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/show_beta_releases" />
@@ -96,7 +97,7 @@ index 7b5203c..312d2a0 100644
 
          <Button
              android:id="@+id/BTFetchLatestDriver"
-             style="@style/ButtonNeutral"
+             style="@style/ButtonPositive"
              android:layout_width="0dp"
              android:layout_height="wrap_content"
              android:layout_weight="1"
@@ -123,7 +124,7 @@ index 2e6a2f4..e72c7b6 100644
 @@
  import android.widget.Spinner;
  import android.widget.TextView;
-+import android.widget.Switch;
++import androidx.appcompat.widget.SwitchCompat;
 @@
 +import java.util.Arrays;
 @@
@@ -133,7 +134,7 @@ index 2e6a2f4..e72c7b6 100644
      SharedPreferences sp;
      private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
      private Spinner sContentType;
-+    private Switch swShowBeta;
++    private SwitchCompat swShowBeta;
 +    private boolean showBeta;
 +    private List<ContentProfile.ContentType> allowedTypes = Arrays.asList(
 +            ContentProfile.ContentType.CONTENT_TYPE_WINE,
@@ -345,21 +346,37 @@ index 4a4a03f..7c05641 100644
 +                if (json == null) throw new Exception("api null");
 +                JSONObject root = new JSONObject(json);
 +                JSONArray assets = root.getJSONArray("assets");
-+                String url = null;
++                ArrayList<String> names = new ArrayList<>();
++                ArrayList<String> urls = new ArrayList<>();
 +                for (int i = 0; i < assets.length(); i++) {
 +                    JSONObject asset = assets.getJSONObject(i);
 +                    String name = asset.getString("name");
 +                    if (name.endsWith(".zip")) {
-+                        url = asset.getString("browser_download_url");
-+                        break;
++                        names.add(name);
++                        urls.add(asset.getString("browser_download_url"));
 +                    }
 +                }
-+                if (url == null) throw new Exception("no zip asset");
++                if (names.isEmpty()) throw new Exception("no zip asset");
 +
++                getActivity().runOnUiThread(() -> {
++                    new android.app.AlertDialog.Builder(getContext())
++                        .setTitle(R.string.fetch_latest_turnip)
++                        .setItems(names.toArray(new String[0]), (dialog, which) -> downloadAndInstall(urls.get(which)))
++                        .setNegativeButton(android.R.string.cancel, null)
++                        .show();
++                });
++            } catch (Exception e) {
++                getActivity().runOnUiThread(() -> AppUtils.showToast(getContext(), R.string.unable_to_install_content));
++            }
++        }).start();
++    }
++
++    private void downloadAndInstall(String url) {
++        new Thread(() -> {
++            try {
 +                File cacheDir = getContext().getCacheDir();
-+                File out = new File(cacheDir, "turnip-latest.zip");
++                File out = new File(cacheDir, "turnip-selected.zip");
 +                if (!Downloader.downloadFile(url, out)) throw new Exception("download failed");
-+
 +                String driver = adrenotoolsManager.installDriver(Uri.fromFile(out));
 +                getActivity().runOnUiThread(() -> {
 +                    if (!driver.isEmpty()) {
