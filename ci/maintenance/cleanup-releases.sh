@@ -31,35 +31,22 @@ command -v gh >/dev/null 2>&1 || fail "gh CLI is required"
 command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 [[ -n "${REPO}" ]] || fail "Unable to determine repository"
 
-json="$(gh api --paginate "/repos/${REPO}/releases?per_page=100" | python3 -c '
-import json, sys
-out = []
-for line in sys.stdin:
-    line = line.strip()
-    if not line:
-        continue
-    page = json.loads(line)
-    if isinstance(page, list):
-        out.extend(page)
-    else:
-        out.append(page)
-print(json.dumps(out))
-')"
+json="$(gh release list --repo "${REPO}" --limit 200 --json tagName,name,isDraft,isPrerelease,createdAt)"
 
-mapfile -t rows < <(KEEP_TAGS="${KEEP_TAGS}" python3 - <<'PY' <<<"$json"
+mapfile -t rows < <(JSON_PAYLOAD="$json" KEEP_TAGS="${KEEP_TAGS}" python3 -c '
 import json, os
-keep = {t.strip() for t in os.environ.get('KEEP_TAGS','').split(',') if t.strip()}
-releases = json.loads(input())
+keep = {t.strip() for t in os.environ.get("KEEP_TAGS","").split(",") if t.strip()}
+releases = json.loads(os.environ.get("JSON_PAYLOAD","[]"))
 for r in releases:
-    tag = r.get('tag_name') or ''
+    tag = r.get("tagName") or r.get("tag_name") or ""
     if tag in keep:
         continue
-    name = r.get('name') or ''
-    draft = r.get('draft', False)
-    pre = r.get('prerelease', False)
-    created = (r.get('created_at') or '')[:19]
+    name = r.get("name") or ""
+    draft = r.get("isDraft", r.get("draft", False))
+    pre = r.get("isPrerelease", r.get("prerelease", False))
+    created = (r.get("createdAt") or r.get("created_at") or "")[:19]
     print(f"{tag}\t{name}\tcreated={created}\tdraft={draft}\tprerelease={pre}")
-PY
+ '
 )
 
 if [[ ${#rows[@]} -eq 0 ]]; then
