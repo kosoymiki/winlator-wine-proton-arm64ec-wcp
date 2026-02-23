@@ -73,8 +73,8 @@ index 1760433..57bb7ab 100644
 +            }
 +        }
 +        if (!missing.isEmpty()) {
-+            // Default: allow missing embedded runtimes to support external WCP delivery.
-+            if ("1".equals(System.getenv("ALLOW_MISSING_EMBEDDED_RUNTIME"))) {
++            // Default: allow missing embedded runtimes (external WCP delivery). Set ALLOW_MISSING_EMBEDDED_RUNTIME=0 to enforce presence.
++            if (!"0".equals(System.getenv("ALLOW_MISSING_EMBEDDED_RUNTIME"))) {
 +                println("Skipping embedded runtime assets (missing: ${missing.join(', ')}); using external WCP delivery.")
 +                return
 +            }
