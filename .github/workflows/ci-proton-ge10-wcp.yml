@@ -40,6 +40,12 @@ env:
   LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}
   WCP_NAME: proton-ge10-arm64ec
+  WCP_VERSION_CODE: "1"
+  WCP_CHANNEL: nightly
+  WCP_DELIVERY: remote
+  WCP_DISPLAY_CATEGORY: Wine/Proton
+  WCP_SOURCE_REPO: ${{ github.repository }}
+  WCP_RELEASE_TAG: wcp-latest
   TARGET_HOST: aarch64-linux-gnu
   WCP_TARGET_RUNTIME: winlator-bionic
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
@@ -117,7 +123,18 @@ jobs:
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cp "${WCP_OUTPUT_DIR}/patchlog.txt" "${WCP_OUTPUT_DIR}/patchlog-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Proton GE10 ARM64EC WCP
+          Proton GE10 ARM64EC WCP (nightly / 0.2b line)
+
+          RU:
+          - Канал: nightly (wcp-latest)
+          - Тип в Winlator Contents: Wine/Proton
+          - Источник для Contents: GitHub Releases этого репозитория
+
+          EN:
+          - Channel: nightly (wcp-latest)
+          - Winlator Contents display type: Wine/Proton
+          - Source for Contents: this repository GitHub Releases
+
           Commit: ${{ github.sha }}
           Workflow run: ${{ github.run_id }}
           EOF_NOTES
@@ -127,7 +144,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: wcp-latest
-          name: WCP Latest Build
+          name: WCP Latest Build (0.2b line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: false

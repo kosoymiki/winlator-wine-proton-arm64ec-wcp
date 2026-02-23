@@ -79,7 +79,7 @@ jobs:
       - name: Upload Winlator artifact
         uses: actions/upload-artifact@v4
         with:
-          name: by.aero.so-benchmark-debug
+          name: by.aero.so.benchmark-debug-0.2b
           path: |
             out/winlator/*.apk
             out/winlator/SHA256SUMS
@@ -88,14 +88,38 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Prepare Winlator release notes
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euxo pipefail
+          cat > RELEASE_NOTES.md <<EOF_NOTES
+          Winlator CMOD Aero.so (0.2b line / rolling)
+
+          RU:
+          - APK package: by.aero.so.benchmark
+          - Contents source: this repository Releases (Wine/Proton WCP)
+          - Turnip UI: latest + version picker support
+          - Forensic logging and diagnostics improvements are included in this patch line
+
+          EN:
+          - APK package: by.aero.so.benchmark
+          - Contents source: this repository Releases (Wine/Proton WCP)
+          - Turnip UI: latest + version picker support
+          - Forensic logging and diagnostics improvements are included in this patch line
+
+          Commit: ${{ github.sha }}
+          Workflow run: ${{ github.run_id }}
+          EOF_NOTES
+
       - name: Publish to Winlator release
         if: github.event_name != 'pull_request'
         uses: ncipollo/release-action@v1
         with:
           tag: winlator-latest
-          name: Winlator ARM64EC Fork Latest
+          name: Winlator CMOD Aero.so Latest (0.2b line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: false
           artifacts: out/winlator/*.apk,out/winlator/SHA256SUMS,docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
           artifactErrorsFailBuild: true
+          bodyFile: RELEASE_NOTES.md
