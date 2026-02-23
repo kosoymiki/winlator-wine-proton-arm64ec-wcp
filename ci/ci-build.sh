@@ -86,6 +86,8 @@ build_wine() {
 
   ensure_sdl2_tooling
   export TARGET_HOST
+  # Guarantee prefixPack is available for downstream packaging/validation.
+  ensure_prefix_pack "${ROOT_DIR}/prefixPack.txz"
 
   wcp_ensure_configure_script "${WINE_SRC_DIR}"
   make_vulkan_log="${OUT_DIR}/logs/make_vulkan.log"
@@ -355,6 +357,8 @@ WINETOOLS
   } > "${WCP_ROOT}/share/winetools/linking-report.txt"
 
   local has_prefix_pack="0"
+  # Attempt to download if missing; fallback honors REQUIRE_PREFIX_PACK flag.
+  ensure_prefix_pack "${ROOT_DIR}/prefixPack.txz"
   if [[ -f "${ROOT_DIR}/prefixPack.txz" ]]; then
     cp -f "${ROOT_DIR}/prefixPack.txz" "${WCP_ROOT}/prefixPack.txz"
     log "included prefixPack.txz"
