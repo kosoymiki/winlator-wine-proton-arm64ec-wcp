@@ -1,0 +1,51 @@
+diff --git a/app/build.gradle b/app/build.gradle
+index 57bb7ab..c6d3bc4 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@
+-tasks.register("prepareEmbeddedWineAssets") {
+-    def assetDir = new File(project.rootDir, ["app","src","main","assets"].join(File.separator))
+-    def requiredRuntimeAssets = [
+-            "wine-11.1-arm64ec.txz",
+-            "proton-ge10-arm64ec.txz",
+-            "protonwine10-gamenative-arm64ec.txz"
+-    ]
+-
+-    doLast {
+-        def missing = []
+-        requiredRuntimeAssets.each { name ->
+-            File f = new File(assetDir, name)
+-            if (!f.exists() || !f.isFile()) {
+-                missing.add(name)
+-            }
+-        }
+-        if (!missing.isEmpty()) {
+-            throw new GradleException("Missing embedded runtime assets: ${missing.join(', ')}")
+-        }
+-    }
+-}
+-
+-tasks.register("prepareKotlinBuildScriptModel"){}
+-prepareEmbeddedWineAssets.dependsOn(downloadImageFS)
+-preBuild.dependsOn(prepareEmbeddedWineAssets)
++tasks.register("prepareKotlinBuildScriptModel"){}
+@@
+-    defaultConfig {
+-        applicationId "com.winlator.cmod"
++    defaultConfig {
++        applicationId "by.aero.so.benchmark"
+         minSdkVersion 26
+         // We’re preserving Winlator’s request to keep targetSdkVersion at 28
+         targetSdkVersion 28
+@@
+-        versionCode 20
+-        versionName "7.1.4x-cmod"
++        versionCode 21
++        versionName "7.1.4x-benchmark-debug"
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 8ea333b..d4b46c8 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@
+-    <string name="app_name">Winlator</string>
++    <string name="app_name">by.aero.so (benchmark)</string>

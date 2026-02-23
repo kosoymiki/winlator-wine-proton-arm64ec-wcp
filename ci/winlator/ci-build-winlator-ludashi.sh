@@ -7,13 +7,12 @@ WORK_DIR="${WORK_DIR:-${ROOT_DIR}/work/winlator-ludashi}"
 SRC_DIR="${WORK_DIR}/src"
 LOG_DIR="${OUT_DIR}/logs"
 INSPECT_DIR="${LOG_DIR}/inspect-upstream"
-RUNTIME_ASSET_WORK_DIR="${WORK_DIR}/runtime-assets"
 DOC_REPORT="${WINLATOR_ANALYSIS_REPORT:-${ROOT_DIR}/docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md}"
 
 : "${WINLATOR_LUDASHI_REPO:=https://github.com/StevenMXZ/Winlator-Ludashi.git}"
 : "${WINLATOR_LUDASHI_REF:=winlator_bionic}"
-: "${WINLATOR_GRADLE_TASK:=assembleRelease}"
-: "${WINLATOR_APK_BASENAME:=winlator-ludashi-arm64ec-fork}"
+: "${WINLATOR_GRADLE_TASK:=assembleDebug}"
+: "${WINLATOR_APK_BASENAME:=by.aero.so-benchmark-debug}"
 
 log() { printf '[winlator-ci] %s\n' "$*"; }
 fail() { printf '[winlator-ci][error] %s\n' "$*" >&2; exit 1; }
@@ -53,11 +52,6 @@ apply_patches() {
   git -C "${SRC_DIR}" diff > "${LOG_DIR}/patch.diff"
 }
 
-prepare_runtime_assets() {
-  bash "${ROOT_DIR}/ci/winlator/materialize-runtime-assets.sh" "${SRC_DIR}/app/src/main/assets" "${RUNTIME_ASSET_WORK_DIR}"
-  cp -f "${SRC_DIR}/app/src/main/assets/embedded-runtime-SHA256SUMS" "${LOG_DIR}/embedded-runtime-SHA256SUMS"
-}
-
 build_apk() {
   local apk_path upstream_sha out_apk
 
@@ -66,7 +60,7 @@ build_apk() {
   ./gradlew --no-daemon "${WINLATOR_GRADLE_TASK}"
   popd >/dev/null
 
-  apk_path="$(find "${SRC_DIR}/app/build/outputs/apk" -type f \( -name '*release*.apk' -o -name '*-unsigned.apk' \) | sort | head -n1)"
+  apk_path="$(find "${SRC_DIR}/app/build/outputs/apk" -type f -name '*.apk' | sort | head -n1)"
   [[ -n "${apk_path}" ]] || fail "Unable to locate built APK under app/build/outputs/apk"
 
   upstream_sha="$(git -C "${SRC_DIR}" rev-parse --short HEAD)"
@@ -93,7 +87,6 @@ main() {
   clone_upstream
   inspect_upstream
   apply_patches
-  prepare_runtime_assets
   build_apk
 }
 

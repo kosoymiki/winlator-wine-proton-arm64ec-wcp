@@ -68,7 +68,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             bash curl git git-lfs python3 tar xz-utils zstd unzip zip rsync file
 
-      - name: Build Winlator Ludashi fork APK
+      - name: Build Winlator Ludashi fork APK (debug, no embedded runtimes)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -78,7 +78,7 @@ jobs:
       - name: Upload Winlator artifact
         uses: actions/upload-artifact@v4
         with:
-          name: winlator-ludashi-arm64ec-fork
+          name: by.aero.so-benchmark-debug
           path: |
             out/winlator/*.apk
             out/winlator/SHA256SUMS

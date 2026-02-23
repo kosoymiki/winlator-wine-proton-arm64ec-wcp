@@ -15,10 +15,8 @@ for f in "${BROKEN[@]}"; do
   fi
 done
 
-# If still any ab_gear frames remain and are PNG, nuke the whole sequence to avoid AAPT crashes.
-if ls "${ASSETS_DIR}"/ab_gear_*.png >/dev/null 2>&1; then
-  rm -f "${ASSETS_DIR}"/ab_gear_*.png
-  printf '[winlator-assets-fix] removed remaining ab_gear PNG sequence\n'
-fi
+# Remove any remaining gear frames to avoid AAPT crunch crashes (some files are malformed PNGs).
+find "${ASSETS_DIR}" -maxdepth 1 -type f -name 'ab_gear_*.png' -print -delete \
+  | sed 's/^/[winlator-assets-fix] removed /'
 
 exit 0
