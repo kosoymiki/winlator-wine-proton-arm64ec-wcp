@@ -1,10 +1,10 @@
-name: Legacy Build Wine 11.1 ARM64EC (WCP)
+name: Legacy Build Wine 11 ARM64EC (WCP)
 
 on:
   workflow_dispatch:
     inputs:
       wine_ref:
-        description: "Git ref в AndreRH/wine (tag/branch/commit). Пример: wine-11.1 или конкретный SHA."
+        description: "Git ref в AndreRH/wine (tag/branch/commit). Пример: wine-11 или конкретный SHA."
         required: true
         default: "arm64ec"
       llvm_mingw_tag:
@@ -14,7 +14,7 @@ on:
       wcp_name:
         description: "Имя итогового пакета без расширения"
         required: true
-        default: "wine-11.1-arm64ec"
+        default: "wine-11-arm64ec"
       compress:
         description: "xz или zst"
         required: true

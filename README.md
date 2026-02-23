@@ -2,7 +2,7 @@
 
 Репозиторий собирает **три независимых ARM64EC WCP-пакета** для Winlator и отдельный **fork Winlator Ludashi APK** с вшитыми runtime:
 
-1. `wine-11.1-arm64ec`
+1. `wine-11-arm64ec`
 2. `proton-ge10-arm64ec`
 3. `protonwine10-gamenative-arm64ec`
 4. `winlator-ludashi-arm64ec-fork-<sha>.apk` (встроенные runtime, без ручного импорта WCP в приложении)
@@ -18,7 +18,7 @@
 
 | Пакет | WCP_NAME | OUT_DIR | Build Script |
 |---|---|---|---|
-| Wine 11.1 ARM64EC | `wine-11.1-arm64ec` | `out/wine` | `ci/ci-build.sh` |
+| Wine 11 ARM64EC | `wine-11-arm64ec` | `out/wine` | `ci/ci-build.sh` |
 | Proton GE10 ARM64EC | `proton-ge10-arm64ec` | `out/proton-ge10` | `ci/proton-ge10/ci-build-proton-ge10-wcp.sh` |
 | ProtonWine10 GameNative ARM64EC | `protonwine10-gamenative-arm64ec` | `out/protonwine10` | `ci/protonwine10/ci-build-protonwine10-wcp.sh` |
 
@@ -48,12 +48,12 @@
 
 ## Локальный запуск
 
-### Wine 11.1 ARM64EC
+### Wine 11 ARM64EC
 
 ```bash
 LLVM_MINGW_TAG=20260210 \
 TARGET_HOST=aarch64-linux-gnu \
-WCP_NAME=wine-11.1-arm64ec \
+WCP_NAME=wine-11-arm64ec \
 WCP_OUTPUT_DIR=out/wine \
 WCP_COMPRESS=xz \
 WCP_ENABLE_SDL2_RUNTIME=1 \
@@ -111,7 +111,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 ## CI Workflows
 
 - `/.github/workflows/ci-arm64ec-wine.yml`
-  - Build Wine 11.1 ARM64EC WCP
+  - Build Wine 11 ARM64EC WCP
 - `/.github/workflows/ci-proton-ge10-wcp.yml`
   - Build Proton GE10 ARM64EC WCP
 - `/.github/workflows/ci-protonwine10-wcp.yml`

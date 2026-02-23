@@ -59,7 +59,7 @@ index 1760433..57bb7ab 100644
 +tasks.register("prepareEmbeddedWineAssets") {
 +    def assetDir = new File(project.rootDir, ["app","src","main","assets"].join(File.separator))
 +    def requiredRuntimeAssets = [
-+            "wine-11.1-arm64ec.txz",
++            "wine-11-arm64ec.txz",
 +            "proton-ge10-arm64ec.txz",
 +            "protonwine10-gamenative-arm64ec.txz"
 +    ]
@@ -276,7 +276,7 @@ index f9cfab0..e105ce1 100644
 +import java.util.regex.Pattern;
 +
 +public class WineInfo implements Parcelable {
-+    public static final WineInfo MAIN_WINE_VERSION = new WineInfo("wine","11.1", "arm64ec");
++    public static final WineInfo MAIN_WINE_VERSION = new WineInfo("wine","11", "arm64ec");
 +    private static final Pattern strictPattern = Pattern.compile("^(wine|proton)\\-([0-9\\.]+)\\-?([0-9\\.]+)?\\-(x86|x86_64|arm64ec)$");
 +    private static final Pattern archSuffixPattern = Pattern.compile("\\-(x86|x86_64|arm64ec)$");
      public final String version;
@@ -533,7 +533,7 @@ index 74bd9e7..810e174 100644
 -        <item>proton-9.0-arm64ec</item>
 -    </string-array>
 +    <string-array name="wine_entries">
-+        <item>wine-11.1-arm64ec</item>
++        <item>wine-11-arm64ec</item>
 +        <item>proton-ge10-arm64ec</item>
 +        <item>protonwine10-gamenative-arm64ec</item>
 +    </string-array>

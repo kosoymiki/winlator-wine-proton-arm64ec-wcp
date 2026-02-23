@@ -11,7 +11,7 @@
 3. Применяет локальные патчи:
    - `ci/winlator/patches/0001-winlator-arm64ec-runtime-and-fex.patch`
 4. Подготавливает встроенные runtime assets:
-   - `wine-11.1-arm64ec.txz`
+   - `wine-11-arm64ec.txz`
    - `proton-ge10-arm64ec.txz`
    - `protonwine10-gamenative-arm64ec.txz`
 5. Собирает APK (`assembleRelease`) и публикует артефакт.
