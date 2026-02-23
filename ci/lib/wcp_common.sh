@@ -57,6 +57,26 @@ wcp_validate_winlator_profile_identifier() {
     wcp_fail "WCP_VERSION_NAME must be Winlator-parseable (example: 10.32-arm64ec), got: ${version_name}"
 }
 
+ensure_prefix_pack() {
+  local dst="${1:-${PREFIX_PACK_PATH:-${ROOT_DIR:-$(pwd)}/prefixPack.txz}}"
+  local url="${PREFIX_PACK_URL:-https://github.com/GameNative/bionic-prefix-files/releases/latest/download/prefixPack.txz}"
+  local tmp
+
+  if [[ -f "${dst}" ]]; then
+    return
+  fi
+
+  wcp_require_cmd curl
+  tmp="$(mktemp)"
+  wcp_log "Downloading prefixPack.txz from ${url}"
+  if ! curl -fL --retry 5 --retry-delay 2 -o "${tmp}" "${url}"; then
+    rm -f "${tmp}"
+    wcp_fail "Failed to download prefixPack from ${url}"
+  fi
+  mkdir -p "$(dirname "${dst}")"
+  mv "${tmp}" "${dst}"
+}
+
 wcp_check_host_arch() {
   local arch
   arch="$(uname -m)"
@@ -282,11 +302,11 @@ compose_wcp_tree_from_stage() {
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
   prefix_pack_path="${PREFIX_PACK_PATH:-${ROOT_DIR}/prefixPack.txz}"
+  ensure_prefix_pack "${prefix_pack_path}"
   profile_name="${WCP_PROFILE_NAME}"
   profile_type="${WCP_PROFILE_TYPE}"
 
   [[ -d "${stage_dir}/usr" ]] || wcp_fail "Stage is missing usr/ payload: ${stage_dir}/usr"
-  [[ -f "${prefix_pack_path}" ]] || wcp_fail "prefixPack.txz is required but missing: ${prefix_pack_path}"
 
   rm -rf "${wcp_root}"
   mkdir -p "${wcp_root}"

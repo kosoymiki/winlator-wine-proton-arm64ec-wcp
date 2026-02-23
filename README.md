@@ -31,13 +31,13 @@
 - Формат: `.wcp` (tar-архив)
 - Компрессия: `xz` или `zst` (`WCP_COMPRESS`, default `xz`)
 - В корне WCP обязательно:
-  - `prefixPack.txz`
+  - `prefixPack.txz` (авто-скачивается из GameNative/bionic-prefix-files при сборке)
   - `profile.json`
 - Обязательные слои внутри `lib/wine/`:
   - `aarch64-unix/`
   - `aarch64-windows/`
   - `i386-windows/`
-- Для Android/bionic профиля включён wrapper glibc-launcher через `ci/lib/winlator-runtime.sh`.
+- Для Android/bionic профиля включён wrapper glibc-launcher через `ci/lib/winlator-runtime.sh`. Локальный `prefixPack.txz` в репо больше не хранится: используется релиз GameNative/bionic-prefix-files.
 
 ## Общие переменные окружения
 
