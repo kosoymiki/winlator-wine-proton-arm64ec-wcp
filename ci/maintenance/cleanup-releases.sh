@@ -31,7 +31,20 @@ command -v gh >/dev/null 2>&1 || fail "gh CLI is required"
 command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 [[ -n "${REPO}" ]] || fail "Unable to determine repository"
 
-json="$(gh api --paginate "/repos/${REPO}/releases?per_page=100")"
+json="$(gh api --paginate "/repos/${REPO}/releases?per_page=100" | python3 -c '
+import json, sys
+out = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    page = json.loads(line)
+    if isinstance(page, list):
+        out.extend(page)
+    else:
+        out.append(page)
+print(json.dumps(out))
+')"
 
 mapfile -t rows < <(KEEP_TAGS="${KEEP_TAGS}" python3 - <<'PY' <<<"$json"
 import json, os

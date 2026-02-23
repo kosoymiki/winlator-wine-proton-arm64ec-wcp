@@ -36,7 +36,7 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 log "Repository: ${REPO}"
 log "Fetching up to ${LIMIT} workflow runs"
 
-json="$(gh api --paginate "/repos/${REPO}/actions/runs?per_page=100" | python3 - "${LIMIT}" <<'PY'
+json="$(gh api --paginate "/repos/${REPO}/actions/runs?per_page=100" | python3 -c '
 import json, sys
 limit = int(sys.argv[1])
 out = []
@@ -45,16 +45,15 @@ for line in sys.stdin:
     if not line:
         continue
     page = json.loads(line)
-    for run in page.get('workflow_runs', []):
+    for run in page.get(\"workflow_runs\", []):
         out.append(run)
         if len(out) >= limit:
             print(json.dumps(out))
             raise SystemExit(0)
 print(json.dumps(out[:limit]))
-PY
-)"
+' "${LIMIT}")"
 
-mapfile -t rows < <(python3 - <<'PY' <<<"$json"
+mapfile -t rows < <(KEEP_BRANCHES="${KEEP_BRANCHES}" python3 - <<'PY' <<<"$json"
 import json, os
 runs = json.loads(input())
 keep_branches = {b.strip() for b in os.environ.get('KEEP_BRANCHES', '').split(',') if b.strip()}
