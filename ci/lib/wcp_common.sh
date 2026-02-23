@@ -59,7 +59,8 @@ wcp_validate_winlator_profile_identifier() {
 
 ensure_prefix_pack() {
   local dst="${1:-${PREFIX_PACK_PATH:-${ROOT_DIR:-$(pwd)}/prefixPack.txz}}"
-  local url="${PREFIX_PACK_URL:-https://github.com/GameNative/bionic-prefix-files/releases/latest/download/prefixPack.txz}"
+  # Default to raw file in GameNative/bionic-prefix-files main branch.
+  local url="${PREFIX_PACK_URL:-https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz}"
   local tmp
 
   if [[ -f "${dst}" ]]; then

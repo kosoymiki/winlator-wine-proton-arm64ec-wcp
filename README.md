@@ -31,7 +31,7 @@
 - Формат: `.wcp` (tar-архив)
 - Компрессия: `xz` или `zst` (`WCP_COMPRESS`, default `xz`)
 - В корне WCP обязательно:
-  - `prefixPack.txz` (авто-скачивается из GameNative/bionic-prefix-files при сборке)
+  - `prefixPack.txz` (авто-скачивается из `GameNative/bionic-prefix-files` `main/prefixPack-arm64ec.txz`, можно переопределить `PREFIX_PACK_URL`)
   - `profile.json`
 - Обязательные слои внутри `lib/wine/`:
   - `aarch64-unix/`
