@@ -36,22 +36,8 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 log "Repository: ${REPO}"
 log "Fetching up to ${LIMIT} workflow runs"
 
-json="$(gh api --paginate "/repos/${REPO}/actions/runs?per_page=100" | python3 -c '
-import json, sys
-limit = int(sys.argv[1])
-out = []
-for line in sys.stdin:
-    line = line.strip()
-    if not line:
-        continue
-    page = json.loads(line)
-    for run in page.get("workflow_runs", []):
-        out.append(run)
-        if len(out) >= limit:
-            print(json.dumps(out))
-            raise SystemExit(0)
-print(json.dumps(out[:limit]))
-' "${LIMIT}")"
+json="$(gh run list --repo "${REPO}" --limit "${LIMIT}" \
+  --json databaseId,status,conclusion,headBranch,createdAt,workflowName,name)"
 
 mapfile -t rows < <(KEEP_BRANCHES="${KEEP_BRANCHES}" python3 - <<'PY' <<<"$json"
 import json, os
@@ -62,13 +48,15 @@ for r in runs:
     status = (r.get('status') or '').lower()
     if conclusion not in {'failure', 'cancelled'}:
         continue
-    if keep_branches and (r.get('head_branch') or '') in keep_branches:
+    branch = r.get('head_branch') or r.get('headBranch') or ''
+    if keep_branches and branch in keep_branches:
         continue
-    rid = r['id']
+    rid = r.get('databaseId') or r.get('id')
     created = (r.get('created_at') or '')[:19]
-    name = r.get('name') or r.get('display_title') or '(no name)'
-    wf = r.get('path') or ''
-    branch = r.get('head_branch') or ''
+    if not created:
+        created = (r.get('createdAt') or '')[:19]
+    name = r.get('name') or r.get('displayTitle') or r.get('display_title') or r.get('workflowName') or '(no name)'
+    wf = r.get('path') or r.get('workflowName') or ''
     print(f"{rid}\t{status}\t{conclusion}\t{branch}\t{created}\t{name}\t{wf}")
 PY
 )
