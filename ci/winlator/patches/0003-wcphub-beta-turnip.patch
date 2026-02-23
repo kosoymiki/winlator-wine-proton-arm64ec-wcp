@@ -1,305 +1,8 @@
-diff --git a/app/src/main/res/layout/contents_fragment.xml b/app/src/main/res/layout/contents_fragment.xml
-index 6f6a8b1..d2f6df5 100644
---- a/app/src/main/res/layout/contents_fragment.xml
-+++ b/app/src/main/res/layout/contents_fragment.xml
-@@
-     <TextView
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:text="@string/content_type" />
-
-    <LinearLayout
-         android:layout_width="match_parent"
-         android:layout_height="wrap_content"
-         android:gravity="center_vertical"
-         android:orientation="horizontal">
-
-        <Spinner
-             android:id="@+id/SContentType"
-             style="@style/ComboBox"
-             android:layout_width="0dp"
-             android:layout_height="wrap_content"
-             android:layout_weight="1" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingTop="8dp"
-        android:paddingBottom="4dp">
-
-        <Switch
-            android:id="@+id/SwShowBeta"
-            style="@style/SwitchCompat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/show_beta_releases" />
-    </LinearLayout>
-
-
-     <View style="@style/HorizontalLine" />
-
-    <androidx.recyclerview.widget.RecyclerView xmlns:app="http://schemas.android.com/apk/res-auto"
-         android:id="@+id/RecyclerView"
-         android:layout_width="match_parent"
-         android:layout_height="0dp"
-         android:layout_weight="1"
-         android:scrollbars="vertical"
-         app:layoutManager="LinearLayoutManager" />
-
-     <TextView
-         android:id="@+id/TVEmptyText"
-         android:layout_width="match_parent"
-         android:layout_height="0dp"
-         android:layout_weight="1"
-         android:gravity="center"
-         android:text="@string/no_items_to_display"
-         android:textSize="24sp"
-         android:visibility="gone" />
-
-     <View style="@style/HorizontalLine" />
-
-     <LinearLayout
-         android:layout_width="match_parent"
-         android:layout_height="wrap_content"
-         android:orientation="horizontal">
-
-         <Button
-             android:id="@+id/BTInstallContent"
-             style="@style/ButtonNeutral"
-             android:layout_width="0dp"
-             android:layout_height="wrap_content"
-             android:layout_weight="1"
-             android:text="@string/install_content" />
-
-     </LinearLayout>
-</LinearLayout>
-diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
-index 7b5203c..312d2a0 100644
---- a/app/src/main/res/layout/adrenotools_fragment.xml
-+++ b/app/src/main/res/layout/adrenotools_fragment.xml
-@@
-     <LinearLayout
-         android:layout_width="match_parent"
-         android:layout_height="wrap_content"
-         android:orientation="horizontal">
-
-         <Button
-             android:id="@+id/BTInstallDriver"
-             style="@style/ButtonNeutral"
-             android:layout_width="0dp"
-             android:layout_height="wrap_content"
-             android:layout_weight="1"
-             android:text="@string/install_drivers" />
-
-         <Button
-             android:id="@+id/BTFetchLatestDriver"
-             style="@style/ButtonPositive"
-             android:layout_width="0dp"
-             android:layout_height="wrap_content"
-             android:layout_weight="1"
-             android:text="@string/fetch_latest_turnip" />
-
-     </LinearLayout>
-</LinearLayout>
-diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
-index d4b46c8..0dc4d33 100644
---- a/app/src/main/res/values/strings.xml
-+++ b/app/src/main/res/values/strings.xml
-@@
-     <string name="install_drivers">Install drivers</string>
-     <string name="install_drivers_message">Do you want to install the drivers?</string>
-     <string name="install_drivers_warning">Please ensure that you trust the source.</string>
-+    <string name="fetch_latest_turnip">Download latest Turnip driver</string>
-+    <string name="show_beta_releases">Show beta / nightly builds</string>
-     <string name="install_soundfonts">Install soundfonts</string>
-     <string name="install_midi_synth">Install midi synth</string>
-diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
-index 2e6a2f4..e72c7b6 100644
---- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
-+++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
-@@
- import android.widget.Spinner;
- import android.widget.TextView;
-+import androidx.appcompat.widget.SwitchCompat;
-@@
-+import java.util.Arrays;
-@@
-     private RecyclerView recyclerView;
-     private View emptyText;
-     private ContentsManager manager;
-     SharedPreferences sp;
-     private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
-     private Spinner sContentType;
-+    private SwitchCompat swShowBeta;
-+    private boolean showBeta;
-+    private List<ContentProfile.ContentType> allowedTypes = Arrays.asList(
-+            ContentProfile.ContentType.CONTENT_TYPE_WINE,
-+            ContentProfile.ContentType.CONTENT_TYPE_DXVK,
-+            ContentProfile.ContentType.CONTENT_TYPE_VKD3D,
-+            ContentProfile.ContentType.CONTENT_TYPE_FEXCORE
-+    );
-@@
-         manager = new ContentsManager(getContext());
-         manager.syncContents();
-         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-+        showBeta = sp.getBoolean("beta_contents_enabled", false);
-@@
-         sContentType = layout.findViewById(R.id.SContentType);
-         updateContentTypeSpinner(sContentType);
-@@
-         emptyText = layout.findViewById(R.id.TVEmptyText);
-+
-+        swShowBeta = layout.findViewById(R.id.SwShowBeta);
-+        swShowBeta.setChecked(showBeta);
-+        swShowBeta.setOnCheckedChangeListener((buttonView, isChecked) -> {
-+            showBeta = isChecked;
-+            sp.edit().putBoolean("beta_contents_enabled", showBeta).apply();
-+            reloadRemoteContents();
-+        });
-@@
-         recyclerView = layout.findViewById(R.id.RecyclerView);
-         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
-         loadContentList();
- 
-         return layout;
-     }
- 
-     private void updateContentTypeSpinner(Spinner spinner) {
-         List<String> typeList = new ArrayList<>();
--        for (ContentProfile.ContentType type : ContentProfile.ContentType.values())
--            typeList.add(type.toString());
-+        for (ContentProfile.ContentType type : allowedTypes)
-+            typeList.add(type.toString());
-         spinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, typeList));
-@@
-             @Override
-             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
--                currentContentType = ContentProfile.ContentType.values()[position];
-+                currentContentType = allowedTypes.get(position);
-                 updateContentsListView();
-             }
-@@
-     public void onResume() {
-         super.onResume();
--
--
--        new Thread(() -> {
--            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
--            String json = Downloader.downloadString(contentsURL);
--            if (json == null)
--                return;
--            getActivity().runOnUiThread(() -> {
--                manager.setRemoteProfiles(json);
--                loadContentList();
--            });
--        }).start();
-+        reloadRemoteContents();
-     }
-+
-+    private void reloadRemoteContents() {
-+        new Thread(() -> {
-+            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
-+            String json = Downloader.downloadString(contentsURL);
-+            if (json == null)
-+                return;
-+            getActivity().runOnUiThread(() -> {
-+                manager.setRemoteProfiles(json, showBeta, true /*ignoreWine*/);
-+                loadContentList();
-+            });
-+        }).start();
-+    }
-
-diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
-index 7b4910..792b1a1 100644
---- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
-+++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
-@@
--    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/StevenMXZ/Winlator-Contents/main/contents.json";
-+    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/contents.json";
-@@
--    public void setRemoteProfiles(String json) {
--        try {
--            remoteProfiles = new ArrayList<>();
--            JSONArray content = new JSONArray(json);
--            for (int i = 0; i < content.length(); i++) {
--                try {
--                    JSONObject object = content.getJSONObject(i);
--                    ContentProfile remoteProfile = new ContentProfile();
--                    remoteProfile.remoteUrl = object.getString("remoteUrl");
--                    remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
--                    remoteProfile.verName = object.getString("verName");
--                    remoteProfile.verCode = object.getInt("verCode");
--                    remoteProfiles.add(remoteProfile);
--                } catch (JSONException e) {
--                    e.printStackTrace();
--                }
--            }
--        } catch (JSONException e) {
--            e.printStackTrace();
--        }
--        syncContents();
--    }
-+    public void setRemoteProfiles(String json) {
-+        setRemoteProfiles(json, false, false);
-+    }
-+
-+    public void setRemoteProfiles(String json, boolean includeBeta, boolean ignoreWine) {
-+        try {
-+            remoteProfiles = new ArrayList<>();
-+            JSONArray content = new JSONArray(json);
-+            for (int i = 0; i < content.length(); i++) {
-+                try {
-+                    JSONObject object = content.getJSONObject(i);
-+                    ContentProfile remoteProfile = new ContentProfile();
-+                    remoteProfile.remoteUrl = object.getString("remoteUrl");
-+                    remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
-+                    remoteProfile.verName = object.getString("verName");
-+                    remoteProfile.verCode = object.getInt("verCode");
-+                    boolean isBeta = object.optBoolean("beta", false) || remoteProfile.verName.toLowerCase().contains("beta") || remoteProfile.verName.toLowerCase().contains("nightly") || remoteProfile.remoteUrl.toLowerCase().contains("nightly");
-+
-+                    if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE)
-+                        continue;
-+                    if (remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_BOX64 || remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64)
-+                        continue; // arm64ec-only, no box64
-+                    if (!includeBeta && isBeta)
-+                        continue;
-+
-+                    remoteProfiles.add(remoteProfile);
-+                } catch (JSONException e) {
-+                    e.printStackTrace();
-+                }
-+            }
-+        } catch (JSONException e) {
-+            e.printStackTrace();
-+        }
-+        syncContents();
-+    }
 diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
-index 4a4a03f..7c05641 100644
+index 1a701c6..c55b78e 100644
 --- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
 +++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
-@@
--import android.app.Activity;
--import android.content.Intent;
--import android.net.Uri;
--import com.winlator.cmod.R;
-+import android.app.Activity;
-+import android.content.Intent;
-+import android.net.Uri;
-+import com.winlator.cmod.R;
- 
- import android.os.Bundle;
- import android.view.LayoutInflater;
- import android.view.View;
- import android.view.ViewGroup;
-@@
- import androidx.recyclerview.widget.DividerItemDecoration;
- import androidx.recyclerview.widget.LinearLayoutManager;
+@@ -18,6 +18,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
  import androidx.recyclerview.widget.RecyclerView;
  import com.winlator.cmod.contentdialog.ContentDialog;
  import com.winlator.cmod.contents.AdrenotoolsManager;
@@ -311,15 +14,7 @@ index 4a4a03f..7c05641 100644
  import java.util.ArrayList;
  
  public class AdrenotoolsFragment extends Fragment {
-@@
-         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
-         recyclerView.setAdapter(new DriversAdapter(adrenotoolsManager.enumarateInstalledDrivers()));
-         View btInstallDriver = layout.findViewById(R.id.BTInstallDriver);
-         btInstallDriver.setOnClickListener((v) -> {
-             ContentDialog.confirm(getContext(), getString(R.string.install_drivers_message) + " " + getString(R.string.install_drivers_warning), () -> {
-                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                 intent.setType("*/*");
+@@ -47,6 +52,9 @@ public class AdrenotoolsFragment extends Fragment {
                  getActivity().startActivityFromFragment(this, intent, MainActivity.OPEN_FILE_REQUEST_CODE);               
              });
          });
@@ -328,11 +23,8 @@ index 4a4a03f..7c05641 100644
 +        btFetchLatest.setOnClickListener(v -> fetchLatestDriver());
          return layout;
      }
-@@
-         if (requestCode == MainActivity.OPEN_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-             Uri uri = data.getData();
-             String driver = adrenotoolsManager.installDriver(uri);
-             if (!driver.isEmpty())
+     
+@@ -65,6 +73,61 @@ public class AdrenotoolsFragment extends Fragment {
                  ((DriversAdapter)recyclerView.getAdapter()).addItem(driver);
          }
       }       
@@ -391,4 +83,356 @@ index 4a4a03f..7c05641 100644
 +            }
 +        }).start();
 +    }
-*** End Patch
+     
+     private class DriversAdapter extends RecyclerView.Adapter<DriversAdapter.ViewHolder> {
+         private ArrayList<String> driversList;
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index a812eaa..c545aad 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -59,15 +59,16 @@ public class ContentsFragment extends Fragment {
+     @Override
+     public void onCreate(@Nullable Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+-        setHasOptionsMenu(false);
+-        manager = new ContentsManager(getContext());
+-        manager.syncContents();
+-        sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+-
+-        // Initialize isDarkMode based on shared preferences or theme
+-        isDarkMode = PreferenceManager.getDefaultSharedPreferences(getContext())
+-                .getBoolean("dark_mode", false);
+-    }
++        setHasOptionsMenu(false);
++        manager = new ContentsManager(getContext());
++        manager.syncContents();
++        sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
++        showBeta = sp.getBoolean("beta_contents_enabled", false);
++
++        // Initialize isDarkMode based on shared preferences or theme
++        isDarkMode = PreferenceManager.getDefaultSharedPreferences(getContext())
++                .getBoolean("dark_mode", false);
++    }
+ 
+     @Override
+     public void onDestroy() {
+@@ -75,22 +76,24 @@ public class ContentsFragment extends Fragment {
+         super.onDestroy();
+     }
+ 
+-    @Override
+-    public void onResume() {
+-        super.onResume();
+-
+-
+-        new Thread(() -> {
+-            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
+-            String json = Downloader.downloadString(contentsURL);
+-            if (json == null)
+-                return;
+-            getActivity().runOnUiThread(() -> {
+-                manager.setRemoteProfiles(json);
+-                loadContentList();
+-            });
+-        }).start();
+-    }
++    @Override
++    public void onResume() {
++        super.onResume();
++        reloadRemoteContents();
++    }
++
++    private void reloadRemoteContents() {
++        new Thread(() -> {
++            String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
++            String json = Downloader.downloadString(contentsURL);
++            if (json == null)
++                return;
++            getActivity().runOnUiThread(() -> {
++                manager.setRemoteProfiles(json, showBeta, true /*ignoreWine*/);
++                loadContentList();
++            });
++        }).start();
++    }
+ 
+     @Override
+     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+@@ -103,22 +106,30 @@ public class ContentsFragment extends Fragment {
+     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+         ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.contents_fragment, container, false);
+ 
+-        sContentType = layout.findViewById(R.id.SContentType);
+-        updateContentTypeSpinner(sContentType);
+-        sContentType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+-            @Override
+-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+-                currentContentType = ContentProfile.ContentType.values()[position];
+-                loadContentList();
+-            }
++        sContentType = layout.findViewById(R.id.SContentType);
++        updateContentTypeSpinner(sContentType);
++        sContentType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
++            @Override
++            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
++                currentContentType = allowedTypes.get(position);
++                loadContentList();
++            }
+ 
+             @Override
+             public void onNothingSelected(AdapterView<?> parent) {
+ 
+             }
+-        });
+-
+-        emptyText = layout.findViewById(R.id.TVEmptyText);
++        });
++
++        emptyText = layout.findViewById(R.id.TVEmptyText);
++
++        swShowBeta = layout.findViewById(R.id.SwShowBeta);
++        swShowBeta.setChecked(showBeta);
++        swShowBeta.setOnCheckedChangeListener((buttonView, isChecked) -> {
++            showBeta = isChecked;
++            sp.edit().putBoolean("beta_contents_enabled", showBeta).apply();
++            reloadRemoteContents();
++        });
+ 
+         View btInstallContent = layout.findViewById(R.id.BTInstallContent);
+         btInstallContent.setOnClickListener(v -> {
+@@ -139,21 +150,21 @@ public class ContentsFragment extends Fragment {
+         return layout;
+     }
+ 
+-    private void updateContentTypeSpinner(Spinner spinner) {
+-        List<String> typeList = new ArrayList<>();
+-        for (ContentProfile.ContentType type : ContentProfile.ContentType.values())
+-            typeList.add(type.toString());
+-        spinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, typeList));
++    private void updateContentTypeSpinner(Spinner spinner) {
++        List<String> typeList = new ArrayList<>();
++        for (ContentProfile.ContentType type : allowedTypes)
++            typeList.add(type.toString());
++        spinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, typeList));
+ 
+         // Set the popup background based on the theme
+         spinner.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+ 
+-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+-            @Override
+-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+-                currentContentType = ContentProfile.ContentType.values()[position];
+-                updateContentsListView();
+-            }
++        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
++            @Override
++            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
++                currentContentType = allowedTypes.get(position);
++                updateContentsListView();
++            }
+ 
+             @Override
+             public void onNothingSelected(AdapterView<?> parent) {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index 162b5dd..2bc6fdd 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -24,7 +24,7 @@ import java.util.Map;
+ 
+ public class ContentsManager {
+     public static final String PROFILE_NAME = "profile.json";
+-    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/StevenMXZ/Winlator-Contents/main/contents.json";
++    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/contents.json";
+     public static final String[] DXVK_TRUST_FILES = {"${system32}/d3d8.dll", "${system32}/d3d9.dll", "${system32}/d3d10.dll", "${system32}/d3d10_1.dll",
+             "${system32}/d3d10core.dll", "${system32}/d3d11.dll", "${system32}/dxgi.dll", "${syswow64}/d3d8.dll", "${syswow64}/d3d9.dll", "${syswow64}/d3d10.dll",
+             "${syswow64}/d3d10_1.dll", "${syswow64}/d3d10core.dll", "${syswow64}/d3d11.dll", "${syswow64}/dxgi.dll"};
+@@ -91,28 +91,45 @@ public class ContentsManager {
+         void onSucceed(ContentProfile profile);
+     }
+ 
+-    public void setRemoteProfiles(String json) {
+-        try {
+-            remoteProfiles = new ArrayList<>();
+-            JSONArray content = new JSONArray(json);
+-            for (int i = 0; i < content.length(); i++) {
+-                try {
+-                    JSONObject object = content.getJSONObject(i);
+-                    ContentProfile remoteProfile = new ContentProfile();
+-                    remoteProfile.remoteUrl = object.getString("remoteUrl");
+-                    remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
+-                    remoteProfile.verName = object.getString("verName");
+-                    remoteProfile.verCode = object.getInt("verCode");
+-                    remoteProfiles.add(remoteProfile);
+-                } catch (JSONException e) {
+-                    e.printStackTrace();
+-                }
+-            }
+-        } catch (JSONException e) {
+-            e.printStackTrace();
+-        }
+-        syncContents();
+-    }
++    public void setRemoteProfiles(String json) {
++        setRemoteProfiles(json, false, false);
++    }
++
++    public void setRemoteProfiles(String json, boolean includeBeta, boolean ignoreWine) {
++        try {
++            remoteProfiles = new ArrayList<>();
++            JSONArray content = new JSONArray(json);
++            for (int i = 0; i < content.length(); i++) {
++                try {
++                    JSONObject object = content.getJSONObject(i);
++                    ContentProfile remoteProfile = new ContentProfile();
++                    remoteProfile.remoteUrl = object.getString("remoteUrl");
++                    remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
++                    remoteProfile.verName = object.getString("verName");
++                    remoteProfile.verCode = object.getInt("verCode");
++                    boolean isBeta = object.optBoolean("beta", false)
++                            || remoteProfile.verName.toLowerCase().contains("beta")
++                            || remoteProfile.verName.toLowerCase().contains("nightly")
++                            || remoteProfile.remoteUrl.toLowerCase().contains("nightly");
++
++                    if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE)
++                        continue;
++                    if (remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_BOX64
++                            || remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64)
++                        continue; // arm64ec-only, skip box64/wowbox64
++                    if (!includeBeta && isBeta)
++                        continue;
++
++                    remoteProfiles.add(remoteProfile);
++                } catch (JSONException e) {
++                    e.printStackTrace();
++                }
++            }
++        } catch (JSONException e) {
++            e.printStackTrace();
++        }
++        syncContents();
++    }
+ 
+     public void syncContents() {
+         profilesMap = new HashMap<>();
+diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
+index 2f46bc1..bff7584 100644
+--- a/app/src/main/res/layout/adrenotools_fragment.xml
++++ b/app/src/main/res/layout/adrenotools_fragment.xml
+@@ -23,13 +23,21 @@
+         android:layout_height="wrap_content"
+         android:orientation="horizontal">
+ 
+-        <Button
+-            android:id="@+id/BTInstallDriver"
+-            style="@style/ButtonNeutral"
+-            android:layout_width="0dp"
+-            android:layout_height="wrap_content"
+-            android:layout_weight="1"
+-            android:text="@string/install_drivers" />
+-
+-    </LinearLayout>
+-</LinearLayout>
+\ No newline at end of file
++        <Button
++            android:id="@+id/BTInstallDriver"
++            style="@style/ButtonNeutral"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:text="@string/install_drivers" />
++
++        <Button
++            android:id="@+id/BTFetchLatestDriver"
++            style="@style/ButtonPositive"
++            android:layout_width="0dp"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:text="@string/fetch_latest_turnip" />
++
++    </LinearLayout>
++</LinearLayout>
+diff --git a/app/src/main/res/layout/contents_fragment.xml b/app/src/main/res/layout/contents_fragment.xml
+index f682121..f672cec 100644
+--- a/app/src/main/res/layout/contents_fragment.xml
++++ b/app/src/main/res/layout/contents_fragment.xml
+@@ -11,23 +11,39 @@
+         android:layout_height="wrap_content"
+         android:text="@string/content_type" />
+ 
+-    <LinearLayout
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:gravity="center_vertical"
+-        android:orientation="horizontal">
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:gravity="center_vertical"
++        android:orientation="horizontal">
+ 
+         <Spinner
+             android:id="@+id/SContentType"
+             style="@style/ComboBox"
+             android:layout_width="0dp"
+-            android:layout_height="wrap_content"
+-            android:layout_weight="1" />
+-
+-    </LinearLayout>
+-
+-
+-    <View style="@style/HorizontalLine" />
++             android:layout_height="wrap_content"
++             android:layout_weight="1" />
++
++    </LinearLayout>
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="horizontal"
++        android:gravity="center_vertical"
++        android:paddingTop="8dp"
++        android:paddingBottom="4dp">
++
++        <Switch
++            android:id="@+id/SwShowBeta"
++            style="@style/SwitchCompat"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:text="@string/show_beta_releases" />
++    </LinearLayout>
++
++
++     <View style="@style/HorizontalLine" />
+ 
+     <androidx.recyclerview.widget.RecyclerView xmlns:app="http://schemas.android.com/apk/res-auto"
+         android:id="@+id/RecyclerView"
+@@ -63,4 +79,4 @@
+             android:text="@string/install_content" />
+ 
+     </LinearLayout>
+-</LinearLayout>
+\ No newline at end of file
++</LinearLayout>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 9750206..32120b4 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -611,11 +611,13 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="pref_summary_requiresTrackpadAndNative">Requires "Touchscreen input mode" to be "Trackpad" and "Display resolution mode" to be not "native"</string>
+     <string name="fexcore_config">FEXCore</string>
+     <string name="fexcore_preset">FEXCore Preset</string>
+-    <string name="adrenotools_gpu_drivers">Adrenotools GPU Drivers</string>
+-    <string name="install_drivers">Install Drivers</string>
+-    <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>
+-    <string name="install_drivers_warning">Be warned that because of limitations of current PC emulators, Qualcomm Drivers may not work on chipsets below 8 Gen2 without getting patched.</string>
+-    <string name="enable_vulkan_api_dump">Enable dumping of Vulkan api calls to file.</string>
++    <string name="adrenotools_gpu_drivers">Adrenotools GPU Drivers</string>
++    <string name="install_drivers">Install Drivers</string>
++    <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>
++    <string name="install_drivers_warning">Be warned that because of limitations of current PC emulators, Qualcomm Drivers may not work on chipsets below 8 Gen2 without getting patched.</string>
++    <string name="fetch_latest_turnip">Download latest Turnip driver</string>
++    <string name="show_beta_releases">Show beta / nightly builds</string>
++    <string name="enable_vulkan_api_dump">Enable dumping of Vulkan api calls to file.</string>
+     <string name="dll_emulator">32bit Emulator</string>
+     <string name="open_with_android_browser">Open Android Browser in Wine</string>
+     <string name="share_android_clipboard">Share Android Clipboard with Wine</string>
