@@ -23,7 +23,7 @@ fi
 
 for patch in "${patches[@]}"; do
   log "Applying $(basename -- "${patch}")"
-  git -C "${WINLATOR_SRC_DIR}" apply --3way "${patch}" || fail "Failed to apply patch: ${patch}"
+  git -C "${WINLATOR_SRC_DIR}" apply --3way --ignore-whitespace "${patch}" || fail "Failed to apply patch: ${patch}"
 done
 
 log "All patches applied"

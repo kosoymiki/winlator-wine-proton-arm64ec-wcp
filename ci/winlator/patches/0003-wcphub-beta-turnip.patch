@@ -90,6 +90,16 @@ diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src
 index a812eaa..c545aad 100644
 --- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
 +++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -54,5 +54,9 @@ public class ContentsFragment extends Fragment {
+     private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
+     private Spinner sContentType;
+ 
++    private android.widget.Switch swShowBeta;
++    private boolean showBeta = false;
++    private List<ContentProfile.ContentType> allowedTypes = new ArrayList<>(java.util.Arrays.asList(ContentProfile.ContentType.values()));
++
+     private boolean isDarkMode;
+ 
 @@ -59,15 +59,16 @@ public class ContentsFragment extends Fragment {
      @Override
      public void onCreate(@Nullable Bundle savedInstanceState) {
