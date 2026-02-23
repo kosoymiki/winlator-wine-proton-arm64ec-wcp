@@ -1,35 +1,38 @@
 diff --git a/app/src/main/res/values/colors.xml b/app/src/main/res/values/colors.xml
-index 988c3f3..080d7ab 100644
+index 988c3f3..54e5949 100644
 --- a/app/src/main/res/values/colors.xml
 +++ b/app/src/main/res/values/colors.xml
-@@ -2,16 +2,16 @@
+@@ -1,17 +1,17 @@
+ <?xml version="1.0" encoding="utf-8"?>
  <resources>
      <!-- Light Theme Colors -->
-     <color name="window_background_color">#fafafa</color>
+-    <color name="window_background_color">#fafafa</color>
 -    <color name="colorPrimary">#607d8b</color>
 -    <color name="colorPrimaryDark">#455a64</color>
 -    <color name="colorAccent">#0288d1</color>
-+    <color name="colorPrimary">#0f3010</color>
-+    <color name="colorPrimaryDark">#0b220c</color>
-+    <color name="colorAccent">#1c7f3a</color>
++    <color name="window_background_color">#f5f7f5</color>
++    <color name="colorPrimary">#2e7d32</color>
++    <color name="colorPrimaryDark">#1b5e20</color>
++    <color name="colorAccent">#43a047</color>
      <color name="black">#000000</color>
  
      <!-- Dark Theme Colors -->
-     <color name="window_background_color_dark">#121212</color>
+-    <color name="window_background_color_dark">#121212</color>
 -    <color name="colorPrimaryDarkMode">#37474f</color>
 -    <color name="colorPrimaryDarkModeDark">#263238</color>
 -    <color name="colorAccentDark">#80d8ff</color>
-+    <color name="colorPrimaryDarkMode">#12351a</color>
-+    <color name="colorPrimaryDarkModeDark">#0a1f10</color>
-+    <color name="colorAccentDark">#29b36f</color>
++    <color name="window_background_color_dark">#111715</color>
++    <color name="colorPrimaryDarkMode">#1f3b2a</color>
++    <color name="colorPrimaryDarkModeDark">#13281c</color>
++    <color name="colorAccentDark">#64d08e</color>
      <color name="white">#ffffff</color>
  
      <!-- Additional Colors for Dark Mode -->
 diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
-index daa69e2..fbc6182 100644
+index daa69e2..8afadc1 100644
 --- a/app/src/main/res/values/styles.xml
 +++ b/app/src/main/res/values/styles.xml
-@@ -1,10 +1,10 @@
+@@ -1,13 +1,15 @@
  <?xml version="1.0" encoding="utf-8"?>
  <resources>
      <!-- Light Theme -->
@@ -37,10 +40,86 @@ index daa69e2..fbc6182 100644
 -        <item name="colorAccent">@color/colorAccent</item>
 -        <item name="colorPrimary">@color/colorPrimary</item>
 -        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-+    <style name="AppTheme" parent="@style/Theme.AppCompat.DayNight.NoActionBar">
+-        <item name="android:windowBackground">@color/window_background_color</item>
+-        <item name="android:colorBackground">@color/window_background_color</item>
+-        <item name="android:textViewStyle">@style/TextView</item>
++    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
 +        <item name="colorAccent">@color/colorAccent</item>
 +        <item name="colorPrimary">@color/colorPrimary</item>
 +        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-         <item name="android:windowBackground">@color/window_background_color</item>
-         <item name="android:colorBackground">@color/window_background_color</item>
-         <item name="android:textViewStyle">@style/TextView</item>
++        <item name="android:fontFamily">sans-serif</item>
++        <item name="fontFamily">sans-serif</item>
++        <item name="android:windowBackground">@color/window_background_color</item>
++        <item name="android:colorBackground">@color/window_background_color</item>
++        <item name="android:textViewStyle">@style/TextView</item>
+         <item name="android:checkboxStyle">@style/CheckBox</item>
+         <item name="android:listPopupWindowStyle">@style/ListPopupWindow</item>
+         <item name="listPopupWindowStyle">@style/ListPopupWindow</item>
+@@ -18,13 +20,15 @@
+     </style>
+ 
+     <!-- Dark Theme -->
+-    <style name="AppTheme.Dark" parent="@style/Theme.AppCompat.NoActionBar">
+-        <item name="colorAccent">@color/colorAccentDark</item>
+-        <item name="colorPrimary">@color/colorPrimaryDarkMode</item>
+-        <item name="colorPrimaryDark">@color/colorPrimaryDarkModeDark</item>
+-        <item name="android:windowBackground">@color/window_background_color_dark</item>
+-        <item name="android:colorBackground">@color/window_background_color_dark</item>
+-        <item name="android:textViewStyle">@style/TextView.Dark</item>
++    <style name="AppTheme.Dark" parent="@style/Theme.AppCompat.NoActionBar">
++        <item name="colorAccent">@color/colorAccentDark</item>
++        <item name="colorPrimary">@color/colorPrimaryDarkMode</item>
++        <item name="colorPrimaryDark">@color/colorPrimaryDarkModeDark</item>
++        <item name="android:fontFamily">sans-serif</item>
++        <item name="fontFamily">sans-serif</item>
++        <item name="android:windowBackground">@color/window_background_color_dark</item>
++        <item name="android:colorBackground">@color/window_background_color_dark</item>
++        <item name="android:textViewStyle">@style/TextView.Dark</item>
+         <item name="android:checkboxStyle">@style/CheckBox.Dark</item>
+         <item name="android:listPopupWindowStyle">@style/ListPopupWindow.Dark</item>
+         <item name="listPopupWindowStyle">@style/ListPopupWindow.Dark</item>
+@@ -139,14 +143,19 @@
+         <item name="android:background">@drawable/edit_text_dark</item>
+     </style>
+ 
+-    <!-- TextView Styles -->
+-    <style name="TextView" parent="@android:style/Widget.TextView">
+-        <item name="android:textSize">16sp</item>
+-    </style>
+-
+-    <style name="TextView.Dark" parent="TextView">
+-        <item name="android:textColor">#ffffff</item>
+-    </style>
++    <!-- TextView Styles -->
++    <style name="TextView" parent="@android:style/Widget.TextView">
++        <item name="android:textSize">16sp</item>
++        <item name="android:fontFamily">sans-serif</item>
++    </style>
++
++    <style name="TextViewEmphasis" parent="TextView">
++        <item name="android:textStyle">italic</item>
++    </style>
++
++    <style name="TextView.Dark" parent="TextView">
++        <item name="android:textColor">#ffffff</item>
++    </style>
+ 
+     <!-- CheckBox Styles -->
+     <style name="CheckBox" parent="@android:style/Widget.CompoundButton.CheckBox">
+@@ -172,10 +181,12 @@
+         <item name="android:textSize">16sp</item>
+         <item name="android:lines">1</item>
+         <item name="android:gravity">center</item>
+-        <item name="android:paddingLeft">24dp</item>
+-        <item name="android:paddingRight">24dp</item>
+-        <item name="android:textAllCaps">false</item>
+-    </style>
++        <item name="android:paddingLeft">24dp</item>
++        <item name="android:paddingRight">24dp</item>
++        <item name="android:textAllCaps">false</item>
++        <item name="android:fontFamily">sans-serif</item>
++        <item name="android:textStyle">italic</item>
++    </style>
+ 
+     <style name="BaseButton.Dark" parent="BaseButton">
+         <item name="android:textColor">#ffffff</item>
