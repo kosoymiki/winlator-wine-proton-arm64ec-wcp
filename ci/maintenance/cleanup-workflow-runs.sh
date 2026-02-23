@@ -45,7 +45,7 @@ for line in sys.stdin:
     if not line:
         continue
     page = json.loads(line)
-    for run in page.get(\"workflow_runs\", []):
+    for run in page.get("workflow_runs", []):
         out.append(run)
         if len(out) >= limit:
             print(json.dumps(out))
