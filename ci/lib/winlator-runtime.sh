@@ -30,6 +30,69 @@ winlator_collect_needed_sonames() {
   readelf -d "${elf_path}" 2>/dev/null | sed -n 's/.*Shared library: \[\(.*\)\].*/\1/p'
 }
 
+winlator_copy_glibc_runtime_tree() {
+  local src_dir="$1" runtime_dir="$2"
+  local loader_target
+
+  [[ -d "${src_dir}" ]] || fail "Pinned glibc runtime dir not found: ${src_dir}"
+  mkdir -p "${runtime_dir}"
+
+  # Copy contents as a runtime tree snapshot (files + symlinks), preserving layout.
+  cp -a "${src_dir}/." "${runtime_dir}/"
+
+  [[ -e "${runtime_dir}/ld-linux-aarch64.so.1" ]] || fail "Pinned glibc runtime is missing ld-linux-aarch64.so.1"
+  loader_target="$(readlink -f "${runtime_dir}/ld-linux-aarch64.so.1" 2>/dev/null || true)"
+  [[ -n "${loader_target}" && -e "${loader_target}" ]] || fail "Pinned glibc runtime loader symlink is broken: ${runtime_dir}/ld-linux-aarch64.so.1"
+}
+
+winlator_extract_glibc_runtime_archive() {
+  local archive="$1" out_dir="$2"
+  local runtime_subdir="${3:-}"
+  local tmp_extract
+
+  [[ -f "${archive}" ]] || fail "Pinned glibc runtime archive not found: ${archive}"
+  command -v tar >/dev/null 2>&1 || fail "tar is required to unpack pinned glibc runtime archive"
+
+  tmp_extract="$(mktemp -d)"
+  tar -xf "${archive}" -C "${tmp_extract}"
+
+  if [[ -n "${runtime_subdir}" ]]; then
+    [[ -d "${tmp_extract}/${runtime_subdir}" ]] || fail "Pinned glibc archive missing runtime subdir: ${runtime_subdir}"
+    winlator_copy_glibc_runtime_tree "${tmp_extract}/${runtime_subdir}" "${out_dir}"
+  elif [[ -d "${tmp_extract}/wcp-glibc-runtime" ]]; then
+    winlator_copy_glibc_runtime_tree "${tmp_extract}/wcp-glibc-runtime" "${out_dir}"
+  else
+    # Fallback: archive root already contains ld-linux + libs.
+    winlator_copy_glibc_runtime_tree "${tmp_extract}" "${out_dir}"
+  fi
+
+  rm -rf "${tmp_extract}"
+}
+
+winlator_bundle_glibc_runtime_from_pinned_source() {
+  local runtime_dir="$1"
+  local source_dir="${WCP_GLIBC_RUNTIME_DIR:-}"
+  local source_archive="${WCP_GLIBC_RUNTIME_ARCHIVE:-}"
+  local archive_subdir="${WCP_GLIBC_RUNTIME_SUBDIR:-}"
+
+  case "${WCP_GLIBC_SOURCE_MODE:-host}" in
+    pinned-source|pinned|prebuilt) ;;
+    *) fail "winlator_bundle_glibc_runtime_from_pinned_source called with unsupported WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}" ;;
+  esac
+
+  if [[ -n "${source_dir}" ]]; then
+    winlator_copy_glibc_runtime_tree "${source_dir}" "${runtime_dir}"
+    return 0
+  fi
+
+  if [[ -n "${source_archive}" ]]; then
+    winlator_extract_glibc_runtime_archive "${source_archive}" "${runtime_dir}" "${archive_subdir}"
+    return 0
+  fi
+
+  fail "Pinned glibc mode requires WCP_GLIBC_RUNTIME_DIR or WCP_GLIBC_RUNTIME_ARCHIVE"
+}
+
 winlator_bundle_glibc_runtime() {
   local runtime_dir="$1"
   local -a seed_sonames=()
@@ -41,6 +104,13 @@ winlator_bundle_glibc_runtime() {
   local root f dep host_path real_name loader_name
   local -a queue=()
   declare -A seen=()
+  local glibc_mode="${WCP_GLIBC_SOURCE_MODE:-host}"
+
+  if [[ "${glibc_mode}" != "host" ]]; then
+    winlator_bundle_glibc_runtime_from_pinned_source "${runtime_dir}"
+    log "Winlator glibc runtime bundled from pinned source mode (${glibc_mode})"
+    return 0
+  fi
 
   mkdir -p "${runtime_dir}"
 

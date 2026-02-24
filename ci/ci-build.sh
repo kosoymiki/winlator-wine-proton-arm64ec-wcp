@@ -35,6 +35,12 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${STRIP_STAGE:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
+: "${WCP_GLIBC_SOURCE_MODE:=host}"
+: "${WCP_GLIBC_VERSION:=host-system}"
+: "${WCP_GLIBC_SOURCE_URL:=}"
+: "${WCP_GLIBC_SOURCE_SHA256:=}"
+: "${WCP_GLIBC_SOURCE_REF:=}"
+: "${WCP_GLIBC_PATCHSET_ID:=}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }

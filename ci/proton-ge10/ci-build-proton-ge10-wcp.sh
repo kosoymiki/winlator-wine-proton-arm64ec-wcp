@@ -42,6 +42,12 @@ fi
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
 : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
+: "${WCP_GLIBC_SOURCE_MODE:=host}"
+: "${WCP_GLIBC_VERSION:=host-system}"
+: "${WCP_GLIBC_SOURCE_URL:=}"
+: "${WCP_GLIBC_SOURCE_SHA256:=}"
+: "${WCP_GLIBC_SOURCE_REF:=}"
+: "${WCP_GLIBC_PATCHSET_ID:=}"
 : "${PATCHLOG_FATAL_REGEX:=\bfatal:|^error:|\[[^]]*\]\[error\]|Traceback \(most recent call last\)}"
 : "${PATCHLOG_FALSE_POSITIVE_REGEX:=Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file|0 errors|0 failures|without errors}"
 

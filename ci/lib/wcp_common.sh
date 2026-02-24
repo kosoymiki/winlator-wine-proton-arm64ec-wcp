@@ -325,6 +325,12 @@ compose_wcp_tree_from_stage() {
   : "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
   : "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
   : "${WCP_RELEASE_TAG:=wcp-latest}"
+  : "${WCP_GLIBC_SOURCE_MODE:=host}"
+  : "${WCP_GLIBC_VERSION:=host-system}"
+  : "${WCP_GLIBC_SOURCE_URL:=}"
+  : "${WCP_GLIBC_SOURCE_SHA256:=}"
+  : "${WCP_GLIBC_SOURCE_REF:=}"
+  : "${WCP_GLIBC_PATCHSET_ID:=}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
@@ -375,6 +381,7 @@ EOF_PROFILE
 wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
+  local glibc_runtime_index glibc_runtime_present
   local -a critical_paths
   local rel hash
 
@@ -389,6 +396,7 @@ wcp_write_forensic_manifest() {
   env_file="${forensic_root}/build-env.txt"
   index_file="${forensic_root}/file-index.txt"
   hashes_file="${forensic_root}/critical-sha256.tsv"
+  glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   repo_commit=""
@@ -404,12 +412,19 @@ wcp_write_forensic_manifest() {
     "profile.json"
     "bin/wine"
     "bin/wineserver"
+    "bin/wine.glibc-real"
+    "bin/wineserver.glibc-real"
     "lib/wine/aarch64-unix/ntdll.so"
     "lib/wine/aarch64-unix/win32u.so"
     "lib/wine/aarch64-unix/ws2_32.so"
     "lib/wine/aarch64-unix/winevulkan.so"
     "lib/wine/aarch64-unix/winebus.so"
     "lib/wine/aarch64-unix/winebus.sys.so"
+    "lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1"
+    "lib/wine/wcp-glibc-runtime/libc.so.6"
+    "lib/wine/wcp-glibc-runtime/libstdc++.so.6"
+    "lib/wine/wcp-glibc-runtime/libgcc_s.so.1"
+    "lib/wine/wcp-glibc-runtime/libSDL2-2.0.so.0"
     "prefixPack.txz"
   )
 
@@ -431,6 +446,12 @@ wcp_write_forensic_manifest() {
     echo "WCP_PROFILE_NAME=${WCP_PROFILE_NAME:-}"
     echo "WCP_PROFILE_TYPE=${WCP_PROFILE_TYPE:-Wine}"
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
+    echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
+    echo "WCP_GLIBC_VERSION=${WCP_GLIBC_VERSION:-}"
+    echo "WCP_GLIBC_SOURCE_URL=${WCP_GLIBC_SOURCE_URL:-}"
+    echo "WCP_GLIBC_SOURCE_SHA256=${WCP_GLIBC_SOURCE_SHA256:-}"
+    echo "WCP_GLIBC_SOURCE_REF=${WCP_GLIBC_SOURCE_REF:-}"
+    echo "WCP_GLIBC_PATCHSET_ID=${WCP_GLIBC_PATCHSET_ID:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -456,10 +477,28 @@ wcp_write_forensic_manifest() {
     "PROTONWINE_REPO": "$(wcp_json_escape "${PROTONWINE_REPO:-}")",
     "PROTONWINE_REF": "$(wcp_json_escape "${PROTONWINE_REF:-}")",
     "HANGOVER_REPO": "$(wcp_json_escape "${HANGOVER_REPO:-}")",
-    "FEX_SOURCE_MODE": "$(wcp_json_escape "${FEX_SOURCE_MODE:-}")"
+    "FEX_SOURCE_MODE": "$(wcp_json_escape "${FEX_SOURCE_MODE:-}")",
+    "WCP_GLIBC_SOURCE_MODE": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_MODE:-}")",
+    "WCP_GLIBC_VERSION": "$(wcp_json_escape "${WCP_GLIBC_VERSION:-}")",
+    "WCP_GLIBC_SOURCE_URL": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
+    "WCP_GLIBC_SOURCE_SHA256": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_SHA256:-}")",
+    "WCP_GLIBC_SOURCE_REF": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
+    "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")"
   }
 }
 EOF_SOURCE_REFS
+
+  glibc_runtime_present=0
+  : > "${glibc_runtime_index}"
+  if [[ -d "${wcp_root}/lib/wine/wcp-glibc-runtime" ]]; then
+    glibc_runtime_present=1
+    while IFS= read -r rel; do
+      [[ -f "${wcp_root}/${rel}" ]] || continue
+      printf '%s\t%s\t%s\n' "${rel}" "$(stat -c '%s' "${wcp_root}/${rel}" 2>/dev/null || echo 0)" "$(wcp_sha256_file "${wcp_root}/${rel}")" >> "${glibc_runtime_index}"
+    done < <(find "${wcp_root}/lib/wine/wcp-glibc-runtime" -type f -printf '%P\n' | LC_ALL=C sort | sed 's#^#lib/wine/wcp-glibc-runtime/#')
+  else
+    echo "ABSENT" > "${glibc_runtime_index}"
+  fi
 
   cat > "${manifest_file}" <<EOF_MANIFEST
 {
@@ -473,9 +512,19 @@ EOF_SOURCE_REFS
     "versionCode": ${WCP_VERSION_CODE:-0},
     "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")"
   },
+  "glibcRuntime": {
+    "present": ${glibc_runtime_present},
+    "sourceMode": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_MODE:-}")",
+    "version": "$(wcp_json_escape "${WCP_GLIBC_VERSION:-}")",
+    "sourceUrl": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
+    "sourceRef": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
+    "patchsetId": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
+    "libsIndex": "share/wcp-forensics/glibc-runtime-libs.tsv"
+  },
   "files": {
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
+    "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "buildEnv": "share/wcp-forensics/build-env.txt",
     "sourceRefs": "share/wcp-forensics/source-refs.json"
   }
@@ -493,6 +542,7 @@ wcp_validate_forensic_manifest() {
   local required=(
     "${wcp_root}/share/wcp-forensics/manifest.json"
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
+    "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/file-index.txt"
     "${wcp_root}/share/wcp-forensics/build-env.txt"
     "${wcp_root}/share/wcp-forensics/source-refs.json"
