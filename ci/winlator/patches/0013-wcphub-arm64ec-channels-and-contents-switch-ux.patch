@@ -1,0 +1,206 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index cc9a0f2..389a2b5 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -57,6 +57,7 @@ public class ContentsFragment extends Fragment {
+     private ContentProfile.ContentType currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
+     private Spinner sContentType;
+     private Switch swShowBeta;
++    private View rowShowBeta;
+     private boolean showBeta;
+     private final List<ContentProfile.ContentType> allowedTypes = new ArrayList<>();
+ 
+@@ -107,6 +108,7 @@ public class ContentsFragment extends Fragment {
+         updateContentTypeSpinner(sContentType);
+ 
+         emptyText = layout.findViewById(R.id.TVEmptyText);
++        rowShowBeta = layout.findViewById(R.id.RowShowBeta);
+         swShowBeta = layout.findViewById(R.id.SwShowBeta);
+         swShowBeta.setChecked(showBeta);
+         swShowBeta.setOnCheckedChangeListener((buttonView, isChecked) -> {
+@@ -114,6 +116,7 @@ public class ContentsFragment extends Fragment {
+             sp.edit().putBoolean("beta_contents_enabled", showBeta).apply();
+             reloadRemoteContents();
+         });
++        updateShowBetaRowVisibility();
+ 
+         View btInstallContent = layout.findViewById(R.id.BTInstallContent);
+         btInstallContent.setOnClickListener(v -> {
+@@ -148,6 +151,7 @@ public class ContentsFragment extends Fragment {
+             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                 if (position >= 0 && position < allowedTypes.size())
+                     currentContentType = allowedTypes.get(position);
++                updateShowBetaRowVisibility();
+                 updateContentsListView();
+                 loadContentList();
+             }
+@@ -162,8 +166,6 @@ public class ContentsFragment extends Fragment {
+     private void initAllowedTypes() {
+         allowedTypes.clear();
+         for (ContentProfile.ContentType type : ContentProfile.ContentType.values()) {
+-            if (type == ContentProfile.ContentType.CONTENT_TYPE_BOX64) continue;
+-            if (type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64) continue;
+             allowedTypes.add(type);
+         }
+     }
+@@ -182,6 +184,12 @@ public class ContentsFragment extends Fragment {
+         }).start();
+     }
+ 
++    private void updateShowBetaRowVisibility() {
++        if (rowShowBeta == null) return;
++        boolean visible = currentContentType != ContentProfile.ContentType.CONTENT_TYPE_WINE;
++        rowShowBeta.setVisibility(visible ? View.VISIBLE : View.GONE);
++    }
++
+     private String getDisplayTypeLabel(ContentProfile.ContentType type) {
+         if (type == ContentProfile.ContentType.CONTENT_TYPE_WINE) return getString(R.string.wine_proton);
+         return type.toString();
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index e59d8a6..da10c9e 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -24,7 +24,7 @@ import java.util.Map;
+ 
+ public class ContentsManager {
+     public static final String PROFILE_NAME = "profile.json";
+-    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/StevenMXZ/Winlator-Contents/main/contents.json";
++    public static final String REMOTE_PROFILES = "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/pack.json";
+     public static final String REMOTE_WINE_PROTON_OVERLAY = "https://raw.githubusercontent.com/kosoymiki/winlator-wine-proton-arm64ec-wcp/main/contents/contents.json";
+     public static final String[] DXVK_TRUST_FILES = {"${system32}/d3d8.dll", "${system32}/d3d9.dll", "${system32}/d3d10.dll", "${system32}/d3d10_1.dll",
+             "${system32}/d3d10core.dll", "${system32}/d3d11.dll", "${system32}/dxgi.dll", "${syswow64}/d3d8.dll", "${syswow64}/d3d9.dll", "${syswow64}/d3d10.dll",
+@@ -102,10 +102,11 @@ public class ContentsManager {
+         syncContents();
+     }
+ 
+-    public void setCompositeRemoteProfiles(String hubJson, String wineProtonOverlayJson, boolean includeBeta) {
++    public void setCompositeRemoteProfiles(String hubJson, String wineProtonOverlayJson, boolean showNightlyOnly) {
+         remoteProfiles = new ArrayList<>();
+-        // WCP Hub: keep channel filtering, exclude Wine/Proton family to avoid duplicates with our overlay.
+-        appendRemoteProfiles(hubJson, includeBeta, true, false);
++        // WCP Hub: exclude Wine/Proton family to avoid duplicates with our overlay.
++        // The UI switch now toggles between stable-only and beta/nightly-only hub lists.
++        appendRemoteProfiles(hubJson, showNightlyOnly, true, false);
+         // Our overlay: Wine/Proton only, and intentionally no beta/nightly split in UI.
+         appendRemoteProfiles(wineProtonOverlayJson, false, false, true);
+         syncContents();
+@@ -119,10 +120,11 @@ public class ContentsManager {
+                 try {
+                     JSONObject object = content.getJSONObject(i);
+                     ContentProfile remoteProfile = new ContentProfile();
+-                    remoteProfile.remoteUrl = object.getString("remoteUrl");
++                    remoteProfile.remoteUrl = readRemoteUrl(object);
++                    if (remoteProfile.remoteUrl == null || remoteProfile.remoteUrl.isEmpty()) continue;
+                     remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
+                     remoteProfile.verName = object.getString("verName");
+-                    remoteProfile.verCode = object.getInt("verCode");
++                    remoteProfile.verCode = parseVerCode(object);
+                     remoteProfile.desc = object.optString("description", "");
+                     remoteProfile.displayCategory = object.optString(ContentProfile.MARK_DISPLAY_CATEGORY, "");
+                     remoteProfile.sourceRepo = object.optString(ContentProfile.MARK_SOURCE_REPO, "");
+@@ -132,11 +134,6 @@ public class ContentsManager {
+                     if (remoteProfile.type == null) continue;
+                     if (onlyWine && remoteProfile.type != ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+                     if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+-                    if (remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_BOX64
+-                            || remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WOWBOX64) {
+-                        continue;
+-                    }
+-
+                     String verName = remoteProfile.verName != null ? remoteProfile.verName.toLowerCase() : "";
+                     String remoteUrl = remoteProfile.remoteUrl != null ? remoteProfile.remoteUrl.toLowerCase() : "";
+                     String channel = object.optString(ContentProfile.MARK_CHANNEL, "").trim().toLowerCase();
+@@ -148,7 +145,12 @@ public class ContentsManager {
+                             || ContentProfile.CHANNEL_NIGHTLY.equals(channel);
+                     // Wine/Proton overlay entries are intentionally presented as a single stable track in UI.
+                     if (onlyWine && isBeta) continue;
+-                    if (!includeBeta && isBeta) continue;
++                    if (!onlyWine) {
++                        // Switch OFF  -> stable only
++                        // Switch ON   -> beta/nightly only (do not append to stable list)
++                        if (includeBeta && !isBeta) continue;
++                        if (!includeBeta && isBeta) continue;
++                    }
+ 
+                     remoteProfiles.add(remoteProfile);
+                 } catch (JSONException e) {
+@@ -329,9 +331,37 @@ public class ContentsManager {
+     private String deriveLegacyChannel(JSONObject object, String verName, String remoteUrl) {
+         if (object.optBoolean("beta", false)) return ContentProfile.CHANNEL_BETA;
+         if (verName.contains("nightly") || remoteUrl.contains("nightly")) return ContentProfile.CHANNEL_NIGHTLY;
++        if (verName.contains("dev") || verName.contains("alpha")) return ContentProfile.CHANNEL_BETA;
+         if (verName.contains("beta") || remoteUrl.contains("beta")) return ContentProfile.CHANNEL_BETA;
+         return ContentProfile.CHANNEL_STABLE;
+     }
++
++    private int parseVerCode(JSONObject object) {
++        Object verCodeValue = object.opt("verCode");
++        if (verCodeValue instanceof Number) return ((Number) verCodeValue).intValue();
++        if (verCodeValue instanceof String) {
++            String text = (String) verCodeValue;
++            try {
++                return Integer.parseInt(text.trim());
++            } catch (Exception ignored) {
++                return 0;
++            }
++        }
++        return 0;
++    }
++
++    private String readRemoteUrl(JSONObject object) {
++        String remoteUrl = object.optString("remoteUrl", "").trim();
++        if (!remoteUrl.isEmpty()) return remoteUrl;
++
++        String downloadUrl = object.optString("downloadUrl", "").trim();
++        if (!downloadUrl.isEmpty()) return downloadUrl;
++
++        String url = object.optString("url", "").trim();
++        if (!url.isEmpty()) return url;
++
++        return "";
++    }
+ 
+     public List<ContentProfile> getProfiles(ContentProfile.ContentType type) {
+         if (profilesMap != null)
+diff --git a/app/src/main/res/layout/contents_fragment.xml b/app/src/main/res/layout/contents_fragment.xml
+index 829b778..44ee7da 100644
+--- a/app/src/main/res/layout/contents_fragment.xml
++++ b/app/src/main/res/layout/contents_fragment.xml
+@@ -27,6 +27,7 @@
+     </LinearLayout>
+ 
+     <LinearLayout
++        android:id="@+id/RowShowBeta"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:gravity="center_vertical"
+@@ -36,7 +37,7 @@
+ 
+         <Switch
+             android:id="@+id/SwShowBeta"
+-            style="@style/SwitchCompat"
++            style="@style/ContentsChannelSwitch"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:text="@string/show_beta_releases" />
+diff --git a/app/src/main/res/values/styles.xml b/app/src/main/res/values/styles.xml
+index 8dd2d86..f42b218 100644
+--- a/app/src/main/res/values/styles.xml
++++ b/app/src/main/res/values/styles.xml
+@@ -165,6 +165,16 @@
+ 
+     <!-- Compatibility alias used by patched layouts -->
+     <style name="SwitchCompat" parent="Widget.AppCompat.CompoundButton.Switch" />
++    <style name="ContentsChannelSwitch" parent="SwitchCompat">
++        <item name="android:textColor">?android:textColorPrimary</item>
++        <item name="android:textSize">14sp</item>
++        <item name="android:thumbTint">@color/colorAccent</item>
++        <item name="android:trackTint">@color/colorPrimaryDark</item>
++        <item name="android:showText">false</item>
++        <item name="android:switchMinWidth">44dp</item>
++        <item name="android:paddingStart">2dp</item>
++        <item name="android:paddingEnd">2dp</item>
++    </style>
+ 
+     <!-- Button Styles -->
+     <style name="BaseButton">
