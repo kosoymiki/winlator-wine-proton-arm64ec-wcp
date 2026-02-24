@@ -230,5 +230,9 @@ winlator_validate_launchers() {
     shebang="$(head -n1 "${wine_bin}" || true)"
     [[ "${shebang}" == "#!/system/bin/sh" ]] || fail "bin/wine wrapper must use #!/system/bin/sh for Android execution"
     [[ -x "${WCP_ROOT}/lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1" ]] || fail "Missing wrapped runtime loader: lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1"
+    grep -Fq 'unset LD_PRELOAD' "${wine_bin}" || fail "bin/wine glibc wrapper must clear LD_PRELOAD for Android bionic preload compatibility"
+    grep -Fq 'glibc.pthread.rseq=0' "${wine_bin}" || fail "bin/wine glibc wrapper must disable glibc rseq on Android"
+    grep -Fq 'unset LD_PRELOAD' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must clear LD_PRELOAD for Android bionic preload compatibility"
+    grep -Fq 'glibc.pthread.rseq=0' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must disable glibc rseq on Android"
   fi
 }
