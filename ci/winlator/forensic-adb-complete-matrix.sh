@@ -4,6 +4,7 @@ set -euo pipefail
 : "${WLT_PACKAGE:=by.aero.so.benchmark}"
 : "${WLT_ACTIVITY:=com.winlator.cmod.XServerDisplayActivity}"
 : "${WLT_CONTAINER_IDS:=1 2}"
+: "${WLT_SCENARIOS:=}"
 : "${WLT_OUT_DIR:=/tmp/winlator-complete-forensics-$(date +%Y%m%d_%H%M%S)}"
 : "${WLT_WAIT_TIMEOUT_SEC:=20}"
 : "${WLT_POLL_SEC:=1}"
@@ -41,7 +42,9 @@ logcat_has_trace_event() {
 
 start_direct_route() {
   local container_id="$1"
+  local trace_suffix="${2:-}"
   local trace_id="complete-${container_id}-$(date +%s)"
+  [[ -n "${trace_suffix}" ]] && trace_id="${trace_suffix}-$(date +%s)"
   log "Start direct forensic route container=${container_id} trace=${trace_id}"
   adb_s shell am start -W -S \
     -n "${WLT_PACKAGE}/${WLT_ACTIVITY}" \
@@ -175,20 +178,35 @@ main() {
   export ADB_SERIAL_PICKED
 
   log "Using device ${ADB_SERIAL_PICKED}"
-  printf 'package=%s\nserial=%s\ntime=%s\ncontainer_ids=%s\n' \
-    "${WLT_PACKAGE}" "${ADB_SERIAL_PICKED}" "$(iso_now)" "${WLT_CONTAINER_IDS}" > "${WLT_OUT_DIR}/session_meta.txt"
+  printf 'package=%s\nserial=%s\ntime=%s\ncontainer_ids=%s\nscenarios=%s\n' \
+    "${WLT_PACKAGE}" "${ADB_SERIAL_PICKED}" "$(iso_now)" "${WLT_CONTAINER_IDS}" "${WLT_SCENARIOS}" > "${WLT_OUT_DIR}/session_meta.txt"
 
   collect_artifact_picker_ui "${WLT_OUT_DIR}/ui-baseline" || true
 
-  for cid in ${WLT_CONTAINER_IDS}; do
+  local scenario_specs=()
+  if [[ -n "${WLT_SCENARIOS}" ]]; then
+    # Format: label:containerId [label2:containerId2 ...]
+    # Example: WLT_SCENARIOS="n2_scaleforce:1 wine11_scaleforce:2"
+    read -r -a scenario_specs <<< "${WLT_SCENARIOS}"
+  else
+    for cid in ${WLT_CONTAINER_IDS}; do
+      scenario_specs+=("container-${cid}:${cid}")
+    done
+  fi
+
+  local spec label
+  for spec in "${scenario_specs[@]}"; do
+    label="${spec%%:*}"
+    cid="${spec##*:}"
     local before_runtime_index
-    scenario_dir="${WLT_OUT_DIR}/container-${cid}"
+    scenario_dir="${WLT_OUT_DIR}/${label}"
     mkdir -p "${scenario_dir}"
     before_runtime_index="${scenario_dir}/sdcard-runtime-before.txt"
+    printf 'label=%s\ncontainer_id=%s\ntime=%s\n' "${label}" "${cid}" "$(iso_now)" > "${scenario_dir}/scenario_meta.txt"
 
     adb_s logcat -c || true
     snapshot_sdcard_runtime_index "${before_runtime_index}"
-    trace_id="$(start_direct_route "${cid}")"
+    trace_id="$(start_direct_route "${cid}" "${label}")"
     printf '%s\n' "${trace_id}" > "${scenario_dir}/trace_id.txt"
     wait_for_trace_settle "${trace_id}" "${scenario_dir}"
 
