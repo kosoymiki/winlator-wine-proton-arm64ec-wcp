@@ -157,6 +157,11 @@ winedllpath="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\$
 export PATH="\${bindir}:\${root}/bin:\${PATH}"
 export WINEDLLPATH="\${winedllpath}\${WINEDLLPATH:+:\${WINEDLLPATH}}"
 export LD_LIBRARY_PATH="\${libpath}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+# Android app seccomp often blocks glibc rseq and causes SIGSYS (signal 31) very early.
+case ":\${GLIBC_TUNABLES:-}:" in
+  *:glibc.pthread.rseq=*:) ;;
+  *) export GLIBC_TUNABLES="\${GLIBC_TUNABLES:+\${GLIBC_TUNABLES}:}glibc.pthread.rseq=0" ;;
+esac
 
 [ -x "\${loader}" ] || { echo "Missing runtime loader: \${loader}" >&2; exit 127; }
 [ -x "\${real}" ] || { echo "Missing launcher payload: \${real}" >&2; exit 127; }
