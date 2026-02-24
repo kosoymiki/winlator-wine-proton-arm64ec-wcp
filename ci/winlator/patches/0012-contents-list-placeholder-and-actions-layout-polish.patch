@@ -1,0 +1,67 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index 7c69e92..cc9a0f2 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -215,7 +215,8 @@ public class ContentsFragment extends Fragment {
+ 
+     private String buildProfileMetaLine(ContentProfile profile) {
+         StringBuilder line = new StringBuilder();
+-        line.append(getString(R.string.version_code)).append(": ").append(profile.verCode);
++        String versionCodeLabel = profile.verCode > 0 ? String.valueOf(profile.verCode) : DASH_PLACEHOLDER;
++        line.append(getString(R.string.version_code)).append(": ").append(versionCodeLabel);
+         if (!profile.isWineProtonFamily()) {
+             line.append(" • ").append(getChannelLabel(profile));
+         }
+diff --git a/app/src/main/res/layout/content_list_item.xml b/app/src/main/res/layout/content_list_item.xml
+index 03dff69..8b29257 100644
+--- a/app/src/main/res/layout/content_list_item.xml
++++ b/app/src/main/res/layout/content_list_item.xml
+@@ -50,20 +50,31 @@
+             android:visibility="gone" />
+     </LinearLayout>
+ 
+-    <ImageButton
+-        android:id="@+id/BTMenu"
+-        style="@style/ListMenuButton"
+-        android:layout_marginStart="8dp"
+-        android:src="@drawable/icon_list_item_menu" />
+-
+-    <ImageButton
+-        android:id="@+id/BTDownload"
+-        style="@style/ListMenuButton"
+-        android:layout_marginStart="8dp"
+-        android:src="@drawable/icon_popup_menu_download" />
+-    <ProgressBar
+-        android:id="@+id/Progress"
+-        style="@style/ListMenuButton"
+-        android:layout_marginStart="8dp"
+-        android:visibility="gone" />
+-</LinearLayout>
++    <ImageButton
++        android:id="@+id/BTMenu"
++        style="@style/ListMenuButton"
++        android:layout_marginStart="8dp"
++        android:src="@drawable/icon_list_item_menu" />
++
++    <FrameLayout
++        android:layout_width="40dp"
++        android:layout_height="40dp"
++        android:layout_marginStart="8dp"
++        android:foregroundGravity="center">
++
++        <ImageButton
++            android:id="@+id/BTDownload"
++            style="@style/ListMenuButton"
++            android:layout_gravity="center"
++            android:layout_marginStart="0dp"
++            android:src="@drawable/icon_popup_menu_download" />
++
++        <ProgressBar
++            android:id="@+id/Progress"
++            style="?android:attr/progressBarStyleSmall"
++            android:layout_width="24dp"
++            android:layout_height="24dp"
++            android:layout_gravity="center"
++            android:visibility="gone" />
++    </FrameLayout>
++</LinearLayout>
