@@ -119,3 +119,74 @@
 
 - Исторические журналы (`docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md` и др.) сохраняют исходные метки `0.2b`; они не переписывались как архивные артефакты.
 - Эта карта отражает инженерную последовательность commit-ов в `main`, а не маркетинговые релизные версии.
+
+## Карта patch-stack (`0001..0036`) по этапам
+
+### `0001-0004` — Базовый форк, runtime/FEX и тема
+- `0001`: базовый ARM64EC runtime/FEX patch-stack поверх `winlator_bionic`
+- `0002`: debug/no-embedded-runtime branding baseline
+- `0003`: ранняя WCPHub/turnip логика
+- `0004`: dark emerald theme baseline
+
+### `0005-0009` — Aero.so линия, contents/turnip, контейнеры и релизный baseline
+- `0005`: branding + turnip/nightly + cleanup (большой интеграционный слой)
+- `0006`: forensic/diagnostics/contents/turnip/repo-contents (ранняя интеграция)
+- `0007`: версия Aero.so (`0.9a`)
+- `0008`: WCPHub overlay для `Wine/Proton`, single-track policy
+- `0009`: container create hardening + content download fixes
+
+### `0010-0012` — Runtime launch стабильность + базовый UI cleanup
+- `0010`: driver probe hardening и fallback telemetry
+- `0011`: no app restart on guest termination
+- `0012`: placeholders/rows polish для `Contents`
+
+### `0013-0018` — WCPHub/Adrenotools каталог и data-source линия
+- `0013`: WCPHub channels/ARM64EC switch UX
+- `0014-0018`: эволюция каталога драйверов, ссылки авторов, динамический каталог, Citron/Yuzu references
+
+### `0019-0024` — glibc mitigations + forensic defaults + честный Wine picker + cleanup
+- `0019`: `rseq` compat для glibc wrappers
+- `0020`: strip bionic `LD_PRELOAD` для glibc wrappers
+- `0021`: default max debug logging
+- `0022`: только реальные Wine артефакты в picker
+- `0023-0024`: ранний `Adrenotools` browser + cleanup legacy path
+
+### `0025-0027` — Upscale core (консолидированная линия)
+- `0025`: upscale runtime guardrails + SWFG contract
+- `0026`: container bridge + launch normalization + upscale UI layer
+- `0027`: container settings как owner upscale config + legacy env migration
+
+### `0028-0036` — Adrenotools UX, forensic telemetry, FEX/FEXCore UI, upscale binding refinements
+- `0028`: native GameNative browser + version sorting + `Recommended`
+- `0029`: launcher pre-exec forensic telemetry
+- `0030`: FEXCore upstream config vars + inline help
+- `0031`: upscale binding gate для service/graphics launches
+- `0032`: ForensicLogger app-private JSONL fallback
+- `0033-0035`: `Adrenotools` version-list UI, contents-style rows, version dialog/GameNative UX fixes
+- `0036`: defer upscale binding на shell launch до child graphics
+
+## Что можно безопасно объединять (кандидаты)
+
+> Это не выполнено автоматически. Это карта для аккуратной консолидации без потери причинной истории.
+
+### Высокая вероятность безопасного объединения
+- `0014 + 0015 + 0016` — одна линия каталога драйверов/ссылок (эволюция одного UX/data слоя).
+- `0023 + 0024` — ранний `Adrenotools` browser + cleanup мёртвого legacy-кода.
+- `0033 + 0034 + 0035` — чистая UI/UX-ветка `Adrenotools` browser rows/dialog fixes.
+
+### Условно безопасно (если нужен более короткий стек)
+- `0019 + 0020` — glibc-wrapper mitigations (один причинный слой, но сейчас полезно держать раздельно для forensic-истории).
+- `0021 + 0022` — forensic defaults + container wine picker honesty (разные подсистемы, но low-risk для merge при желании сокращения).
+- `0025 + 0026` уже фактически консолидированы из более мелкой upscale-серии.
+
+### Лучше не объединять (держать раздельно)
+- `0008` и `0013`/`0017` (`Contents` policy/filters): пересекаются по `Contents`, но отражают разные этапы бизнес-логики.
+- `0009`, `0010`, `0011` (container/driver probe/session exit): это разные причинные runtime-слои, их разделение полезно для расследований.
+- `0028` и `0035`: оба про `Adrenotools`, но `0035` — compile/runtime UI fix поверх `0028`; объединение скроет реальную регрессию.
+- `0031` и `0036`: оба про upscale binding, но `0036` — корректировка логики после device forensic (важно как отдельный postmortem-fix).
+
+## Практический порядок консолидации (если делать)
+
+1. Сначала только UI/Adrenotools серии (`0014-0016`, `0023-0024`, `0033-0035`).
+2. Затем повторный `ci/winlator/check-patch-stack.sh` + Winlator CI.
+3. Только после этого рассматривать glibc/upscale серии, и только при явной цели сокращения стека.
