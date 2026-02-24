@@ -1,0 +1,453 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index 6f9f4a2..cbb44f8 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -198,11 +198,23 @@ public class ContainerDetailFragment extends Fragment {
+         Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
+         sFEXCoreVersion.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+ 
+-        Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
+-        sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+-
+-        Spinner sStartupSelection = view.findViewById(R.id.SStartupSelection);
+-        sStartupSelection.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++        Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
++        sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sStartupSelection = view.findViewById(R.id.SStartupSelection);
++        sStartupSelection.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscalePerfPreset = view.findViewById(R.id.SUpscalePerfPreset);
++        sUpscalePerfPreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleSwfgPolicy = view.findViewById(R.id.SUpscaleSwfgPolicy);
++        sUpscaleSwfgPolicy.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleSwfgMode = view.findViewById(R.id.SUpscaleSwfgMode);
++        sUpscaleSwfgMode.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleSwfgArtifactGuard = view.findViewById(R.id.SUpscaleSwfgArtifactGuard);
++        sUpscaleSwfgArtifactGuard.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+     }
+ 
+     private void applyDynamicStylesRecursively(View view, boolean isDarkMode) {
+@@ -256,8 +268,11 @@ public class ContainerDetailFragment extends Fragment {
+         TextView directXLabel = view.findViewById(R.id.TVDirectX);
+         applyFieldSetLabelStyle(directXLabel, isDarkMode);  // Apply the dark or light mode styles
+ 
+-        TextView generalLabel = view.findViewById(R.id.TVGeneral);
+-        applyFieldSetLabelStyle(generalLabel, isDarkMode);  // Apply the dark or light mode styles
++        TextView generalLabel = view.findViewById(R.id.TVGeneral);
++        applyFieldSetLabelStyle(generalLabel, isDarkMode);  // Apply the dark or light mode styles
++
++        TextView upscaleLabel = view.findViewById(R.id.TVUpscaleGraphics);
++        applyFieldSetLabelStyle(upscaleLabel, isDarkMode);
+ 
+         // Advanced Tab TextViews
+         TextView box64Label = view.findViewById(R.id.TVBox64);
+@@ -418,10 +433,12 @@ public class ContainerDetailFragment extends Fragment {
+         final Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
+         FEXCoreManager.loadFEXCoreVersion(context, contentsManager, sFEXCoreVersion, isEditMode() ? container.getFEXCoreVersion() : DefaultVersion.FEXCORE);
+ 
+-        final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
+-        FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : preferences.getString("fexcore_preset", FEXCorePreset.INTERMEDIATE));
+-
+-        String selectedDriver = sGraphicsDriver.getSelectedItem().toString();
++        final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
++        FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : preferences.getString("fexcore_preset", FEXCorePreset.INTERMEDIATE));
++
++        setupUpscaleConfigSection(view);
++
++        String selectedDriver = sGraphicsDriver.getSelectedItem().toString();
+         List<String> sGraphicsItemsList = new ArrayList<>(Arrays.asList(context.getResources().getStringArray(R.array.graphics_driver_entries)));
+         sGraphicsDriver.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, sGraphicsItemsList));
+         AppUtils.setSpinnerSelectionFromValue(sGraphicsDriver, selectedDriver);
+@@ -487,12 +504,13 @@ public class ContainerDetailFragment extends Fragment {
+                 String cpuListWoW64 = cpuListViewWoW64.getCheckedCPUListAsString();
+                 byte startupSelection = (byte) sStartupSelection.getSelectedItemPosition();
+                 String box64Version = sBox64Version.getSelectedItem().toString();
+-                String fexcoreVersion = sFEXCoreVersion.getSelectedItem().toString();
+-                String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
+-                String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
+-                String desktopTheme = getDesktopTheme(view);
+-                // Capture missing properties
+-                String midiSoundFont = sMIDISoundFont.getSelectedItemPosition() == 0 ? "" : sMIDISoundFont.getSelectedItem().toString();
++                String fexcoreVersion = sFEXCoreVersion.getSelectedItem().toString();
++                String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
++                String box64Preset = Box64PresetManager.getSpinnerSelectedId(sBox64Preset);
++                UpscaleUiConfig upscaleUiConfig = readUpscaleConfigSection(view);
++                String desktopTheme = getDesktopTheme(view);
++                // Capture missing properties
++                String midiSoundFont = sMIDISoundFont.getSelectedItemPosition() == 0 ? "" : sMIDISoundFont.getSelectedItem().toString();
+                 String lc_all = etLC_ALL.getText().toString();
+                 int primaryController = sPrimaryController.getSelectedItemPosition();
+                 String controllerMapping = getControllerMapping(view);
+@@ -541,12 +559,13 @@ public class ContainerDetailFragment extends Fragment {
+                     container.setStartupSelection(startupSelection);
+                     container.setBox64Version(box64Version);
+                     container.setBox64Preset(box64Preset);
+-                    container.setFEXCoreVersion(fexcoreVersion);
+-                    container.setFEXCorePreset(fexcorePreset);
+-                    container.setDesktopTheme(desktopTheme);
+-                    container.setMidiSoundFont(midiSoundFont);
+-                    container.setLC_ALL(lc_all);
+-                    container.setPrimaryController(primaryController);
++                    container.setFEXCoreVersion(fexcoreVersion);
++                    container.setFEXCorePreset(fexcorePreset);
++                    container.setDesktopTheme(desktopTheme);
++                    applyUpscaleConfigToContainer(container, upscaleUiConfig);
++                    container.setMidiSoundFont(midiSoundFont);
++                    container.setLC_ALL(lc_all);
++                    container.setPrimaryController(primaryController);
+                     container.setControllerMapping(controllerMapping);
+                     container.saveData();
+                     saveWineRegistryKeys(view);
+@@ -573,12 +592,13 @@ public class ContainerDetailFragment extends Fragment {
+                     data.put("startupSelection", startupSelection);
+                     data.put("box64Version", box64Version);
+                     data.put("box64Preset", box64Preset);
+-                    data.put("fexcoreVersion", fexcoreVersion);
+-                    data.put("fexcorePreset", fexcorePreset);
+-                    data.put("desktopTheme", desktopTheme);
+-                    data.put("wineVersion", sWineVersion.getSelectedItem().toString());
+-                    data.put("midiSoundFont", midiSoundFont);
+-                    data.put("lc_all", lc_all);
++                    data.put("fexcoreVersion", fexcoreVersion);
++                    data.put("fexcorePreset", fexcorePreset);
++                    data.put("desktopTheme", desktopTheme);
++                    data.put("wineVersion", sWineVersion.getSelectedItem().toString());
++                    data.put("extraData", buildUpscaleExtraData(upscaleUiConfig));
++                    data.put("midiSoundFont", midiSoundFont);
++                    data.put("lc_all", lc_all);
+                     data.put("primaryController", primaryController);
+                     data.put("controllerMapping", controllerMapping);
+ 
+@@ -601,12 +621,100 @@ public class ContainerDetailFragment extends Fragment {
+             } catch (JSONException e) {
+                 e.printStackTrace();
+             }
+-        });
+-        return view;
+-    }
+-
+-    private void saveWineRegistryKeys(View view) {
+-        File userRegFile = new File(container.getRootDir(), ".wine/user.reg");
++        });
++        return view;
++    }
++
++    private void setupUpscaleConfigSection(View view) {
++        Spinner sPerfPreset = view.findViewById(R.id.SUpscalePerfPreset);
++        Spinner sSwfgPolicy = view.findViewById(R.id.SUpscaleSwfgPolicy);
++        Spinner sSwfgMode = view.findViewById(R.id.SUpscaleSwfgMode);
++        Spinner sArtifactGuard = view.findViewById(R.id.SUpscaleSwfgArtifactGuard);
++        EditText etMultiplier = view.findViewById(R.id.ETUpscaleSwfgMultiplier);
++        EditText etLatency = view.findViewById(R.id.ETUpscaleSwfgLatencyMs);
++
++        String perfPreset = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_PERF_PRESET, "auto") : "auto";
++        String swfgPolicy = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_SWFG_POLICY, "auto") : "auto";
++        String swfgMode = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_SWFG_MODE, "off") : "off";
++        String swfgMultiplier = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, "2") : "2";
++        String swfgLatency = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, "8") : "8";
++        String swfgArtifactGuard = isEditMode() ? container.getExtra(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, "balanced") : "balanced";
++
++        AppUtils.setSpinnerSelectionFromValue(sPerfPreset, perfPreset);
++        AppUtils.setSpinnerSelectionFromValue(sSwfgPolicy, swfgPolicy);
++        AppUtils.setSpinnerSelectionFromValue(sSwfgMode, swfgMode);
++        AppUtils.setSpinnerSelectionFromValue(sArtifactGuard, swfgArtifactGuard);
++
++        etMultiplier.setText(String.valueOf(clampInt(swfgMultiplier, 1, 4, 2)));
++        etLatency.setText(String.valueOf(clampInt(swfgLatency, 1, 50, 8)));
++    }
++
++    private UpscaleUiConfig readUpscaleConfigSection(View view) {
++        Spinner sPerfPreset = view.findViewById(R.id.SUpscalePerfPreset);
++        Spinner sSwfgPolicy = view.findViewById(R.id.SUpscaleSwfgPolicy);
++        Spinner sSwfgMode = view.findViewById(R.id.SUpscaleSwfgMode);
++        Spinner sArtifactGuard = view.findViewById(R.id.SUpscaleSwfgArtifactGuard);
++        EditText etMultiplier = view.findViewById(R.id.ETUpscaleSwfgMultiplier);
++        EditText etLatency = view.findViewById(R.id.ETUpscaleSwfgLatencyMs);
++
++        UpscaleUiConfig cfg = new UpscaleUiConfig();
++        cfg.perfPreset = normalizeChoice(String.valueOf(sPerfPreset.getSelectedItem()), "auto");
++        cfg.swfgPolicy = normalizeChoice(String.valueOf(sSwfgPolicy.getSelectedItem()), "auto");
++        cfg.swfgMode = normalizeChoice(String.valueOf(sSwfgMode.getSelectedItem()), "off");
++        cfg.swfgMultiplier = String.valueOf(clampInt(etMultiplier.getText().toString(), 1, 4, 2));
++        cfg.swfgLatencyMs = String.valueOf(clampInt(etLatency.getText().toString(), 1, 50, 8));
++        cfg.swfgArtifactGuard = normalizeChoice(String.valueOf(sArtifactGuard.getSelectedItem()), "balanced");
++        return cfg;
++    }
++
++    private JSONObject buildUpscaleExtraData(UpscaleUiConfig cfg) throws JSONException {
++        JSONObject extraData = new JSONObject();
++        extraData.put(Container.EXTRA_UPSCALE_PERF_PRESET, cfg.perfPreset);
++        extraData.put(Container.EXTRA_UPSCALE_SWFG_POLICY, cfg.swfgPolicy);
++        extraData.put(Container.EXTRA_UPSCALE_SWFG_MODE, cfg.swfgMode);
++        extraData.put(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, cfg.swfgMultiplier);
++        extraData.put(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, cfg.swfgLatencyMs);
++        extraData.put(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, cfg.swfgArtifactGuard);
++        return extraData;
++    }
++
++    private void applyUpscaleConfigToContainer(Container container, UpscaleUiConfig cfg) {
++        if (container == null || cfg == null) return;
++        container.putExtra(Container.EXTRA_UPSCALE_PERF_PRESET, cfg.perfPreset);
++        container.putExtra(Container.EXTRA_UPSCALE_SWFG_POLICY, cfg.swfgPolicy);
++        container.putExtra(Container.EXTRA_UPSCALE_SWFG_MODE, cfg.swfgMode);
++        container.putExtra(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, cfg.swfgMultiplier);
++        container.putExtra(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, cfg.swfgLatencyMs);
++        container.putExtra(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, cfg.swfgArtifactGuard);
++    }
++
++    private static String normalizeChoice(String value, String fallback) {
++        if (value == null) return fallback;
++        String normalized = value.trim().toLowerCase(Locale.US);
++        return normalized.isEmpty() ? fallback : normalized;
++    }
++
++    private static int clampInt(String value, int min, int max, int fallback) {
++        int parsed = fallback;
++        try {
++            parsed = Integer.parseInt(value != null ? value.trim() : "");
++        } catch (Exception ignored) {}
++        if (parsed < min) return min;
++        if (parsed > max) return max;
++        return parsed;
++    }
++
++    private static final class UpscaleUiConfig {
++        String perfPreset = "auto";
++        String swfgPolicy = "auto";
++        String swfgMode = "off";
++        String swfgMultiplier = "2";
++        String swfgLatencyMs = "8";
++        String swfgArtifactGuard = "balanced";
++    }
++
++    private void saveWineRegistryKeys(View view) {
++        File userRegFile = new File(container.getRootDir(), ".wine/user.reg");
+         try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
+             Spinner sMouseWarpOverride = view.findViewById(R.id.SMouseWarpOverride);
+             registryEditor.setStringValue("Software\\Wine\\DirectInput", "MouseWarpOverride", sMouseWarpOverride.getSelectedItem().toString().toLowerCase(Locale.ENGLISH));
+diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
+index 6cb6935..d78eaf4 100644
+--- a/app/src/main/res/layout/container_detail_fragment.xml
++++ b/app/src/main/res/layout/container_detail_fragment.xml
+@@ -561,13 +561,13 @@
+                         style="@style/FieldSetLabel"
+                         android:text="@string/box64" />
+                 </FrameLayout>
+-                
++
+                 <FrameLayout
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:id="@+id/fexcoreFrame"
+                     android:layout_marginTop="8dp">
+-                
++
+                     <LinearLayout style="@style/FieldSet">
+                         <TextView
+                             android:layout_width="wrap_content"
+@@ -590,14 +590,123 @@
+                             android:layout_width="match_parent"
+                             android:spinnerMode="dialog" />
+                     </LinearLayout>
+-                    
++
+                     <TextView
+                         android:id="@+id/TVFEXCore"
+                         style="@style/FieldSetLabel"
+                         android:text="@string/fexcore_config" />
+-                    
++
++                </FrameLayout>
++
++                <FrameLayout
++                    android:id="@+id/upscaleFrame"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="8dp">
++
++                    <LinearLayout style="@style/FieldSet">
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_perf_preset" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscalePerfPreset"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_perf_preset_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_swfg_policy" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleSwfgPolicy"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_swfg_policy_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_swfg_mode" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleSwfgMode"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_swfg_mode_entries" />
++
++                        <LinearLayout
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:orientation="horizontal">
++
++                            <LinearLayout
++                                android:layout_width="0dp"
++                                android:layout_height="wrap_content"
++                                android:layout_weight="1"
++                                android:orientation="vertical">
++
++                                <TextView
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:text="@string/upscale_swfg_multiplier" />
++
++                                <EditText
++                                    style="@style/AppTheme"
++                                    android:id="@+id/ETUpscaleSwfgMultiplier"
++                                    android:layout_width="match_parent"
++                                    android:layout_height="wrap_content"
++                                    android:inputType="number"
++                                    android:maxLength="1" />
++                            </LinearLayout>
++
++                            <Space
++                                android:layout_width="8dp"
++                                android:layout_height="1dp" />
++
++                            <LinearLayout
++                                android:layout_width="0dp"
++                                android:layout_height="wrap_content"
++                                android:layout_weight="1"
++                                android:orientation="vertical">
++
++                                <TextView
++                                    android:layout_width="wrap_content"
++                                    android:layout_height="wrap_content"
++                                    android:text="@string/upscale_swfg_latency_ms" />
++
++                                <EditText
++                                    style="@style/AppTheme"
++                                    android:id="@+id/ETUpscaleSwfgLatencyMs"
++                                    android:layout_width="match_parent"
++                                    android:layout_height="wrap_content"
++                                    android:inputType="number"
++                                    android:maxLength="2" />
++                            </LinearLayout>
++                        </LinearLayout>
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_swfg_artifact_guard" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleSwfgArtifactGuard"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_swfg_artifact_guard_entries" />
++                    </LinearLayout>
++
++                    <TextView
++                        android:id="@+id/TVUpscaleGraphics"
++                        style="@style/FieldSetLabel"
++                        android:text="@string/upscale_graphics" />
+                 </FrameLayout>
+-                
++
+                 <FrameLayout
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+diff --git a/app/src/main/res/values/arrays.xml b/app/src/main/res/values/arrays.xml
+index 1bf6d84..207169b 100644
+--- a/app/src/main/res/values/arrays.xml
++++ b/app/src/main/res/values/arrays.xml
+@@ -148,16 +148,36 @@
+         <item>Image</item>
+         <item>Solid Color</item>
+     </string-array>
+-    <string-array name="startup_selection_entries">
+-        <item>Normal (Load all services)</item>
+-        <item>Essential (Load only essential services)</item>
+-        <item>Aggressive (Stop services on startup)</item>
+-    </string-array>
+-    <string-array name="vkd3d_version_entries">
+-        <item>None</item>
+-        <item>2.8</item>
+-        <item>2.14.1</item>
+-    </string-array>
++    <string-array name="startup_selection_entries">
++        <item>Normal (Load all services)</item>
++        <item>Essential (Load only essential services)</item>
++        <item>Aggressive (Stop services on startup)</item>
++    </string-array>
++    <string-array name="upscale_perf_preset_entries">
++        <item>auto</item>
++        <item>safe</item>
++        <item>balanced</item>
++        <item>scaleforce</item>
++    </string-array>
++    <string-array name="upscale_swfg_policy_entries">
++        <item>auto</item>
++        <item>off</item>
++        <item>on</item>
++    </string-array>
++    <string-array name="upscale_swfg_mode_entries">
++        <item>off</item>
++        <item>mv_fg</item>
++    </string-array>
++    <string-array name="upscale_swfg_artifact_guard_entries">
++        <item>safe</item>
++        <item>balanced</item>
++        <item>aggressive</item>
++    </string-array>
++    <string-array name="vkd3d_version_entries">
++        <item>None</item>
++        <item>2.8</item>
++        <item>2.14.1</item>
++    </string-array>
+     <string-array name="some_lc_all">
+         <item>ar_EG</item>
+         <item>ar_SA</item>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index a10e19f..63a06f9 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -137,9 +137,16 @@
+     <string name="cache">Cache</string>
+     <string name="total">Total</string>
+     <string name="clear_cache">Clear Cache</string>
+-    <string name="estimated_used_space">Estimated Used Space</string>
+-    <string name="advanced">Advanced</string>
+-    <string name="box64">Box64</string>
++    <string name="estimated_used_space">Estimated Used Space</string>
++    <string name="advanced">Advanced</string>
++    <string name="upscale_graphics">Upscale / Frame Generation</string>
++    <string name="upscale_perf_preset">Performance preset</string>
++    <string name="upscale_swfg_policy">Software FG policy</string>
++    <string name="upscale_swfg_mode">Software FG mode</string>
++    <string name="upscale_swfg_multiplier">FG multiplier</string>
++    <string name="upscale_swfg_latency_ms">FG latency budget (ms)</string>
++    <string name="upscale_swfg_artifact_guard">Artifact guard</string>
++    <string name="box64">Box64</string>
+     <string name="system">System</string>
+     <string name="box64_preset">Box64 Preset</string>
+     <string name="box64_version">Box64 Version</string>
