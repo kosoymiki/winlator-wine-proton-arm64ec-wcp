@@ -15,6 +15,7 @@ middle of the stack.
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
 - `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion
+  and upscale runtime binding gates
 
 ## Upscale patch consolidation note
 
@@ -32,6 +33,8 @@ consolidated into:
   - adds launcher wrapper artifact telemetry and final pre-exec env markers for glibc/bionic runtime triage
 - `0030-fexcore-upstream-config-vars-and-inline-help.patch`
   - expands FEX preset env-var editor to track upstream FEX config options and uses inline help text parsed from the source config descriptions
+- `0031-upscale-runtime-binding-gate-service-processes.patch`
+  - binds ScaleForce/SWFG activation to graphics-eligible shortcut launches (Vulkan/OpenGL) and disables it for container shell/service processes with forensic reasons
 
 ## Known high-overlap files (intentional)
 

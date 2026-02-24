@@ -1,0 +1,135 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 51be81f..73d846e 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1812,6 +1812,38 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                             "perf_preset_before", basePerfProfile.getName(),
+                             "perf_preset_after", perfProfile.getName()));
+         }
++        UpscaleBindingDecision upscaleBinding = resolveUpscaleBindingDecision();
++        ScaleForceProfile preBindingPerfProfile = perfProfile;
++        if (!upscaleBinding.eligible) {
++            if (ScaleForceProfile.SCALEFORCE.equals(perfProfile.getName())) {
++                perfProfile = new ScaleForceProfile(ScaleForceProfile.BALANCED,
++                        "binding-" + upscaleBinding.reason, false, false);
++            }
++            envVars.put("WINLATOR_SCALEFORCE_ENABLED", "0");
++            envVars.put("WINLATOR_SWFG", "0");
++            envVars.put("WINLATOR_SWFG_AUTO", "0");
++            envVars.put("WINLATOR_SWFG_ENABLED", "0");
++            envVars.put("WINLATOR_SWFG_MODE", "off");
++            envVars.put("WINLATOR_UPSCALER_BINDING_GUARD_REASON", upscaleBinding.reason);
++        }
++        envVars.put("WINLATOR_UPSCALER_BINDING_ELIGIBLE", upscaleBinding.eligible ? "1" : "0");
++        envVars.put("WINLATOR_UPSCALER_BINDING_BACKEND", upscaleBinding.backend);
++        envVars.put("WINLATOR_UPSCALER_BINDING_EXECUTABLE", upscaleBinding.executable);
++        ForensicLogger.logEvent(this,
++                upscaleBinding.eligible ? "info" : "warn",
++                "RUNTIME_UPSCALER_BINDING_DECISION",
++                forensicTraceId,
++                "graphics_perf",
++                upscaleBinding.eligible ? "upscaler enabled for launch target" : "upscaler disabled for non-graphics or service launch target",
++                ForensicLogger.fields(
++                        "shortcut_launch", upscaleBinding.shortcutLaunch,
++                        "target_executable", upscaleBinding.executable,
++                        "binding_backend", upscaleBinding.backend,
++                        "binding_eligible", upscaleBinding.eligible,
++                        "binding_reason", upscaleBinding.reason,
++                        "perf_preset_before_binding", preBindingPerfProfile.getName(),
++                        "perf_preset_after_binding", perfProfile.getName()));
++
+         PerfPresetResolver.apply(perfProfile, envVars, this.graphicsDriverConfig);
+         FrameGenerationConfig fgConfig = FrameGenerationConfig.fromEnv(envVars, perfProfile, graphicsSuitability);
+         fgConfig.applyTo(envVars);
+@@ -2134,20 +2166,80 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         }
+     }
+ 
+-    private static int compareVersion(String varA, String varB) {
+-        int[] a = parseSemverLoose(varA);
++    private static int compareVersion(String varA, String varB) {
++        int[] a = parseSemverLoose(varA);
+         int[] b = parseSemverLoose(varB);
+ 
+         if (a[0] != b[0]) return a[0] - b[0];
+-        if (a[1] != b[1]) return a[1] - b[1];
+-        return a[2] - b[2];
+-    }
+-
+-    private static final Pattern SEMVER_LOOSE =
+-            Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+-
+-    private static int[] parseSemverLoose(String s) {
+-        if (s == null) return new int[]{0, 0, 0};
++        if (a[1] != b[1]) return a[1] - b[1];
++        return a[2] - b[2];
++    }
++
++    private UpscaleBindingDecision resolveUpscaleBindingDecision() {
++        String executable = getExecutable();
++        String execLower = executable != null ? executable.trim().toLowerCase() : "";
++        if (execLower.isEmpty()) execLower = "unknown";
++
++        boolean shortcutLaunch = shortcut != null;
++        boolean serviceProcess = isServiceLauncherExecutable(execLower);
++
++        String backend = classifyUpscaleBackend();
++        boolean backendEligible = "vulkan".equals(backend) || "opengl".equals(backend);
++
++        ArrayList<String> reasons = new ArrayList<>();
++        if (!shortcutLaunch) reasons.add("container_shell");
++        if (serviceProcess) reasons.add("service_process");
++        if (!backendEligible) reasons.add("backend_" + backend);
++
++        boolean eligible = shortcutLaunch && !serviceProcess && backendEligible;
++        String reason = reasons.isEmpty() ? "eligible" : android.text.TextUtils.join(",", reasons);
++        return new UpscaleBindingDecision(eligible, reason, execLower, backend, shortcutLaunch);
++    }
++
++    private boolean isServiceLauncherExecutable(String executableLower) {
++        if (executableLower == null || executableLower.isEmpty()) return true;
++        String normalized = executableLower.replace('\\', '/');
++        int lastSlash = normalized.lastIndexOf('/');
++        if (lastSlash >= 0 && lastSlash + 1 < normalized.length()) {
++            normalized = normalized.substring(lastSlash + 1);
++        }
++        return normalized.equals("wfm.exe")
++                || normalized.equals("explorer.exe")
++                || normalized.equals("winhandler.exe")
++                || normalized.equals("services.exe")
++                || normalized.equals("rpcss.exe")
++                || normalized.equals("wineboot.exe");
++    }
++
++    private String classifyUpscaleBackend() {
++        String wrapper = dxwrapper != null ? dxwrapper.trim().toLowerCase() : "";
++        if (wrapper.contains("dxvk")) return "vulkan";
++        if (wrapper.contains("wined3d")) return "opengl";
++        if (wrapper.contains("vkd3d")) return "vulkan";
++        return "unknown";
++    }
++
++    private static final Pattern SEMVER_LOOSE =
++            Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
++
++    private static final class UpscaleBindingDecision {
++        final boolean eligible;
++        final String reason;
++        final String executable;
++        final String backend;
++        final boolean shortcutLaunch;
++
++        UpscaleBindingDecision(boolean eligible, String reason, String executable, String backend, boolean shortcutLaunch) {
++            this.eligible = eligible;
++            this.reason = reason;
++            this.executable = executable;
++            this.backend = backend;
++            this.shortcutLaunch = shortcutLaunch;
++        }
++    }
++
++    private static int[] parseSemverLoose(String s) {
++        if (s == null) return new int[]{0, 0, 0};
+ 
+         Matcher m = SEMVER_LOOSE.matcher(s);
+ 
