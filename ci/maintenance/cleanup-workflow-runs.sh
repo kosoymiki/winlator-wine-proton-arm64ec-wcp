@@ -39,9 +39,9 @@ log "Fetching up to ${LIMIT} workflow runs"
 json="$(gh run list --repo "${REPO}" --limit "${LIMIT}" \
   --json databaseId,status,conclusion,headBranch,createdAt,workflowName,name)"
 
-mapfile -t rows < <(KEEP_BRANCHES="${KEEP_BRANCHES}" python3 - <<'PY' <<<"$json"
+mapfile -t rows < <(KEEP_BRANCHES="${KEEP_BRANCHES}" JSON_PAYLOAD="${json}" python3 - <<'PY'
 import json, os
-runs = json.loads(input())
+runs = json.loads(os.environ.get("JSON_PAYLOAD", "[]"))
 keep_branches = {b.strip() for b in os.environ.get('KEEP_BRANCHES', '').split(',') if b.strip()}
 for r in runs:
     conclusion = (r.get('conclusion') or '').lower()
@@ -77,7 +77,7 @@ fi
 for row in "${rows[@]}"; do
   run_id="${row%%$'\t'*}"
   log "Deleting run ${run_id}"
-  gh run delete "${run_id}" --repo "${REPO}" --yes
+  gh run delete "${run_id}" --repo "${REPO}"
   sleep 0.2
 done
 
