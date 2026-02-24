@@ -14,7 +14,7 @@ middle of the stack.
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
-- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting
+- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting, runtime forensic instrumentation follow-ups
 
 ## Upscale patch consolidation note
 
@@ -28,6 +28,8 @@ consolidated into:
   - historical steps: old `0028`, `0029`, `0030`
 - `0027-upscale-container-settings-own-config-and-env-migration.patch`
   - moves upscale config ownership to container settings UI and strips legacy raw env overrides from generic env editor
+- `0029-runtime-launcher-wrapper-preexec-forensics.patch`
+  - adds launcher wrapper artifact telemetry and final pre-exec env markers for glibc/bionic runtime triage
 
 ## Known high-overlap files (intentional)
 
