@@ -1,0 +1,135 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 41cdcbb..f864f1e 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -407,6 +407,25 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "removed_ld_preload", glibcRemovedPreload));
+         }
+ 
++        String wineRuntimeClass = detectWineRuntimeClass(wineBinPath);
++        envVars.put("WINLATOR_WINE_RUNTIME_CLASS", wineRuntimeClass);
++        boolean upscaleLaunchEnvNormalized = normalizeUpscaleLaunchEnvVars(envVars);
++        if (upscaleLaunchEnvNormalized && (forensicMode || !isEmpty(forensicTraceId))) {
++            ForensicLogger.logEvent(context, "warn", "RUNTIME_UPSCALE_LAUNCH_ENV_NORMALIZED", forensicTraceId, "launcher",
++                    "Normalized upscale env vars before guest launch",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "wine_runtime_class", wineRuntimeClass,
++                            "perf_preset", envVars.get("WINLATOR_PERF_PRESET"),
++                            "suitability_tier", envVars.get("WINLATOR_GRAPHICS_SUITABILITY_TIER"),
++                            "swfg_enabled", envVars.get("WINLATOR_SWFG_ENABLED"),
++                            "swfg_mode", envVars.get("WINLATOR_SWFG_MODE"),
++                            "swfg_multiplier", envVars.get("WINLATOR_SWFG_MULTIPLIER"),
++                            "swfg_latency_budget_ms", envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"),
++                            "swfg_artifact_guard", envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD")));
++        }
++
+         // Construct the command without Box64 to the Wine executable
+         String command = "";
+         String overriddenCommand = envVars.get("GUEST_PROGRAM_LAUNCHER_COMMAND");
+@@ -447,6 +466,18 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "fexcore_preset", fexcorePreset,
+                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
+                             "fexcore_version", !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container != null ? container.getFEXCoreVersion() : "",
++                            "wine_runtime_class", wineRuntimeClass,
++                            "perf_preset", envVars.get("WINLATOR_PERF_PRESET"),
++                            "perf_preset_source", envVars.get("WINLATOR_PERF_PRESET_SOURCE"),
++                            "graphics_suitability_tier", envVars.get("WINLATOR_GRAPHICS_SUITABILITY_TIER"),
++                            "graphics_driver_family", envVars.get("WINLATOR_GRAPHICS_DRIVER_FAMILY"),
++                            "swfg_enabled", envVars.get("WINLATOR_SWFG_ENABLED"),
++                            "swfg_mode", envVars.get("WINLATOR_SWFG_MODE"),
++                            "swfg_multiplier", envVars.get("WINLATOR_SWFG_MULTIPLIER"),
++                            "swfg_latency_budget_ms", envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"),
++                            "swfg_artifact_guard", envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD"),
++                            "swfg_guard_reason", envVars.get("WINLATOR_SWFG_GUARD_REASON"),
++                            "swfg_override_conflict", envVars.get("WINLATOR_SWFG_OVERRIDE_CONFLICT"),
+                             "command", command,
+                             "env_hash", ForensicLogger.hashEnvVars(envVars)));
+         }
+@@ -507,6 +538,85 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return currentTunables + ":" + requiredTunable;
+     }
+ 
++    private String detectWineRuntimeClass(String wineBinPath) {
++        if (isEmpty(wineBinPath)) return "unknown";
++
++        File wineReal = new File(wineBinPath, "wine.glibc-real");
++        if (wineReal.isFile()) return "glibc_wrapped";
++
++        File wineFile = new File(wineBinPath, "wine");
++        if (wineFile.isFile()) return "bionic_or_native";
++
++        return "unknown";
++    }
++
++    private boolean normalizeUpscaleLaunchEnvVars(EnvVars envVars) {
++        boolean changed = false;
++
++        String perfPreset = envVars.get("WINLATOR_PERF_PRESET").trim().toLowerCase();
++        if (!perfPreset.isEmpty()
++                && !perfPreset.equals("safe")
++                && !perfPreset.equals("balanced")
++                && !perfPreset.equals("scaleforce")) {
++            envVars.put("WINLATOR_PERF_PRESET", "balanced");
++            changed = true;
++        }
++
++        String swfgEnabled = normalizeBoolToken(envVars.get("WINLATOR_SWFG_ENABLED"));
++        if (!swfgEnabled.equals(envVars.get("WINLATOR_SWFG_ENABLED"))) {
++            envVars.put("WINLATOR_SWFG_ENABLED", swfgEnabled);
++            changed = true;
++        }
++
++        String swfgMode = envVars.get("WINLATOR_SWFG_MODE").trim().toLowerCase();
++        String normalizedMode = "mv_fg".equals(swfgMode) ? "mv_fg" : "off";
++        if (!normalizedMode.equals(swfgMode)) {
++            envVars.put("WINLATOR_SWFG_MODE", normalizedMode);
++            changed = true;
++        }
++
++        int multiplier = clampInt(envVars.get("WINLATOR_SWFG_MULTIPLIER"), 1, 4, 2);
++        if (!String.valueOf(multiplier).equals(envVars.get("WINLATOR_SWFG_MULTIPLIER"))) {
++            envVars.put("WINLATOR_SWFG_MULTIPLIER", multiplier);
++            changed = true;
++        }
++
++        int latency = clampInt(envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"), 1, 50, 8);
++        if (!String.valueOf(latency).equals(envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"))) {
++            envVars.put("WINLATOR_SWFG_LATENCY_BUDGET_MS", latency);
++            changed = true;
++        }
++
++        String guard = envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD").trim().toLowerCase();
++        String normalizedGuard = "safe".equals(guard) || "aggressive".equals(guard) ? guard : "balanced";
++        if (!normalizedGuard.equals(guard)) {
++            envVars.put("WINLATOR_SWFG_ARTIFACT_GUARD", normalizedGuard);
++            changed = true;
++        }
++
++        if ("0".equals(envVars.get("WINLATOR_SWFG_ENABLED")) && !"off".equals(envVars.get("WINLATOR_SWFG_MODE"))) {
++            envVars.put("WINLATOR_SWFG_MODE", "off");
++            changed = true;
++        }
++
++        return changed;
++    }
++
++    private String normalizeBoolToken(String value) {
++        String lowered = value != null ? value.trim().toLowerCase() : "";
++        return ("1".equals(lowered) || "true".equals(lowered) || "yes".equals(lowered) || "on".equals(lowered)) ? "1" : "0";
++    }
++
++    private int clampInt(String value, int min, int max, int fallback) {
++        int parsed = fallback;
++        try {
++            parsed = Integer.parseInt(value != null ? value.trim() : "");
++        } catch (Exception ignored) {}
++        if (parsed < min) return min;
++        if (parsed > max) return max;
++        return parsed;
++    }
++
+     private void addBox64EnvVars(EnvVars envVars, boolean enableLogs) {
+         envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
+         envVars.put("BOX64_DYNAREC", "1");
