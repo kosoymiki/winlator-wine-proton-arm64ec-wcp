@@ -338,7 +338,7 @@ compose_wcp_tree_from_stage() {
   : "${ROOT_DIR:=$(cd -- "${WCP_COMMON_DIR}/../.." && pwd)}"
   : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
   : "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
-  : "${WCP_RUNTIME_CLASS_ENFORCE:=0}"
+  : "${WCP_RUNTIME_CLASS_ENFORCE:=1}"
   : "${WCP_VERSION_NAME:=arm64ec}"
   : "${WCP_VERSION_CODE:=0}"
   : "${WCP_DESCRIPTION:=ARM64EC WCP package}"

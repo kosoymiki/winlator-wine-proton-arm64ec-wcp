@@ -52,10 +52,10 @@ env:
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
   WCP_ENABLE_SDL2_RUNTIME: "1"
   WCP_WINE_BUILD_JOBS: "2"
-  WCP_GLIBC_BUILD_JOBS: "2"
   WCP_RUNTIME_CLASS_TARGET: bionic-native
-  WCP_RUNTIME_CLASS_ENFORCE: "0"
-  WCP_RUNTIME_BUNDLE_LOCK_MODE: relaxed-enforce
+  WCP_RUNTIME_CLASS_ENFORCE: "1"
+  WCP_GLIBC_SOURCE_MODE: host
+  WCP_RUNTIME_BUNDLE_LOCK_MODE: audit
   WCP_INCLUDE_FEX_DLLS: "0"
   WCP_FEX_EXPECTATION_MODE: external
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
@@ -130,7 +130,7 @@ jobs:
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Proton GE10 ARM64EC WCP (rolling nightly / 0.2b line)
+          Proton GE10 ARM64EC WCP (rolling nightly / 0.9a line)
 
           RU:
           - Канал: nightly (proton-ge10-arm64ec-latest)
@@ -151,7 +151,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: proton-ge10-arm64ec-latest
-          name: Proton GE10 ARM64EC Latest (0.2b line)
+          name: Proton GE10 ARM64EC Latest (0.9a line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: true

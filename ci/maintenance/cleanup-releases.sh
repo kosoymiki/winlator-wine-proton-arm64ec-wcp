@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 REPO="${GITHUB_REPOSITORY:-$(git -C "${ROOT_DIR}" config --get remote.origin.url | sed -E 's#(git@github.com:|https://github.com/)##; s#\.git$##')}"
 APPLY=0
-KEEP_TAGS="v0.2b,wcp-v0.2b,winlator-latest,wine-11-arm64ec-latest,proton-ge10-arm64ec-latest,protonwine10-gamenative-arm64ec-latest"
+KEEP_TAGS="v0.9a,wcp-v0.9a,winlator-latest,wine-11-arm64ec-latest,proton-ge10-arm64ec-latest,protonwine10-gamenative-arm64ec-latest"
 
 log() { printf '[release-cleanup] %s\n' "$*"; }
 fail() { printf '[release-cleanup][error] %s\n' "$*" >&2; exit 1; }

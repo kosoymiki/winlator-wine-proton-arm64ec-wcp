@@ -79,7 +79,7 @@ jobs:
       - name: Upload Winlator artifact
         uses: actions/upload-artifact@v4
         with:
-          name: by.aero.so.benchmark-debug-0.2b
+          name: by.aero.so.benchmark-debug-0.9a
           path: |
             out/winlator/*.apk
             out/winlator/SHA256SUMS
@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euxo pipefail
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Winlator CMOD Aero.so (0.2b line / rolling)
+          Winlator CMOD Aero.so (0.9a line / rolling)
 
           RU:
           - APK package: by.aero.so.benchmark
@@ -116,7 +116,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: winlator-latest
-          name: Winlator CMOD Aero.so Latest (0.2b line)
+          name: Winlator CMOD Aero.so Latest (0.9a line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: false

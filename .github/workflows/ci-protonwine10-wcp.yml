@@ -55,10 +55,10 @@ env:
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
   WCP_ENABLE_SDL2_RUNTIME: "1"
   WCP_WINE_BUILD_JOBS: "2"
-  WCP_GLIBC_BUILD_JOBS: "2"
   WCP_RUNTIME_CLASS_TARGET: bionic-native
-  WCP_RUNTIME_CLASS_ENFORCE: "0"
-  WCP_RUNTIME_BUNDLE_LOCK_MODE: relaxed-enforce
+  WCP_RUNTIME_CLASS_ENFORCE: "1"
+  WCP_GLIBC_SOURCE_MODE: host
+  WCP_RUNTIME_BUNDLE_LOCK_MODE: audit
   WCP_INCLUDE_FEX_DLLS: "0"
   WCP_FEX_EXPECTATION_MODE: external
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
@@ -131,7 +131,7 @@ jobs:
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          ProtonWine10 GameNative ARM64EC WCP (rolling nightly / 0.2b line)
+          ProtonWine10 GameNative ARM64EC WCP (rolling nightly / 0.9a line)
 
           RU:
           - Канал: nightly (protonwine10-gamenative-arm64ec-latest)
@@ -152,7 +152,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: protonwine10-gamenative-arm64ec-latest
-          name: ProtonWine10 GameNative ARM64EC Latest (0.2b line)
+          name: ProtonWine10 GameNative ARM64EC Latest (0.9a line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: true

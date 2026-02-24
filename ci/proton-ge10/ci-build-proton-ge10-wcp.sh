@@ -41,16 +41,10 @@ fi
 : "${WCP_PROFILE_NAME:=Proton GE10 ARM64EC}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
 : "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
-: "${WCP_RUNTIME_CLASS_ENFORCE:=0}"
+: "${WCP_RUNTIME_CLASS_ENFORCE:=1}"
 : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
-if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
-  if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
-    WCP_GLIBC_SOURCE_MODE="pinned-source"
-  else
-    WCP_GLIBC_SOURCE_MODE="host"
-  fi
-fi
+: "${WCP_GLIBC_SOURCE_MODE:=host}"
 : "${WCP_GLIBC_VERSION:=2.43}"
 : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
 : "${WCP_GLIBC_SOURCE_URL:=https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz}"

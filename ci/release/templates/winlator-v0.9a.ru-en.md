@@ -1,4 +1,4 @@
-# Winlator CMOD Aero.so 0.2b
+# Winlator CMOD Aero.so 0.9a
 
 ## RU
 - Пакет приложения: `by.aero.so.benchmark` (суффикс `.benchmark` сохранён намеренно).
