@@ -1,0 +1,97 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 8698096..46f4ecd 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -5,10 +5,13 @@ import android.app.AlertDialog;
+ import android.content.Intent;
+ import android.net.Uri;
+ import android.os.Bundle;
++import android.text.Html;
+ import android.text.format.DateFormat;
++import android.text.method.LinkMovementMethod;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
++import android.widget.ScrollView;
+ import android.widget.ImageButton;
+ import android.widget.TextView;
+ 
+@@ -74,6 +77,9 @@ public class AdrenotoolsFragment extends Fragment {
+ 
+         View btFetchLatestDriver = layout.findViewById(R.id.BTFetchLatestDriver);
+         btFetchLatestDriver.setOnClickListener(v -> openTurnipVersionPicker(false));
++
++        View btDriverSourcesInfo = layout.findViewById(R.id.BTDriverSourcesInfo);
++        btDriverSourcesInfo.setOnClickListener(v -> showDriverSourcesDialog());
+         return layout;
+     }
+ 
+@@ -243,6 +249,26 @@ public class AdrenotoolsFragment extends Fragment {
+         }).start();
+     }
+ 
++    private void showDriverSourcesDialog() {
++        if (!isAdded() || getContext() == null) return;
++
++        int padding = (int) (getResources().getDisplayMetrics().density * 16);
++        TextView textView = new TextView(getContext());
++        textView.setPadding(padding, padding, padding, padding);
++        textView.setText(Html.fromHtml(getString(R.string.adreno_driver_sources_html), Html.FROM_HTML_MODE_LEGACY));
++        textView.setMovementMethod(LinkMovementMethod.getInstance());
++        textView.setTextSize(14);
++
++        ScrollView scrollView = new ScrollView(getContext());
++        scrollView.addView(textView);
++
++        new AlertDialog.Builder(getContext())
++                .setTitle(R.string.adreno_driver_sources_title)
++                .setView(scrollView)
++                .setPositiveButton(android.R.string.ok, null)
++                .show();
++    }
++
+     private void downloadFileWithProgress(String address, File file, ProgressCallback progressCallback) throws Exception {
+         URLConnection connection = new URL(address).openConnection();
+         connection.connect();
+diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
+index 11e5eff..cbd5ff6 100644
+--- a/app/src/main/res/layout/adrenotools_fragment.xml
++++ b/app/src/main/res/layout/adrenotools_fragment.xml
+@@ -40,4 +40,12 @@
+             android:text="@string/fetch_latest_turnip" />
+ 
+     </LinearLayout>
++
++    <Button
++        android:id="@+id/BTDriverSourcesInfo"
++        style="@style/ButtonNeutral"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="8dp"
++        android:text="@string/adreno_driver_sources_info" />
+ </LinearLayout>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index a26a658..b27f6e5 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -623,6 +623,20 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="unable_to_fetch_turnip_versions">Unable to fetch Turnip versions.</string>
+     <string name="turnip_download_failed">Turnip download failed.</string>
+     <string name="turnip_install_failed_or_exists">Turnip install failed or version is already installed.</string>
++    <string name="adreno_driver_sources_info">Adreno driver links &amp; quick info</string>
++    <string name="adreno_driver_sources_title">Adreno driver links</string>
++    <string name="adreno_driver_sources_html"><![CDATA[
++<b>Links (from WCP Hub README)</b><br/><br/>
++<b>StevenMXZ</b> — <a href="https://github.com/StevenMXZ/freedreno_turnip-CI/releases">Mesa Turnip driver</a><br/>
++<b>K11MCH1</b> — <a href="https://github.com/K11MCH1/WinlatorTurnipDrivers/releases">Qualcomm proprietary + Mesa Turnip</a><br/>
++<b>GameNative</b> — <a href="https://github.com/miya8390/WinlatorMaliWCPHub/releases">Qualcomm proprietary + Mesa Turnip</a><br/>
++<b>zoerakk</b> — <a href="https://github.com/zoerakk/turnip/releases">Qualcomm proprietary (ELITE)</a><br/><br/>
++<b>Quick info</b><br/><br/>
++<b>Qualcomm driver</b><br/>
++Extracted from official Adreno drivers of recent devices. Partially compatible with similar chipsets, but emulation may show lower performance or rendering glitches.<br/><br/>
++<b>Mesa Turnip driver</b><br/>
++Open-source Mesa driver with broader Vulkan support and emulator-friendly behavior. Often more compatible or stable across devices.
++]]></string>
+     <string name="show_beta_releases">Show beta / nightly builds (WCP Hub content)</string>
+     <string name="channel_stable">Stable</string>
+     <string name="channel_beta">Beta</string>
