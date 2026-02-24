@@ -1,0 +1,52 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 6b59e7d..dbffbc7 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -370,6 +370,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             envVars.putAll(this.envVars);
+         }
+ 
++        String glibcRemovedPreload = stripIncompatibleGlibcPreloadEnvVar(envVars, wineBinPath);
+         boolean glibcCompatApplied = applyGlibcRuntimeCompatEnvVars(envVars, wineBinPath);
+ 
+         String emulator = !isEmpty(emulatorOverride) ? emulatorOverride : container.getEmulator();
+@@ -395,6 +396,17 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "glibc_tunables", envVars.get("GLIBC_TUNABLES")));
+         }
+ 
++        if (!isEmpty(glibcRemovedPreload) && (forensicMode || !isEmpty(forensicTraceId))) {
++            ForensicLogger.logEvent(context, "warn", "RUNTIME_GLIBC_PRELOAD_STRIPPED", forensicTraceId, "launcher",
++                    "Removed incompatible LD_PRELOAD for glibc-wrapped Wine launcher",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "wine_version", container != null ? container.getWineVersion() : "",
++                            "wine_path", imageFs.getWinePath(),
++                            "removed_ld_preload", glibcRemovedPreload));
++        }
++
+         // Construct the command without Box64 to the Wine executable
+         String command = "";
+         String overriddenCommand = envVars.get("GUEST_PROGRAM_LAUNCHER_COMMAND");
+@@ -469,6 +481,21 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return true;
+     }
+ 
++    private String stripIncompatibleGlibcPreloadEnvVar(EnvVars envVars, String wineBinPath) {
++        if (isEmpty(wineBinPath)) return "";
++
++        File wineReal = new File(wineBinPath, "wine.glibc-real");
++        if (!wineReal.isFile()) return "";
++
++        String preload = envVars.get("LD_PRELOAD");
++        if (isEmpty(preload)) return "";
++
++        // Winlator's Android sysvshm preload is a bionic library. Injecting it into glibc-wrapped
++        // Wine/Hangover launchers causes early loader failures (missing libdl.so/ld-android.so) or traps.
++        envVars.put("LD_PRELOAD", "");
++        return preload;
++    }
++
+     private static String appendGlibcTunable(String currentTunables, String requiredTunable) {
+         if (isEmpty(requiredTunable)) return currentTunables == null ? "" : currentTunables;
+         if (isEmpty(currentTunables)) return requiredTunable;

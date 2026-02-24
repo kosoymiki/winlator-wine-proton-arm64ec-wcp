@@ -157,6 +157,9 @@ winedllpath="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\$
 export PATH="\${bindir}:\${root}/bin:\${PATH}"
 export WINEDLLPATH="\${winedllpath}\${WINEDLLPATH:+:\${WINEDLLPATH}}"
 export LD_LIBRARY_PATH="\${libpath}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+# Winlator injects Android sysvshm as a bionic LD_PRELOAD. This breaks glibc-wrapped Wine/Hangover
+# launchers (missing libdl.so/ld-android.so or early traps), so glibc wrappers must clear it.
+unset LD_PRELOAD
 # Android app seccomp often blocks glibc rseq and causes SIGSYS (signal 31) very early.
 case ":\${GLIBC_TUNABLES:-}:" in
   *:glibc.pthread.rseq=*:) ;;
