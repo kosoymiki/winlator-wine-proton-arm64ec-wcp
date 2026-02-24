@@ -12,7 +12,7 @@ on:
       winlator_ref:
         description: "Winlator Ludashi git ref"
         required: false
-        default: "winlator_bionic"
+        default: "7a315deaf899f0945fbb779970fe897b96281bb6"
       runtime_release_tag:
         description: "Release tag containing runtime WCP assets"
         required: false
@@ -28,7 +28,7 @@ permissions:
 env:
   WINLATOR_OUTPUT_DIR: ${{ github.workspace }}/out/winlator
   WINLATOR_LUDASHI_REPO: https://github.com/StevenMXZ/Winlator-Ludashi.git
-  WINLATOR_LUDASHI_REF: ${{ github.event.inputs.winlator_ref || 'winlator_bionic' }}
+  WINLATOR_LUDASHI_REF: ${{ github.event.inputs.winlator_ref || '7a315deaf899f0945fbb779970fe897b96281bb6' }}
   RUNTIME_RELEASE_REPO: ${{ github.repository }}
   RUNTIME_RELEASE_TAG: ${{ github.event.inputs.runtime_release_tag || 'wcp-latest' }}
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
