@@ -13,7 +13,18 @@ middle of the stack.
 - `0001-0005` - base fork, runtime/FEX, branding, CI compatibility
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
-- `0025-0030` - upscale transfer (control plane -> guardrails -> execution contract -> container UI)
+- `0025-0026` - upscale transfer (consolidated runtime + launcher + container UI flow)
+
+## Upscale patch consolidation note
+
+The original incremental upscale bring-up (`0025`..`0030`) was intentionally
+split during implementation for safe iteration. After validation, it was
+consolidated into:
+
+- `0025-upscale-runtime-guardrails-and-swfg-contract.patch`
+  - historical steps: old `0025`, `0026`, `0027`
+- `0026-upscale-container-bridge-launch-normalization-and-ui.patch`
+  - historical steps: old `0028`, `0029`, `0030`
 
 ## Known high-overlap files (intentional)
 

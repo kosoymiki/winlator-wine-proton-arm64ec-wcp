@@ -1,0 +1,871 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 8b723c1..613f637 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -87,6 +87,10 @@ import com.winlator.cmod.inputcontrols.ControlsProfile;
+ import com.winlator.cmod.inputcontrols.ExternalController;
+ import com.winlator.cmod.inputcontrols.InputControlsManager;
+ import com.winlator.cmod.graphics.DriverProbeResult;
++import com.winlator.cmod.graphics.FrameGenerationConfig;
++import com.winlator.cmod.graphics.GraphicsSuitability;
++import com.winlator.cmod.graphics.PerfPresetResolver;
++import com.winlator.cmod.graphics.ScaleForceProfile;
+ import com.winlator.cmod.math.Mathf;
+ import com.winlator.cmod.math.XForm;
+ import com.winlator.cmod.midi.MidiHandler;
+@@ -1731,6 +1735,27 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         vulkanVersion = vulkanVersion + "." + vulkanVersionPatch;
+         envVars.put("WRAPPER_VK_VERSION", vulkanVersion);
+         envVars.put("WINLATOR_DETECTED_VK_VERSION", detectedVkVersion == null ? "" : detectedVkVersion);
++        GraphicsSuitability graphicsSuitability = GraphicsSuitability.evaluate(this, versionProbeDriverId, driverProbe);
++        envVars.put("WINLATOR_GRAPHICS_SUITABILITY_TIER", graphicsSuitability.getTier());
++        envVars.put("WINLATOR_GRAPHICS_DRIVER_FAMILY", graphicsSuitability.getDriverFamily());
++        if (!graphicsSuitability.getReasons().isEmpty()) {
++            envVars.put("WINLATOR_GRAPHICS_SUITABILITY_REASONS", graphicsSuitability.getReasons().toString());
++        }
++        ForensicLogger.logEvent(this,
++                graphicsSuitability.isGood() ? "info" : (graphicsSuitability.isUnsafe() ? "warn" : "info"),
++                "RUNTIME_GRAPHICS_SUITABILITY",
++                forensicTraceId,
++                "graphics_suitability",
++                graphicsSuitability.isGood() ? "graphics suitability good" : "graphics suitability degraded",
++                ForensicLogger.fields(
++                        "suitability_tier", graphicsSuitability.getTier(),
++                        "suitability_summary", graphicsSuitability.summarize(),
++                        "driver_probe_status", driverProbe.isUsable() ? "usable" : "fallback",
++                        "driver_id", graphicsSuitability.getDriverId(),
++                        "driver_family", graphicsSuitability.getDriverFamily(),
++                        "detected_vk_version", graphicsSuitability.getVulkanVersion(),
++                        "detected_renderer", graphicsSuitability.getRenderer(),
++                        "suitability_reasons", graphicsSuitability.getReasons().toString()));
+ 
+         String blacklistedExtensions = graphicsDriverConfig.get("blacklistedExtensions");
+         envVars.put("WRAPPER_EXTENSION_BLACKLIST", blacklistedExtensions != null ? blacklistedExtensions : "");
+@@ -1747,13 +1772,127 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             envVars.put("WRAPPER_VMEM_MAX_SIZE", maxDeviceMemory);
+         
+         String presentMode = graphicsDriverConfig.get("presentMode");
+-        if (presentMode.contains("immediate")) {
+-            envVars.put("WRAPPER_MAX_IMAGE_COUNT", "1");
+-        }
+-        envVars.put("MESA_VK_WSI_PRESENT_MODE", presentMode);
+-
+-        String resourceType = graphicsDriverConfig.get("resourceType");
+-        envVars.put("WRAPPER_RESOURCE_TYPE", resourceType);
++        if (presentMode.contains("immediate")) {
++            envVars.put("WRAPPER_MAX_IMAGE_COUNT", "1");
++        }
++        envVars.put("MESA_VK_WSI_PRESENT_MODE", presentMode);
++
++        // Apply a deterministic performance/upscale control plane before late-stage wrapper env tweaks.
++        ScaleForceProfile basePerfProfile = PerfPresetResolver.resolveBase(this, envVars, driverProbe);
++        ScaleForceProfile perfProfile = PerfPresetResolver.applySuitabilityGuard(basePerfProfile, graphicsSuitability);
++        boolean perfPresetDowngraded = !basePerfProfile.getName().equals(perfProfile.getName()) ||
++                !basePerfProfile.getSource().equals(perfProfile.getSource());
++        if (perfPresetDowngraded) {
++            envVars.put("WINLATOR_UPSCALER_GUARD_REASON", graphicsSuitability.getReasons().toString());
++            ForensicLogger.logEvent(this,
++                    "warn",
++                    "RUNTIME_PERF_PRESET_DOWNGRADED",
++                    forensicTraceId,
++                    "graphics_perf",
++                    "performance preset downgraded by graphics suitability guard",
++                    ForensicLogger.fields(
++                            "perf_preset_base", basePerfProfile.getName(),
++                            "perf_preset_base_source", basePerfProfile.getSource(),
++                            "perf_preset_effective", perfProfile.getName(),
++                            "perf_preset_effective_source", perfProfile.getSource(),
++                            "suitability_tier", graphicsSuitability.getTier(),
++                            "suitability_reasons", graphicsSuitability.getReasons().toString()));
++            ForensicLogger.logEvent(this,
++                    "warn",
++                    "RUNTIME_UPSCALER_GUARD_APPLIED",
++                    forensicTraceId,
++                    "graphics_perf",
++                    "upscaler guardrails adjusted runtime policy",
++                    ForensicLogger.fields(
++                            "suitability_tier", graphicsSuitability.getTier(),
++                            "driver_family", graphicsSuitability.getDriverFamily(),
++                            "guard_reason", graphicsSuitability.getReasons().toString(),
++                            "perf_preset_before", basePerfProfile.getName(),
++                            "perf_preset_after", perfProfile.getName()));
++        }
++        PerfPresetResolver.apply(perfProfile, envVars, this.graphicsDriverConfig);
++        FrameGenerationConfig fgConfig = FrameGenerationConfig.fromEnv(envVars, perfProfile, graphicsSuitability);
++        fgConfig.applyTo(envVars);
++        if (fgConfig.hasOverrideConflict()) {
++            ForensicLogger.logEvent(this,
++                    "warn",
++                    "RUNTIME_SWFG_OVERRIDE_CONFLICT",
++                    forensicTraceId,
++                    "graphics_fg",
++                    "explicit software fg request overridden by runtime guard",
++                    ForensicLogger.fields(
++                            "swfg_requested_enabled", fgConfig.isRequestedEnabled() ? "1" : "0",
++                            "swfg_effective_enabled", fgConfig.isEnabled() ? "1" : "0",
++                            "swfg_guard_reason", fgConfig.getGuardReason(),
++                            "suitability_tier", graphicsSuitability.getTier(),
++                            "normalization_notes", fgConfig.getNormalizationNotes().toString()));
++        }
++        if (fgConfig.isDisabledByGuard()) {
++            ForensicLogger.logEvent(this,
++                    "warn",
++                    "RUNTIME_SWFG_DISABLED_BY_GUARD",
++                    forensicTraceId,
++                    "graphics_fg",
++                    "software frame-generation disabled by runtime guardrails",
++                    ForensicLogger.fields(
++                            "swfg_guard_reason", fgConfig.getGuardReason(),
++                            "suitability_tier", graphicsSuitability.getTier(),
++                            "perf_preset_effective", perfProfile.getName(),
++                            "swfg_requested_mode", fgConfig.getRequestedMode(),
++                            "swfg_effective_mode", fgConfig.getMode()));
++        }
++        ForensicLogger.logEvent(this,
++                "info",
++                "RUNTIME_SWFG_EFFECTIVE_CONFIG",
++                forensicTraceId,
++                "graphics_fg",
++                "resolved software frame-generation effective config",
++                ForensicLogger.fields(
++                        "swfg_source", fgConfig.getSource(),
++                        "swfg_requested_enabled", fgConfig.isRequestedEnabled() ? "1" : "0",
++                        "swfg_effective_enabled", fgConfig.isEnabled() ? "1" : "0",
++                        "swfg_requested_mode", fgConfig.getRequestedMode(),
++                        "swfg_effective_mode", fgConfig.getMode(),
++                        "swfg_requested_multiplier", fgConfig.getRequestedMultiplier(),
++                        "swfg_effective_multiplier", fgConfig.getMultiplier(),
++                        "swfg_requested_latency_budget_ms", fgConfig.getRequestedLatencyBudgetMs(),
++                        "swfg_effective_latency_budget_ms", fgConfig.getLatencyBudgetMs(),
++                        "swfg_requested_artifact_guard", fgConfig.getRequestedArtifactGuard(),
++                        "swfg_effective_artifact_guard", fgConfig.getArtifactGuard(),
++                        "swfg_normalized", fgConfig.isNormalized() ? "1" : "0",
++                        "swfg_normalization_notes", fgConfig.getNormalizationNotes().toString(),
++                        "swfg_guard_reason", fgConfig.getGuardReason()));
++        ForensicLogger.logEvent(this,
++                ScaleForceProfile.SAFE.equals(perfProfile.getName()) ? "warn" : "info",
++                "RUNTIME_PERF_PRESET_RESOLVED",
++                forensicTraceId,
++                "graphics_perf",
++                "resolved performance preset",
++                ForensicLogger.fields(
++                        "perf_preset", perfProfile.getName(),
++                        "perf_preset_source", perfProfile.getSource(),
++                        "driver_probe_status", driverProbe.isUsable() ? "usable" : "fallback",
++                        "scaleforce_enabled", envVars.get("WINLATOR_SCALEFORCE_ENABLED"),
++                        "present_mode_effective", envVars.get("MESA_VK_WSI_PRESENT_MODE")));
++        ForensicLogger.logEvent(this,
++                "info",
++                "RUNTIME_SWFG_CONTRACT",
++                forensicTraceId,
++                "graphics_fg",
++                "applied software frame-generation control plane",
++                ForensicLogger.fields(
++                        "swfg_requested", envVars.get("WINLATOR_SWFG"),
++                        "swfg_enabled", envVars.get("WINLATOR_SWFG_ENABLED"),
++                        "swfg_mode", envVars.get("WINLATOR_SWFG_MODE"),
++                        "swfg_source", envVars.get("WINLATOR_SWFG_SOURCE"),
++                        "swfg_multiplier", envVars.get("WINLATOR_SWFG_MULTIPLIER"),
++                        "swfg_latency_budget_ms", envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"),
++                        "swfg_artifact_guard", envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD"),
++                        "swfg_guard_reason", envVars.get("WINLATOR_SWFG_GUARD_REASON"),
++                        "swfg_override_conflict", envVars.get("WINLATOR_SWFG_OVERRIDE_CONFLICT")));
++
++        String resourceType = graphicsDriverConfig.get("resourceType");
++        envVars.put("WRAPPER_RESOURCE_TYPE", resourceType);
+ 
+         String syncFrame = graphicsDriverConfig.get("syncFrame");
+         if (syncFrame.equals("1"))
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java b/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java
+new file mode 100644
+index 0000000..2f0c1fd
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java
+@@ -0,0 +1,296 @@
++package com.winlator.cmod.graphics;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++public class FrameGenerationConfig {
++    public static final String MODE_OFF = "off";
++    public static final String MODE_MV_FG = "mv_fg";
++
++    public static final String GUARD_SAFE = "safe";
++    public static final String GUARD_BALANCED = "balanced";
++    public static final String GUARD_AGGRESSIVE = "aggressive";
++
++    private final boolean enabled;
++    private final String mode;
++    private final int multiplier;
++    private final int latencyBudgetMs;
++    private final String artifactGuard;
++    private final String source;
++    private final boolean requestedEnabled;
++    private final String requestedMode;
++    private final int requestedMultiplier;
++    private final int requestedLatencyBudgetMs;
++    private final String requestedArtifactGuard;
++    private final boolean normalized;
++    private final boolean disabledByGuard;
++    private final String guardReason;
++    private final boolean overrideConflict;
++    private final ArrayList<String> normalizationNotes;
++
++    public FrameGenerationConfig(boolean enabled, String mode, int multiplier, int latencyBudgetMs, String artifactGuard) {
++        this(enabled, mode, multiplier, latencyBudgetMs, artifactGuard,
++                "legacy", enabled, mode, multiplier, latencyBudgetMs, artifactGuard,
++                false, false, "", false, new ArrayList<>());
++    }
++
++    public FrameGenerationConfig(boolean enabled, String mode, int multiplier, int latencyBudgetMs, String artifactGuard,
++                                 String source, boolean requestedEnabled, String requestedMode,
++                                 int requestedMultiplier, int requestedLatencyBudgetMs, String requestedArtifactGuard,
++                                 boolean normalized, boolean disabledByGuard, String guardReason,
++                                 boolean overrideConflict, ArrayList<String> normalizationNotes) {
++        this.enabled = enabled;
++        this.mode = mode;
++        this.multiplier = multiplier;
++        this.latencyBudgetMs = latencyBudgetMs;
++        this.artifactGuard = artifactGuard;
++        this.source = source != null ? source : "unknown";
++        this.requestedEnabled = requestedEnabled;
++        this.requestedMode = requestedMode != null ? requestedMode : MODE_OFF;
++        this.requestedMultiplier = requestedMultiplier;
++        this.requestedLatencyBudgetMs = requestedLatencyBudgetMs;
++        this.requestedArtifactGuard = requestedArtifactGuard != null ? requestedArtifactGuard : GUARD_BALANCED;
++        this.normalized = normalized;
++        this.disabledByGuard = disabledByGuard;
++        this.guardReason = guardReason != null ? guardReason : "";
++        this.overrideConflict = overrideConflict;
++        this.normalizationNotes = normalizationNotes != null ? normalizationNotes : new ArrayList<>();
++    }
++
++    public static FrameGenerationConfig fromEnv(EnvVars envVars, ScaleForceProfile profile) {
++        return fromEnv(envVars, profile, null);
++    }
++
++    public static FrameGenerationConfig fromEnv(EnvVars envVars, ScaleForceProfile profile, GraphicsSuitability suitability) {
++        ArrayList<String> notes = new ArrayList<>();
++
++        String requestedModeRaw = envVars.get("WINLATOR_SWFG_MODE");
++        boolean requestedModeSpecified = requestedModeRaw != null && !requestedModeRaw.trim().isEmpty();
++        String effectiveMode = normalizeMode(requestedModeRaw);
++        if (requestedModeSpecified && !normalizeRaw(requestedModeRaw).equals(effectiveMode)) {
++            notes.add("mode_normalized");
++        }
++
++        String requestedToggleRaw = envVars.get("WINLATOR_SWFG");
++        boolean requestedEnabled = parseBoolean(requestedToggleRaw);
++        boolean autoRequested = parseBoolean(envVars.get("WINLATOR_SWFG_AUTO"));
++
++        boolean enabled = requestedEnabled;
++        String source = requestedEnabled || requestedModeSpecified ? "explicit" : "default";
++        if (!enabled && MODE_MV_FG.equalsIgnoreCase(effectiveMode)) {
++            enabled = true;
++            if (!requestedModeSpecified) notes.add("mode_implied_enable");
++        }
++
++        if (!enabled && profile != null && profile.isSoftwareFgRecommended() && autoRequested) {
++            enabled = true;
++            effectiveMode = MODE_MV_FG;
++            source = "auto-profile";
++        }
++
++        int requestedMultiplier = parseInt(envVars.get("WINLATOR_SWFG_MULTIPLIER"), 2);
++        int multiplier = clamp(requestedMultiplier, 1, 4);
++        if (multiplier != requestedMultiplier) notes.add("multiplier_clamped");
++
++        int requestedLatency = parseInt(envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"), 8);
++        int latencyBudgetMs = clamp(requestedLatency, 1, 50);
++        if (latencyBudgetMs != requestedLatency) notes.add("latency_clamped");
++
++        String requestedGuard = normalizeGuard(envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD"));
++        String requestedGuardRaw = envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD");
++        if (requestedGuardRaw != null && !requestedGuardRaw.trim().isEmpty()
++                && !normalizeRaw(requestedGuardRaw).equals(requestedGuard)) {
++            notes.add("artifact_guard_normalized");
++        }
++        String guard = requestedGuard;
++
++        boolean disabledByGuard = false;
++        String guardReason = "";
++
++        if (profile != null && ScaleForceProfile.SAFE.equals(profile.getName()) && enabled) {
++            disabledByGuard = true;
++            guardReason = "safe_profile";
++            enabled = false;
++            effectiveMode = MODE_OFF;
++            guard = GUARD_SAFE;
++            notes.add("fg_disabled_by_safe_profile");
++        }
++
++        if (suitability != null) {
++            if (suitability.isUnsafe()) {
++                if (enabled || !GUARD_SAFE.equals(guard)) {
++                    disabledByGuard = true;
++                    guardReason = appendGuardReason(guardReason, "graphics_suitability_unsafe");
++                    notes.add("fg_disabled_by_graphics_suitability");
++                }
++                enabled = false;
++                effectiveMode = MODE_OFF;
++                guard = GUARD_SAFE;
++            } else if (suitability.isDegraded()) {
++                if (GUARD_AGGRESSIVE.equals(guard)) {
++                    guard = GUARD_BALANCED;
++                    notes.add("artifact_guard_downgraded_by_suitability");
++                }
++                if (multiplier > 2) {
++                    multiplier = 2;
++                    notes.add("multiplier_downgraded_by_suitability");
++                }
++            }
++        }
++
++        boolean overrideConflict = requestedEnabled && disabledByGuard;
++        if (overrideConflict) {
++            notes.add("explicit_enable_overridden_by_guard");
++        }
++
++        boolean normalized = !notes.isEmpty();
++        return new FrameGenerationConfig(
++                enabled,
++                effectiveMode,
++                multiplier,
++                latencyBudgetMs,
++                guard,
++                source,
++                requestedEnabled,
++                requestedModeSpecified ? normalizeMode(requestedModeRaw) : MODE_OFF,
++                requestedMultiplier,
++                requestedLatency,
++                requestedGuard,
++                normalized,
++                disabledByGuard,
++                guardReason,
++                overrideConflict,
++                notes
++        );
++    }
++
++    public void applyTo(EnvVars envVars) {
++        envVars.put("WINLATOR_SWFG_ENABLED", enabled ? "1" : "0");
++        envVars.put("WINLATOR_SWFG_MODE", mode);
++        envVars.put("WINLATOR_SWFG_MULTIPLIER", String.valueOf(multiplier));
++        envVars.put("WINLATOR_SWFG_LATENCY_BUDGET_MS", String.valueOf(latencyBudgetMs));
++        envVars.put("WINLATOR_SWFG_ARTIFACT_GUARD", artifactGuard);
++        envVars.put("WINLATOR_SWFG_SOURCE", source);
++        envVars.put("WINLATOR_SWFG_NORMALIZED", normalized ? "1" : "0");
++        if (disabledByGuard) {
++            envVars.put("WINLATOR_SWFG_GUARD_REASON", guardReason);
++        } else {
++            envVars.remove("WINLATOR_SWFG_GUARD_REASON");
++        }
++        if (overrideConflict) {
++            envVars.put("WINLATOR_SWFG_OVERRIDE_CONFLICT", "1");
++        } else {
++            envVars.remove("WINLATOR_SWFG_OVERRIDE_CONFLICT");
++        }
++    }
++
++    public boolean isEnabled() {
++        return enabled;
++    }
++
++    public String getMode() {
++        return mode;
++    }
++
++    public int getMultiplier() {
++        return multiplier;
++    }
++
++    public int getLatencyBudgetMs() {
++        return latencyBudgetMs;
++    }
++
++    public String getArtifactGuard() {
++        return artifactGuard;
++    }
++
++    public String getSource() {
++        return source;
++    }
++
++    public boolean isRequestedEnabled() {
++        return requestedEnabled;
++    }
++
++    public String getRequestedMode() {
++        return requestedMode;
++    }
++
++    public int getRequestedMultiplier() {
++        return requestedMultiplier;
++    }
++
++    public int getRequestedLatencyBudgetMs() {
++        return requestedLatencyBudgetMs;
++    }
++
++    public String getRequestedArtifactGuard() {
++        return requestedArtifactGuard;
++    }
++
++    public boolean isNormalized() {
++        return normalized;
++    }
++
++    public boolean isDisabledByGuard() {
++        return disabledByGuard;
++    }
++
++    public String getGuardReason() {
++        return guardReason;
++    }
++
++    public boolean hasOverrideConflict() {
++        return overrideConflict;
++    }
++
++    public List<String> getNormalizationNotes() {
++        return Collections.unmodifiableList(normalizationNotes);
++    }
++
++    private static boolean parseBoolean(String value) {
++        String lowered = value != null ? value.trim().toLowerCase() : "";
++        return "1".equals(lowered) || "true".equals(lowered) || "yes".equals(lowered) || "on".equals(lowered);
++    }
++
++    private static int parseInt(String value, int fallback) {
++        try {
++            return Integer.parseInt(value);
++        } catch (Exception ignored) {
++            return fallback;
++        }
++    }
++
++    private static int clamp(int value, int min, int max) {
++        if (value < min) return min;
++        if (value > max) return max;
++        return value;
++    }
++
++    private static String normalizeMode(String value) {
++        String lowered = normalizeRaw(value);
++        if (MODE_MV_FG.equals(lowered)) return MODE_MV_FG;
++        return MODE_OFF;
++    }
++
++    private static String normalizeGuard(String value) {
++        String lowered = normalizeRaw(value);
++        if (GUARD_SAFE.equals(lowered)) return GUARD_SAFE;
++        if (GUARD_AGGRESSIVE.equals(lowered)) return GUARD_AGGRESSIVE;
++        return GUARD_BALANCED;
++    }
++
++    private static String normalizeRaw(String value) {
++        return value != null ? value.trim().toLowerCase() : "";
++    }
++
++    private static String appendGuardReason(String existing, String part) {
++        if (part == null || part.isEmpty()) return existing != null ? existing : "";
++        if (existing == null || existing.isEmpty()) return part;
++        if (existing.contains(part)) return existing;
++        return existing + "," + part;
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/GraphicsSuitability.java b/app/src/main/java/com/winlator/cmod/graphics/GraphicsSuitability.java
+new file mode 100644
+index 0000000..bcb0699
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/GraphicsSuitability.java
+@@ -0,0 +1,222 @@
++package com.winlator.cmod.graphics;
++
++import android.content.Context;
++
++import com.winlator.cmod.core.GPUInformation;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Locale;
++
++public class GraphicsSuitability {
++    public static final String GOOD = "good";
++    public static final String DEGRADED = "degraded";
++    public static final String UNSAFE = "unsafe";
++
++    private final String driverId;
++    private final String renderer;
++    private final String vulkanVersion;
++    private final String driverFamily;
++    private final String tier;
++    private final int[] parsedVulkanVersion;
++    private final ArrayList<String> reasons;
++
++    private GraphicsSuitability(String driverId, String renderer, String vulkanVersion, String driverFamily,
++                                String tier, int[] parsedVulkanVersion, ArrayList<String> reasons) {
++        this.driverId = driverId != null ? driverId : "";
++        this.renderer = renderer != null ? renderer : "";
++        this.vulkanVersion = vulkanVersion != null ? vulkanVersion : "";
++        this.driverFamily = driverFamily != null ? driverFamily : "unknown";
++        this.tier = normalizeTier(tier);
++        this.parsedVulkanVersion = parsedVulkanVersion != null ? parsedVulkanVersion : new int[]{0, 0, 0};
++        this.reasons = reasons != null ? reasons : new ArrayList<>();
++    }
++
++    public static GraphicsSuitability evaluate(Context context, String driverId, DriverProbeResult probeResult) {
++        String effectiveDriverId = driverId;
++        if (effectiveDriverId == null || effectiveDriverId.trim().isEmpty()) {
++            effectiveDriverId = "System";
++        }
++
++        String renderer = "";
++        String vkVersion = "";
++        String[] extensions = null;
++
++        try {
++            renderer = GPUInformation.getRenderer(effectiveDriverId, context);
++        } catch (Throwable ignored) {}
++        try {
++            vkVersion = GPUInformation.getVulkanVersion(effectiveDriverId, context);
++        } catch (Throwable ignored) {}
++        try {
++            extensions = GPUInformation.enumerateExtensions(effectiveDriverId, context);
++        } catch (Throwable ignored) {}
++
++        ArrayList<String> reasons = new ArrayList<>();
++        int severity = 0; // 0 good, 1 degraded, 2 unsafe
++
++        boolean requestedCustom = probeResult != null && !isSystemDriverId(probeResult.getRequestedDriverId());
++        boolean probeFallback = probeResult != null && requestedCustom && !probeResult.isUsable();
++        if (probeFallback) {
++            reasons.add("driver_probe_fallback");
++            severity = Math.max(severity, 2);
++        }
++
++        String normalizedRenderer = renderer != null ? renderer.trim() : "";
++        if (normalizedRenderer.isEmpty()) {
++            reasons.add("renderer_empty");
++            severity = Math.max(severity, 2);
++        } else if (normalizedRenderer.toLowerCase(Locale.US).contains("unknown")) {
++            reasons.add("renderer_unknown");
++            severity = Math.max(severity, 2);
++        }
++
++        String driverFamily = classifyDriverFamily(normalizedRenderer);
++        if ("qualcomm_proprietary".equals(driverFamily)) {
++            reasons.add("qualcomm_proprietary_cautious");
++            severity = Math.max(severity, 1);
++        }
++
++        int[] vk = parseSemverLoose(vkVersion);
++        if (vk[0] == 0 && vk[1] == 0) {
++            reasons.add("vulkan_version_unknown");
++            severity = Math.max(severity, 1);
++        } else if (compareVersions(vk, new int[]{1, 1, 0}) < 0) {
++            reasons.add("vulkan_lt_1_1");
++            severity = Math.max(severity, 2);
++        } else if (compareVersions(vk, new int[]{1, 2, 0}) < 0) {
++            reasons.add("vulkan_lt_1_2");
++            severity = Math.max(severity, 1);
++        } else if (compareVersions(vk, new int[]{1, 3, 0}) < 0) {
++            reasons.add("vulkan_lt_1_3");
++            severity = Math.max(severity, 1);
++        }
++
++        HashSet<String> extSet = new HashSet<>();
++        if (extensions != null) {
++            for (String ext : extensions) {
++                if (ext != null) extSet.add(ext.toLowerCase(Locale.US));
++            }
++        }
++        if (!extSet.isEmpty()) {
++            if (!extSet.contains("vk_khr_timeline_semaphore")) {
++                reasons.add("missing_ext_timeline_semaphore");
++                severity = Math.max(severity, 1);
++            }
++            if (!extSet.contains("vk_khr_synchronization2")) {
++                reasons.add("missing_ext_synchronization2");
++                severity = Math.max(severity, 1);
++            }
++            if (!extSet.contains("vk_khr_dynamic_rendering")) {
++                reasons.add("missing_ext_dynamic_rendering");
++                severity = Math.max(severity, 1);
++            }
++        }
++
++        String tier = severity >= 2 ? UNSAFE : (severity == 1 ? DEGRADED : GOOD);
++        return new GraphicsSuitability(effectiveDriverId, normalizedRenderer, vkVersion, driverFamily, tier, vk, reasons);
++    }
++
++    public String getDriverId() {
++        return driverId;
++    }
++
++    public String getRenderer() {
++        return renderer;
++    }
++
++    public String getVulkanVersion() {
++        return vulkanVersion;
++    }
++
++    public String getDriverFamily() {
++        return driverFamily;
++    }
++
++    public String getTier() {
++        return tier;
++    }
++
++    public int[] getParsedVulkanVersion() {
++        return new int[]{parsedVulkanVersion[0], parsedVulkanVersion[1], parsedVulkanVersion[2]};
++    }
++
++    public List<String> getReasons() {
++        return Collections.unmodifiableList(reasons);
++    }
++
++    public boolean isGood() {
++        return GOOD.equals(tier);
++    }
++
++    public boolean isDegraded() {
++        return DEGRADED.equals(tier);
++    }
++
++    public boolean isUnsafe() {
++        return UNSAFE.equals(tier);
++    }
++
++    public boolean shouldForceSafePreset() {
++        return isUnsafe();
++    }
++
++    public boolean shouldDowngradeAggressivePreset() {
++        return !isGood();
++    }
++
++    public String summarize() {
++        return "tier=" + tier
++                + ", family=" + driverFamily
++                + ", driver=" + driverId
++                + ", renderer=" + (renderer.isEmpty() ? "<none>" : renderer)
++                + ", vk=" + (vulkanVersion.isEmpty() ? "<none>" : vulkanVersion)
++                + (reasons.isEmpty() ? "" : ", reasons=" + reasons);
++    }
++
++    private static boolean isSystemDriverId(String value) {
++        return value == null || value.trim().isEmpty() || "system".equalsIgnoreCase(value.trim());
++    }
++
++    private static String classifyDriverFamily(String renderer) {
++        String normalized = renderer != null ? renderer.toLowerCase(Locale.US) : "";
++        if (normalized.contains("turnip") || normalized.contains("mesa")) return "mesa_turnip";
++        if (normalized.contains("adreno") || normalized.contains("qualcomm")) return "qualcomm_proprietary";
++        if (normalized.contains("zink")) return "zink";
++        if (normalized.contains("llvmpipe") || normalized.contains("swiftshader")) return "software";
++        return "unknown";
++    }
++
++    private static String normalizeTier(String tier) {
++        if (UNSAFE.equals(tier)) return UNSAFE;
++        if (DEGRADED.equals(tier)) return DEGRADED;
++        return GOOD;
++    }
++
++    private static int compareVersions(int[] a, int[] b) {
++        if (a[0] != b[0]) return a[0] - b[0];
++        if (a[1] != b[1]) return a[1] - b[1];
++        return a[2] - b[2];
++    }
++
++    private static int[] parseSemverLoose(String s) {
++        if (s == null) return new int[]{0, 0, 0};
++        int[] out = new int[]{0, 0, 0};
++        int index = 0;
++        int value = -1;
++        for (int i = 0; i < s.length() && index < 3; i++) {
++            char c = s.charAt(i);
++            if (c >= '0' && c <= '9') {
++                if (value < 0) value = 0;
++                value = (value * 10) + (c - '0');
++            } else if (value >= 0) {
++                out[index++] = value;
++                value = -1;
++            }
++        }
++        if (value >= 0 && index < 3) out[index] = value;
++        return out;
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java b/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java
+new file mode 100644
+index 0000000..c631d88
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java
+@@ -0,0 +1,108 @@
++package com.winlator.cmod.graphics;
++
++import android.content.Context;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.util.HashMap;
++
++public class PerfPresetResolver {
++    private PerfPresetResolver() {}
++
++    public static ScaleForceProfile resolve(Context context, EnvVars envVars, DriverProbeResult probeResult) {
++        return resolve(context, envVars, probeResult, null);
++    }
++
++    public static ScaleForceProfile resolve(Context context, EnvVars envVars, DriverProbeResult probeResult, GraphicsSuitability suitability) {
++        ScaleForceProfile base = resolveBase(context, envVars, probeResult);
++        return applySuitabilityGuard(base, suitability);
++    }
++
++    public static ScaleForceProfile resolveBase(Context context, EnvVars envVars, DriverProbeResult probeResult) {
++        String explicitPreset = envVars.get("WINLATOR_PERF_PRESET");
++        if (!explicitPreset.isEmpty()) {
++            return buildExplicitPreset(explicitPreset);
++        }
++
++        String packageName = context != null ? context.getPackageName().toLowerCase() : "";
++        boolean vendorHint = packageName.contains("ludashi") || packageName.contains("redmagic");
++        if (vendorHint) {
++            return new ScaleForceProfile(ScaleForceProfile.SCALEFORCE, "vendor-package", true, true);
++        }
++
++        if (probeResult != null && !probeResult.isUsable()) {
++            return new ScaleForceProfile(ScaleForceProfile.SAFE, "driver-fallback", false, false);
++        }
++
++        return new ScaleForceProfile(ScaleForceProfile.BALANCED, "default", false, false);
++    }
++
++    public static ScaleForceProfile applySuitabilityGuard(ScaleForceProfile profile, GraphicsSuitability suitability) {
++        if (profile == null) {
++            profile = new ScaleForceProfile(ScaleForceProfile.BALANCED, "null-profile", false, false);
++        }
++        if (suitability == null || suitability.isGood()) {
++            return profile;
++        }
++
++        String guardSource = "suitability-" + suitability.getTier();
++        if (suitability.shouldForceSafePreset()) {
++            if (ScaleForceProfile.SAFE.equals(profile.getName())) {
++                return new ScaleForceProfile(ScaleForceProfile.SAFE, guardSource, false, false);
++            }
++            return new ScaleForceProfile(ScaleForceProfile.SAFE, guardSource, false, false);
++        }
++
++        if (suitability.shouldDowngradeAggressivePreset() && ScaleForceProfile.SCALEFORCE.equals(profile.getName())) {
++            return new ScaleForceProfile(ScaleForceProfile.BALANCED, guardSource, false, false);
++        }
++        return profile;
++    }
++
++    public static void apply(ScaleForceProfile profile, EnvVars envVars, HashMap<String, String> graphicsDriverConfig) {
++        if (profile == null) {
++            profile = new ScaleForceProfile(ScaleForceProfile.BALANCED, "null-profile", false, false);
++        }
++
++        envVars.put("WINLATOR_PERF_PRESET", profile.getName());
++        envVars.put("WINLATOR_PERF_PRESET_SOURCE", profile.getSource());
++
++        String presentMode = graphicsDriverConfig != null ? graphicsDriverConfig.get("presentMode") : "";
++        if (presentMode == null) presentMode = "";
++
++        if (ScaleForceProfile.SCALEFORCE.equals(profile.getName())) {
++            envVars.put("WINLATOR_SCALEFORCE_ENABLED", "1");
++
++            if (!"immediate".equalsIgnoreCase(presentMode) && "0".equals(envVars.get("WRAPPER_MAX_IMAGE_COUNT"))) {
++                envVars.put("WRAPPER_MAX_IMAGE_COUNT", "2");
++            }
++
++            if (!envVars.has("mesa_glthread")) envVars.put("mesa_glthread", "true");
++            if (!envVars.has("WINEESYNC")) envVars.put("WINEESYNC", "1");
++            return;
++        }
++
++        if (ScaleForceProfile.SAFE.equals(profile.getName())) {
++            envVars.put("WINLATOR_SCALEFORCE_ENABLED", "0");
++            envVars.put("WINLATOR_SWFG", "0");
++
++            if ("mailbox".equalsIgnoreCase(presentMode)) {
++                envVars.put("MESA_VK_WSI_PRESENT_MODE", "fifo");
++            }
++            return;
++        }
++
++        envVars.put("WINLATOR_SCALEFORCE_ENABLED", "0");
++    }
++
++    private static ScaleForceProfile buildExplicitPreset(String presetValue) {
++        String preset = presetValue != null ? presetValue.trim().toLowerCase() : "";
++        if (ScaleForceProfile.SCALEFORCE.equals(preset)) {
++            return new ScaleForceProfile(ScaleForceProfile.SCALEFORCE, "explicit", true, true);
++        }
++        if (ScaleForceProfile.SAFE.equals(preset)) {
++            return new ScaleForceProfile(ScaleForceProfile.SAFE, "explicit", false, false);
++        }
++        return new ScaleForceProfile(ScaleForceProfile.BALANCED, "explicit", false, false);
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java b/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java
+new file mode 100644
+index 0000000..08bab38
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java
+@@ -0,0 +1,43 @@
++package com.winlator.cmod.graphics;
++
++public class ScaleForceProfile {
++    public static final String SCALEFORCE = "scaleforce";
++    public static final String BALANCED = "balanced";
++    public static final String SAFE = "safe";
++
++    private final String name;
++    private final String source;
++    private final boolean aggressiveTuning;
++    private final boolean softwareFgRecommended;
++
++    public ScaleForceProfile(String name, String source, boolean aggressiveTuning, boolean softwareFgRecommended) {
++        this.name = normalizeName(name);
++        this.source = source != null ? source : "unknown";
++        this.aggressiveTuning = aggressiveTuning;
++        this.softwareFgRecommended = softwareFgRecommended;
++    }
++
++    private static String normalizeName(String value) {
++        if (value == null) return BALANCED;
++        String lowered = value.trim().toLowerCase();
++        if (SCALEFORCE.equals(lowered)) return SCALEFORCE;
++        if (SAFE.equals(lowered)) return SAFE;
++        return BALANCED;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public String getSource() {
++        return source;
++    }
++
++    public boolean isAggressiveTuning() {
++        return aggressiveTuning;
++    }
++
++    public boolean isSoftwareFgRecommended() {
++        return softwareFgRecommended;
++    }
++}

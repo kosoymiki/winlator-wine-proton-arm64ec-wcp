@@ -3,7 +3,13 @@
 This log tracks the upscale transfer work from Eden/Yuzu/Citron into Winlator and
 captures the reasoning for each patch-level step.
 
-## Patch `0025` - Control Plane Baseline
+Note: the implementation was developed incrementally as `0025..0030`, then
+consolidated in the patch stack to reduce maintenance overhead:
+
+- current `0025` = historical `0025+0026+0027`
+- current `0026` = historical `0028+0029+0030`
+
+## Historical Patch `0025` - Control Plane Baseline
 
 ### Before
 - Missing structured upscale control plane in Winlator runtime.
@@ -17,7 +23,7 @@ captures the reasoning for each patch-level step.
 - Established base preset resolution + SWFG env contract.
 - Created stable foundation for guardrails and execution-plane work.
 
-## Patch `0026` - Graphics Suitability Guardrails
+## Historical Patch `0026` - Graphics Suitability Guardrails
 
 ### Before
 - `0025` could enable aggressive presets without validating driver suitability.
@@ -31,7 +37,7 @@ captures the reasoning for each patch-level step.
 - Runtime can downgrade presets with explicit reasons.
 - Forensic events now explain *why* a preset changes.
 
-## Patch `0027` - SWFG Execution Contract Completion
+## Historical Patch `0027` - SWFG Execution Contract Completion
 
 ### Before
 - Control-plane existed but effective SWFG config lacked full normalization/conflict logging.
@@ -45,7 +51,7 @@ captures the reasoning for each patch-level step.
 - Effective SWFG config is deterministic and observable in logs.
 - Guard actions no longer look like unexplained behavior changes.
 
-## Patch `0028` - Container Schema Bridge
+## Historical Patch `0028` - Container Schema Bridge
 
 ### Before
 - Upscale controls existed only as env overrides; no container-level source of truth.
@@ -58,7 +64,7 @@ captures the reasoning for each patch-level step.
 - Container config now participates directly in upscale policy resolution.
 - Forensic logs can attribute runtime config to container settings.
 
-## Patch `0029` - Launcher Final Normalization
+## Historical Patch `0029` - Launcher Final Normalization
 
 ### Before
 - Runtime could still receive malformed/conflicting `WINLATOR_SWFG_*` values before submit.
@@ -71,7 +77,7 @@ captures the reasoning for each patch-level step.
 - Launch step acts as final safety gate for upscale env.
 - Cross-package comparison (Wine/GE/GameNative) is easier and less noisy.
 
-## Patch `0030` - Container UI Controls
+## Historical Patch `0030` - Container UI Controls
 
 ### Before
 - Control plane and schema existed, but no stable UI for per-container configuration.
@@ -84,7 +90,7 @@ captures the reasoning for each patch-level step.
 - End-to-end path exists: UI -> `.container` -> runtime env -> resolver -> telemetry.
 - This is the first version suitable for real ADB validation of user-facing upscale control.
 
-## Patch Interaction Audit (through `0030`)
+## Patch Interaction Audit (historical split `0025..0030`)
 
 ### Intentional overlap zones
 - `XServerDisplayActivity.java`: `0025`, `0026`, `0027`, `0028`
@@ -100,9 +106,27 @@ captures the reasoning for each patch-level step.
 - Final env normalization exists only in launcher (`0029`) to avoid duplicate logic spread.
 - Guard decisions are logged at runtime (`0026`, `0027`) instead of hidden in UI.
 
+## Consolidation Step (patch stack cleanup)
+
+### Before
+- Patch stack contained six upscale patches (`0025..0030`) with intentional overlap.
+- This was safe for iteration, but expensive to maintain and review long-term.
+
+### During
+- Rebuilt consolidated patch artifacts from the validated export baseline:
+  - `a273fc8..da1465b` -> new patch stack `0025`
+  - `da1465b..2b07678` -> new patch stack `0026`
+- Removed old patch files `0027..0030` from `ci/winlator/patches`.
+- Kept implementation code unchanged (artifact-level consolidation only).
+
+### After
+- Patch stack is shorter and easier to review (`0025..0026` for upscale).
+- Functional behavior remains identical to validated historical split patches.
+- Audit tooling confirms stack applies end-to-end.
+
 ## Next Work
 
-- `0031+`: upscale forensic validation matrix + patch-stack audit tooling (repo-level)
+- `0031+`: runtime upscale validation / deeper renderer behavior parity work
 - Runtime validation against:
   - `container n2` (Steven reference)
   - problematic Wine/GE/GameNative containers
