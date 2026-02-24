@@ -102,7 +102,8 @@ collect_logcat_filtered() {
 collect_app_snapshots() {
   local out_dir="$1"
   mkdir -p "${out_dir}"
-  adb_s shell "run-as ${WLT_PACKAGE} sh -c 'find ./files/imagefs/home -maxdepth 2 -name .container -print | sort'" \
+  # Android toybox find doesn't support -maxdepth on many devices.
+  adb_s shell "run-as ${WLT_PACKAGE} sh -c 'find ./files/imagefs/home -type f -name .container 2>/dev/null | sort'" \
     > "${out_dir}/containers-list.txt" 2>&1 || true
   adb_s shell "run-as ${WLT_PACKAGE} sh -c 'for f in ./files/imagefs/home/xuser-*/.container; do [ -f \"\$f\" ] || continue; echo ===== \$f =====; cat \"\$f\"; echo; done'" \
     > "${out_dir}/containers-json.txt" 2>&1 || true
@@ -122,7 +123,7 @@ collect_app_snapshots() {
 
 snapshot_sdcard_runtime_index() {
   local out_file="$1"
-  adb_s shell "find /sdcard/Winlator/logs -maxdepth 1 -type f -printf '%p\n' 2>/dev/null | sort" \
+  adb_s shell "sh -c 'for f in /sdcard/Winlator/logs/*; do [ -f \"\$f\" ] && printf \"%s\n\" \"\$f\"; done | sort'" \
     > "${out_file}" 2>&1 || true
 }
 
@@ -130,7 +131,7 @@ collect_sdcard_runtime_logs() {
   local out_dir="$1"
   local before_index="${2:-}"
   local after_index="${out_dir}/sdcard-runtime-logs-index.txt"
-  adb_s shell "find /sdcard/Winlator/logs -maxdepth 1 -type f 2>/dev/null | sort" \
+  adb_s shell "sh -c 'for f in /sdcard/Winlator/logs/*; do [ -f \"\$f\" ] && printf \"%s\n\" \"\$f\"; done | sort'" \
     > "${after_index}" 2>&1 || true
   [[ "${WLT_CAPTURE_RUNTIME_CONTENTS}" == "1" ]] || return 0
   mkdir -p "${out_dir}/runtime-logs"
