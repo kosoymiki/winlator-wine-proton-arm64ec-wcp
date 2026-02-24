@@ -1,0 +1,281 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index deb93cd..7c69e92 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -421,22 +421,26 @@ public class ContentsFragment extends Fragment {
+                 holder.ibDownload.setVisibility(View.GONE);
+                 holder.progressBar.setVisibility(View.VISIBLE);
+ 
+-                Intent intent = new Intent();
+-                intent.setData(Uri.parse(profile.remoteUrl));
++                Intent intent = new Intent();
++                intent.setData(Uri.parse(profile.remoteUrl));
+                 new Thread(() -> {
+                     long timestamp = System.currentTimeMillis();
+                     File output = new File(getContext().getCacheDir(), "content_" + timestamp + ".wcp");
+-                    if (Downloader.downloadFile(profile.remoteUrl, output)) {
+-                        intent.setData(Uri.parse(output.getAbsolutePath()));
+-                    }
+-                    getActivity().runOnUiThread(() -> {
+-                        holder.progressBar.setVisibility(View.GONE);
+-                        holder.ibDownload.setVisibility(View.VISIBLE);
+-                        onActivityResult(MainActivity.OPEN_FILE_REQUEST_CODE, Activity.RESULT_OK, intent);
+-                    });
+-                }).start();
+-            });
+-        }
++                    boolean downloaded = Downloader.downloadFile(profile.remoteUrl, output);
++                    if (downloaded) intent.setData(Uri.parse(output.getAbsolutePath()));
++                    getActivity().runOnUiThread(() -> {
++                        holder.progressBar.setVisibility(View.GONE);
++                        holder.ibDownload.setVisibility(View.VISIBLE);
++                        if (!downloaded) {
++                            if (output.exists()) FileUtils.delete(output);
++                            AppUtils.showToast(getContext(), R.string.unable_to_download_file);
++                            return;
++                        }
++                        onActivityResult(MainActivity.OPEN_FILE_REQUEST_CODE, Activity.RESULT_OK, intent);
++                    });
++                }).start();
++            });
++        }
+ 
+         @Override
+         public int getItemCount() {
+diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
+index a0a41a1..a513a57 100644
+--- a/app/src/main/java/com/winlator/cmod/container/Container.java
++++ b/app/src/main/java/com/winlator/cmod/container/Container.java
+@@ -1,6 +1,7 @@
+ package com.winlator.cmod.container;
+ 
+-import android.os.Environment;
++import android.os.Environment;
++import android.util.Log;
+ 
+ import com.winlator.cmod.box64.Box64Preset;
+ import com.winlator.cmod.contentdialog.DXVKConfigDialog;
+@@ -21,7 +22,8 @@ import org.json.JSONObject;
+ import java.io.File;
+ import java.util.Iterator;
+ 
+-public class Container {
++public class Container {
++    private static final String TAG = "Container";
+     public enum XrControllerMapping {
+         BUTTON_A, BUTTON_B, BUTTON_X, BUTTON_Y, BUTTON_GRIP, BUTTON_TRIGGER,
+         THUMBSTICK_UP, THUMBSTICK_DOWN, THUMBSTICK_LEFT, THUMBSTICK_RIGHT
+@@ -388,9 +390,9 @@ public class Container {
+         };
+     }
+ 
+-    public void saveData() {
+-        try {
+-            JSONObject data = new JSONObject();
++    public boolean saveData() {
++        try {
++            JSONObject data = new JSONObject();
+             data.put("id", id);
+             data.put("name", name);
+             data.put("screenSize", screenSize);
+@@ -418,12 +420,26 @@ public class Container {
+             data.put("midiSoundFont", midiSoundFont);
+             data.put("lc_all", lc_all);
+             data.put("primaryController", primaryController);
+-            data.put("controllerMapping", controllerMapping);
+-            if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
+-            FileUtils.writeString(getConfigFile(), data.toString());
+-        }
+-        catch (JSONException e) {}
+-    }
++            data.put("controllerMapping", controllerMapping);
++            if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
++            File configFile = getConfigFile();
++            File parentDir = configFile.getParentFile();
++            if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
++                Log.e(TAG, "Failed to create container config parent: " + parentDir.getAbsolutePath());
++                return false;
++            }
++            boolean written = FileUtils.writeString(configFile, data.toString());
++            if (!written) {
++                Log.e(TAG, "Failed to write container config: " + configFile.getAbsolutePath());
++                return false;
++            }
++            return configFile.isFile();
++        }
++        catch (JSONException e) {
++            Log.e(TAG, "Failed to serialize container config for id=" + id, e);
++        }
++        return false;
++    }
+ 
+ 
+     public void loadData(JSONObject data) throws JSONException {
+diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
+index dd76baf..44d6f4d 100644
+--- a/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
++++ b/app/src/main/java/com/winlator/cmod/container/ContainerManager.java
+@@ -204,21 +204,32 @@ public class ContainerManager {
+     private Container createContainer(JSONObject data, ContentsManager contentsManager) {
+         try {
+             int id = maxContainerId + 1;
+-            data.put("id", id);
+-
+-            File containerDir = new File(homeDir, ImageFs.USER+"-"+id);
+-            if (!containerDir.mkdirs()) return null;
++            data.put("id", id);
++
++            File containerDir = new File(homeDir, ImageFs.USER+"-"+id);
++            if (!containerDir.mkdirs()) {
++                ForensicLogger.warn(context, "CONTAINER_CREATE_MKDIR_FAILED", null, "container_create",
++                        "Failed to create container directory",
++                        ForensicLogger.fields("container_id", id, "container_dir", containerDir.getAbsolutePath()));
++                return null;
++            }
+ 
+             Container container = new Container(id, this);
+-            container.setRootDir(containerDir);
+-            container.loadData(data);
+-
+-            container.setWineVersion(data.getString("wineVersion"));
+-
+-            if (!extractContainerPatternFile(container, container.getWineVersion(), contentsManager, containerDir, null)) {
+-                FileUtils.delete(containerDir);
+-                return null;
+-            }
++            container.setRootDir(containerDir);
++            container.loadData(data);
++
++            container.setWineVersion(data.getString("wineVersion"));
++            ForensicLogger.info(context, "CONTAINER_CREATE_BEGIN", null, "container_create",
++                    "Starting container creation for " + container.getWineVersion());
++
++            if (!extractContainerPatternFile(container, container.getWineVersion(), contentsManager, containerDir, null)) {
++                ForensicLogger.warn(context, "CONTAINER_CREATE_EXTRACT_FAILED", null, "container_create",
++                        "Failed to extract container pattern",
++                        ForensicLogger.fields("container_id", id, "container_dir", containerDir.getAbsolutePath(),
++                                "wine_version", container.getWineVersion()));
++                FileUtils.delete(containerDir);
++                return null;
++            }
+ 
+ //            // Extract the selected graphics driver files
+ //            String driverVersion = container.getGraphicsDriverVersion();
+@@ -227,13 +238,26 @@ public class ContainerManager {
+ //                return null;
+ //            }
+ 
+-            container.saveData();
+-            maxContainerId++;
+-            containers.add(container);
+-            return container;
+-        } catch (JSONException e) {
+-            e.printStackTrace();
+-        }
++            boolean saved = container.saveData();
++            if (!saved || !container.getConfigFile().isFile()) {
++                ForensicLogger.warn(context, "CONTAINER_CREATE_CONFIG_MISSING", null, "container_create",
++                        "Container config was not created after saveData()",
++                        ForensicLogger.fields("container_id", id, "container_dir", containerDir.getAbsolutePath(),
++                                "config_path", container.getConfigFile().getAbsolutePath(), "save_return", saved));
++                FileUtils.delete(containerDir);
++                return null;
++            }
++            maxContainerId++;
++            containers.add(container);
++            ForensicLogger.info(context, "CONTAINER_CREATE_SUCCESS", null, "container_create",
++                    "Container created successfully");
++            return container;
++        } catch (Exception e) {
++            ForensicLogger.error(context, "CONTAINER_CREATE_EXCEPTION", null, "container_create",
++                    "Unhandled exception while creating container", e,
++                    ForensicLogger.fields("data", String.valueOf(data)));
++            e.printStackTrace();
++        }
+         return null;
+     }
+ 
+@@ -361,10 +385,14 @@ public class ContainerManager {
+ 
+                 extractCommonDlls(wineInfo, "i386-windows", "syswow64", containerDir, onExtractFileListener);
+             }
+-            catch (JSONException e) {
+-                return false;
+-            }
+-        }
++            catch (Exception e) {
++                ForensicLogger.error(context, "CONTAINER_PATTERN_POST_EXTRACT_FAILED", null, "container_create",
++                        "Failed while copying Wine DLLs after prefix extraction", e,
++                        ForensicLogger.fields("wine_version", wineVersion, "container_dir", containerDir.getAbsolutePath(),
++                                "wine_path", wineInfo.path));
++                return false;
++            }
++        }
+    
+         return result;
+     }
+diff --git a/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java b/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
+index 76a8f4e..d09fad4 100644
+--- a/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
++++ b/app/src/main/java/com/winlator/cmod/core/ForensicLogger.java
+@@ -17,6 +17,7 @@ import java.io.IOException;
+ import java.nio.charset.StandardCharsets;
+ import java.security.MessageDigest;
+ import java.security.NoSuchAlgorithmException;
++import java.text.SimpleDateFormat;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Date;
+@@ -25,6 +26,9 @@ import java.util.Locale;
+ public final class ForensicLogger {
+     private static final String TAG = "ForensicLogger";
+     private static final Object FILE_LOCK = new Object();
++    private static final ThreadLocal<SimpleDateFormat> TS_FORMAT = ThreadLocal.withInitial(
++            () -> new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US)
++    );
+ 
+     private ForensicLogger() {}
+ 
+@@ -70,7 +74,7 @@ public final class ForensicLogger {
+     public static void logEvent(Context context, String severity, String eventId, String traceId, String stage, String message, JSONObject fields) {
+         JSONObject obj = new JSONObject();
+         try {
+-            obj.put("ts", DateFormat.format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", new Date()).toString());
++            obj.put("ts", TS_FORMAT.get().format(new Date()));
+             obj.put("event_id", sanitize(eventId));
+             obj.put("severity", sanitize(severity));
+             obj.put("trace_id", traceId == null ? JSONObject.NULL : traceId);
+diff --git a/app/src/main/java/com/winlator/cmod/core/TarCompressorUtils.java b/app/src/main/java/com/winlator/cmod/core/TarCompressorUtils.java
+index 37915ea..5537afa 100644
+--- a/app/src/main/java/com/winlator/cmod/core/TarCompressorUtils.java
++++ b/app/src/main/java/com/winlator/cmod/core/TarCompressorUtils.java
+@@ -167,15 +167,20 @@ public abstract class TarCompressorUtils {
+                     if (file == null) continue;
+                 }
+ 
+-                if (entry.isDirectory()) {
+-                    if (!file.isDirectory()) file.mkdirs();
+-                }
+-                else {
+-                    if (entry.isSymbolicLink()) {
+-                        FileUtils.symlink(entry.getLinkName(), file.getAbsolutePath());
+-                    }
+-                    else {
+-                        try (BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(file), StreamUtils.BUFFER_SIZE)) {
++                if (entry.isDirectory()) {
++                    if (!file.isDirectory()) file.mkdirs();
++                }
++                else {
++                    File parentDir = file.getParentFile();
++                    if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
++                        Log.e("TarCompressorUtils", "Failed to create parent directory for " + file.getAbsolutePath());
++                        return false;
++                    }
++                    if (entry.isSymbolicLink()) {
++                        FileUtils.symlink(entry.getLinkName(), file.getAbsolutePath());
++                    }
++                    else {
++                        try (BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(file), StreamUtils.BUFFER_SIZE)) {
+                             if (!StreamUtils.copy(tar, outStream)) return false;
+                         }
+                     }
