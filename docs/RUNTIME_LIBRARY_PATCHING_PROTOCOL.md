@@ -69,6 +69,6 @@ Applies to:
 ## Current target lock
 
 - Lock ID: `glibc-2.43-bundle-v1`
-- Default mode in repo: **audit**
+- Default WCP builder mode in repo: **`pinned-source` target `glibc 2.43`**
+- Lock mode in repo defaults to: **audit** (auto-enforced for `pinned-source` during WCP validation)
 - Enforce mode should be enabled only for pinned-source runtime bundles after fingerprinting.
-

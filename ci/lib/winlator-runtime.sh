@@ -100,6 +100,10 @@ winlator_bundle_glibc_runtime_from_pinned_source() {
   local source_dir="${WCP_GLIBC_RUNTIME_DIR:-}"
   local source_archive="${WCP_GLIBC_RUNTIME_ARCHIVE:-}"
   local archive_subdir="${WCP_GLIBC_RUNTIME_SUBDIR:-}"
+  local build_script="${ROOT_DIR:-}/ci/runtime-bundle/build-glibc-runtime-from-source.sh"
+  local cache_root="${WCP_GLIBC_BUILD_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-glibc-runtime-cache}"
+  local cached_runtime_dir="${cache_root}/runtime-${WCP_GLIBC_VERSION:-unknown}-${WCP_GLIBC_TARGET_VERSION:-target}"
+  local -a build_args=()
 
   case "${WCP_GLIBC_SOURCE_MODE:-host}" in
     pinned-source|pinned|prebuilt) ;;
@@ -113,6 +117,26 @@ winlator_bundle_glibc_runtime_from_pinned_source() {
 
   if [[ -n "${source_archive}" ]]; then
     winlator_extract_glibc_runtime_archive "${source_archive}" "${runtime_dir}" "${archive_subdir}"
+    return 0
+  fi
+
+  if [[ -x "${build_script}" && -n "${WCP_GLIBC_SOURCE_URL:-}" ]]; then
+    mkdir -p "${cache_root}"
+    if [[ ! -f "${cached_runtime_dir}/ld-linux-aarch64.so.1" ]]; then
+      build_args=(
+        --out-dir "${cached_runtime_dir}"
+        --src-url "${WCP_GLIBC_SOURCE_URL}"
+        --version "${WCP_GLIBC_VERSION:-${WCP_GLIBC_TARGET_VERSION:-unknown}}"
+        --cache-dir "${cache_root}"
+        --enable-kernel "${WCP_GLIBC_ENABLE_KERNEL:-4.14}"
+        --jobs "${WCP_GLIBC_BUILD_JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
+      )
+      if [[ -n "${WCP_GLIBC_SOURCE_SHA256:-}" ]]; then
+        build_args+=(--src-sha256 "${WCP_GLIBC_SOURCE_SHA256}")
+      fi
+      "${build_script}" "${build_args[@]}"
+    fi
+    winlator_copy_glibc_runtime_tree "${cached_runtime_dir}" "${runtime_dir}"
     return 0
   fi
 

@@ -11,7 +11,7 @@ This document tracks which runtime libraries in the WCP packaging pipeline shoul
 - Glibc-wrapped runtimes (e.g. `Wine 11`) still show early `signal_31` (`SIGSYS`) in some device scenarios, despite wrapper mitigations:
   - `unset LD_PRELOAD`
   - `GLIBC_TUNABLES=glibc.pthread.rseq=0`
-- Repo now has **glibc runtime lane plumbing** (`host` vs `pinned-source`) and WCP forensics provenance fields, but the default build mode is still `host`.
+- Repo now has **glibc runtime lane plumbing** (`host` vs `pinned-source`) and WCP forensics provenance fields, and WCP builders now default to **`pinned-source` target `2.43`** (with host override still available).
 - Repo now records a **glibc runtime bundle inventory** and **version markers** (`glibc-runtime-libs.tsv`, `glibc-runtime-version-markers.tsv`) and can run lock validation in audit/enforce mode.
 
 ## Reflexive analysis
@@ -86,6 +86,7 @@ These libraries are copied transitively into `wcp-glibc-runtime` and are part of
 
 ### Implemented groundwork (what is already done in repo)
 - `WCP_GLIBC_SOURCE_MODE`, `WCP_GLIBC_RUNTIME_DIR`, `WCP_GLIBC_RUNTIME_ARCHIVE` support in CI runtime bundling.
+- Auto-build path for pinned glibc runtime from source tarball (`ci/runtime-bundle/build-glibc-runtime-from-source.sh`).
 - `WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR` / `WCP_GLIBC_RUNTIME_PATCH_SCRIPT` hooks for runtime-bundle patching.
 - `WCP_RUNTIME_BUNDLE_LOCK_*` metadata + audit/enforce validation hooks.
 - `glibc-runtime-libs.tsv` + `glibc-runtime-version-markers.tsv` forensic outputs in every WCP.

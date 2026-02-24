@@ -114,6 +114,12 @@ wcp_runtime_verify_glibc_lock() {
   : "${WCP_LOCK_EXPECT_LIBSTDCXX_REGEX:=}"
   : "${WCP_LOCK_EXPECT_LIBGCC_REGEX:=}"
   : "${WCP_LOCK_EXPECT_LIBSDL2_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBZ_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBNSL_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBNSS_FILES_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBNSS_DNS_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBRESOLV_REGEX:=}"
+  : "${WCP_LOCK_EXPECT_LIBUTIL_REGEX:=}"
 
   if [[ "${mode}" != "host" ]]; then
     effective_enforce=1
@@ -138,6 +144,12 @@ wcp_runtime_verify_glibc_lock() {
   _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libstdc++.so.6" "${WCP_LOCK_EXPECT_LIBSTDCXX_REGEX}" "libstdc++"
   _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libgcc_s.so.1" "${WCP_LOCK_EXPECT_LIBGCC_REGEX}" "libgcc_s"
   _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libSDL2-2.0.so.0" "${WCP_LOCK_EXPECT_LIBSDL2_REGEX}" "SDL2"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libz.so.1" "${WCP_LOCK_EXPECT_LIBZ_REGEX}" "libz"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnsl.so.1" "${WCP_LOCK_EXPECT_LIBNSL_REGEX}" "libnsl"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_files.so.2" "${WCP_LOCK_EXPECT_LIBNSS_FILES_REGEX}" "libnss_files"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_dns.so.2" "${WCP_LOCK_EXPECT_LIBNSS_DNS_REGEX}" "libnss_dns"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libresolv.so.2" "${WCP_LOCK_EXPECT_LIBRESOLV_REGEX}" "libresolv"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libutil.so.1" "${WCP_LOCK_EXPECT_LIBUTIL_REGEX}" "libutil"
 
   if (( mismatch_count > 0 )); then
     if [[ "${effective_enforce}" == "1" ]]; then

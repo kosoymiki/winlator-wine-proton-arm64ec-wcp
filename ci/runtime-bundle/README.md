@@ -14,6 +14,13 @@ Wine/Proton launchers (`lib/wine/wcp-glibc-runtime`).
 - `locks/glibc-2.43-bundle-v1.env` — regex-based audit/enforce expectations for
   runtime-bundle version markers.
 
+## Source build helper
+
+- `build-glibc-runtime-from-source.sh` — builds a reusable glibc runtime tree
+  from a pinned glibc source tarball and supplements adjacent runtime libs.
+  This is used automatically in `pinned-source` mode when no prebuilt runtime
+  dir/archive is provided.
+
 ## CI variables (all WCP builders)
 
 - `WCP_GLIBC_SOURCE_MODE=host|pinned-source`
@@ -35,3 +42,6 @@ WCP forensics emits:
 Lock verification runs during `validate_wcp_tree_arm64ec()` in audit mode by
 default and auto-switches to enforce mode for `pinned-source` runtime builds.
 
+Current builder defaults target:
+- `WCP_GLIBC_SOURCE_MODE=pinned-source`
+- `WCP_GLIBC_VERSION=2.43`
