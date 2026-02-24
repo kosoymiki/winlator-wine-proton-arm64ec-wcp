@@ -41,6 +41,8 @@ consolidated into:
   - makes the driver-version picker rows look and behave closer to `Contents` (icon + structured metadata rows + recommended badge)
 - `0034-adrenotools-contents-style-version-rows-and-disable-dead-xforyoux.patch`
   - temporarily removes dead `XForYouX` release source entries (404) from the in-app driver browser pending a valid upstream source
+- `0035-adrenotools-fix-version-dialog-and-gamenative-native-browser-ux.patch`
+  - fixes OEM AlertDialog list/message collision in version picker (source hint moved into custom clickable header), improves GameNative native parsing/filter labels, and hardens driver row readability in themed dialogs
 
 ## Known high-overlap files (intentional)
 

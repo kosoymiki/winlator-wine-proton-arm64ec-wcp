@@ -1,0 +1,222 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index ffeb40868bf3340591783aa2941e8da5c49618d9..3c7f985f97906b5669f1bc0550293d512d1b8589 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -12,7 +12,9 @@ import android.text.SpannableStringBuilder;
+ import android.text.Spanned;
+ import android.text.TextUtils;
+ import android.text.format.DateFormat;
++import android.text.method.LinkMovementMethod;
+ import android.text.style.StyleSpan;
++import android.text.util.Linkify;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
+@@ -61,7 +63,7 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final long GAMENATIVE_DRIVER_LIST_CACHE_TTL_MS = 10L * 60L * 1000L;
+     private static final String GAMENATIVE_DRIVERS_URL = "https://gamenative.app/drivers/";
+     private static final Pattern GAMENATIVE_DRIVER_CARD_PATTERN = Pattern.compile(
+-            "<h3[^>]*>([^<]+)</h3>.*?<a[^>]+href=\"(https://downloads\\.gamenative\\.app/[^\"]+?\\.zip)\"",
++            "<div[^>]*class=\"[^\"]*flex[^\"]*items-center[^\"]*justify-between[^\"]*\"[^>]*>.*?<h3[^>]*>([^<]+)</h3>.*?<a[^>]+href=\"(https://downloads\\.gamenative\\.app/[^\"]+?\\.zip)\"",
+             Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+     private static final Pattern TURNIP_VERSION_PATTERN = Pattern.compile(
+             "(?i)(?:turnip[_-]?v?|\\bv)(\\d+)\\.(\\d+)\\.(\\d+)");
+@@ -158,8 +160,6 @@ public class AdrenotoolsFragment extends Fragment {
+         authors.add(DriverSourceAuthor.github("MrPurple666", "MrPurple666 • Turnip",
+                 "MrPurple666", "purple-turnip",
+                 DriverFamily.turnip()));
+-        // XForYouX release URLs currently return 404 (see driver source audit report).
+-        // Keep the rest of the catalog functional instead of surfacing a dead source entry.
+         return authors;
+     }
+ 
+@@ -207,15 +207,14 @@ public class AdrenotoolsFragment extends Fragment {
+                                          ArrayList<RemoteDriverAssetItem> items, boolean forceRefresh) {
+         if (!isAdded() || getContext() == null) return;
+         AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
+-                .setTitle(getString(R.string.driver_browser_choose_version_for, author.name, family.shortLabel))
+                 .setAdapter(new DriverVersionDialogAdapter(getContext(), items),
+                         (dialog, which) -> showDriverVersionDetailsDialog(author, family, items, items.get(which), forceRefresh))
+                 .setPositiveButton(R.string.back, (dialog, which) -> openDriverFamilyPicker(author, forceRefresh))
+                 .setNegativeButton(android.R.string.cancel, null)
+                 .setNeutralButton(R.string.refresh, (dialog, which) -> openDriverVersionBrowser(author, family, true));
+-
+-        builder.setMessage(getString(R.string.driver_browser_source_hint, author.getPrimarySourceLabel()));
+-        builder.show();
++        AlertDialog dialog = builder.create();
++        dialog.setCustomTitle(buildDriverVersionPickerHeaderView(author, family));
++        dialog.show();
+     }
+ 
+     private void showDriverVersionDetailsDialog(DriverSourceAuthor author, DriverFamily family,
+@@ -223,13 +222,14 @@ public class AdrenotoolsFragment extends Fragment {
+                                                 RemoteDriverAssetItem item,
+                                                 boolean forceRefresh) {
+         if (!isAdded() || getContext() == null || item == null) return;
+-        new AlertDialog.Builder(getContext())
++        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                 .setTitle(item.displayTitle)
+-                .setMessage(buildDriverReleaseDetailsText(item))
++                .setView(buildDriverReleaseDetailsView(item))
+                 .setPositiveButton(R.string.driver_browser_download, (dialog, which) -> downloadAndInstall(item))
+                 .setNeutralButton(R.string.back, (dialog, which) -> showDriverVersionPicker(author, family, items, forceRefresh))
+                 .setNegativeButton(android.R.string.cancel, null)
+-                .show();
++                .create();
++        dialog.show();
+     }
+ 
+     private ArrayList<RemoteDriverAssetItem> loadDriverAssetItems(DriverSourceAuthor author, DriverFamily family,
+@@ -274,7 +274,8 @@ public class AdrenotoolsFragment extends Fragment {
+             item.prerelease = false;
+             item.sourcePageUrl = author.externalUrl;
+             item.sourceLabel = "GameNative";
+-            item.releaseNotesSnippet = getString(R.string.driver_browser_gamenative_release_note);
++            item.releaseNotesSnippet = getString(R.string.driver_browser_gamenative_release_note) +
++                    (TextUtils.isEmpty(rawTitle) ? "" : ("\n• Raw label: " + rawTitle));
+             items.add(item);
+         }
+         return items;
+@@ -397,6 +398,8 @@ public class AdrenotoolsFragment extends Fragment {
+         return combined.contains("turnip")
+                 || combined.contains("adreno")
+                 || combined.contains("qualcomm")
++                || combined.contains("qcom")
++                || combined.contains("a8xx")
+                 || combined.contains("freedreno")
+                 || combined.contains("mesa");
+     }
+@@ -425,6 +428,36 @@ public class AdrenotoolsFragment extends Fragment {
+         downloadAndInstall(item.downloadUrl, item.assetName);
+     }
+ 
++    private View buildDriverVersionPickerHeaderView(DriverSourceAuthor author, DriverFamily family) {
++        View view = LayoutInflater.from(getContext()).inflate(R.layout.driver_browser_dialog_header, null, false);
++        TextView tvTitle = view.findViewById(R.id.TVTitle);
++        TextView tvSource = view.findViewById(R.id.TVSource);
++        tvTitle.setText(getString(R.string.driver_browser_choose_version_for, author.name, family.shortLabel));
++        String sourceText = getString(R.string.driver_browser_source_hint, author.getPrimarySourceLabel());
++        tvSource.setText(sourceText);
++        if (!TextUtils.isEmpty(author.externalUrl)) {
++            tvSource.setOnClickListener(v -> {
++                try {
++                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(author.externalUrl)));
++                } catch (ActivityNotFoundException e) {
++                    AppUtils.showToast(getContext(), R.string.unable_to_fetch_driver_versions);
++                }
++            });
++            tvSource.setTextColor(view.getResources().getColor(R.color.colorAccent));
++        }
++        return view;
++    }
++
++    private View buildDriverReleaseDetailsView(RemoteDriverAssetItem item) {
++        View view = LayoutInflater.from(getContext()).inflate(R.layout.driver_browser_release_details_dialog, null, false);
++        TextView tvBody = view.findViewById(R.id.TVBody);
++        tvBody.setText(buildDriverReleaseDetailsText(item));
++        tvBody.setTextIsSelectable(true);
++        Linkify.addLinks(tvBody, Linkify.WEB_URLS);
++        tvBody.setMovementMethod(LinkMovementMethod.getInstance());
++        return view;
++    }
++
+     private void downloadAndInstall(String downloadUrl, String assetName) {
+         if (!isAdded() || getActivity() == null) return;
+ 
+@@ -624,6 +657,10 @@ public class AdrenotoolsFragment extends Fragment {
+                 ? item.publishedAt.substring(0, 10)
+                 : "";
+         String releaseLabel = !TextUtils.isEmpty(item.releaseName) ? item.releaseName : item.tagName;
++        if ("gamenative".equals(item.sourceKind)) {
++            String inferred = extractTitleFromAsset(item.assetName, family);
++            if (!TextUtils.isEmpty(inferred)) releaseLabel = inferred;
++        }
+         if (TextUtils.isEmpty(releaseLabel)) {
+             releaseLabel = extractTitleFromAsset(item.assetName, family);
+         }
+@@ -631,7 +668,12 @@ public class AdrenotoolsFragment extends Fragment {
+         item.displaySubtitle = item.authorName + " • " + safeString(item.familyLabel)
+                 + (!TextUtils.isEmpty(date) ? " • " + date : "")
+                 + (item.prerelease ? " • " + getString(R.string.channel_beta) : "");
+-        item.displayMeta = safeString(item.assetName);
++        if ("gamenative".equals(item.sourceKind) && !TextUtils.isEmpty(item.releaseName)
++                && !item.releaseName.equalsIgnoreCase(releaseLabel)) {
++            item.displayMeta = safeString(item.assetName) + " • " + item.releaseName;
++        } else {
++            item.displayMeta = safeString(item.assetName);
++        }
+         item.label = item.displayTitle + "\n" + item.displaySubtitle + "\n" + item.displayMeta;
+     }
+ 
+@@ -847,7 +889,9 @@ public class AdrenotoolsFragment extends Fragment {
+             if ("qualcomm".equals(id)) {
+                 if (combined.contains("turnip") || combined.contains("mesa")) return false;
+                 return combined.contains("qualcomm") || combined.contains("adreno")
+-                        || combined.contains("elite") || combined.contains("driver");
++                        || combined.contains("elite") || combined.contains("driver")
++                        || combined.contains("qcom") || combined.contains("a8xx")
++                        || combined.contains("gen8") || combined.contains("8gen");
+             }
+             return true;
+         }
+diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
+index e6522f8fe6e1491a533faa1d07711871ab77c015..6e7e92909b0cbd27c371d5662f2d1ec23b0b55ff 100644
+--- a/app/src/main/res/layout/adrenotools_fragment.xml
++++ b/app/src/main/res/layout/adrenotools_fragment.xml
+@@ -44,7 +44,7 @@
+             android:layout_weight="1"
+             android:layout_marginStart="6dp"
+             android:maxLines="2"
+-            android:text="@string/fetch_latest_turnip" />
++            android:text="@string/driver_browser_open" />
+ 
+     </LinearLayout>
+ </LinearLayout>
+diff --git a/app/src/main/res/layout/driver_browser_version_list_item.xml b/app/src/main/res/layout/driver_browser_version_list_item.xml
+index e23e32a1f9cd0cbf41493388ba6a479694b59fb3..db66435e91ec3924e6d385ac193881c98e4ba6b8 100644
+--- a/app/src/main/res/layout/driver_browser_version_list_item.xml
++++ b/app/src/main/res/layout/driver_browser_version_list_item.xml
+@@ -2,6 +2,7 @@
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
++    android:background="?android:attr/selectableItemBackground"
+     android:gravity="center_vertical"
+     android:minHeight="56dp"
+     android:orientation="horizontal"
+@@ -36,6 +37,7 @@
+                 android:layout_weight="1"
+                 android:ellipsize="end"
+                 android:maxLines="1"
++                android:textColor="?android:attr/textColorPrimary"
+                 android:textStyle="bold" />
+ 
+             <TextView
+@@ -62,6 +64,7 @@
+             android:alpha="0.9"
+             android:ellipsize="end"
+             android:maxLines="1"
++            android:textColor="?android:attr/textColorSecondary"
+             android:textSize="12sp"
+             android:textStyle="italic" />
+ 
+@@ -73,6 +76,7 @@
+             android:ellipsize="middle"
+             android:fontFamily="monospace"
+             android:maxLines="1"
++            android:textColor="?android:attr/textColorSecondary"
+             android:textSize="11sp" />
+     </LinearLayout>
+ </LinearLayout>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index b73dfcb8995acabee402806ff07f50126d69e2fa..4ebe91f9cc13b6445754ecf2e1f359e576346c45 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -647,6 +647,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="driver_browser_unknown_release">Driver release</string>
+     <string name="driver_browser_recommended">Recommended</string>
+     <string name="driver_browser_recommended_hint">Latest version in this author/type list</string>
++    <string name="driver_browser_open">Browse drivers</string>
+     <string name="back">Back</string>
+     <string name="driver_download_failed">Driver download failed.</string>
+     <string name="driver_install_failed_or_exists">Driver install failed or version is already installed.</string>
