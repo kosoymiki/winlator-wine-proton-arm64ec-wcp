@@ -23,6 +23,7 @@ Optional:
   --jobs N                      make -jN (default: nproc)
   --strip                       Strip installed libs if strip available
   --host-triplet TRIPLET        Explicit triplet (default: gcc -dumpmachine)
+  --keep-workdir                Keep glibc source/build/dest workdir cache (disabled by default)
 EOF
 }
 
@@ -66,6 +67,7 @@ ENABLE_KERNEL="4.14"
 JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 DO_STRIP=0
 HOST_TRIPLET=""
+KEEP_WORKDIR=0
 
 while (($#)); do
   case "$1" in
@@ -79,6 +81,7 @@ while (($#)); do
     --jobs) JOBS="${2:-}"; shift 2 ;;
     --strip) DO_STRIP=1; shift ;;
     --host-triplet) HOST_TRIPLET="${2:-}"; shift 2 ;;
+    --keep-workdir) KEEP_WORKDIR=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) fail "Unknown argument: $1" ;;
   esac
@@ -219,3 +222,10 @@ EOF_META
 
 log "glibc runtime bundle prepared: ${OUT_DIR}"
 
+if [[ "${KEEP_WORKDIR}" != "1" ]]; then
+  if command -v du >/dev/null 2>&1; then
+    log "glibc build staging size before prune: $(du -sh "${WORK_DIR}" 2>/dev/null | awk '{print $1}' || echo unknown)"
+  fi
+  log "Pruning glibc build staging workdir to reduce CI disk usage: ${WORK_DIR}"
+  rm -rf "${SRC_DIR}" "${BLD_DIR}" "${DST_DIR}"
+fi
