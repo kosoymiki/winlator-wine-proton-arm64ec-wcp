@@ -1,0 +1,226 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 613f637..51be81f 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1643,6 +1643,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     }
+ 
+     private void extractGraphicsDriverFiles() {
++        applyContainerUpscaleOverridesToEnv();
++
+         String adrenoToolsDriverId = graphicsDriverConfig.get("version");
+         if (adrenoToolsDriverId == null || adrenoToolsDriverId.trim().isEmpty()) {
+             adrenoToolsDriverId = "System";
+@@ -1926,10 +1928,91 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String bcnEmulationCache = graphicsDriverConfig.get("bcnEmulationCache");
+         envVars.put("WRAPPER_USE_BCN_CACHE", bcnEmulationCache);
+ 
+-        if (!vkbasaltConfig.isEmpty()) {
+-            envVars.put("ENABLE_VKBASALT", "1");
+-            envVars.put("VKBASALT_CONFIG", vkbasaltConfig);
+-        }
++        if (!vkbasaltConfig.isEmpty()) {
++            envVars.put("ENABLE_VKBASALT", "1");
++            envVars.put("VKBASALT_CONFIG", vkbasaltConfig);
++        }
++    }
++
++    private void applyContainerUpscaleOverridesToEnv() {
++        if (container == null) return;
++
++        String perfPreset = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_PERF_PRESET, container.getExtra(Container.EXTRA_UPSCALE_PERF_PRESET, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_PERF_PRESET, "auto");
++        String swfgPolicy = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SWFG_POLICY, container.getExtra(Container.EXTRA_UPSCALE_SWFG_POLICY, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_SWFG_POLICY, "auto");
++        String swfgMode = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SWFG_MODE, container.getExtra(Container.EXTRA_UPSCALE_SWFG_MODE, "off"))
++                : container.getExtra(Container.EXTRA_UPSCALE_SWFG_MODE, "off");
++        String swfgMultiplier = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, container.getExtra(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, ""))
++                : container.getExtra(Container.EXTRA_UPSCALE_SWFG_MULTIPLIER, "");
++        String swfgLatencyMs = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, container.getExtra(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, ""))
++                : container.getExtra(Container.EXTRA_UPSCALE_SWFG_LATENCY_MS, "");
++        String swfgArtifactGuard = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, container.getExtra(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, ""))
++                : container.getExtra(Container.EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, "");
++
++        boolean applied = false;
++        if (perfPreset != null && !perfPreset.trim().isEmpty() && !"auto".equalsIgnoreCase(perfPreset)) {
++            envVars.put("WINLATOR_PERF_PRESET", perfPreset);
++            applied = true;
++        }
++
++        if (swfgPolicy != null && !swfgPolicy.trim().isEmpty()) {
++            String policy = swfgPolicy.trim().toLowerCase();
++            if ("on".equals(policy)) {
++                envVars.put("WINLATOR_SWFG", "1");
++                envVars.put("WINLATOR_SWFG_AUTO", "0");
++                applied = true;
++            } else if ("off".equals(policy)) {
++                envVars.put("WINLATOR_SWFG", "0");
++                envVars.put("WINLATOR_SWFG_AUTO", "0");
++                applied = true;
++            } else if ("auto".equals(policy)) {
++                envVars.put("WINLATOR_SWFG_AUTO", "1");
++                applied = true;
++            }
++        }
++
++        if (swfgMode != null && !swfgMode.trim().isEmpty()) {
++            envVars.put("WINLATOR_SWFG_MODE", swfgMode);
++            applied = true;
++        }
++        if (swfgMultiplier != null && !swfgMultiplier.trim().isEmpty()) {
++            envVars.put("WINLATOR_SWFG_MULTIPLIER", swfgMultiplier);
++            applied = true;
++        }
++        if (swfgLatencyMs != null && !swfgLatencyMs.trim().isEmpty()) {
++            envVars.put("WINLATOR_SWFG_LATENCY_BUDGET_MS", swfgLatencyMs);
++            applied = true;
++        }
++        if (swfgArtifactGuard != null && !swfgArtifactGuard.trim().isEmpty()) {
++            envVars.put("WINLATOR_SWFG_ARTIFACT_GUARD", swfgArtifactGuard);
++            applied = true;
++        }
++
++        if (applied) {
++            ForensicLogger.logEvent(this,
++                    "info",
++                    "RUNTIME_CONTAINER_UPSCALE_CONFIG_APPLIED",
++                    forensicTraceId,
++                    "graphics_fg",
++                    "applied container/shortcut upscale config overrides",
++                    ForensicLogger.fields(
++                            "container_id", container.id,
++                            "route", forensicRouteSource,
++                            "perf_preset", perfPreset,
++                            "swfg_policy", swfgPolicy,
++                            "swfg_mode", swfgMode,
++                            "swfg_multiplier", swfgMultiplier,
++                            "swfg_latency_ms", swfgLatencyMs,
++                            "swfg_artifact_guard", swfgArtifactGuard,
++                            "config_source", shortcut != null ? "shortcut+container" : "container"));
++        }
+     }
+ 
+     @Override
+diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
+index a513a57..862bb51 100644
+--- a/app/src/main/java/com/winlator/cmod/container/Container.java
++++ b/app/src/main/java/com/winlator/cmod/container/Container.java
+@@ -37,15 +37,21 @@ public class Container {
+     public static final String DEFAULT_DXWRAPPERCONFIG = "version=" + DefaultVersion.DXVK + ",framerate=0,async=0,asyncCache=0" + ",vkd3dVersion=" + DefaultVersion.VKD3D + ",vkd3dLevel=12_1" + ",ddrawrapper=" + Container.DEFAULT_DDRAWRAPPER + ",csmt=3" + ",gpuName=NVIDIA GeForce GTX 480" + ",videoMemorySize=2048" + ",strict_shader_math=1" + ",OffscreenRenderingMode=fbo" + ",renderer=gl";
+     public static final String DEFAULT_GRAPHICSDRIVERCONFIG =
+             "vulkanVersion=1.3" + ";version=" + ";blacklistedExtensions=" + ";maxDeviceMemory=0" + ";presentMode=mailbox" + ";syncFrame=0" + ";disablePresentWait=0" + ";resourceType=auto" + ";bcnEmulation=auto" + ";bcnEmulationType=compute" + ";bcnEmulationCache=0" + ";gpuName=Device";
+-    public static final String DEFAULT_DDRAWRAPPER = "none";
+-    public static final String DEFAULT_WINCOMPONENTS = "direct3d=1,directsound=0,directmusic=0,directshow=0,directplay=0,xaudio=0,vcrun2010=1";
++    public static final String DEFAULT_DDRAWRAPPER = "none";
++    public static final String DEFAULT_WINCOMPONENTS = "direct3d=1,directsound=0,directmusic=0,directshow=0,directplay=0,xaudio=0,vcrun2010=1";
+     public static final String FALLBACK_WINCOMPONENTS = "direct3d=1,directsound=1,directmusic=1,directshow=1,directplay=1,xaudio=1,vcrun2010=1";
+     public static final String DEFAULT_DRIVES = "F:"+Environment.getExternalStorageDirectory().getAbsolutePath()+"D:"+Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+     public static final byte STARTUP_SELECTION_NORMAL = 0;
+     public static final byte STARTUP_SELECTION_ESSENTIAL = 1;
+     public static final byte STARTUP_SELECTION_AGGRESSIVE = 2;
+-    public static final byte MAX_DRIVE_LETTERS = 26;
+-    public final int id;
++    public static final byte MAX_DRIVE_LETTERS = 26;
++    public static final String EXTRA_UPSCALE_PERF_PRESET = "upscalePerfPreset"; // auto|safe|balanced|scaleforce
++    public static final String EXTRA_UPSCALE_SWFG_POLICY = "upscaleSwfgPolicy"; // auto|on|off
++    public static final String EXTRA_UPSCALE_SWFG_MODE = "upscaleSwfgMode"; // off|mv_fg
++    public static final String EXTRA_UPSCALE_SWFG_MULTIPLIER = "upscaleSwfgMultiplier"; // 1..4
++    public static final String EXTRA_UPSCALE_SWFG_LATENCY_MS = "upscaleSwfgLatencyMs"; // 1..50
++    public static final String EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD = "upscaleSwfgArtifactGuard"; // safe|balanced|aggressive
++    public final int id;
+     private String name;
+     private String screenSize = DEFAULT_SCREEN_SIZE;
+     private String envVars = DEFAULT_ENV_VARS;
+@@ -541,8 +547,8 @@ public class Container {
+         }
+     }
+ 
+-    public static void checkObsoleteOrMissingProperties(JSONObject data) {
+-        try {
++    public static void checkObsoleteOrMissingProperties(JSONObject data) {
++        try {
+             if (data.has("dxcomponents")) {
+                 data.put("wincomponents", data.getString("dxcomponents"));
+                 data.remove("dxcomponents");
+@@ -596,10 +602,71 @@ public class Container {
+                 result += (!result.isEmpty() ? "," : "")+wincomponent1[0]+"="+value;
+             }
+ 
+-            data.put("wincomponents", result);
+-        }
+-        catch (JSONException e) {}
+-    }
++            data.put("wincomponents", result);
++
++            normalizeUpscaleExtraData(data);
++        }
++        catch (JSONException e) {}
++    }
++
++    private static void normalizeUpscaleExtraData(JSONObject data) {
++        if (data == null) return;
++
++        try {
++            if (data.has(EXTRA_UPSCALE_PERF_PRESET)) {
++                String preset = normalizeLower(data.optString(EXTRA_UPSCALE_PERF_PRESET, "auto"));
++                if (!(preset.equals("auto") || preset.equals("safe") || preset.equals("balanced") || preset.equals("scaleforce"))) {
++                    preset = "auto";
++                }
++                data.put(EXTRA_UPSCALE_PERF_PRESET, preset);
++            }
++
++            if (data.has(EXTRA_UPSCALE_SWFG_POLICY)) {
++                String policy = normalizeLower(data.optString(EXTRA_UPSCALE_SWFG_POLICY, "auto"));
++                if (!(policy.equals("auto") || policy.equals("on") || policy.equals("off"))) {
++                    policy = "auto";
++                }
++                data.put(EXTRA_UPSCALE_SWFG_POLICY, policy);
++            }
++
++            if (data.has(EXTRA_UPSCALE_SWFG_MODE)) {
++                String mode = normalizeLower(data.optString(EXTRA_UPSCALE_SWFG_MODE, "off"));
++                if (!mode.equals("mv_fg")) mode = "off";
++                data.put(EXTRA_UPSCALE_SWFG_MODE, mode);
++            }
++
++            if (data.has(EXTRA_UPSCALE_SWFG_MULTIPLIER)) {
++                data.put(EXTRA_UPSCALE_SWFG_MULTIPLIER, clampInt(data.optString(EXTRA_UPSCALE_SWFG_MULTIPLIER, "2"), 1, 4, 2));
++            }
++
++            if (data.has(EXTRA_UPSCALE_SWFG_LATENCY_MS)) {
++                data.put(EXTRA_UPSCALE_SWFG_LATENCY_MS, clampInt(data.optString(EXTRA_UPSCALE_SWFG_LATENCY_MS, "8"), 1, 50, 8));
++            }
++
++            if (data.has(EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD)) {
++                String guard = normalizeLower(data.optString(EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, "balanced"));
++                if (!(guard.equals("safe") || guard.equals("balanced") || guard.equals("aggressive"))) {
++                    guard = "balanced";
++                }
++                data.put(EXTRA_UPSCALE_SWFG_ARTIFACT_GUARD, guard);
++            }
++        }
++        catch (JSONException ignored) {}
++    }
++
++    private static String normalizeLower(String value) {
++        return value != null ? value.trim().toLowerCase() : "";
++    }
++
++    private static int clampInt(String value, int min, int max, int fallback) {
++        int parsed = fallback;
++        try {
++            parsed = Integer.parseInt(value != null ? value.trim() : "");
++        } catch (Exception ignored) {}
++        if (parsed < min) return min;
++        if (parsed > max) return max;
++        return parsed;
++    }
+ 
+     public static String getFallbackCPUList() {
+         String cpuList = "";
