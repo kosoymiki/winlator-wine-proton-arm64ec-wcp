@@ -1,0 +1,342 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 46f4ecd..1188374 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -8,6 +8,7 @@ import android.os.Bundle;
+ import android.text.Html;
+ import android.text.format.DateFormat;
+ import android.text.method.LinkMovementMethod;
++import android.util.TypedValue;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
+@@ -18,6 +19,7 @@ import android.widget.TextView;
+ import androidx.annotation.NonNull;
+ import androidx.appcompat.app.AppCompatActivity;
+ import androidx.fragment.app.Fragment;
++import androidx.core.content.ContextCompat;
+ import androidx.recyclerview.widget.DividerItemDecoration;
+ import androidx.recyclerview.widget.LinearLayoutManager;
+ import androidx.recyclerview.widget.RecyclerView;
+@@ -40,13 +42,20 @@ import java.io.OutputStream;
+ import java.net.URL;
+ import java.net.URLConnection;
+ import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashSet;
+ import java.util.Date;
++import java.util.Locale;
+ 
+ public class AdrenotoolsFragment extends Fragment {
+     private static final String TURNIP_RELEASES_API =
+             "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases?per_page=30";
+     private static final String TURNIP_RELEASES_CACHE_FILE = "turnip_releases_cache.json";
+     private static final long TURNIP_RELEASES_CACHE_TTL_MS = 15L * 60L * 1000L;
++    private static final String WCPHUB_PACK_JSON_URL =
++            "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/pack.json";
++    private static final String WCPHUB_PACK_CACHE_FILE = "wcphub_pack_cache.json";
++    private static final long WCPHUB_PACK_CACHE_TTL_MS = 15L * 60L * 1000L;
+ 
+     private AdrenotoolsManager adrenotoolsManager;
+     private RecyclerView recyclerView;
+@@ -79,7 +88,7 @@ public class AdrenotoolsFragment extends Fragment {
+         btFetchLatestDriver.setOnClickListener(v -> openTurnipVersionPicker(false));
+ 
+         View btDriverSourcesInfo = layout.findViewById(R.id.BTDriverSourcesInfo);
+-        btDriverSourcesInfo.setOnClickListener(v -> showDriverSourcesDialog());
++        btDriverSourcesInfo.setOnClickListener(v -> openDriverCatalog(false));
+         return layout;
+     }
+ 
+@@ -249,24 +258,225 @@ public class AdrenotoolsFragment extends Fragment {
+         }).start();
+     }
+ 
+-    private void showDriverSourcesDialog() {
++    private void openDriverCatalog(boolean forceRefresh) {
++        if (!isAdded() || getActivity() == null) return;
++
++        DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
++        progressDialog.show(R.string.loading_driver_catalog);
++
++        new Thread(() -> {
++            String html;
++            boolean loadedFromHub = false;
++            try {
++                ArrayList<DriverCatalogLink> hubLinks = loadWcpHubArm64ecGraphicsLinks(forceRefresh);
++                loadedFromHub = true;
++                html = buildDriverCatalogHtml(hubLinks);
++            } catch (Exception e) {
++                html = buildDriverCatalogHtml(new ArrayList<>());
++            }
++
++            if (!isAdded() || getActivity() == null || getContext() == null) return;
++            final String finalHtml = html;
++            final boolean finalLoadedFromHub = loadedFromHub;
++            getActivity().runOnUiThread(() -> {
++                progressDialog.close();
++                showDriverCatalogDialog(finalHtml, finalLoadedFromHub, forceRefresh);
++            });
++        }).start();
++    }
++
++    private void showDriverCatalogDialog(String html, boolean loadedFromHub, boolean forceRefresh) {
+         if (!isAdded() || getContext() == null) return;
+ 
+         int padding = (int) (getResources().getDisplayMetrics().density * 16);
+         TextView textView = new TextView(getContext());
+         textView.setPadding(padding, padding, padding, padding);
+-        textView.setText(Html.fromHtml(getString(R.string.adreno_driver_sources_html), Html.FROM_HTML_MODE_LEGACY));
++        textView.setText(Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY));
+         textView.setMovementMethod(LinkMovementMethod.getInstance());
+         textView.setTextSize(14);
++        textView.setLineSpacing(0f, 1.15f);
++        textView.setTextColor(resolveThemeColor(android.R.attr.textColorPrimary, 0xFFEDEDED));
++        textView.setLinkTextColor(ContextCompat.getColor(requireContext(), R.color.colorAccent));
+ 
+         ScrollView scrollView = new ScrollView(getContext());
++        scrollView.setFillViewport(true);
+         scrollView.addView(textView);
+ 
+-        new AlertDialog.Builder(getContext())
++        AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
+                 .setTitle(R.string.adreno_driver_sources_title)
+                 .setView(scrollView)
+                 .setPositiveButton(android.R.string.ok, null)
+-                .show();
++                .setNeutralButton(R.string.refresh, (dialog, which) -> openDriverCatalog(true));
++        if (!loadedFromHub && !forceRefresh) {
++            builder.setMessage(R.string.unable_to_fetch_driver_catalog);
++        }
++        builder.show();
++    }
++
++    private ArrayList<DriverCatalogLink> loadWcpHubArm64ecGraphicsLinks(boolean forceRefresh) throws Exception {
++        String json = null;
++        File cacheFile = new File(requireContext().getCacheDir(), WCPHUB_PACK_CACHE_FILE);
++        if (!forceRefresh && cacheFile.isFile()) {
++            long age = System.currentTimeMillis() - cacheFile.lastModified();
++            if (age >= 0 && age <= WCPHUB_PACK_CACHE_TTL_MS) {
++                json = FileUtils.readString(cacheFile);
++            }
++        }
++
++        if (json == null || json.trim().isEmpty()) {
++            json = Downloader.downloadString(WCPHUB_PACK_JSON_URL);
++            if (json == null || json.trim().isEmpty()) throw new IllegalStateException("empty wcphub pack response");
++            FileUtils.writeString(cacheFile, json);
++        }
++
++        JSONArray items = new JSONArray(json);
++        ArrayList<DriverCatalogLink> links = new ArrayList<>();
++        HashSet<String> seenUrls = new HashSet<>();
++        for (int i = 0; i < items.length(); i++) {
++            JSONObject item = items.optJSONObject(i);
++            if (item == null) continue;
++
++            String type = item.optString("type", "");
++            String verName = item.optString("verName", "");
++            String remoteUrl = item.optString("remoteUrl", "");
++            if (remoteUrl.isEmpty()) continue;
++            if (!isGraphicsLayerType(type)) continue;
++            if (!containsArm64Ec(type, verName, remoteUrl)) continue;
++            if (!seenUrls.add(remoteUrl)) continue;
++
++            DriverCatalogLink link = new DriverCatalogLink();
++            link.label = !verName.isEmpty() ? verName : type;
++            link.url = remoteUrl;
++            link.typeKey = type != null ? type : "";
++            link.subtitle = buildWcpHubCatalogSubtitle(type, remoteUrl);
++            link.nightly = isNightlyLike(verName, remoteUrl);
++            links.add(link);
++        }
++
++        Collections.sort(links, (a, b) -> {
++            if (a.nightly != b.nightly) return a.nightly ? 1 : -1; // stable first
++            int typeCmp = a.typeKey.compareToIgnoreCase(b.typeKey);
++            if (typeCmp != 0) return typeCmp;
++            return a.label.compareToIgnoreCase(b.label);
++        });
++        return links;
++    }
++
++    private boolean isGraphicsLayerType(String type) {
++        if (type == null) return false;
++        String t = type.trim().toUpperCase(Locale.ROOT);
++        return t.equals("DXVK") || t.equals("VKD3D") || t.equals("D8VK") || t.equals("DXWRAPPER")
++                || t.equals("CNC-DDRAW") || t.equals("CNCDDRAW") || t.equals("VKBASALT");
++    }
++
++    private boolean containsArm64Ec(String type, String verName, String remoteUrl) {
++        String combined = ((type != null ? type : "") + " " + (verName != null ? verName : "") + " " + (remoteUrl != null ? remoteUrl : ""))
++                .toLowerCase(Locale.ROOT);
++        return combined.contains("arm64ec");
++    }
++
++    private boolean isNightlyLike(String verName, String remoteUrl) {
++        String combined = ((verName != null ? verName : "") + " " + (remoteUrl != null ? remoteUrl : ""))
++                .toLowerCase(Locale.ROOT);
++        return combined.contains("nightly") || combined.contains("beta") || combined.contains("alpha") || combined.contains("dev");
++    }
++
++    private String buildWcpHubCatalogSubtitle(String type, String remoteUrl) {
++        String normalizedType = (type == null || type.trim().isEmpty()) ? "Package" : type.trim();
++        String channel = isNightlyLike("", remoteUrl) ? "Nightly" : "Stable";
++        String releaseTag = extractReleaseTag(remoteUrl);
++        return normalizedType + " • " + channel + (releaseTag.isEmpty() ? "" : " • " + releaseTag);
++    }
++
++    private String extractReleaseTag(String remoteUrl) {
++        if (remoteUrl == null || remoteUrl.isEmpty()) return "";
++        int idx = remoteUrl.indexOf("/releases/tag/");
++        if (idx < 0) return "";
++        String tag = remoteUrl.substring(idx + "/releases/tag/".length());
++        int slash = tag.indexOf('/');
++        return slash >= 0 ? tag.substring(0, slash) : tag;
++    }
++
++    private String buildDriverCatalogHtml(ArrayList<DriverCatalogLink> hubLinks) {
++        StringBuilder sb = new StringBuilder();
++        sb.append("<b>").append(getString(R.string.driver_catalog_authors_header)).append("</b><br/><br/>");
++        appendLinkLine(sb, "StevenMXZ", "Mesa Turnip driver",
++                "https://github.com/StevenMXZ/freedreno_turnip-CI/releases");
++        sb.append("<b>K11MCH1</b> — ")
++                .append(linkHtml("Qualcomm proprietary",
++                        "https://github.com/K11MCH1/AdrenoToolsDrivers/releases?q=Qualcomm&expanded=true"))
++                .append(" + ")
++                .append(linkHtml("Mesa Turnip",
++                        "https://github.com/K11MCH1/AdrenoToolsDrivers/releases?q=Turnip&expanded=true"))
++                .append("<br/>");
++        appendLinkLine(sb, "GameNative", "Qualcomm proprietary + Mesa Turnip",
++                "https://gamenative.app/drivers/");
++        appendLinkLine(sb, "zoerakk", "Qualcomm proprietary (ELITE)",
++                "https://github.com/zoerakk/qualcomm-adreno-driver/releases");
++        sb.append("<br/>");
++
++        sb.append("<b>").append(getString(R.string.driver_catalog_community_turnip_header)).append("</b><br/><br/>");
++        appendLinkLine(sb, "whitebelyash", "freedreno_turnip-CI releases",
++                "https://github.com/whitebelyash/freedreno_turnip-CI/releases");
++        appendLinkLine(sb, "Weab-chan", "freedreno_turnip-CI releases",
++                "https://github.com/Weab-chan/freedreno_turnip-CI/releases");
++        appendLinkLine(sb, "MrPurple666", "purple-turnip releases",
++                "https://github.com/MrPurple666/purple-turnip/releases");
++        appendLinkLine(sb, "XForYouX", "Turnip_Driver releases",
++                "https://github.com/XForYouX/Turnip_Driver/releases");
++        sb.append("<br/>");
++
++        sb.append("<b>").append(getString(R.string.driver_catalog_wcphub_graphics_header)).append("</b><br/><br/>");
++        if (hubLinks.isEmpty()) {
++            sb.append(getString(R.string.driver_catalog_wcphub_unavailable)).append("<br/><br/>");
++        } else {
++            for (DriverCatalogLink link : hubLinks) {
++                sb.append("<b>")
++                        .append(htmlEscape(link.subtitle))
++                        .append("</b><br/>")
++                        .append(linkHtml(link.label, link.url))
++                        .append("<br/><br/>");
++            }
++        }
++
++        sb.append("<b>").append(getString(R.string.driver_catalog_reference_header)).append("</b><br/><br/>")
++                .append(linkHtml("Arihany / WinlatorWCPHub", "https://github.com/Arihany/WinlatorWCPHub"))
++                .append("<br/><br/>");
++
++        sb.append("<b>").append(getString(R.string.driver_catalog_quick_info_header)).append("</b><br/><br/>")
++                .append("<b>").append(getString(R.string.driver_catalog_qualcomm_header)).append("</b><br/>")
++                .append(htmlEscape(getString(R.string.driver_catalog_qualcomm_desc)))
++                .append("<br/><br/>")
++                .append("<b>").append(getString(R.string.driver_catalog_turnip_header)).append("</b><br/>")
++                .append(htmlEscape(getString(R.string.driver_catalog_turnip_desc)));
++
++        return sb.toString();
++    }
++
++    private void appendLinkLine(StringBuilder sb, String title, String label, String url) {
++        sb.append("<b>").append(htmlEscape(title)).append("</b> — ")
++                .append(linkHtml(label, url))
++                .append("<br/>");
++    }
++
++    private String linkHtml(String label, String url) {
++        return "<a href=\"" + htmlEscape(url) + "\">" + htmlEscape(label) + "</a>";
++    }
++
++    private String htmlEscape(String value) {
++        if (value == null) return "";
++        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
++    }
++
++    private int resolveThemeColor(int attr, int fallbackColor) {
++        TypedValue outValue = new TypedValue();
++        if (getContext() != null && getContext().getTheme().resolveAttribute(attr, outValue, true)) {
++            if (outValue.resourceId != 0) {
++                return ContextCompat.getColor(requireContext(), outValue.resourceId);
++            }
++            return outValue.data;
++        }
++        return fallbackColor;
+     }
+ 
+     private void downloadFileWithProgress(String address, File file, ProgressCallback progressCallback) throws Exception {
+@@ -315,6 +525,14 @@ public class AdrenotoolsFragment extends Fragment {
+         String label;
+     }
+ 
++    private static class DriverCatalogLink {
++        String label;
++        String url;
++        String subtitle;
++        boolean nightly;
++        String typeKey = "";
++    }
++
+     private class DriversAdapter extends RecyclerView.Adapter<DriversAdapter.ViewHolder> {
+         private final ArrayList<String> driversList;
+ 
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index e61362c..0cb59bd 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -625,30 +625,18 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="turnip_install_failed_or_exists">Turnip install failed or version is already installed.</string>
+     <string name="adreno_driver_sources_info">Adreno/WCPHub driver links &amp; quick info</string>
+     <string name="adreno_driver_sources_title">Driver links &amp; quick info</string>
+-    <string name="adreno_driver_sources_html"><![CDATA[
+-<b>Adreno driver authors (WCP Hub README)</b><br/><br/>
+-<b>StevenMXZ</b> — <a href="https://github.com/StevenMXZ/freedreno_turnip-CI/releases">Mesa Turnip driver</a><br/>
+-<b>K11MCH1</b> — <a href="https://github.com/K11MCH1/AdrenoToolsDrivers/releases?q=Qualcomm&amp;expanded=true">Qualcomm proprietary</a> + <a href="https://github.com/K11MCH1/AdrenoToolsDrivers/releases?q=Turnip&amp;expanded=true">Mesa Turnip</a><br/>
+-<b>GameNative</b> — <a href="https://gamenative.app/drivers/">Qualcomm proprietary + Mesa Turnip</a><br/>
+-<b>zoerakk</b> — <a href="https://github.com/zoerakk/qualcomm-adreno-driver/releases">Qualcomm proprietary (ELITE)</a><br/><br/>
+-<b>Community Turnip builds (GitHub)</b><br/><br/>
+-<b>whitebelyash</b> — <a href="https://github.com/whitebelyash/freedreno_turnip-CI/releases">freedreno_turnip-CI releases</a><br/>
+-<b>Weab-chan</b> — <a href="https://github.com/Weab-chan/freedreno_turnip-CI/releases">freedreno_turnip-CI releases</a><br/>
+-<b>MrPurple666</b> — <a href="https://github.com/MrPurple666/purple-turnip/releases">purple-turnip releases</a><br/>
+-<b>XForYouX</b> — <a href="https://github.com/XForYouX/Turnip_Driver/releases">Turnip_Driver releases</a><br/><br/>
+-<b>WCP Hub ARM64EC graphics layers (related packages)</b><br/><br/>
+-<a href="https://github.com/Arihany/WinlatorWCPHub/releases/tag/DXVK-ARM64EC">DXVK-ARM64EC</a><br/>
+-<a href="https://github.com/Arihany/WinlatorWCPHub/releases/tag/DXVK-GPLASYNC-ARM64EC">DXVK-GPLASYNC-ARM64EC</a><br/>
+-<a href="https://github.com/Arihany/WinlatorWCPHub/releases/tag/DXVK-SAREK-ASYNC-ARM64EC">DXVK-SAREK-ASYNC-ARM64EC</a><br/>
+-<a href="https://github.com/Arihany/WinlatorWCPHub/releases/tag/VKD3D-PROTON-ARM64EC">VKD3D-PROTON-ARM64EC</a><br/><br/>
+-<b>Reference sources</b><br/><br/>
+-<a href="https://github.com/Arihany/WinlatorWCPHub">Arihany / WinlatorWCPHub</a><br/>
+-<b>Quick info</b><br/><br/>
+-<b>Qualcomm driver</b><br/>
+-Extracted from official Adreno drivers of recent devices. Partially compatible with similar chipsets, but emulation may show lower performance or rendering glitches.<br/><br/>
+-<b>Mesa Turnip driver</b><br/>
+-Open-source Mesa driver with broader Vulkan support and emulator-friendly behavior. Often more compatible or stable across devices.
+-]]></string>
++    <string name="loading_driver_catalog">Loading driver catalog…</string>
++    <string name="unable_to_fetch_driver_catalog">Unable to update WCP Hub graphics catalog. Showing built-in references only.</string>
++    <string name="driver_catalog_authors_header">Adreno driver authors (curated)</string>
++    <string name="driver_catalog_community_turnip_header">Community Turnip builds (GitHub)</string>
++    <string name="driver_catalog_wcphub_graphics_header">WCP Hub ARM64EC graphics layers (dynamic)</string>
++    <string name="driver_catalog_wcphub_unavailable">WCP Hub graphics catalog is unavailable right now.</string>
++    <string name="driver_catalog_reference_header">Reference source</string>
++    <string name="driver_catalog_quick_info_header">Quick info</string>
++    <string name="driver_catalog_qualcomm_header">Qualcomm driver</string>
++    <string name="driver_catalog_turnip_header">Mesa Turnip driver</string>
++    <string name="driver_catalog_qualcomm_desc">Extracted from official Adreno drivers of recent devices. Partially compatible with similar chipsets, but emulation may show lower performance or rendering glitches.</string>
++    <string name="driver_catalog_turnip_desc">Open-source Mesa driver with broader Vulkan support and emulator-friendly behavior. Often more compatible or stable across devices.</string>
+     <string name="show_beta_releases">Show beta / nightly builds (WCP Hub content)</string>
+     <string name="channel_stable">Stable</string>
+     <string name="channel_beta">Beta</string>
