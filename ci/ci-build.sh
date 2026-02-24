@@ -53,6 +53,14 @@ fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
 
 source "${ROOT_DIR}/ci/lib/wcp_common.sh"
 
+wine_make_jobs() {
+  printf '%s' "${WCP_WINE_BUILD_JOBS:-${WCP_BUILD_JOBS:-$(nproc)}}"
+}
+
+fex_make_jobs() {
+  printf '%s' "${WCP_FEX_BUILD_JOBS:-${WCP_BUILD_JOBS:-$(nproc)}}"
+}
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
 }
@@ -124,7 +132,7 @@ build_wine() {
     fail "configure did not include ARM64EC target support"
   fi
 
-  make -j"$(nproc)"
+  make -j"$(wine_make_jobs)"
   make install DESTDIR="${STAGE_DIR}"
   validate_sdl2_runtime_payload
   popd >/dev/null
@@ -179,7 +187,7 @@ build_fex_dlls() {
     -DCMAKE_SHARED_LINKER_FLAGS="-lkernel32" \
     -DCMAKE_MODULE_LINKER_FLAGS="-lkernel32" \
     ..
-  make -j"$(nproc)" arm64ecfex
+  make -j"$(fex_make_jobs)" arm64ecfex
   popd >/dev/null
 
   mkdir -p "${HANGOVER_SRC_DIR}/fex/build_pe"
@@ -192,7 +200,7 @@ build_fex_dlls() {
     -DENABLE_TESTS=OFF \
     -DUNIT_TESTS=OFF \
     ..
-  make -j"$(nproc)" wow64fex
+  make -j"$(fex_make_jobs)" wow64fex
   popd >/dev/null
 
   mkdir -p "${STAGE_DIR}/usr/lib/wine/aarch64-windows"

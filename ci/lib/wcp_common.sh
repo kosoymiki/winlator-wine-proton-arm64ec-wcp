@@ -32,6 +32,18 @@ wcp_fail() {
   fi
 }
 
+wcp_make_jobs() {
+  if [[ -n "${WCP_WINE_BUILD_JOBS:-}" ]]; then
+    printf '%s' "${WCP_WINE_BUILD_JOBS}"
+    return
+  fi
+  if [[ -n "${WCP_BUILD_JOBS:-}" ]]; then
+    printf '%s' "${WCP_BUILD_JOBS}"
+    return
+  fi
+  nproc
+}
+
 source "${WCP_COMMON_DIR}/runtime-bundle-lock.sh"
 
 wcp_require_cmd() {
@@ -215,7 +227,7 @@ build_wine_tools_host() {
     "${configure_args[@]}"
   fi
 
-  if ! make -j"$(nproc)" tools; then
+  if ! make -j"$(wcp_make_jobs)" tools; then
     wcp_log "make tools target is unavailable; continuing with full build path"
   fi
   popd >/dev/null
@@ -251,7 +263,7 @@ build_wine_multiarc_arm64ec() {
     wcp_fail "configure did not include ARM64EC target support"
   fi
 
-  make -j"$(nproc)"
+  make -j"$(wcp_make_jobs)"
   make install DESTDIR="${stage_dir}"
   popd >/dev/null
 }
