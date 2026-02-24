@@ -42,7 +42,7 @@ env:
   WCP_DELIVERY: remote
   WCP_DISPLAY_CATEGORY: Wine/Proton
   WCP_SOURCE_REPO: ${{ github.repository }}
-  WCP_RELEASE_TAG: wcp-latest
+  WCP_RELEASE_TAG: wine-11-arm64ec-latest
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
   TARGET_HOST: aarch64-linux-gnu
   WCP_ENABLE_SDL2_RUNTIME: "1"
@@ -115,15 +115,15 @@ jobs:
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Wine 11 ARM64EC WCP (nightly / 0.2b line)
+          Wine 11 ARM64EC WCP (rolling nightly / 0.2b line)
 
           RU:
-          - Канал: nightly (wcp-latest)
+          - Канал: nightly (wine-11-arm64ec-latest)
           - Тип в Winlator Contents: Wine/Proton
           - Источник для Contents: GitHub Releases этого репозитория
 
           EN:
-          - Channel: nightly (wcp-latest)
+          - Channel: nightly (wine-11-arm64ec-latest)
           - Winlator Contents display type: Wine/Proton
           - Source for Contents: this repository GitHub Releases
 
@@ -135,11 +135,11 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: ncipollo/release-action@v1
         with:
-          tag: wcp-latest
-          name: WCP Latest Build (0.2b line)
+          tag: wine-11-arm64ec-latest
+          name: Wine 11 ARM64EC Latest (0.2b line)
           allowUpdates: true
           prerelease: true
-          removeArtifacts: false
+          removeArtifacts: true
           artifacts: out/wine/wine-11-arm64ec.wcp,out/wine/SHA256SUMS-wine-11-arm64ec.txt
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

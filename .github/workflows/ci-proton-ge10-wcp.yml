@@ -45,7 +45,7 @@ env:
   WCP_DELIVERY: remote
   WCP_DISPLAY_CATEGORY: Wine/Proton
   WCP_SOURCE_REPO: ${{ github.repository }}
-  WCP_RELEASE_TAG: wcp-latest
+  WCP_RELEASE_TAG: proton-ge10-arm64ec-latest
   TARGET_HOST: aarch64-linux-gnu
   WCP_TARGET_RUNTIME: winlator-bionic
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
@@ -121,17 +121,16 @@ jobs:
         run: |
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
-          cp "${WCP_OUTPUT_DIR}/patchlog.txt" "${WCP_OUTPUT_DIR}/patchlog-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Proton GE10 ARM64EC WCP (nightly / 0.2b line)
+          Proton GE10 ARM64EC WCP (rolling nightly / 0.2b line)
 
           RU:
-          - Канал: nightly (wcp-latest)
+          - Канал: nightly (proton-ge10-arm64ec-latest)
           - Тип в Winlator Contents: Wine/Proton
           - Источник для Contents: GitHub Releases этого репозитория
 
           EN:
-          - Channel: nightly (wcp-latest)
+          - Channel: nightly (proton-ge10-arm64ec-latest)
           - Winlator Contents display type: Wine/Proton
           - Source for Contents: this repository GitHub Releases
 
@@ -143,11 +142,11 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: ncipollo/release-action@v1
         with:
-          tag: wcp-latest
-          name: WCP Latest Build (0.2b line)
+          tag: proton-ge10-arm64ec-latest
+          name: Proton GE10 ARM64EC Latest (0.2b line)
           allowUpdates: true
           prerelease: true
-          removeArtifacts: false
-          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS-proton-ge10-arm64ec.txt,out/proton-ge10/patchlog-proton-ge10-arm64ec.txt
+          removeArtifacts: true
+          artifacts: out/proton-ge10/proton-ge10-arm64ec.wcp,out/proton-ge10/SHA256SUMS-proton-ge10-arm64ec.txt
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

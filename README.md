@@ -28,7 +28,7 @@ APK использует package ID `by.aero.so.benchmark` **намеренно*
 
 - ARM64EC/FEX-ориентированная логика runtime/launcher
 - `Contents` для `Wine/Proton` из релизов **этого** репозитория
-- разделение каналов `stable / beta / nightly`
+- раздельные rolling release-линии для `wine / proton-ge / protonwine`
 - улучшенный `Turnip / Adrenotools` (выбор версий: latest + history)
 - forensic/diagnostics слой (parser hardening, launch trace, JSONL logs)
 - ребрендинг `Winlator CMOD Aero.so`
@@ -47,9 +47,10 @@ APK использует package ID `by.aero.so.benchmark` **намеренно*
 
 - Источник списка пакетов: `contents/contents.json`
 - Источник загрузки `Wine/Proton`: GitHub Releases этого репозитория
-- Каналы:
-  - `stable` → `wcp-v0.2b`
-  - `nightly` → `wcp-latest`
+- Rolling tags (`Wine/Proton` overlay):
+  - `wine-11-arm64ec-latest`
+  - `proton-ge10-arm64ec-latest`
+  - `protonwine10-gamenative-arm64ec-latest`
 - В UI Winlator тип отображается как `Wine/Proton` (внутренний тип совместимости остаётся `Wine`)
 
 См. также:
@@ -61,9 +62,12 @@ APK использует package ID `by.aero.so.benchmark` **намеренно*
 - **Winlator app**:
   - rolling prerelease: `winlator-latest`
   - stable: `v0.2b`
-- **WCP bundle** (`wine-11`, `proton-ge10`, `protonwine10-gamenative`):
-  - rolling prerelease: `wcp-latest`
-  - stable: `wcp-v0.2b`
+- **WCP packages** (rolling, по одному пакету на релиз):
+  - `wine-11-arm64ec-latest`
+  - `proton-ge10-arm64ec-latest`
+  - `protonwine10-gamenative-arm64ec-latest`
+- **WCP stable bundle**:
+  - `wcp-v0.2b`
 
 ## Основные workflows
 

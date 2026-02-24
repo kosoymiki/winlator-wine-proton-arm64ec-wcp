@@ -4,7 +4,7 @@
 - [ ] `ContentsManager.REMOTE_PROFILES` points to this repo `contents/contents.json`
 - [ ] `ci/contents/validate-contents-json.py contents/contents.json` passes
 - [ ] Each `Wine/Proton` stable entry points to `wcp-v0.2b`
-- [ ] Each `Wine/Proton` nightly entry points to `wcp-latest`
+- [ ] Each `Wine/Proton` entry points to its per-package rolling tag (`*-latest`)
 - [ ] `channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag` are present
 
 ## Winlator UI behavior
@@ -29,7 +29,7 @@
 - [ ] Network/API failures show user-readable error messages
 
 ## CI/WCP metadata parity
-- [ ] `wine-11` nightly build emits `channel=nightly`, `releaseTag=wcp-latest`, `versionCode=1`
+- [ ] `wine-11` nightly build emits `channel=nightly`, `releaseTag=wine-11-arm64ec-latest`, `versionCode=1`
 - [ ] `proton-ge10` nightly build emits same metadata policy
 - [ ] `protonwine10` nightly build emits same metadata policy
 - [ ] Stable release builds emit `channel=stable` and `releaseTag=wcp-v0.2b`
