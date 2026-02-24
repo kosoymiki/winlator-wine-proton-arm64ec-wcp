@@ -1,0 +1,994 @@
+diff --git a/app/src/main/assets/fexcore_env_vars.json b/app/src/main/assets/fexcore_env_vars.json
+index 0a56d09..796994d 100644
+--- a/app/src/main/assets/fexcore_env_vars.json
++++ b/app/src/main/assets/fexcore_env_vars.json
+@@ -1,17 +1,914 @@
+-[
+-    {"name" : "FEX_TSOENABLED", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_VECTORTSOENABLED", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "0"},
+-    {"name" : "FEX_HALFBARRIERTSOENABLED", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_MEMCPYSETTSOENABLED", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "0"},
+-    {"name" : "FEX_X87REDUCEDPRECISION", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "0"},
+-    {"name" : "FEX_MULTIBLOCK", "values" : ["0", "1"], "toggleSwitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_MAXINST", "values" : ["5000"], "editText" : true, "defaultValue" : "5000"},
+-    {"name" : "FEX_HOSTFEATURES", "values" : ["enablesve", "disablesve", "enableavx", "disableavx", "off"], "defaultValue" : "off"},
+-    {"name" : "FEX_SMALLTSCSCALE", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_SMC_CHECKS", "values" : ["none", "mtrack", "full"], "defaultValue" : "mtrack"},
+-    {"name" : "FEX_VOLATILEMETADATA", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_MONOHACKS", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "1"},
+-    {"name" : "FEX_HIDEHYPERVISORBIT", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "0"},
+-    {"name" : "FEX_DISABLEL2CACHE", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "0"},
+-    {"name" : "FEX_DYNAMICL1CACHE", "values" : ["0", "1"], "toggleswitch" : true, "defaultValue" : "0"}
+-]
++[
++    {
++        "name": "FEX_MULTIBLOCK",
++        "group": "CPU",
++        "fexOption": "Multiblock",
++        "desc": [
++            "Controls multiblock code compilation",
++            "Can cause long JIT compilation times and stutter"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_MAXINST",
++        "group": "CPU",
++        "fexOption": "MaxInst",
++        "desc": [
++            "Maximum number of instruction to store in a block"
++        ],
++        "values": [
++            "5000"
++        ],
++        "editText": true,
++        "defaultValue": "5000"
++    },
++    {
++        "name": "FEX_ENABLECODECACHINGWIP",
++        "group": "CPU",
++        "fexOption": "EnableCodeCachingWIP",
++        "desc": [
++            "Enable the code caching subsystem"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_ENABLECODECACHEVALIDATION",
++        "group": "CPU",
++        "fexOption": "EnableCodeCacheValidation",
++        "desc": [
++            "Enable expensive validation when loading code caches"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_HOSTFEATURES",
++        "group": "CPU",
++        "fexOption": "HostFeatures",
++        "desc": [
++            "Allows controlling of the CPU features in the JIT.",
++            "\toff: Default CPU features queried from CPU features",
++            "\t{enable,disable}sve: Will force enable or disable sve even if the host doesn't support it",
++            "\t{enable,disable}avx: Will force enable or disable avx even if the host doesn't support it",
++            "\t{enable,disable}afp: Will force enable or disable afp even if the host doesn't support it",
++            "\t{enable,disable}lrcpc: Will force enable or disable lrcpc even if the host doesn't support it",
++            "\t{enable,disable}lrcpc2: Will force enable or disable lrcpc2 even if the host doesn't support it",
++            "\t{enable,disable}cssc: Will force enable or disable cssc even if the host doesn't support it",
++            "\t{enable,disable}pmull128: Will force enable or disable pmull128 even if the host doesn't support it",
++            "\t{enable,disable}rng: Will force enable or disable rng even if the host doesn't support it",
++            "\t{enable,disable}clzero: Will force enable or disable clzero even if the host doesn't support it",
++            "\t{enable,disable}atomics: Will force enable or disable ARMv8.1 LSE atomics even if the host doesn't support it",
++            "\t{enable,disable}fcma: Will force enable or disable fcma even if the host doesn't support it",
++            "\t{enable,disable}flagm: Will force enable or disable flagm even if the host doesn't support it",
++            "\t{enable,disable}flagm2: Will force enable or disable flagm2 even if the host doesn't support it",
++            "\t{enable,disable}crypto: Will force enable or disable crypto extensions even if the host doesn't support it",
++            "\t{enable,disable}rpres: Will force enable or disable rpres even if the host doesn't support it",
++            "\t{enable,disable}svebitperm: Will force enable or disable svebitperm even if the host doesn't support it",
++            "\t{enable,disable}preserveallabi: Will force enable or disable preserve_all abi even if the host doesn't support it",
++            "\t{enable,disable}wfxt: Will force enable or disable wfxt even if the host doesn't support it",
++            "\t{enable,disable}3dnow: Will force enable or disable 3DNow! even if the host doesn't support it",
++            "\t{enable,disable}sse4a: Will force enable or disable SSE4a even if the host doesn't support it"
++        ],
++        "values": [
++            "off",
++            "enablesve",
++            "disablesve",
++            "enableavx",
++            "disableavx",
++            "enableafp",
++            "disableafp",
++            "enablelrcpc",
++            "disablelrcpc",
++            "enablelrcpc2",
++            "disablelrcpc2",
++            "enablecssc",
++            "disablecssc",
++            "enablepmull128",
++            "disablepmull128",
++            "enablerng",
++            "disablerng",
++            "enableclzero",
++            "disableclzero",
++            "enableatomics",
++            "disableatomics",
++            "enablefcma",
++            "disablefcma",
++            "enableflagm",
++            "disableflagm",
++            "enableflagm2",
++            "disableflagm2",
++            "enablefrintts",
++            "disablefrintts",
++            "enablecrypto",
++            "disablecrypto",
++            "enablerpres",
++            "disablerpres",
++            "enablesvebitperm",
++            "disablesvebitperm",
++            "enablepreserveallabi",
++            "disablepreserveallabi",
++            "enablewfxt",
++            "disablewfxt",
++            "enable3dnow",
++            "disable3dnow",
++            "enablesse4a",
++            "disablesse4a"
++        ],
++        "defaultValue": "off"
++    },
++    {
++        "name": "FEX_SMALLTSCSCALE",
++        "group": "CPU",
++        "fexOption": "SmallTSCScale",
++        "desc": [
++            "Scales the cycle counter on systems that have low frequencies."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_HIDEHYBRID",
++        "group": "CPU",
++        "fexOption": "HideHybrid",
++        "desc": [
++            "Hides hybrid CPU core arrangement."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_CPUFEATUREREGISTERS",
++        "group": "CPU",
++        "fexOption": "CPUFeatureRegisters",
++        "desc": [
++            "Allows overriding cpu feature flags for manual testing"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_ROOTFS",
++        "group": "Emulation",
++        "fexOption": "RootFS",
++        "desc": [
++            "Which Root filesystem prefix to use",
++            "This can be a filesystem path",
++            "\teg: ~/RootFS/Debian_x86_64",
++            "Or this can be a name of a rootfs",
++            "If the named rootfs exists in the FEX data folder then it will use that one",
++            "\teg: $XDG_DATA_HOME/fex-emu/RootFS/<RootFS name>/",
++            "If XDG_DATA_HOME is unset, ~/.local/share will be used in its place.",
++            "\teg: $HOME/.local/share/fex-emu/RootFS/<RootFS name>/"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_THUNKHOSTLIBS",
++        "group": "Emulation",
++        "fexOption": "ThunkHostLibs",
++        "desc": [
++            "Folder to find the host-side thunking libraries."
++        ],
++        "values": [
++            "@CMAKE_INSTALL_FULL_LIBDIR@/fex-emu/HostThunks"
++        ],
++        "editText": true,
++        "defaultValue": "@CMAKE_INSTALL_FULL_LIBDIR@/fex-emu/HostThunks"
++    },
++    {
++        "name": "FEX_THUNKGUESTLIBS",
++        "group": "Emulation",
++        "fexOption": "ThunkGuestLibs",
++        "desc": [
++            "Folder to find the guest-side thunking libraries."
++        ],
++        "values": [
++            "@CMAKE_INSTALL_PREFIX@/share/fex-emu/GuestThunks"
++        ],
++        "editText": true,
++        "defaultValue": "@CMAKE_INSTALL_PREFIX@/share/fex-emu/GuestThunks"
++    },
++    {
++        "name": "FEX_THUNKCONFIG",
++        "group": "Emulation",
++        "fexOption": "ThunkConfig",
++        "desc": [
++            "A json file specifying where to overlay the thunks.",
++            "This can be a filesystem path",
++            "\teg: ~/MyThunkConfig.json",
++            "Or this can be a named of a Thunk config file",
++            "If the named config file exists in the FEX data folder folder the it will use that one",
++            "\teg: $XDG_DATA_HOME/fex-emu/ThunkConfigs/<ThunkConfig name>",
++            "If XDG_DATA_HOME is unset, ~/.local/share will be used in its place.",
++            "\teg: $HOME/.local/share/fex-emu/ThunkConfigs/<ThunkConfig name>"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_ENV",
++        "group": "Emulation",
++        "fexOption": "Env",
++        "desc": [
++            "Adds an environment variable to the emulated environment."
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_HOSTENV",
++        "group": "Emulation",
++        "fexOption": "HostEnv",
++        "desc": [
++            "Adds an environment variable to the host environment.",
++            "This can be useful for setting environment variables that thunks can pick up.",
++            "Typically isn't necessary since the guest libc isn't thunked. But is possible."
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_ADDITIONALARGUMENTS",
++        "group": "Emulation",
++        "fexOption": "AdditionalArguments",
++        "desc": [
++            "Allows the user to pass additional arguments to the application"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_DISABLEL2CACHE",
++        "group": "Emulation",
++        "fexOption": "DisableL2Cache",
++        "desc": [
++            "Disables FEXCore's JIT L2 cache lookup. Saving memory.",
++            "Can potentially introduce more stutters."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_DYNAMICL1CACHE",
++        "group": "Emulation",
++        "fexOption": "DynamicL1Cache",
++        "desc": [
++            "Switches FEXCore's JIT L1 cache to be dynamically sized. Saving memory.",
++            "Can potentially introduce more stutters."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_DYNAMICL1CACHEINCREASECOUNTHEURISTIC",
++        "group": "Emulation",
++        "fexOption": "DynamicL1CacheIncreaseCountHeuristic",
++        "desc": [
++            "Threshold of lookups per second that the L1 dynamic cache should increase its size.",
++            "Lower numbers means more aggressive scaling upward to the maximum size.",
++            "Higher numbers means more conservative scaling, using less memory.",
++            "Can potentially introduce stutters, more likely the higher the number.",
++            "Don't have this number smaller than the decrease count!"
++        ],
++        "values": [
++            "250"
++        ],
++        "editText": true,
++        "defaultValue": "250"
++    },
++    {
++        "name": "FEX_DYNAMICL1CACHEDECREASECOUNTHEURISTIC",
++        "group": "Emulation",
++        "fexOption": "DynamicL1CacheDecreaseCountHeuristic",
++        "desc": [
++            "Threshold of lookups per second that the L1 dynamic cache should decrease its size.",
++            "The higher the number, the more aggressively it reduces the L1 cache size.",
++            "Lower numbers means more conservative memory savings.",
++            "Can potentially introduce more stutters, more likely the higher the number.",
++            "Don't have this number larger than the increase count!"
++        ],
++        "values": [
++            "50"
++        ],
++        "editText": true,
++        "defaultValue": "50"
++    },
++    {
++        "name": "FEX_SINGLESTEP",
++        "group": "Debug",
++        "fexOption": "SingleStep",
++        "desc": [
++            "Single stepping configuration."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_GDBSERVER",
++        "group": "Debug",
++        "fexOption": "GdbServer",
++        "desc": [
++            "Enables the GDB server."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_DUMPIR",
++        "group": "Debug",
++        "fexOption": "DumpIR",
++        "desc": [
++            "Folder to dump the IR in to.",
++            "[no, stdout, stderr, server, <Folder>]"
++        ],
++        "values": [
++            "no",
++            "stdout",
++            "stderr",
++            "server"
++        ],
++        "defaultValue": "no"
++    },
++    {
++        "name": "FEX_PASSMANAGERDUMPIR",
++        "group": "Debug",
++        "fexOption": "PassManagerDumpIR",
++        "desc": [
++            "Allows controlling when FEX dumps its IR.",
++            "\toff: IR dumping will be disabled",
++            "\tbeforeopt: Dump IR before any optimizations",
++            "\tafteropt: Dump IR after all optimizations",
++            "\tbeforepass: Dump IR before every optimization pass",
++            "\tafterpass: Dump IR after every optimization pass"
++        ],
++        "values": [
++            "beforeopt",
++            "afteropt",
++            "beforepass",
++            "afterpass"
++        ],
++        "defaultValue": "beforeopt"
++    },
++    {
++        "name": "FEX_DUMPGPRS",
++        "group": "Debug",
++        "fexOption": "DumpGPRs",
++        "desc": [
++            "When the test harness ends, print the GPR state."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_O0",
++        "group": "Debug",
++        "fexOption": "O0",
++        "desc": [
++            "Disables optimizations passes for debugging."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_GLOBALJITNAMING",
++        "group": "Debug",
++        "fexOption": "GlobalJITNaming",
++        "desc": [
++            "Uses JITSymbols to name all JIT state as one symbol",
++            "Useful for querying how much time is spent inside of the JIT",
++            "Profiling tools will show JIT time as FEXJIT"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_LIBRARYJITNAMING",
++        "group": "Debug",
++        "fexOption": "LibraryJITNaming",
++        "desc": [
++            "Uses JITSymbols to name JIT symbols grouped by library",
++            "Useful for querying how much time is spent in each guest library",
++            "Can be used to help guide thunk generation"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_BLOCKJITNAMING",
++        "group": "Debug",
++        "fexOption": "BlockJITNaming",
++        "desc": [
++            "Uses JITSymbols to name JIT symbols",
++            "Useful for determining hot blocks of code",
++            "Has some file writing overhead per JIT block"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_GDBSYMBOLS",
++        "group": "Debug",
++        "fexOption": "GDBSymbols",
++        "desc": [
++            "Integrates with GDB using the JIT interface.",
++            "Needs the fex jit loader in GDB, which can be loaded via `jit-reader-load libFEXGDBReader.so.`",
++            "Also needs x86_64-linux-gnu-objdump in PATH.",
++            "Can be very slow."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_INJECTLIBSEGFAULT",
++        "group": "Debug",
++        "fexOption": "InjectLibSegFault",
++        "desc": [
++            "Sets the environment variable LD_PRELOAD=libSegFault.so",
++            "This allows the user to very easily enable libSegFault without dealing with environment variables",
++            "Very useful for applications that have launch scripts that set the variable to nothing at launch",
++            "Set this in an application configuration for injecting in to only specific applications.",
++            "\tNote: If x86/x86_64 libSegFault.so isn't installed then this option won't work."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_DISASSEMBLE",
++        "group": "Debug",
++        "fexOption": "Disassemble",
++        "desc": [
++            "Allows controlling of the vixl disassembler for generated ARM code.",
++            "\toff: No disassembly will be output",
++            "\tdispatcher: Will enable disassembly of the JIT dispatcher loop",
++            "\tblocks: Will enable disassembly of the translated instruction code blocks",
++            "\tstats: Will print stats when disassembling the code"
++        ],
++        "values": [
++            "dispatcher",
++            "blocks",
++            "stats"
++        ],
++        "defaultValue": "dispatcher"
++    },
++    {
++        "name": "FEX_X86DISASSEMBLE",
++        "group": "Debug",
++        "fexOption": "X86Disassemble",
++        "desc": [
++            "Enables x86/x86-64 guest disassembly output for compiled blocks.",
++            "Requires FEX to be built with -DENABLE_ZYDIS=TRUE"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_FORCESVEWIDTH",
++        "group": "Debug",
++        "fexOption": "ForceSVEWidth",
++        "desc": [
++            "Allows overriding the SVE width in the vixl simulator.",
++            "Useful as a debugging feature."
++        ],
++        "values": [
++            "0"
++        ],
++        "editText": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_DISABLETELEMETRY",
++        "group": "Debug",
++        "fexOption": "DisableTelemetry",
++        "desc": [
++            "Disables telemetry at runtime.",
++            "Useful for CI instcountCI mostly"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_SILENTLOG",
++        "group": "Logging",
++        "fexOption": "SilentLog",
++        "desc": [
++            "Disables logging"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_OUTPUTLOG",
++        "group": "Logging",
++        "fexOption": "OutputLog",
++        "desc": [
++            "File to write FEX output to.",
++            "[stderr, server, <Filename>]"
++        ],
++        "values": [
++            "no",
++            "stdout",
++            "stderr",
++            "server"
++        ],
++        "defaultValue": "server"
++    },
++    {
++        "name": "FEX_TELEMETRYDIRECTORY",
++        "group": "Logging",
++        "fexOption": "TelemetryDirectory",
++        "desc": [
++            "Redirects the telemetry folder that FEX usually writes to.",
++            "By default telemetry data is stored in {$FEX_APP_DATA_LOCATION,{$XDG_DATA_HOME,$HOME}/fex-emu/Telemetry/}"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_PROFILESTATS",
++        "group": "Logging",
++        "fexOption": "ProfileStats",
++        "desc": [
++            "Enables FEX's low-overhead sampling profile statistics.",
++            "Requires a supported version of Mangohud to see the results"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_ENABLEGPUVISPROFILING",
++        "group": "Logging",
++        "fexOption": "EnableGpuvisProfiling",
++        "desc": [
++            "Enables profiling when FEX was built with the gpuvis profiler backend."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_SMCCHECKS",
++        "group": "Hacks",
++        "fexOption": "SMCChecks",
++        "desc": [
++            "Checks code for modification before execution.",
++            "\tnone: No checks",
++            "\tmtrack: Page tracking based invalidation (default)",
++            "\tfull: Validate code before every run (slow)"
++        ],
++        "values": [
++            "none",
++            "mtrack",
++            "full"
++        ],
++        "defaultValue": "mtrack"
++    },
++    {
++        "name": "FEX_TSOENABLED",
++        "group": "Hacks",
++        "fexOption": "TSOEnabled",
++        "desc": [
++            "Controls TSO IR ops.",
++            "Highly likely to break any multithreaded application if disabled."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_VECTORTSOENABLED",
++        "group": "Hacks",
++        "fexOption": "VectorTSOEnabled",
++        "desc": [
++            "When TSO emulation is enabled, controls if vector loadstores should also be atomic."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_MEMCPYSETTSOENABLED",
++        "group": "Hacks",
++        "fexOption": "MemcpySetTSOEnabled",
++        "desc": [
++            "When TSO emulation is enabled, controls if memcpy and memset should also be atomic.",
++            "Only affects REP MOVS and REP STOS instructions"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_HALFBARRIERTSOENABLED",
++        "group": "Hacks",
++        "fexOption": "HalfBarrierTSOEnabled",
++        "desc": [
++            "When TSO emulation is enabled, controls if unaligned loads and stores should be backpatched to half-barrier atomics.",
++            "Can be dangerous due to aligned loadstores through the same code now become non-atomic."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_STRICTINPROCESSSPLITLOCKS",
++        "group": "Hacks",
++        "fexOption": "StrictInProcessSplitLocks",
++        "desc": [
++            "Strict global lock when handling an unaligned atomic that crosses a 16-byte or cacheline granularity",
++            "This is required to ensure a split-lock doesn't tear inside the process"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_KERNELUNALIGNEDATOMICBACKPATCHING",
++        "group": "Hacks",
++        "fexOption": "KernelUnalignedAtomicBackpatching",
++        "desc": [
++            "When the kernel unaligned atomic handler is enabled, use backpatching to reduce kernel context switches."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_VOLATILEMETADATA",
++        "group": "Hacks",
++        "fexOption": "VolatileMetadata",
++        "desc": [
++            "Use volatile metadata in PE files to inform TSO instructions when available.",
++            "When metadata is unavailable falls back to the currently enabled TSO options."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_X87REDUCEDPRECISION",
++        "group": "Hacks",
++        "fexOption": "X87ReducedPrecision",
++        "desc": [
++            "Emulates X87 floating point using 64-bit precision. This reduces emulation accuracy and may result in rendering bugs."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_STALLPROCESS",
++        "group": "Hacks",
++        "fexOption": "StallProcess",
++        "desc": [
++            "Forces a process to stall out on initialization",
++            "Useful for a process that keeps restarting and doesn't work"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_HIDEHYPERVISORBIT",
++        "group": "Hacks",
++        "fexOption": "HideHypervisorBit",
++        "desc": [
++            "Hides the hypervisor CPUID bit when set.",
++            "Should only be used for applications that have issues with this set."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_STARTUPSLEEP",
++        "group": "Hacks",
++        "fexOption": "StartupSleep",
++        "desc": [
++            "Sleeps the process at startup for a duration of seconds.",
++            "Useful if an application crashes too quickly to attach a debugger."
++        ],
++        "values": [
++            "0"
++        ],
++        "editText": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_STARTUPSLEEPPROCNAME",
++        "group": "Hacks",
++        "fexOption": "StartupSleepProcName",
++        "desc": [
++            "Contrains the startup sleep to only apply to processes that match this name."
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_MONOHACKS",
++        "group": "Hacks",
++        "fexOption": "MonoHacks",
++        "desc": [
++            "Permits a hook-based SMC approach and smaller JIT blocks when mono is detected."
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "1"
++    },
++    {
++        "name": "FEX_SERVERSOCKETPATH",
++        "group": "Misc",
++        "fexOption": "ServerSocketPath",
++        "desc": [
++            "Override for a FEXServer socket path. Only useful for chroots."
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    },
++    {
++        "name": "FEX_NEEDSSECCOMP",
++        "group": "Misc",
++        "fexOption": "NeedsSeccomp",
++        "desc": [
++            "Disables inline syscalls in order to support seccomp handling"
++        ],
++        "values": [
++            "0",
++            "1"
++        ],
++        "toggleSwitch": true,
++        "defaultValue": "0"
++    },
++    {
++        "name": "FEX_EXTENDEDVOLATILEMETADATA",
++        "group": "Misc",
++        "fexOption": "ExtendedVolatileMetadata",
++        "desc": [
++            "Configuration provided volatile metadata. Only implemented for WoW64/arm64ec.",
++            "Limited in its use but can be handy.",
++            "Extends on top of what Microsoft has for volatile metadata, but also supported for WoW64.",
++            "Colon delimited modules, then semi-colon delimited instructions, then comma delimited ranges",
++            "Default disables TSO in the module, unless instructions overlap the range",
++            "<module>;<offset begin>-<offset-end>,...;<instruction offset to force TSO>,...:<another>",
++            "examples:",
++            "  * Disable TSO for a full module: Just provide the module name:",
++            "      `hl2_linux`",
++            "  * Disable TSO for a part of the module:",
++            "      `hl2_linux;<offset begin>-<offset-end>`",
++            "  * Disable TSO for a part of the module, but enable TSO for some instructions within the module",
++            "      `hl2_linux;<offset begin>-<offset-end>;<instruction offset>,<instruction offset>`",
++            "  * Disable TSO for multiple modules",
++            "      `hl2_linux:libsdl2.so`"
++        ],
++        "values": [
++            ""
++        ],
++        "editText": true,
++        "defaultValue": ""
++    }
++]
+diff --git a/app/src/main/java/com/winlator/cmod/fexcore/FEXCoreEditPresetDialog.java b/app/src/main/java/com/winlator/cmod/fexcore/FEXCoreEditPresetDialog.java
+index ee20fe9..aaf81d3 100644
+--- a/app/src/main/java/com/winlator/cmod/fexcore/FEXCoreEditPresetDialog.java
++++ b/app/src/main/java/com/winlator/cmod/fexcore/FEXCoreEditPresetDialog.java
+@@ -83,7 +83,8 @@ public class FEXCoreEditPresetDialog extends ContentDialog {
+         LinearLayout parent = findViewById(R.id.LLContent);
+         for (int i = 0; i < parent.getChildCount(); i++) {
+             View child = parent.getChildAt(i);
+-            String name = ((TextView)child.findViewById(R.id.TextView)).getText().toString();
++            TextView nameView = child.findViewById(R.id.TextView);
++            String name = nameView.getTag() instanceof String ? (String)nameView.getTag() : nameView.getText().toString();
+ 
+             Spinner spinner = child.findViewById(R.id.Spinner);
+             ToggleButton toggleButton = child.findViewById(R.id.ToggleButton);
+@@ -114,12 +115,16 @@ public class FEXCoreEditPresetDialog extends ContentDialog {
+             for (int i = 0; i < data.length(); i++) {
+                 JSONObject item = data.getJSONObject(i);
+                 final String name = item.getString("name");
++                final String inlineHelp = buildInlineHelp(item);
+                 View child = inflater.inflate(R.layout.box64_env_var_list_item, parent, false);
+-                ((TextView)child.findViewById(R.id.TextView)).setText(name);
++                TextView envVarNameView = child.findViewById(R.id.TextView);
++                envVarNameView.setText(name);
++                envVarNameView.setTag(name);
+ 
+                 child.findViewById(R.id.BTHelp).setOnClickListener((v) -> {
+                     String suffix = name.replace("FEX_", "").toLowerCase(Locale.ENGLISH);
+-                    String value = StringUtils.getString(context, "fexcore_env_var_help__"+suffix);
++                    String value = inlineHelp;
++                    if (value == null) value = StringUtils.getString(context, "fexcore_env_var_help__"+suffix);
+                     if (value != null) AppUtils.showHelpBox(context, v, value);
+                 });
+ 
+@@ -155,6 +160,24 @@ public class FEXCoreEditPresetDialog extends ContentDialog {
+         catch (JSONException e) {}
+     }
+ 
++    private static String buildInlineHelp(JSONObject item) {
++        JSONArray descArray = item.optJSONArray("desc");
++        if (descArray == null || descArray.length() == 0) return null;
++
++        StringBuilder sb = new StringBuilder();
++        String group = item.optString("group", "");
++        if (!group.isEmpty()) sb.append("Group: ").append(group);
++
++        for (int i = 0; i < descArray.length(); i++) {
++            String line = descArray.optString(i, "").trim();
++            if (line.isEmpty()) continue;
++            if (sb.length() > 0) sb.append('\n');
++            sb.append(line);
++        }
++
++        return sb.length() == 0 ? null : sb.toString();
++    }
++
+     private static void applyFieldSetLabelStyle(TextView textView, boolean isDarkMode) {
+ //        Context context = textView.getContext();
+ 
