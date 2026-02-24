@@ -43,6 +43,8 @@ consolidated into:
   - temporarily removes dead `XForYouX` release source entries (404) from the in-app driver browser pending a valid upstream source
 - `0035-adrenotools-fix-version-dialog-and-gamenative-native-browser-ux.patch`
   - fixes OEM AlertDialog list/message collision in version picker (source hint moved into custom clickable header), improves GameNative native parsing/filter labels, and hardens driver row readability in themed dialogs
+- `0036-upscale-binding-defer-shell-to-child-graphics.patch`
+  - defers ScaleForce/SWFG binding decisions at container-shell/service launches so child graphics launches can apply upscale policy later instead of being preemptively downgraded
 
 ## Known high-overlap files (intentional)
 
