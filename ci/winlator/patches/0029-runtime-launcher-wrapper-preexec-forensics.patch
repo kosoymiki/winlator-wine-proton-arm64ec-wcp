@@ -41,7 +41,7 @@ index f864f1e..8190ba8 100644
 +                            "glibc_libc_exists", glibcLibc.isFile(),
 +                            "fex_log_enabled", !isEmpty(envVars.get("FEX_LOG_FILE")),
 +                            "vulkan_dump_enabled", !isEmpty(envVars.get("VK_APIDUMP_OUTPUT_FILENAME")),
-+                            "turnip_log_enabled", !isEmpty(envVars.get("MESA_LOG_FILE")) || !isEmpty(envVars.get("TU_DEBUG_LOG")))));
++                            "turnip_log_enabled", !isEmpty(envVars.get("MESA_LOG_FILE")) || !isEmpty(envVars.get("TU_DEBUG_LOG"))));
 +        }
          boolean upscaleLaunchEnvNormalized = normalizeUpscaleLaunchEnvVars(envVars);
          if (upscaleLaunchEnvNormalized && (forensicMode || !isEmpty(forensicTraceId))) {
@@ -69,4 +69,3 @@ index f864f1e..8190ba8 100644
                      ForensicLogger.fields(
 -- 
 2.43.0
-
