@@ -1,0 +1,80 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index c4dba41..6b59e7d 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -365,11 +365,13 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             this.envVars.remove("MANGOHUD_CONFIG");
+         }
+         
+-        // Merge any additional environment variables from external sources
+-        if (this.envVars != null) {
+-            envVars.putAll(this.envVars);
+-        }
+-
++        // Merge any additional environment variables from external sources
++        if (this.envVars != null) {
++            envVars.putAll(this.envVars);
++        }
++
++        boolean glibcCompatApplied = applyGlibcRuntimeCompatEnvVars(envVars, wineBinPath);
++
+         String emulator = !isEmpty(emulatorOverride) ? emulatorOverride : container.getEmulator();
+         if (shortcut != null)
+             emulator = shortcut.getExtra("emulator", container.getEmulator());
+@@ -382,8 +384,19 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             envVars.put("FEX_LOG_FILE", fexLogFile.getAbsolutePath());
+         }
+ 
++        if (glibcCompatApplied && (forensicMode || !isEmpty(forensicTraceId))) {
++            ForensicLogger.logEvent(context, "info", "RUNTIME_GLIBC_COMPAT_APPLIED", forensicTraceId, "launcher",
++                    "Applied Android glibc runtime compatibility tunables",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "wine_version", container != null ? container.getWineVersion() : "",
++                            "wine_path", imageFs.getWinePath(),
++                            "glibc_tunables", envVars.get("GLIBC_TUNABLES")));
++        }
++
+         // Construct the command without Box64 to the Wine executable
+-        String command = "";
++        String command = "";
+         String overriddenCommand = envVars.get("GUEST_PROGRAM_LAUNCHER_COMMAND");
+         if (!overriddenCommand.isEmpty()) {
+             String[] parts = overriddenCommand.split(";");
+@@ -443,9 +456,32 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                 terminationCallback.call(status);
+         });
+     }
+-
+-    private void addBox64EnvVars(EnvVars envVars, boolean enableLogs) {
+-        envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
++
++    private boolean applyGlibcRuntimeCompatEnvVars(EnvVars envVars, String wineBinPath) {
++        if (isEmpty(wineBinPath)) return false;
++
++        // Newer glibc-wrapped Wine packages can trigger SIGSYS (signal 31) on Android due to rseq.
++        File wineReal = new File(wineBinPath, "wine.glibc-real");
++        if (!wineReal.isFile()) return false;
++
++        String currentTunables = envVars.get("GLIBC_TUNABLES");
++        envVars.put("GLIBC_TUNABLES", appendGlibcTunable(currentTunables, "glibc.pthread.rseq=0"));
++        return true;
++    }
++
++    private static String appendGlibcTunable(String currentTunables, String requiredTunable) {
++        if (isEmpty(requiredTunable)) return currentTunables == null ? "" : currentTunables;
++        if (isEmpty(currentTunables)) return requiredTunable;
++
++        for (String token : currentTunables.split(":")) {
++            if (requiredTunable.equals(token.trim())) return currentTunables;
++            if (token.startsWith("glibc.pthread.rseq=")) return currentTunables;
++        }
++        return currentTunables + ":" + requiredTunable;
++    }
++
++    private void addBox64EnvVars(EnvVars envVars, boolean enableLogs) {
++        envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
+         envVars.put("BOX64_DYNAREC", "1");
+ 
+         if (enableLogs) {
