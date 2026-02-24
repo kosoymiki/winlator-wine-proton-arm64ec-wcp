@@ -31,6 +31,14 @@ adb_s() { adb -s "${ADB_SERIAL_PICKED}" "$@"; }
 
 iso_now() { date -Is; }
 
+logcat_has_trace_event() {
+  local file="$1"
+  local trace_id="$2"
+  local event_id="$3"
+  grep -F "\"trace_id\":\"${trace_id}\"" "${file}" >/dev/null 2>&1 \
+    && grep -F "\"event_id\":\"${event_id}\"" "${file}" >/dev/null 2>&1
+}
+
 start_direct_route() {
   local container_id="$1"
   local trace_id="complete-${container_id}-$(date +%s)"
@@ -54,14 +62,14 @@ wait_for_trace_settle() {
   local saw_terminal=0
   while (( elapsed < WLT_WAIT_TIMEOUT_SEC )); do
     adb_s logcat -d > "${out_dir}/_poll.logcat" 2>/dev/null || true
-    if grep -q "\"trace_id\":\"${trace_id}\".*\"event_id\":\"ROUTE_INTENT_RECEIVED\"" "${out_dir}/_poll.logcat"; then
+    if logcat_has_trace_event "${out_dir}/_poll.logcat" "${trace_id}" "ROUTE_INTENT_RECEIVED"; then
       saw_intent=1
     fi
-    if grep -q "\"trace_id\":\"${trace_id}\".*\"event_id\":\"LAUNCH_EXEC_SUBMIT\"" "${out_dir}/_poll.logcat"; then
+    if logcat_has_trace_event "${out_dir}/_poll.logcat" "${trace_id}" "LAUNCH_EXEC_SUBMIT"; then
       saw_submit=1
     fi
-    if grep -q "\"trace_id\":\"${trace_id}\".*\"event_id\":\"LAUNCH_EXEC_EXIT\"" "${out_dir}/_poll.logcat" \
-      || grep -q "\"trace_id\":\"${trace_id}\".*\"event_id\":\"SESSION_EXIT_COMPLETED\"" "${out_dir}/_poll.logcat"; then
+    if logcat_has_trace_event "${out_dir}/_poll.logcat" "${trace_id}" "LAUNCH_EXEC_EXIT" \
+      || logcat_has_trace_event "${out_dir}/_poll.logcat" "${trace_id}" "SESSION_EXIT_COMPLETED"; then
       saw_terminal=1
       break
     fi
@@ -128,11 +136,13 @@ collect_sdcard_runtime_logs() {
   else
     cp "${after_index}" "${out_dir}/sdcard-runtime-logs-new.txt" 2>/dev/null || true
   fi
+  : > "${out_dir}/sdcard-runtime-logs-new-ls.txt"
   while IFS= read -r path; do
     [[ "${path}" == /sdcard/Winlator/logs/* ]] || continue
     local base
     base="$(basename "${path}")"
-    adb_s shell "cat '${path}'" > "${out_dir}/runtime-logs/${base}" 2>/dev/null || true
+    adb_s shell "ls -l '${path}'" >> "${out_dir}/sdcard-runtime-logs-new-ls.txt" 2>&1 </dev/null || true
+    adb_s shell "cat '${path}'" > "${out_dir}/runtime-logs/${base}" 2>/dev/null </dev/null || true
   done < "${out_dir}/sdcard-runtime-logs-new.txt"
 }
 
