@@ -1,0 +1,492 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index e6ca9da..bdbb9f1 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -2,6 +2,7 @@ package com.winlator.cmod;
+ 
+ import android.app.Activity;
+ import android.app.AlertDialog;
++import android.content.ActivityNotFoundException;
+ import android.content.Intent;
+ import android.net.Uri;
+ import android.os.Bundle;
+@@ -52,6 +53,9 @@ public class AdrenotoolsFragment extends Fragment {
+             "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases?per_page=30";
+     private static final String TURNIP_RELEASES_CACHE_FILE = "turnip_releases_cache.json";
+     private static final long TURNIP_RELEASES_CACHE_TTL_MS = 15L * 60L * 1000L;
++    private static final String GITHUB_DRIVER_RELEASES_API_TEMPLATE =
++            "https://api.github.com/repos/%s/%s/releases?per_page=40";
++    private static final long GITHUB_DRIVER_RELEASES_CACHE_TTL_MS = 15L * 60L * 1000L;
+     private static final String WCPHUB_PACK_JSON_URL =
+             "https://raw.githubusercontent.com/Arihany/WinlatorWCPHub/main/pack.json";
+     private static final String WCPHUB_PACK_CACHE_FILE = "wcphub_pack_cache.json";
+@@ -85,10 +89,7 @@ public class AdrenotoolsFragment extends Fragment {
+         });
+ 
+         View btFetchLatestDriver = layout.findViewById(R.id.BTFetchLatestDriver);
+-        btFetchLatestDriver.setOnClickListener(v -> openTurnipVersionPicker(false));
+-
+-        View btDriverSourcesInfo = layout.findViewById(R.id.BTDriverSourcesInfo);
+-        btDriverSourcesInfo.setOnClickListener(v -> openDriverCatalog(false));
++        btFetchLatestDriver.setOnClickListener(v -> openDriverBrowser(false));
+         return layout;
+     }
+ 
+@@ -110,6 +111,232 @@ public class AdrenotoolsFragment extends Fragment {
+         }
+     }
+ 
++    private void openDriverBrowser(boolean forceRefresh) {
++        if (!isAdded() || getContext() == null) return;
++        final ArrayList<DriverSourceAuthor> authors = buildDriverSourceAuthors();
++        String[] labels = new String[authors.size()];
++        for (int i = 0; i < authors.size(); i++) labels[i] = authors.get(i).label;
++
++        AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
++                .setTitle(R.string.driver_browser_choose_author)
++                .setItems(labels, (dialog, which) -> openDriverFamilyPicker(authors.get(which), forceRefresh))
++                .setNegativeButton(android.R.string.cancel, null);
++        if (forceRefresh) {
++            builder.setMessage(R.string.driver_browser_refreshed_sources_hint);
++        }
++        builder.show();
++    }
++
++    private ArrayList<DriverSourceAuthor> buildDriverSourceAuthors() {
++        ArrayList<DriverSourceAuthor> authors = new ArrayList<>();
++        authors.add(DriverSourceAuthor.github("StevenMXZ", "Mesa Turnip (GitHub Releases)",
++                "StevenMXZ", "freedreno_turnip-CI",
++                DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.github("K11MCH1", "Qualcomm + Mesa Turnip (GitHub Releases)",
++                "K11MCH1", "AdrenoToolsDrivers",
++                DriverFamily.qualcomm(), DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.external("GameNative", "Qualcomm + Mesa Turnip (Website)",
++                "https://gamenative.app/drivers/",
++                DriverFamily.qualcomm(), DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.github("zoerakk", "Qualcomm ELITE (GitHub Releases)",
++                "zoerakk", "qualcomm-adreno-driver",
++                DriverFamily.qualcomm()));
++        authors.add(DriverSourceAuthor.github("whitebelyash", "Mesa Turnip (GitHub Releases)",
++                "whitebelyash", "freedreno_turnip-CI",
++                DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.github("Weab-chan", "Mesa Turnip (GitHub Releases)",
++                "Weab-chan", "freedreno_turnip-CI",
++                DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.github("MrPurple666", "Mesa Turnip (GitHub Releases)",
++                "MrPurple666", "purple-turnip",
++                DriverFamily.turnip()));
++        authors.add(DriverSourceAuthor.github("XForYouX", "Mesa Turnip (GitHub Releases)",
++                "XForYouX", "Turnip_Driver",
++                DriverFamily.turnip()));
++        return authors;
++    }
++
++    private void openDriverFamilyPicker(DriverSourceAuthor author, boolean forceRefresh) {
++        if (!isAdded() || getContext() == null) return;
++        String[] labels = new String[author.families.size()];
++        for (int i = 0; i < author.families.size(); i++) labels[i] = author.families.get(i).label;
++
++        new AlertDialog.Builder(getContext())
++                .setTitle(getString(R.string.driver_browser_choose_family_for, author.name))
++                .setItems(labels, (dialog, which) -> openDriverVersionBrowser(author, author.families.get(which), forceRefresh))
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
++    private void openDriverVersionBrowser(DriverSourceAuthor author, DriverFamily family, boolean forceRefresh) {
++        if (author.externalUrl != null && (author.repoOwner == null || author.repoName == null)) {
++            openExternalDriverSource(author, family);
++            return;
++        }
++
++        if (!isAdded() || getActivity() == null) return;
++        DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
++        progressDialog.show(R.string.loading_driver_versions);
++
++        new Thread(() -> {
++            try {
++                ArrayList<RemoteDriverAssetItem> items = loadGithubDriverAssetItems(author, family, forceRefresh);
++                if (!isAdded() || getActivity() == null) return;
++                getActivity().runOnUiThread(() -> {
++                    progressDialog.close();
++                    if (items.isEmpty()) {
++                        AppUtils.showToast(getContext(), R.string.unable_to_fetch_driver_versions);
++                        return;
++                    }
++                    showDriverVersionPicker(author, family, items, forceRefresh);
++                });
++            } catch (Exception e) {
++                if (!isAdded() || getActivity() == null) return;
++                getActivity().runOnUiThread(() -> {
++                    progressDialog.close();
++                    AppUtils.showToast(getContext(), R.string.unable_to_fetch_driver_versions);
++                });
++            }
++        }).start();
++    }
++
++    private void showDriverVersionPicker(DriverSourceAuthor author, DriverFamily family,
++                                         ArrayList<RemoteDriverAssetItem> items, boolean forceRefresh) {
++        if (!isAdded() || getContext() == null) return;
++
++        String[] labels = new String[items.size()];
++        for (int i = 0; i < items.size(); i++) labels[i] = items.get(i).label;
++
++        AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
++                .setTitle(getString(R.string.driver_browser_choose_version_for, author.name, family.shortLabel))
++                .setItems(labels, (dialog, which) -> downloadAndInstall(items.get(which)))
++                .setNegativeButton(android.R.string.cancel, null)
++                .setNeutralButton(R.string.refresh, (dialog, which) -> openDriverVersionBrowser(author, family, true));
++
++        if (author.externalUrl != null && !author.externalUrl.isEmpty()) {
++            builder.setMessage(getString(R.string.driver_browser_source_hint, author.externalUrl));
++        }
++        builder.show();
++    }
++
++    private ArrayList<RemoteDriverAssetItem> loadGithubDriverAssetItems(DriverSourceAuthor author, DriverFamily family,
++                                                                        boolean forceRefresh) throws Exception {
++        String cacheName = String.format(Locale.ROOT, "driver_releases_%s_%s.json",
++                author.repoOwner.toLowerCase(Locale.ROOT), author.repoName.toLowerCase(Locale.ROOT));
++        File cacheFile = new File(requireContext().getCacheDir(), cacheName);
++        String json = null;
++        if (!forceRefresh && cacheFile.isFile()) {
++            long age = System.currentTimeMillis() - cacheFile.lastModified();
++            if (age >= 0 && age <= GITHUB_DRIVER_RELEASES_CACHE_TTL_MS) {
++                json = FileUtils.readString(cacheFile);
++            }
++        }
++        if (json == null || json.trim().isEmpty()) {
++            String api = String.format(Locale.ROOT, GITHUB_DRIVER_RELEASES_API_TEMPLATE, author.repoOwner, author.repoName);
++            json = Downloader.downloadString(api);
++            if (json == null || json.trim().isEmpty()) throw new IllegalStateException("empty github releases response");
++            FileUtils.writeString(cacheFile, json);
++        }
++
++        JSONArray releases = new JSONArray(json);
++        ArrayList<RemoteDriverAssetItem> items = new ArrayList<>();
++        HashSet<String> seen = new HashSet<>();
++        for (int i = 0; i < releases.length(); i++) {
++            JSONObject release = releases.optJSONObject(i);
++            if (release == null) continue;
++            String releaseName = release.optString("name", release.optString("tag_name", "release"));
++            String tagName = release.optString("tag_name", "");
++            String publishedAt = release.optString("published_at", "");
++            boolean prerelease = release.optBoolean("prerelease", false);
++            JSONArray assets = release.optJSONArray("assets");
++            if (assets == null) continue;
++
++            for (int j = 0; j < assets.length(); j++) {
++                JSONObject asset = assets.optJSONObject(j);
++                if (asset == null) continue;
++                String assetName = asset.optString("name", "");
++                String url = asset.optString("browser_download_url", "");
++                if (assetName.isEmpty() || url.isEmpty()) continue;
++                if (!assetName.toLowerCase(Locale.ROOT).endsWith(".zip")) continue;
++                if (!isAdrenoDriverAssetCandidate(assetName, releaseName, tagName)) continue;
++                if (!family.matches(assetName, releaseName, tagName)) continue;
++                if (!seen.add(url)) continue;
++
++                RemoteDriverAssetItem item = new RemoteDriverAssetItem();
++                item.authorName = author.name;
++                item.familyId = family.id;
++                item.releaseName = releaseName;
++                item.tagName = tagName;
++                item.assetName = assetName;
++                item.downloadUrl = url;
++                item.publishedAt = publishedAt;
++                item.prerelease = prerelease;
++                item.label = buildGenericDriverLabel(item, i == 0);
++                items.add(item);
++            }
++        }
++
++        Collections.sort(items, (a, b) -> {
++            long ta = parseIsoDateMillis(a.publishedAt);
++            long tb = parseIsoDateMillis(b.publishedAt);
++            if (ta != tb) return Long.compare(tb, ta); // newest first
++            if (a.prerelease != b.prerelease) return a.prerelease ? 1 : -1; // stable first
++            int releaseCmp = safeString(b.releaseName).compareToIgnoreCase(safeString(a.releaseName));
++            if (releaseCmp != 0) return releaseCmp;
++            return safeString(a.assetName).compareToIgnoreCase(safeString(b.assetName));
++        });
++        if (!items.isEmpty()) {
++            // Rebuild labels after sort so "Latest" tag reflects the top item shown to the user.
++            for (int i = 0; i < items.size(); i++) {
++                items.get(i).label = buildGenericDriverLabel(items.get(i), i == 0);
++            }
++        }
++        return items;
++    }
++
++    private boolean isAdrenoDriverAssetCandidate(String assetName, String releaseName, String tagName) {
++        String combined = (assetName + " " + releaseName + " " + tagName).toLowerCase(Locale.ROOT);
++        if (combined.contains("dxvk") || combined.contains("vkd3d") || combined.contains("d8vk")
++                || combined.contains("vkbasalt") || combined.contains("dxwrapper")) {
++            return false;
++        }
++        return combined.contains("turnip")
++                || combined.contains("adreno")
++                || combined.contains("qualcomm")
++                || combined.contains("freedreno")
++                || combined.contains("mesa");
++    }
++
++    private String buildGenericDriverLabel(RemoteDriverAssetItem item, boolean firstReleaseInList) {
++        String channel;
++        if (firstReleaseInList) channel = getString(R.string.turnip_channel_latest);
++        else if (item.prerelease) channel = getString(R.string.channel_beta);
++        else channel = getString(R.string.channel_stable);
++
++        String date = item.publishedAt;
++        if (date != null && date.length() >= 10) date = date.substring(0, 10);
++        else date = DateFormat.format("yyyy-MM-dd", new Date()).toString();
++
++        String releaseLabel = !item.releaseName.isEmpty() ? item.releaseName : item.tagName;
++        return releaseLabel + " • " + date + " • " + channel + "\n" + item.assetName;
++    }
++
++    private void openExternalDriverSource(DriverSourceAuthor author, DriverFamily family) {
++        if (!isAdded() || getContext() == null || author.externalUrl == null || author.externalUrl.isEmpty()) return;
++        new AlertDialog.Builder(getContext())
++                .setTitle(getString(R.string.driver_browser_open_site_title, author.name))
++                .setMessage(getString(R.string.driver_browser_open_site_message, family.shortLabel))
++                .setPositiveButton(R.string.open_source_page, (dialog, which) -> {
++                    try {
++                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(author.externalUrl)));
++                    } catch (ActivityNotFoundException e) {
++                        AppUtils.showToast(getContext(), R.string.unable_to_fetch_driver_catalog);
++                    }
++                })
++                .setNegativeButton(android.R.string.cancel, null)
++                .show();
++    }
++
+     private void openTurnipVersionPicker(boolean forceRefresh) {
+         if (!isAdded() || getActivity() == null) return;
+         DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
+@@ -213,6 +440,16 @@ public class AdrenotoolsFragment extends Fragment {
+     }
+ 
+     private void downloadAndInstall(TurnipAssetItem item) {
++        if (item == null) return;
++        downloadAndInstall(item.downloadUrl, item.assetName);
++    }
++
++    private void downloadAndInstall(RemoteDriverAssetItem item) {
++        if (item == null) return;
++        downloadAndInstall(item.downloadUrl, item.assetName);
++    }
++
++    private void downloadAndInstall(String downloadUrl, String assetName) {
+         if (!isAdded() || getActivity() == null) return;
+ 
+         DownloadProgressDialog progressDialog = new DownloadProgressDialog(getActivity());
+@@ -223,8 +460,8 @@ public class AdrenotoolsFragment extends Fragment {
+             try {
+                 if (!isAdded() || getContext() == null) return;
+                 out = new File(getContext().getCacheDir(),
+-                        "turnip_" + System.currentTimeMillis() + "_" + sanitizeFilename(item.assetName));
+-                downloadFileWithProgress(item.downloadUrl, out, progress -> {
++                        "driver_" + System.currentTimeMillis() + "_" + sanitizeFilename(assetName));
++                downloadFileWithProgress(downloadUrl, out, progress -> {
+                     if (!isAdded() || getActivity() == null) return;
+                     getActivity().runOnUiThread(() -> progressDialog.setProgress(progress));
+                 });
+@@ -239,14 +476,14 @@ public class AdrenotoolsFragment extends Fragment {
+                         if (adapter != null) adapter.addItem(installedDriver);
+                         AppUtils.showToast(getContext(), R.string.content_installed_success);
+                     } else {
+-                        AppUtils.showToast(getContext(), R.string.turnip_install_failed_or_exists);
++                        AppUtils.showToast(getContext(), R.string.driver_install_failed_or_exists);
+                     }
+                 });
+             } catch (Exception e) {
+                 if (!isAdded() || getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> {
+                     progressDialog.close();
+-                    AppUtils.showToast(getContext(), R.string.turnip_download_failed);
++                    AppUtils.showToast(getContext(), R.string.driver_download_failed);
+                 });
+             } finally {
+                 if (out != null && out.exists()) {
+@@ -522,10 +759,92 @@ public class AdrenotoolsFragment extends Fragment {
+         return name.replaceAll("[^a-zA-Z0-9._-]", "_");
+     }
+ 
++    private long parseIsoDateMillis(String value) {
++        if (value == null || value.length() < 10) return Long.MIN_VALUE;
++        try {
++            // API timestamps are ISO8601 UTC; Date.parse is deprecated but available and sufficient here.
++            return Date.parse(value);
++        } catch (IllegalArgumentException e) {
++            return Long.MIN_VALUE;
++        }
++    }
++
++    private String safeString(String value) {
++        return value != null ? value : "";
++    }
++
+     private interface ProgressCallback {
+         void onProgress(int progress);
+     }
+ 
++    private static class DriverSourceAuthor {
++        String name;
++        String label;
++        String repoOwner;
++        String repoName;
++        String externalUrl;
++        ArrayList<DriverFamily> families = new ArrayList<>();
++
++        static DriverSourceAuthor github(String name, String label, String repoOwner, String repoName, DriverFamily... families) {
++            DriverSourceAuthor author = new DriverSourceAuthor();
++            author.name = name;
++            author.label = label;
++            author.repoOwner = repoOwner;
++            author.repoName = repoName;
++            if (families != null) Collections.addAll(author.families, families);
++            return author;
++        }
++
++        static DriverSourceAuthor external(String name, String label, String externalUrl, DriverFamily... families) {
++            DriverSourceAuthor author = new DriverSourceAuthor();
++            author.name = name;
++            author.label = label;
++            author.externalUrl = externalUrl;
++            if (families != null) Collections.addAll(author.families, families);
++            return author;
++        }
++    }
++
++    private static class DriverFamily {
++        String id;
++        String label;
++        String shortLabel;
++
++        static DriverFamily turnip() {
++            DriverFamily family = new DriverFamily();
++            family.id = "turnip";
++            family.label = "Mesa Turnip (Adreno)";
++            family.shortLabel = "Turnip";
++            return family;
++        }
++
++        static DriverFamily qualcomm() {
++            DriverFamily family = new DriverFamily();
++            family.id = "qualcomm";
++            family.label = "Qualcomm proprietary";
++            family.shortLabel = "Qualcomm";
++            return family;
++        }
++
++        boolean isTurnip() {
++            return "turnip".equals(id);
++        }
++
++        boolean matches(String assetName, String releaseName, String tagName) {
++            String combined = (assetName + " " + releaseName + " " + tagName).toLowerCase(Locale.ROOT);
++            if (isTurnip()) {
++                return combined.contains("turnip") || combined.contains("freedreno")
++                        || combined.contains("mesa") || combined.contains("purple");
++            }
++            if ("qualcomm".equals(id)) {
++                if (combined.contains("turnip") || combined.contains("mesa")) return false;
++                return combined.contains("qualcomm") || combined.contains("adreno")
++                        || combined.contains("elite") || combined.contains("driver");
++            }
++            return true;
++        }
++    }
++
+     private static class TurnipAssetItem {
+         String releaseName;
+         String tagName;
+@@ -536,6 +855,18 @@ public class AdrenotoolsFragment extends Fragment {
+         String label;
+     }
+ 
++    private static class RemoteDriverAssetItem {
++        String authorName;
++        String familyId;
++        String releaseName;
++        String tagName;
++        String assetName;
++        String downloadUrl;
++        String publishedAt;
++        boolean prerelease;
++        String label;
++    }
++
+     private static class DriverCatalogLink {
+         String label;
+         String url;
+diff --git a/app/src/main/res/layout/adrenotools_fragment.xml b/app/src/main/res/layout/adrenotools_fragment.xml
+index cbd5ff6..d9a8577 100644
+--- a/app/src/main/res/layout/adrenotools_fragment.xml
++++ b/app/src/main/res/layout/adrenotools_fragment.xml
+@@ -21,14 +21,16 @@
+     <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:orientation="horizontal">
++        android:orientation="horizontal"
++        android:gravity="center_vertical">
+ 
+-        <Button
+-            android:id="@+id/BTInstallDriver"
+-            style="@style/ButtonNeutral"
++        <Button
++            android:id="@+id/BTInstallDriver"
++            style="@style/ButtonNeutral"
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_weight="1"
++            android:layout_marginEnd="6dp"
+             android:text="@string/install_drivers" />
+ 
+         <Button
+@@ -37,15 +39,8 @@
+             android:layout_width="0dp"
+             android:layout_height="wrap_content"
+             android:layout_weight="1"
++            android:layout_marginStart="6dp"
+             android:text="@string/fetch_latest_turnip" />
+ 
+     </LinearLayout>
+-
+-    <Button
+-        android:id="@+id/BTDriverSourcesInfo"
+-        style="@style/ButtonNeutral"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:layout_marginTop="8dp"
+-        android:text="@string/adreno_driver_sources_info" />
+ </LinearLayout>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 7fa922f..af3398c 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -616,8 +616,20 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="install_drivers">Install Drivers</string>
+     <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>
+     <string name="install_drivers_warning">Be warned that because of limitations of current PC emulators, Qualcomm Drivers may not work on chipsets below 8 Gen2 without getting patched.</string>
+-    <string name="fetch_latest_turnip">Browse Turnip versions (latest + history)</string>
++    <string name="fetch_latest_turnip">Browse drivers</string>
+     <string name="turnip_choose_version">Choose Turnip version</string>
++    <string name="driver_browser_choose_author">Choose driver author</string>
++    <string name="driver_browser_choose_family_for">Choose driver type • %1$s</string>
++    <string name="driver_browser_choose_version_for">Choose version • %1$s / %2$s</string>
++    <string name="driver_browser_source_hint">Source: %1$s</string>
++    <string name="driver_browser_open_site_title">Open source site • %1$s</string>
++    <string name="driver_browser_open_site_message">This source does not provide a reliable in-app release API yet for %1$s. Open the source page and download manually?</string>
++    <string name="driver_browser_refreshed_sources_hint">Refresh mode enabled for remote driver sources.</string>
++    <string name="open_source_page">Open source page</string>
++    <string name="loading_driver_versions">Loading driver versions…</string>
++    <string name="unable_to_fetch_driver_versions">Unable to fetch driver versions.</string>
++    <string name="driver_download_failed">Driver download failed.</string>
++    <string name="driver_install_failed_or_exists">Driver install failed or version is already installed.</string>
+     <string name="turnip_channel_latest">Latest</string>
+     <string name="loading_turnip_versions">Loading Turnip versions…</string>
+     <string name="unable_to_fetch_turnip_versions">Unable to fetch Turnip versions.</string>
