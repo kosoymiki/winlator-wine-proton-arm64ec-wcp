@@ -46,6 +46,9 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${WCP_RUNTIME_BUNDLE_LOCK_ID:=glibc-2.43-bundle-v1}"
 : "${WCP_RUNTIME_BUNDLE_LOCK_FILE:=${ROOT_DIR}/ci/runtime-bundle/locks/glibc-2.43-bundle-v1.env}"
 : "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:=0}"
+: "${WCP_RUNTIME_BUNDLE_LOCK_MODE:=relaxed-enforce}"
+: "${WCP_INCLUDE_FEX_DLLS:=0}"
+: "${WCP_FEX_EXPECTATION_MODE:=external}"
 
 TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 export TOOLCHAIN_DIR CACHE_DIR LLVM_MINGW_TAG
@@ -60,6 +63,12 @@ preflight_runtime_profile() {
   [[ -n "${WCP_TARGET_RUNTIME}" ]] || fail "WCP_TARGET_RUNTIME must not be empty"
   wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
   wcp_require_bool WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+  wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
+  if [[ "${WCP_FEX_EXPECTATION_MODE}" == "bundled" && "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]]; then
+    fail "WCP_FEX_EXPECTATION_MODE=bundled conflicts with WCP_PRUNE_EXTERNAL_COMPONENTS=1"
+  fi
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 }
 

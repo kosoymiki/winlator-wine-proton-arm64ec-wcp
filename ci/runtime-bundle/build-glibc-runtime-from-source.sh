@@ -30,6 +30,13 @@ EOF
 log() { printf '[glibc-build] %s\n' "$*"; }
 fail() { printf '[glibc-build][error] %s\n' "$*" >&2; exit 1; }
 
+print_log_tail() {
+  local f="$1"
+  [[ -f "${f}" ]] || return 0
+  printf '[glibc-build][tail] %s\n' "${f}" >&2
+  tail -n 80 "${f}" >&2 || true
+}
+
 sha256_file() {
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$1" | awk '{print $1}'
@@ -96,6 +103,7 @@ fi
 command -v tar >/dev/null 2>&1 || fail "tar is required"
 command -v make >/dev/null 2>&1 || fail "make is required"
 command -v gcc >/dev/null 2>&1 || fail "gcc is required"
+command -v g++ >/dev/null 2>&1 || fail "g++ is required"
 command -v gawk >/dev/null 2>&1 || fail "gawk is required for glibc build"
 command -v bison >/dev/null 2>&1 || fail "bison is required for glibc build"
 command -v msgfmt >/dev/null 2>&1 || log "msgfmt not found (gettext optional; glibc may still build)"
@@ -128,34 +136,103 @@ WORK_DIR="${CACHE_DIR}/build-${VERSION_LABEL}-${HOST_TRIPLET}"
 SRC_DIR="${WORK_DIR}/src"
 BLD_DIR="${WORK_DIR}/build"
 DST_DIR="${WORK_DIR}/dest"
+REPORT_DIR="${WORK_DIR}/reports"
 STAMP_FILE="${WORK_DIR}/.stamp-${VERSION_LABEL}"
 
 if [[ ! -f "${STAMP_FILE}" ]]; then
   log "Preparing build dirs: ${WORK_DIR}"
   rm -rf "${WORK_DIR}"
-  mkdir -p "${SRC_DIR}" "${BLD_DIR}" "${DST_DIR}"
+  mkdir -p "${SRC_DIR}" "${BLD_DIR}" "${DST_DIR}" "${REPORT_DIR}"
   tar -xf "${SRC_TARBALL}" -C "${SRC_DIR}" --strip-components=1
 
+  {
+    echo "version=${VERSION_LABEL}"
+    echo "host_triplet=${HOST_TRIPLET}"
+    echo "enable_kernel=${ENABLE_KERNEL}"
+    echo "jobs=${JOBS}"
+    echo "src_tarball=${SRC_TARBALL}"
+    echo "src_sha256=${SRC_SHA256}"
+    echo "caller_CC=${CC:-}"
+    echo "caller_CXX=${CXX:-}"
+    echo "caller_LD=${LD:-}"
+    echo "caller_AR=${AR:-}"
+    echo "caller_RANLIB=${RANLIB:-}"
+    echo "caller_CFLAGS=${CFLAGS:-}"
+    echo "caller_LDFLAGS=${LDFLAGS:-}"
+  } > "${REPORT_DIR}/toolchain-env.txt"
+
+  if ! command -v makeinfo >/dev/null 2>&1; then
+    log "makeinfo not found, glibc docs generation will be disabled (MAKEINFO=true)"
+  fi
+
+  export GLIBC_HOST_CC="${GLIBC_HOST_CC:-gcc}"
+  export GLIBC_HOST_CXX="${GLIBC_HOST_CXX:-g++}"
+  export GLIBC_HOST_LD="${GLIBC_HOST_LD:-ld}"
+  export GLIBC_HOST_AR="${GLIBC_HOST_AR:-ar}"
+  export GLIBC_HOST_RANLIB="${GLIBC_HOST_RANLIB:-ranlib}"
+  export GLIBC_HOST_NM="${GLIBC_HOST_NM:-nm}"
+  export GLIBC_HOST_STRIP="${GLIBC_HOST_STRIP:-strip}"
+
   log "Configuring glibc ${VERSION_LABEL} (${HOST_TRIPLET})"
-  (
+  if ! (
     cd "${BLD_DIR}"
-    "${SRC_DIR}/configure" \
+    env -u CC -u CXX -u LD -u AR -u RANLIB -u NM -u STRIP \
+        -u CFLAGS -u CXXFLAGS -u CPPFLAGS -u LDFLAGS -u PKG_CONFIG_PATH -u PKG_CONFIG_LIBDIR \
+        CC="${GLIBC_HOST_CC}" \
+        CXX="${GLIBC_HOST_CXX}" \
+        LD="${GLIBC_HOST_LD}" \
+        AR="${GLIBC_HOST_AR}" \
+        RANLIB="${GLIBC_HOST_RANLIB}" \
+        NM="${GLIBC_HOST_NM}" \
+        STRIP="${GLIBC_HOST_STRIP}" \
+        MAKEINFO="${MAKEINFO:-true}" \
+        "${SRC_DIR}/configure" \
       --prefix=/usr \
       --disable-werror \
       --enable-kernel="${ENABLE_KERNEL}" \
       --host="${HOST_TRIPLET}" \
       --build="${HOST_TRIPLET}"
-  )
+  ) > "${REPORT_DIR}/configure.log" 2>&1; then
+    print_log_tail "${REPORT_DIR}/configure.log"
+    fail "glibc configure failed (see ${REPORT_DIR}/configure.log)"
+  fi
 
   log "Building glibc (make -j${JOBS})"
-  make -C "${BLD_DIR}" -j"${JOBS}"
+  if ! env -u CC -u CXX -u LD -u AR -u RANLIB -u NM -u STRIP \
+      -u CFLAGS -u CXXFLAGS -u CPPFLAGS -u LDFLAGS \
+      CC="${GLIBC_HOST_CC}" \
+      CXX="${GLIBC_HOST_CXX}" \
+      LD="${GLIBC_HOST_LD}" \
+      AR="${GLIBC_HOST_AR}" \
+      RANLIB="${GLIBC_HOST_RANLIB}" \
+      NM="${GLIBC_HOST_NM}" \
+      STRIP="${GLIBC_HOST_STRIP}" \
+      MAKEINFO="${MAKEINFO:-true}" \
+      make -C "${BLD_DIR}" -j"${JOBS}" > "${REPORT_DIR}/build.log" 2>&1; then
+    print_log_tail "${REPORT_DIR}/build.log"
+    fail "glibc make failed (see ${REPORT_DIR}/build.log)"
+  fi
 
   log "Installing glibc into staging destdir"
-  make -C "${BLD_DIR}" install DESTDIR="${DST_DIR}"
+  if ! env -u CC -u CXX -u LD -u AR -u RANLIB -u NM -u STRIP \
+      -u CFLAGS -u CXXFLAGS -u CPPFLAGS -u LDFLAGS \
+      CC="${GLIBC_HOST_CC}" \
+      CXX="${GLIBC_HOST_CXX}" \
+      LD="${GLIBC_HOST_LD}" \
+      AR="${GLIBC_HOST_AR}" \
+      RANLIB="${GLIBC_HOST_RANLIB}" \
+      NM="${GLIBC_HOST_NM}" \
+      STRIP="${GLIBC_HOST_STRIP}" \
+      MAKEINFO="${MAKEINFO:-true}" \
+      make -C "${BLD_DIR}" install DESTDIR="${DST_DIR}" > "${REPORT_DIR}/install.log" 2>&1; then
+    print_log_tail "${REPORT_DIR}/install.log"
+    fail "glibc make install failed (see ${REPORT_DIR}/install.log)"
+  fi
 
   date -u +"%Y-%m-%dT%H:%M:%SZ" > "${STAMP_FILE}"
 else
   log "Using cached built glibc runtime staging: ${WORK_DIR}"
+  mkdir -p "${REPORT_DIR}"
 fi
 
 rm -rf "${OUT_DIR}"
@@ -210,6 +287,10 @@ done
 if [[ "${DO_STRIP}" == "1" ]] && command -v strip >/dev/null 2>&1; then
   find "${OUT_DIR}" -maxdepth 1 -type f -name '*.so*' -exec strip --strip-unneeded {} + >/dev/null 2>&1 || true
 fi
+
+find "${OUT_DIR}" -maxdepth 1 -mindepth 1 -printf '%f\t%s\n' | LC_ALL=C sort > "${REPORT_DIR}/runtime-tree-manifest.tsv"
+mkdir -p "${OUT_DIR}/.build-reports"
+cp -a "${REPORT_DIR}/." "${OUT_DIR}/.build-reports/"
 
 cat > "${OUT_DIR}/.runtime-bundle-meta" <<EOF_META
 version=${VERSION_LABEL}

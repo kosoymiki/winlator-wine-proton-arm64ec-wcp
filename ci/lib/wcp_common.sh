@@ -58,6 +58,15 @@ wcp_require_bool() {
   esac
 }
 
+wcp_require_enum() {
+  local flag_name="$1" flag_value="$2"; shift 2
+  local candidate
+  for candidate in "$@"; do
+    [[ "${flag_value}" == "${candidate}" ]] && return 0
+  done
+  wcp_fail "${flag_name} must be one of: $* (got: ${flag_value})"
+}
+
 wcp_json_escape() {
   local s="${1-}"
   s="${s//\\/\\\\}"
@@ -351,8 +360,13 @@ compose_wcp_tree_from_stage() {
   : "${WCP_RUNTIME_BUNDLE_LOCK_ID:=glibc-2.43-bundle-v1}"
   : "${WCP_RUNTIME_BUNDLE_LOCK_FILE:=}"
   : "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:=0}"
+  : "${WCP_RUNTIME_BUNDLE_LOCK_MODE:=relaxed-enforce}"
+  : "${WCP_INCLUDE_FEX_DLLS:=0}"
+  : "${WCP_FEX_EXPECTATION_MODE:=external}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
+  wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
 
   prefix_pack_path="${PREFIX_PACK_PATH:-${ROOT_DIR}/prefixPack.txz}"
   ensure_prefix_pack "${prefix_pack_path}"
@@ -391,7 +405,9 @@ compose_wcp_tree_from_stage() {
     "prefixPack": "prefixPack.txz"
   },
   "runtime": {
-    "target": "${WCP_TARGET_RUNTIME}"
+    "target": "${WCP_TARGET_RUNTIME}",
+    "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
+    "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   },
   "built": "${utc_now}"
 }
@@ -402,6 +418,8 @@ wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
   local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
+  local glibc_stage_reports_index glibc_stage_reports_dir
+  local fex_bundled_present=0
   local -a critical_paths
   local rel hash
 
@@ -418,6 +436,8 @@ wcp_write_forensic_manifest() {
   hashes_file="${forensic_root}/critical-sha256.tsv"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
+  glibc_stage_reports_index="${forensic_root}/glibc-stage-reports-index.tsv"
+  glibc_stage_reports_dir="${forensic_root}/glibc-stage-reports"
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   repo_commit=""
@@ -479,6 +499,9 @@ wcp_write_forensic_manifest() {
     echo "WCP_RUNTIME_BUNDLE_LOCK_ID=${WCP_RUNTIME_BUNDLE_LOCK_ID:-}"
     echo "WCP_RUNTIME_BUNDLE_LOCK_FILE=${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}"
     echo "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK=${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}"
+    echo "WCP_RUNTIME_BUNDLE_LOCK_MODE=${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}"
+    echo "WCP_INCLUDE_FEX_DLLS=${WCP_INCLUDE_FEX_DLLS:-}"
+    echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -516,7 +539,10 @@ wcp_write_forensic_manifest() {
     "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
-    "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")"
+    "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
+    "WCP_RUNTIME_BUNDLE_LOCK_MODE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}")",
+    "WCP_INCLUDE_FEX_DLLS": "$(wcp_json_escape "${WCP_INCLUDE_FEX_DLLS:-}")",
+    "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   }
 }
 EOF_SOURCE_REFS
@@ -534,6 +560,24 @@ EOF_SOURCE_REFS
   fi
   wcp_runtime_write_glibc_markers "${wcp_root}" "${glibc_runtime_markers}"
 
+  rm -rf "${glibc_stage_reports_dir}"
+  : > "${glibc_stage_reports_index}"
+  if [[ -d "${wcp_root}/lib/wine/wcp-glibc-runtime/.build-reports" ]]; then
+    mkdir -p "${glibc_stage_reports_dir}"
+    while IFS= read -r rel; do
+      [[ -f "${wcp_root}/${rel}" ]] || continue
+      mkdir -p "${glibc_stage_reports_dir}/$(dirname -- "${rel#lib/wine/wcp-glibc-runtime/.build-reports/}")"
+      cp -f "${wcp_root}/${rel}" "${glibc_stage_reports_dir}/${rel#lib/wine/wcp-glibc-runtime/.build-reports/}"
+      printf '%s\t%s\n' "${rel#lib/wine/wcp-glibc-runtime/.build-reports/}" "$(stat -c '%s' "${wcp_root}/${rel}" 2>/dev/null || echo 0)" >> "${glibc_stage_reports_index}"
+    done < <(find "${wcp_root}/lib/wine/wcp-glibc-runtime/.build-reports" -type f -printf '%P\n' | LC_ALL=C sort | sed 's#^#lib/wine/wcp-glibc-runtime/.build-reports/#')
+  else
+    echo "ABSENT" > "${glibc_stage_reports_index}"
+  fi
+
+  if [[ -f "${wcp_root}/lib/wine/aarch64-windows/libarm64ecfex.dll" || -f "${wcp_root}/lib/wine/aarch64-windows/libwow64fex.dll" ]]; then
+    fex_bundled_present=1
+  fi
+
   cat > "${manifest_file}" <<EOF_MANIFEST
 {
   "schema": "wcp-forensics/v1",
@@ -544,7 +588,9 @@ EOF_SOURCE_REFS
     "profileType": "$(wcp_json_escape "${WCP_PROFILE_TYPE:-Wine}")",
     "versionName": "$(wcp_json_escape "${WCP_VERSION_NAME:-}")",
     "versionCode": ${WCP_VERSION_CODE:-0},
-    "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")"
+    "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")",
+    "fexBundledInWcp": ${fex_bundled_present},
+    "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   },
   "glibcRuntime": {
     "present": ${glibc_runtime_present},
@@ -557,16 +603,19 @@ EOF_SOURCE_REFS
     "runtimeLockId": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "runtimeLockFile": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
     "runtimeLockEnforce": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
+    "runtimeLockMode": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}")",
     "runtimePatchOverlayDir": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
     "runtimePatchScript": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
     "libsIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
-    "versionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv"
+    "versionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
+    "stageReportsIndex": "share/wcp-forensics/glibc-stage-reports-index.tsv"
   },
   "files": {
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
+    "glibcStageReportsIndex": "share/wcp-forensics/glibc-stage-reports-index.tsv",
     "buildEnv": "share/wcp-forensics/build-env.txt",
     "sourceRefs": "share/wcp-forensics/source-refs.json"
   }
@@ -586,6 +635,7 @@ wcp_validate_forensic_manifest() {
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
+    "${wcp_root}/share/wcp-forensics/glibc-stage-reports-index.tsv"
     "${wcp_root}/share/wcp-forensics/file-index.txt"
     "${wcp_root}/share/wcp-forensics/build-env.txt"
     "${wcp_root}/share/wcp-forensics/source-refs.json"
@@ -618,6 +668,11 @@ validate_wcp_tree_arm64ec() {
   for p in "${required_paths[@]}"; do
     [[ -e "${p}" ]] || wcp_fail "WCP layout is incomplete, missing: ${p#${wcp_root}/}"
   done
+
+  if [[ "${WCP_FEX_EXPECTATION_MODE:-external}" == "bundled" ]]; then
+    [[ -f "${wcp_root}/lib/wine/aarch64-windows/libarm64ecfex.dll" ]] || wcp_fail "Bundled FEX mode requires lib/wine/aarch64-windows/libarm64ecfex.dll"
+    [[ -f "${wcp_root}/lib/wine/aarch64-windows/libwow64fex.dll" ]] || wcp_fail "Bundled FEX mode requires lib/wine/aarch64-windows/libwow64fex.dll"
+  fi
 
   if [[ -d "${wcp_root}/lib/wine/arm64ec-windows" ]]; then
     wcp_log "Detected explicit arm64ec-windows layer"

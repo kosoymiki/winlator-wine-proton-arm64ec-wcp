@@ -47,6 +47,9 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_RUNTIME_BUNDLE_LOCK_ID:=glibc-2.43-bundle-v1}"
 : "${WCP_RUNTIME_BUNDLE_LOCK_FILE:=${ROOT_DIR}/ci/runtime-bundle/locks/glibc-2.43-bundle-v1.env}"
 : "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:=0}"
+: "${WCP_RUNTIME_BUNDLE_LOCK_MODE:=relaxed-enforce}"
+: "${WCP_INCLUDE_FEX_DLLS:=0}"
+: "${WCP_FEX_EXPECTATION_MODE:=external}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -417,6 +420,11 @@ WINETOOLS
         printf ',\n    "prefixPack": "prefixPack.txz"'
       fi
     )
+  },
+  "runtime": {
+    "target": "$(printf '%s' "${WCP_TARGET_RUNTIME}" | sed 's/"/\\"/g')",
+    "fexExpectationMode": "$(printf '%s' "${WCP_FEX_EXPECTATION_MODE}" | sed 's/"/\\"/g')",
+    "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   }
 }
 EOF_PROFILE
@@ -444,11 +452,15 @@ validate_wcp_tree() {
     "${WCP_ROOT}/lib/wine/aarch64-unix"
     "${WCP_ROOT}/lib/wine/aarch64-windows"
     "${WCP_ROOT}/lib/wine/i386-windows"
-    "${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
-    "${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
     "${WCP_ROOT}/share"
     "${WCP_ROOT}/profile.json"
   )
+  if [[ "${WCP_FEX_EXPECTATION_MODE}" == "bundled" ]]; then
+    required_paths+=(
+      "${WCP_ROOT}/lib/wine/aarch64-windows/libarm64ecfex.dll"
+      "${WCP_ROOT}/lib/wine/aarch64-windows/libwow64fex.dll"
+    )
+  fi
 
   local p
   for p in "${required_paths[@]}"; do
@@ -538,6 +550,13 @@ main() {
   require_cmd pkg-config
 
   require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+  require_bool_flag WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
+  case "${WCP_FEX_EXPECTATION_MODE}" in
+    external|bundled) ;;
+    *) fail "WCP_FEX_EXPECTATION_MODE must be external or bundled" ;;
+  esac
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
   check_host_arch
@@ -552,7 +571,11 @@ main() {
 
   fetch_wine_sources
   build_wine
-  install_fex_dlls
+  if [[ "${WCP_INCLUDE_FEX_DLLS}" == "1" ]]; then
+    install_fex_dlls
+  else
+    log "Skipping FEX DLL embedding (WCP_INCLUDE_FEX_DLLS=0, mode=${WCP_FEX_EXPECTATION_MODE})"
+  fi
   strip_stage_payload
   compose_wcp_tree
   wcp_write_forensic_manifest "${WCP_ROOT}"

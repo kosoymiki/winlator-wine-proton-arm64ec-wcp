@@ -50,6 +50,9 @@ env:
   WCP_WINE_BUILD_JOBS: "2"
   WCP_FEX_BUILD_JOBS: "2"
   WCP_GLIBC_BUILD_JOBS: "2"
+  WCP_RUNTIME_BUNDLE_LOCK_MODE: relaxed-enforce
+  WCP_INCLUDE_FEX_DLLS: "0"
+  WCP_FEX_EXPECTATION_MODE: external
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
 
 jobs:
@@ -69,7 +72,7 @@ jobs:
             bash curl git python3 wget unzip tar pkg-config \
             cmake ninja-build rsync \
             zstd file binutils nasm \
-            build-essential gawk bison \
+            build-essential gawk bison texinfo \
             libfreetype-dev fonts-dejavu-core \
             libglib2.0-dev gstreamer1.0-tools \
             libxslt1-dev libxml2-dev \

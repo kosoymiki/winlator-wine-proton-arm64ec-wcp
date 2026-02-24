@@ -56,6 +56,9 @@ env:
   WCP_ENABLE_SDL2_RUNTIME: "1"
   WCP_WINE_BUILD_JOBS: "2"
   WCP_GLIBC_BUILD_JOBS: "2"
+  WCP_RUNTIME_BUNDLE_LOCK_MODE: relaxed-enforce
+  WCP_INCLUDE_FEX_DLLS: "0"
+  WCP_FEX_EXPECTATION_MODE: external
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
 
 jobs:
@@ -73,7 +76,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             ca-certificates curl git python3 tar xz-utils zstd rsync file binutils \
-            build-essential autoconf automake libtool pkg-config bison flex gettext gawk \
+            build-essential autoconf automake libtool pkg-config bison flex gettext gawk texinfo \
             cmake ninja-build \
             libunwind-dev libxml2-dev zlib1g-dev \
             libfreetype-dev libjpeg-dev libpng-dev libtiff-dev \

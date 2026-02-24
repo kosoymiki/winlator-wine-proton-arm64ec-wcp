@@ -83,9 +83,12 @@ wcp_runtime_verify_glibc_lock() {
   local markers_file="${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
   local lock_file="${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}"
   local enforce="${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-0}"
+  local lock_mode="${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}"
   local mode="${WCP_GLIBC_SOURCE_MODE:-host}"
   local effective_enforce="${enforce}"
   local mismatch_count=0
+  local core_mismatch_count=0
+  local noncore_mismatch_count=0
   local msg_prefix="[wcp-runtime-lock]"
   local actual
 
@@ -121,17 +124,39 @@ wcp_runtime_verify_glibc_lock() {
   : "${WCP_LOCK_EXPECT_LIBRESOLV_REGEX:=}"
   : "${WCP_LOCK_EXPECT_LIBUTIL_REGEX:=}"
 
-  if [[ "${mode}" != "host" ]]; then
-    effective_enforce=1
+  if [[ -z "${lock_mode}" ]]; then
+    if [[ "${mode}" != "host" ]]; then
+      lock_mode="enforce"
+    else
+      lock_mode="audit"
+    fi
   fi
 
+  case "${lock_mode}" in
+    audit) effective_enforce=0 ;;
+    enforce) effective_enforce=1 ;;
+    relaxed-enforce) effective_enforce=0 ;; # handled per-entry below
+    *) wcp_fail "WCP_RUNTIME_BUNDLE_LOCK_MODE must be audit|enforce|relaxed-enforce (got: ${lock_mode})" ;;
+  esac
+
   _wcp_runtime_check_marker_regex() {
-    local rel_path="$1" regex="$2" label="$3"
+    local rel_path="$1" regex="$2" label="$3" strict_kind="${4:-noncore}"
+    local strict="0"
     [[ -n "${regex}" ]] || return 0
     actual="$(wcp_runtime_lock_lookup_marker "${markers_file}" "${rel_path}")"
+    if [[ "${lock_mode}" == "enforce" ]]; then
+      strict="1"
+    elif [[ "${lock_mode}" == "relaxed-enforce" && "${strict_kind}" == "core" ]]; then
+      strict="1"
+    fi
     if [[ -z "${actual}" || ! "${actual}" =~ ${regex} ]]; then
       mismatch_count=$((mismatch_count + 1))
-      if [[ "${effective_enforce}" == "1" ]]; then
+      if [[ "${strict_kind}" == "core" ]]; then
+        core_mismatch_count=$((core_mismatch_count + 1))
+      else
+        noncore_mismatch_count=$((noncore_mismatch_count + 1))
+      fi
+      if [[ "${strict}" == "1" ]]; then
         wcp_log "${msg_prefix} mismatch ${label}: expected /${regex}/ got '${actual:-MISSING}'"
       else
         wcp_log "${msg_prefix} audit mismatch ${label}: expected /${regex}/ got '${actual:-MISSING}'"
@@ -139,24 +164,26 @@ wcp_runtime_verify_glibc_lock() {
     fi
   }
 
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libc.so.6" "${WCP_LOCK_EXPECT_LIBC_REGEX}" "libc"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1" "${WCP_LOCK_EXPECT_LOADER_REGEX}" "loader"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libstdc++.so.6" "${WCP_LOCK_EXPECT_LIBSTDCXX_REGEX}" "libstdc++"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libgcc_s.so.1" "${WCP_LOCK_EXPECT_LIBGCC_REGEX}" "libgcc_s"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libSDL2-2.0.so.0" "${WCP_LOCK_EXPECT_LIBSDL2_REGEX}" "SDL2"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libz.so.1" "${WCP_LOCK_EXPECT_LIBZ_REGEX}" "libz"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnsl.so.1" "${WCP_LOCK_EXPECT_LIBNSL_REGEX}" "libnsl"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_files.so.2" "${WCP_LOCK_EXPECT_LIBNSS_FILES_REGEX}" "libnss_files"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_dns.so.2" "${WCP_LOCK_EXPECT_LIBNSS_DNS_REGEX}" "libnss_dns"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libresolv.so.2" "${WCP_LOCK_EXPECT_LIBRESOLV_REGEX}" "libresolv"
-  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libutil.so.1" "${WCP_LOCK_EXPECT_LIBUTIL_REGEX}" "libutil"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libc.so.6" "${WCP_LOCK_EXPECT_LIBC_REGEX}" "libc" "core"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1" "${WCP_LOCK_EXPECT_LOADER_REGEX}" "loader" "core"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libstdc++.so.6" "${WCP_LOCK_EXPECT_LIBSTDCXX_REGEX}" "libstdc++" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libgcc_s.so.1" "${WCP_LOCK_EXPECT_LIBGCC_REGEX}" "libgcc_s" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libSDL2-2.0.so.0" "${WCP_LOCK_EXPECT_LIBSDL2_REGEX}" "SDL2" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libz.so.1" "${WCP_LOCK_EXPECT_LIBZ_REGEX}" "libz" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnsl.so.1" "${WCP_LOCK_EXPECT_LIBNSL_REGEX}" "libnsl" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_files.so.2" "${WCP_LOCK_EXPECT_LIBNSS_FILES_REGEX}" "libnss_files" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libnss_dns.so.2" "${WCP_LOCK_EXPECT_LIBNSS_DNS_REGEX}" "libnss_dns" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libresolv.so.2" "${WCP_LOCK_EXPECT_LIBRESOLV_REGEX}" "libresolv" "noncore"
+  _wcp_runtime_check_marker_regex "lib/wine/wcp-glibc-runtime/libutil.so.1" "${WCP_LOCK_EXPECT_LIBUTIL_REGEX}" "libutil" "noncore"
 
   if (( mismatch_count > 0 )); then
-    if [[ "${effective_enforce}" == "1" ]]; then
+    if [[ "${lock_mode}" == "enforce" ]]; then
       wcp_fail "Runtime bundle lock validation failed (${mismatch_count} mismatch(es)); lock=${WCP_RUNTIME_LOCK_ID:-unknown}"
+    elif [[ "${lock_mode}" == "relaxed-enforce" && ${core_mismatch_count} -gt 0 ]]; then
+      wcp_fail "Runtime bundle lock validation failed (core mismatches=${core_mismatch_count}, noncore=${noncore_mismatch_count}); lock=${WCP_RUNTIME_LOCK_ID:-unknown}"
     fi
-    wcp_log "${msg_prefix} audit completed with ${mismatch_count} mismatch(es); lock=${WCP_RUNTIME_LOCK_ID:-unknown}"
+    wcp_log "${msg_prefix} audit completed with ${mismatch_count} mismatch(es) (core=${core_mismatch_count}, noncore=${noncore_mismatch_count}); lock=${WCP_RUNTIME_LOCK_ID:-unknown} mode=${lock_mode}"
   else
-    wcp_log "${msg_prefix} validated (lock=${WCP_RUNTIME_LOCK_ID:-unknown}, mode=${mode}, enforce=${effective_enforce})"
+    wcp_log "${msg_prefix} validated (lock=${WCP_RUNTIME_LOCK_ID:-unknown}, runtime=${mode}, lock_mode=${lock_mode})"
   fi
 }
