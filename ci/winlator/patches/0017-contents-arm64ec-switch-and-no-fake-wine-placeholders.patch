@@ -1,0 +1,361 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index b83cca6..90ba970 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -961,21 +961,32 @@ public class ContainerDetailFragment extends Fragment {
+ 
+     }
+ 
+-    private void loadWineVersionSpinner(final View view, Spinner sWineVersion, Spinner sBox64Version) {
+-        final Context context = getContext();
+-        sWineVersion.setEnabled(!isEditMode());
+-//
+-        sWineVersion.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+-            @Override
+-            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
++    private void loadWineVersionSpinner(final View view, Spinner sWineVersion, Spinner sBox64Version) {
++        final Context context = getContext();
++        sWineVersion.setEnabled(!isEditMode());
++        final String unavailableWinePlaceholder = "\u2014";
++//
++        sWineVersion.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
++            @Override
++            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                 FrameLayout fexcoreFL = view.findViewById(R.id.fexcoreFrame);
+                 Spinner sEmulator = view.findViewById(R.id.SEmulator);
+                 Spinner sEmulator64 = view.findViewById(R.id.SEmulator64);
+-                Spinner sDXWrapper = view.findViewById(R.id.SDXWrapper);
+-                View vDXWrapperConfig = view.findViewById(R.id.BTDXWrapperConfig);
+-                sEmulator64.setEnabled(false);
+-                String wineVersion = sWineVersion.getSelectedItem().toString();
+-                WineInfo wineInfo = WineInfo.fromIdentifier(context, contentsManager, wineVersion);
++                Spinner sDXWrapper = view.findViewById(R.id.SDXWrapper);
++                View vDXWrapperConfig = view.findViewById(R.id.BTDXWrapperConfig);
++                sEmulator64.setEnabled(false);
++                Object selected = sWineVersion.getSelectedItem();
++                String wineVersion = selected != null ? selected.toString() : "";
++                if (wineVersion.isEmpty() || unavailableWinePlaceholder.equals(wineVersion)) {
++                    fexcoreFL.setVisibility(View.GONE);
++                    sEmulator.setEnabled(false);
++                    AppUtils.setSpinnerSelectionFromIdentifier(sEmulator, "box64");
++                    sEmulator64.setSelection(1);
++                    loadBox64VersionSpinner(context, container, contentsManager, sBox64Version, false);
++                    setupDXWrapperSpinner(sDXWrapper, vDXWrapperConfig, false);
++                    return;
++                }
++                WineInfo wineInfo = WineInfo.fromIdentifier(context, contentsManager, wineVersion);
+                 if (wineInfo.isArm64EC()) {
+                     fexcoreFL.setVisibility(View.VISIBLE);
+                     sEmulator.setEnabled(true);
+@@ -997,15 +1008,34 @@ public class ContainerDetailFragment extends Fragment {
+         });
+ 
+ 
+-        view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
+-        String[] versions = getResources().getStringArray(R.array.wine_entries);
+-        ArrayList<String> wineVersions = new ArrayList<>();
+-        wineVersions.addAll(Arrays.asList(versions));
+-        for (ContentProfile profile : contentsManager.getProfiles(ContentProfile.ContentType.CONTENT_TYPE_WINE))
+-            wineVersions.add(ContentsManager.getEntryName(profile));
+-        sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineVersions));
+-        if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, container.getWineVersion());
+-    }
++        view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
++        String[] versions = getResources().getStringArray(R.array.wine_entries);
++        ArrayList<String> wineVersions = new ArrayList<>();
++        ImageFs imageFs = ImageFs.find(context);
++        File optDir = imageFs != null ? new File(imageFs.getRootDir(), "opt") : null;
++        for (String version : versions) {
++            if (optDir != null) {
++                File candidate = new File(optDir, version);
++                if (!candidate.isDirectory()) continue;
++            }
++            wineVersions.add(version);
++        }
++        List<ContentProfile> installedWineProfiles = contentsManager.getProfiles(ContentProfile.ContentType.CONTENT_TYPE_WINE);
++        if (installedWineProfiles != null) {
++            for (ContentProfile profile : installedWineProfiles) {
++                if (profile == null) continue;
++                if (profile.isRemoteDownloadable()) continue; // hide not-installed WCP entries from container creation
++                String entryName = ContentsManager.getEntryName(profile);
++                if (!wineVersions.contains(entryName)) wineVersions.add(entryName);
++            }
++        }
++        if (wineVersions.isEmpty()) {
++            wineVersions.add(unavailableWinePlaceholder);
++        }
++        sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineVersions));
++        sWineVersion.setEnabled(!isEditMode() && !wineVersions.contains(unavailableWinePlaceholder));
++        if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, container.getWineVersion());
++    }
+ 
+     public String getControllerMapping(View view) {
+         //The order has to be the same like Container.XrControllerMapping
+diff --git a/app/src/main/java/com/winlator/cmod/ContentsFragment.java b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+index 389a2b5..f1911a9 100644
+--- a/app/src/main/java/com/winlator/cmod/ContentsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContentsFragment.java
+@@ -59,6 +59,7 @@ public class ContentsFragment extends Fragment {
+     private Switch swShowBeta;
+     private View rowShowBeta;
+     private boolean showBeta;
++    private boolean showArm64ecGraphics;
+     private final List<ContentProfile.ContentType> allowedTypes = new ArrayList<>();
+ 
+     private boolean isDarkMode;
+@@ -71,6 +72,7 @@ public class ContentsFragment extends Fragment {
+         manager.syncContents();
+         sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+         showBeta = sp.getBoolean("beta_contents_enabled", false);
++        showArm64ecGraphics = sp.getBoolean("arm64ec_graphics_contents_enabled", true);
+         initAllowedTypes();
+         if (!allowedTypes.isEmpty()) {
+             currentContentType = allowedTypes.get(0);
+@@ -110,11 +112,16 @@ public class ContentsFragment extends Fragment {
+         emptyText = layout.findViewById(R.id.TVEmptyText);
+         rowShowBeta = layout.findViewById(R.id.RowShowBeta);
+         swShowBeta = layout.findViewById(R.id.SwShowBeta);
+-        swShowBeta.setChecked(showBeta);
+         swShowBeta.setOnCheckedChangeListener((buttonView, isChecked) -> {
+-            showBeta = isChecked;
+-            sp.edit().putBoolean("beta_contents_enabled", showBeta).apply();
+-            reloadRemoteContents();
++            if (isArm64EcSwitchType(currentContentType)) {
++                showArm64ecGraphics = isChecked;
++                sp.edit().putBoolean("arm64ec_graphics_contents_enabled", showArm64ecGraphics).apply();
++                loadContentList();
++            } else {
++                showBeta = isChecked;
++                sp.edit().putBoolean("beta_contents_enabled", showBeta).apply();
++                loadContentList();
++            }
+         });
+         updateShowBetaRowVisibility();
+ 
+@@ -188,6 +195,61 @@ public class ContentsFragment extends Fragment {
+         if (rowShowBeta == null) return;
+         boolean visible = currentContentType != ContentProfile.ContentType.CONTENT_TYPE_WINE;
+         rowShowBeta.setVisibility(visible ? View.VISIBLE : View.GONE);
++        if (!visible || swShowBeta == null) return;
++        if (isArm64EcSwitchType(currentContentType)) {
++            swShowBeta.setText(R.string.show_arm64ec_builds);
++            if (swShowBeta.isChecked() != showArm64ecGraphics) swShowBeta.setChecked(showArm64ecGraphics);
++        } else {
++            swShowBeta.setText(R.string.show_beta_releases);
++            if (swShowBeta.isChecked() != showBeta) swShowBeta.setChecked(showBeta);
++        }
++    }
++
++    private boolean isArm64EcSwitchType(ContentProfile.ContentType type) {
++        return type == ContentProfile.ContentType.CONTENT_TYPE_DXVK
++                || type == ContentProfile.ContentType.CONTENT_TYPE_VKD3D;
++    }
++
++    private boolean isArm64EcProfile(ContentProfile profile) {
++        if (profile == null) return false;
++        String combined = ((profile.verName != null ? profile.verName : "") + " "
++                + (profile.desc != null ? profile.desc : "") + " "
++                + (profile.remoteUrl != null ? profile.remoteUrl : "") + " "
++                + (profile.releaseTag != null ? profile.releaseTag : ""))
++                .toLowerCase(Locale.US);
++        return combined.contains("arm64ec");
++    }
++
++    private List<ContentProfile> getVisibleProfilesForCurrentType() {
++        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
++        if (profiles == null || profiles.isEmpty()) return profiles;
++
++        ArrayList<ContentProfile> filtered = new ArrayList<>();
++        for (ContentProfile profile : profiles) {
++            if (currentContentType == ContentProfile.ContentType.CONTENT_TYPE_WINE) {
++                filtered.add(profile);
++                continue;
++            }
++
++            if (isArm64EcSwitchType(currentContentType)) {
++                boolean arm64ec = isArm64EcProfile(profile);
++                if (showArm64ecGraphics && !arm64ec) continue;
++                if (!showArm64ecGraphics && arm64ec) continue;
++                filtered.add(profile);
++                continue;
++            }
++
++            if (profile.isWineProtonFamily()) {
++                filtered.add(profile);
++                continue;
++            }
++
++            boolean betaLike = profile.isBetaLike();
++            if (showBeta && !betaLike) continue;
++            if (!showBeta && betaLike) continue;
++            filtered.add(profile);
++        }
++        return filtered;
+     }
+ 
+     private String getDisplayTypeLabel(ContentProfile.ContentType type) {
+@@ -250,12 +312,12 @@ public class ContentsFragment extends Fragment {
+     }
+ 
+     private void updateContentsListView() {
+-        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
++        List<ContentProfile> profiles = getVisibleProfilesForCurrentType();
+         if (profiles == null || profiles.isEmpty()) {
+             recyclerView.setVisibility(View.GONE);
+             emptyText.setVisibility(View.VISIBLE);
+         }
+-    }
++    }
+ 
+     @Override
+     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+@@ -328,7 +390,7 @@ public class ContentsFragment extends Fragment {
+     }
+ 
+     private void loadContentList() {
+-        List<ContentProfile> profiles = manager.getProfiles(currentContentType);
++        List<ContentProfile> profiles = getVisibleProfilesForCurrentType();
+         if (profiles == null || profiles.isEmpty()) {
+             emptyText.setVisibility(View.VISIBLE);
+             recyclerView.setVisibility(View.GONE);
+diff --git a/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java b/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
+index 003e937..d60b6e8 100644
+--- a/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
++++ b/app/src/main/java/com/winlator/cmod/contentdialog/ContentInfoDialog.java
+@@ -33,7 +33,7 @@ public class ContentInfoDialog extends ContentDialog {
+ 
+         tvType.setText(orDash(profile.getDisplayCategory()));
+         tvVersion.setText(orDash(profile.verName));
+-        tvVersionCode.setText(String.valueOf(profile.verCode));
++        tvVersionCode.setText(profile.verCode > 0 ? String.valueOf(profile.verCode) : DASH_PLACEHOLDER);
+         StringBuilder descBuilder = new StringBuilder();
+         if (profile.desc != null && !profile.desc.isEmpty()) descBuilder.append(profile.desc);
+         if (!profile.isWineProtonFamily() && profile.channel != null && !profile.channel.isEmpty()) {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index da10c9e..cc5d175 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -105,14 +105,18 @@ public class ContentsManager {
+     public void setCompositeRemoteProfiles(String hubJson, String wineProtonOverlayJson, boolean showNightlyOnly) {
+         remoteProfiles = new ArrayList<>();
+         // WCP Hub: exclude Wine/Proton family to avoid duplicates with our overlay.
+-        // The UI switch now toggles between stable-only and beta/nightly-only hub lists.
+-        appendRemoteProfiles(hubJson, showNightlyOnly, true, false);
++        // Keep all hub channels in memory; UI applies per-tab filtering (nightly or ARM64EC).
++        appendRemoteProfiles(hubJson, showNightlyOnly, true, false, true);
+         // Our overlay: Wine/Proton only, and intentionally no beta/nightly split in UI.
+         appendRemoteProfiles(wineProtonOverlayJson, false, false, true);
+         syncContents();
+     }
+ 
+     private void appendRemoteProfiles(String json, boolean includeBeta, boolean ignoreWine, boolean onlyWine) {
++        appendRemoteProfiles(json, includeBeta, ignoreWine, onlyWine, false);
++    }
++
++    private void appendRemoteProfiles(String json, boolean includeBeta, boolean ignoreWine, boolean onlyWine, boolean keepAllChannels) {
+         if (json == null || json.trim().isEmpty()) return;
+         try {
+             JSONArray content = new JSONArray(json);
+@@ -123,14 +127,24 @@ public class ContentsManager {
+                     remoteProfile.remoteUrl = readRemoteUrl(object);
+                     if (remoteProfile.remoteUrl == null || remoteProfile.remoteUrl.isEmpty()) continue;
+                     remoteProfile.type = ContentProfile.ContentType.getTypeByName(object.getString("type"));
+-                    remoteProfile.verName = object.getString("verName");
++                    remoteProfile.verName = object.optString("verName", "").trim();
+                     remoteProfile.verCode = parseVerCode(object);
+-                    remoteProfile.desc = object.optString("description", "");
++                    remoteProfile.desc = object.optString("description", "").trim();
+                     remoteProfile.displayCategory = object.optString(ContentProfile.MARK_DISPLAY_CATEGORY, "");
+                     remoteProfile.sourceRepo = object.optString(ContentProfile.MARK_SOURCE_REPO, "");
+                     remoteProfile.releaseTag = object.optString(ContentProfile.MARK_RELEASE_TAG, "");
+                     remoteProfile.delivery = object.optString(ContentProfile.MARK_DELIVERY, ContentProfile.DELIVERY_REMOTE);
+ 
++                    if (remoteProfile.verName.isEmpty()) {
++                        remoteProfile.verName = deriveVersionNameFromUrl(remoteProfile.remoteUrl);
++                    }
++                    if (remoteProfile.desc.isEmpty()) {
++                        remoteProfile.desc = object.optString("name", "").trim();
++                    }
++                    if (remoteProfile.desc.isEmpty()) {
++                        remoteProfile.desc = remoteProfile.verName != null ? remoteProfile.verName : "";
++                    }
++
+                     if (remoteProfile.type == null) continue;
+                     if (onlyWine && remoteProfile.type != ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+                     if (ignoreWine && remoteProfile.type == ContentProfile.ContentType.CONTENT_TYPE_WINE) continue;
+@@ -145,7 +159,7 @@ public class ContentsManager {
+                             || ContentProfile.CHANNEL_NIGHTLY.equals(channel);
+                     // Wine/Proton overlay entries are intentionally presented as a single stable track in UI.
+                     if (onlyWine && isBeta) continue;
+-                    if (!onlyWine) {
++                    if (!onlyWine && !keepAllChannels) {
+                         // Switch OFF  -> stable only
+                         // Switch ON   -> beta/nightly only (do not append to stable list)
+                         if (includeBeta && !isBeta) continue;
+@@ -291,10 +305,10 @@ public class ContentsManager {
+         try {
+             ContentProfile profile = new ContentProfile();
+             JSONObject profileJSONObject = new JSONObject(FileUtils.readString(file));
+-            String typeName = profileJSONObject.getString(ContentProfile.MARK_TYPE);
+-            String verName = profileJSONObject.getString(ContentProfile.MARK_VERSION_NAME);
+-            int verCode = profileJSONObject.getInt(ContentProfile.MARK_VERSION_CODE);
+-            String desc = profileJSONObject.getString(ContentProfile.MARK_DESC);
++            String typeName = profileJSONObject.getString(ContentProfile.MARK_TYPE);
++            String verName = profileJSONObject.getString(ContentProfile.MARK_VERSION_NAME);
++            int verCode = profileJSONObject.getInt(ContentProfile.MARK_VERSION_CODE);
++            String desc = profileJSONObject.optString(ContentProfile.MARK_DESC, "");
+ 
+             JSONArray fileJSONArray = profileJSONObject.getJSONArray(ContentProfile.MARK_FILE_LIST);
+             List<ContentProfile.ContentFile> fileList = new ArrayList<>();
+@@ -313,9 +327,9 @@ public class ContentsManager {
+             }
+ 
+             profile.type = ContentProfile.ContentType.getTypeByName(typeName);
+-            profile.verName = verName;
++            profile.verName = verName;
+             profile.verCode = verCode;
+-            profile.desc = desc;
++            profile.desc = (desc == null || desc.trim().isEmpty()) ? verName : desc;
+             profile.fileList = fileList;
+             profile.channel = profileJSONObject.optString(ContentProfile.MARK_CHANNEL, ContentProfile.CHANNEL_STABLE);
+             profile.delivery = profileJSONObject.optString(ContentProfile.MARK_DELIVERY, "");
+@@ -362,6 +376,18 @@ public class ContentsManager {
+ 
+         return "";
+     }
++
++    private String deriveVersionNameFromUrl(String remoteUrl) {
++        if (remoteUrl == null || remoteUrl.trim().isEmpty()) return "";
++        String normalized = remoteUrl.trim();
++        int idx = normalized.lastIndexOf('/');
++        String tail = idx >= 0 ? normalized.substring(idx + 1) : normalized;
++        String lower = tail.toLowerCase();
++        if (lower.endsWith(".wcp")) tail = tail.substring(0, tail.length() - 4);
++        else if (lower.endsWith(".wcp.xz")) tail = tail.substring(0, tail.length() - 7);
++        else if (lower.endsWith(".wcp.zst")) tail = tail.substring(0, tail.length() - 8);
++        return tail;
++    }
+ 
+     public List<ContentProfile> getProfiles(ContentProfile.ContentType type) {
+         if (profilesMap != null)
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 0cb59bd..0acea95 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -623,7 +623,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="unable_to_fetch_turnip_versions">Unable to fetch Turnip versions.</string>
+     <string name="turnip_download_failed">Turnip download failed.</string>
+     <string name="turnip_install_failed_or_exists">Turnip install failed or version is already installed.</string>
+-    <string name="adreno_driver_sources_info">Adreno/WCPHub driver links &amp; quick info</string>
++    <string name="adreno_driver_sources_info">Driver links &amp; quick info</string>
+     <string name="adreno_driver_sources_title">Driver links &amp; quick info</string>
+     <string name="loading_driver_catalog">Loading driver catalog…</string>
+     <string name="unable_to_fetch_driver_catalog">Unable to update WCP Hub graphics catalog. Showing built-in references only.</string>
+@@ -638,6 +638,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="driver_catalog_qualcomm_desc">Extracted from official Adreno drivers of recent devices. Partially compatible with similar chipsets, but emulation may show lower performance or rendering glitches.</string>
+     <string name="driver_catalog_turnip_desc">Open-source Mesa driver with broader Vulkan support and emulator-friendly behavior. Often more compatible or stable across devices.</string>
+     <string name="show_beta_releases">Show beta / nightly builds (WCP Hub content)</string>
++    <string name="show_arm64ec_builds">Show ARM64EC builds (OFF = regular builds)</string>
+     <string name="channel_stable">Stable</string>
+     <string name="channel_beta">Beta</string>
+     <string name="channel_nightly">Nightly</string>
