@@ -2,83 +2,80 @@
   <img src="docs/assets/winlator-cmod-aeroso-logo.png" alt="Winlator CMOD Aero.so" width="680">
 </p>
 
-# Winlator CMOD Aero.so (ARM64EC WCP Toolkit)
+# **Winlator CMOD Aero.so** *(ARM64EC / FEX / WCP Toolkit)*
 
-`Winlator CMOD Aero.so` — наш форк Winlator (через upstream `Winlator-Ludashi`) с фокусом на `ARM64EC + FEXCore`, расширенную диагностику, аккуратную работу `Contents` и сборку/дистрибуцию WCP-пакетов.
+**Winlator CMOD Aero.so** — форк Winlator (через базу *Winlator Ludashi*), ориентированный на **ARM64EC + FEXCore**, аккуратную работу с **WCP-пакетами**, расширенную **forensic-диагностику** и воспроизводимую CI-сборку.
 
-## Что находится в репозитории
+> Пакет приложения: **`by.aero.so.benchmark`** *(суффикс `.benchmark` оставлен намеренно для поведения некоторых OEM game-mode профилей).*
 
-- WCP runtime-пакеты:
+---
+
+## **Что здесь есть**
+
+- **Winlator APK** (CI-сборка форка, без embedded runtime по умолчанию)
+- **WCP пакеты**:
   - `wine-11-arm64ec.wcp`
   - `proton-ge10-arm64ec.wcp`
   - `protonwine10-gamenative-arm64ec.wcp`
-- APK форка Winlator:
-  - `by.aero.so.benchmark` (debug/release artifacts через CI)
-- CI-инфраструктура:
-  - сборка WCP-пакетов и Winlator APK,
-  - публикация rolling/stable релизов,
-  - reflective/forensic tooling и диагностические артефакты.
+- **Patch stack Winlator** (`ci/winlator/patches/*.patch`)
+- **Contents index** (`contents/contents.json`) для overlay `Wine/Proton`
+- **Forensic / ADB tooling** для runtime-диагностики
 
-## Почему package ID заканчивается на `.benchmark`
+---
 
-APK использует package ID `by.aero.so.benchmark` **намеренно**.
-Это не опечатка: на части устройств/OEM game-mode профилировщиков имя пакета в стиле benchmark-приложений может влиять на поведение режимов производительности.
+## **Release Policy (без каши и дублей)**
 
-## Что меняет этот форк
+### **Rolling releases (по одному пакету на релиз)**
 
-- ARM64EC/FEX-ориентированная логика runtime/launcher
-- `Contents` для `Wine/Proton` из релизов **этого** репозитория
-- раздельные rolling release-линии для `wine / proton-ge / protonwine`
-- улучшенный `Turnip / Adrenotools` (выбор версий: latest + history)
-- forensic/diagnostics слой (parser hardening, launch trace, JSONL logs)
-- ребрендинг `Winlator CMOD Aero.so`
+Каждый пакет имеет **свой rolling release** и **свою SHA256**:
 
-## Winlator patch stack (порядок применения)
+- **Winlator APK:** `winlator-latest`
+- **Wine 11 ARM64EC:** `wine-11-arm64ec-latest`
+- **Proton GE10 ARM64EC:** `proton-ge10-arm64ec-latest`
+- **ProtonWine10 GameNative ARM64EC:** `protonwine10-gamenative-arm64ec-latest`
 
-1. `0001-winlator-arm64ec-runtime-and-fex.patch` — ARM64EC/FEX/runtime fixes
-2. `0002-debug-no-embedded-runtime.patch` — режим APK без обязательных embedded runtime
-3. `0003-wcphub-beta-turnip.patch` — базовые правки `Contents`/Turnip/beta-nightly
-4. `0004-theme-darkgreen-daynight.patch` — тема/палитра
-5. `0005-aeroso-turnip-nightly-logs-branding-cleanup.patch` — Aero.so branding/logging/UI cleanup
-6. `0006-forensics-diagnostics-contents-turnip-picker-and-repo-contents.patch` — forensic + diagnostics + repo-backed contents + Turnip picker
-7. `0007-aeroso-version-0.2b.patch` — версия Winlator `0.2b`
+### **Stable line (0.2b)**
 
-## Contents / Content Packages
+- **Winlator app:** `v0.2b`
+- **WCP bundle:** `wcp-v0.2b`
 
-- Источник списка пакетов: `contents/contents.json`
-- Источник загрузки `Wine/Proton`: GitHub Releases этого репозитория
-- Rolling tags (`Wine/Proton` overlay):
-  - `wine-11-arm64ec-latest`
-  - `proton-ge10-arm64ec-latest`
-  - `protonwine10-gamenative-arm64ec-latest`
-- В UI Winlator тип отображается как `Wine/Proton` (внутренний тип совместимости остаётся `Wine`)
+**Принцип:** *новый артефакт заменяет предыдущий внутри своего релиза*; дубли и лишние служебные файлы удаляются.
+
+---
+
+## **Contents / пакеты внутри Winlator**
+
+- **WCP Hub** используется для общего контента (layers/tools и т.п.)
+- **Наш репозиторий** используется для **Wine/Proton** пакетов
+- В UI `Wine/Proton` отображается как одна группа (совместимый internal type остаётся `Wine`)
+- Для `Wine/Proton` **нет искусственного разделения на stable/nightly**
+- Для пустых/неустановленных значений используется честный placeholder: **`—`**
 
 См. также:
 - `docs/CONTENT_PACKAGES_ARCHITECTURE.md`
 - `docs/CONTENTS_QA_CHECKLIST.md`
 
-## Releases (0.2b line)
+---
 
-- **Winlator app**:
-  - rolling prerelease: `winlator-latest`
-  - stable: `v0.2b`
-- **WCP packages** (rolling, по одному пакету на релиз):
-  - `wine-11-arm64ec-latest`
-  - `proton-ge10-arm64ec-latest`
-  - `protonwine10-gamenative-arm64ec-latest`
-- **WCP stable bundle**:
-  - `wcp-v0.2b`
+## **Winlator Patch Stack**
 
-## Основные workflows
+Ниже — *эволюция форка* (ключевые этапы):
 
-- `ci-arm64ec-wine.yml` — сборка `wine-11-arm64ec.wcp`
-- `ci-proton-ge10-wcp.yml` — сборка `proton-ge10-arm64ec.wcp`
-- `ci-protonwine10-wcp.yml` — сборка `protonwine10-gamenative-arm64ec.wcp`
-- `ci-winlator.yml` — сборка Winlator APK на основе upstream `winlator_bionic`
+- `0001`–`0004` — ARM64EC/FEX runtime база, debug/no-embedded-runtime, WCPHub baseline, dark-green theme
+- `0005`–`0009` — Aero.so branding, logs, contents fixes, Turnip/contents UX, container create/download fixes
+- `0010`–`0014` — driver probe hardening, session-exit diagnostics, contents UI polish, WCPHub channels, Adrenotools source links
+- `0015`–`0019` — driver catalog expansion, dynamic sources, ARM64EC switch logic, glibc wrapper/rseq compatibility
+- `0020`–`0024` — glibc `LD_PRELOAD` fix, forensic logging defaults, honest Wine picker, hierarchical Adrenotools browser, dead-code cleanup
 
-## Быстрый старт (локальная сборка)
+Патчи Winlator всегда применяются через:
+- `ci/winlator/apply-repo-patches.sh`
+- `ci/winlator/ci-build-winlator-ludashi.sh`
 
-### WCP пакеты
+---
+
+## **Локальная сборка (быстрый старт)**
+
+### **WCP пакеты**
 
 ```bash
 bash ci/ci-build.sh
@@ -86,55 +83,61 @@ bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 ```
 
-### Winlator APK
+### **Winlator APK**
 
 ```bash
 bash ci/winlator/ci-build-winlator-ludashi.sh
 ```
 
-По умолчанию APK-артефакт именуется в стиле `by.aero.so.benchmark-debug-<upstream_sha>.apk`.
+Обычно APK именуется в формате:
+- `by.aero.so.benchmark-debug-<upstream_sha>.apk`
 
-## Структура репозитория
+---
 
-- `ci/` — pipeline-скрипты сборки/publish/maintenance
-- `ci/lib/` — общие WCP/runtime helper-функции
+## **Диагностика и forensic workflow**
+
+### **Что добавлено в форк**
+
+- structured runtime/launch events (`ROUTE_*`, `RUNTIME_*`, `LAUNCH_*`, `SESSION_EXIT_*`)
+- логирование `FEX / Vulkan / Turnip / Box64`
+- вкладка **Diagnostics** для прямого forensic-запуска `XServerDisplayActivity`
+- ADB сценарии для сравнения контейнеров и поиска root cause
+
+### **Полезные скрипты**
+
+- `ci/winlator/forensic-adb-matrix.sh`
+- `ci/winlator/forensic-regression-local.sh`
+- `ci/winlator/adb-logcat-winlator.sh`
+
+---
+
+## **Структура репозитория**
+
+- `ci/` — сборка, публикация, maintenance-утилиты
+- `ci/lib/` — общие runtime/WCP helper-скрипты
 - `ci/winlator/patches/` — patch stack форка Winlator
-- `.github/workflows/` — GitHub Actions entrypoints
-- `contents/` — repo-backed index для Winlator `Contents`
-- `docs/` — архитектура, QA, reflective/forensic заметки
-- `work/`, `out/` — локальные рабочие/выходные директории (игнорируются)
+- `.github/workflows/` — GitHub Actions workflows
+- `contents/` — overlay index для Winlator `Contents`
+- `docs/` — архитектура, QA, forensic/reflective документы
+- `work/`, `out/` — локальные рабочие директории *(gitignored)*
 
-## Техническая диагностика
+---
 
-- forensic/reflective журнал реализации: `docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md`
-- интеграция форка Winlator: `docs/winlator-fork-integration.md`
-- локальные regression helpers:
-  - `ci/winlator/forensic-regression-local.sh`
-  - `ci/winlator/forensic-adb-matrix.sh` (ADB запуск — отдельно, после фиксов)
-
-## Правила сопровождения (практика)
-
-- Изменения Winlator вносятся через patch stack (`ci/winlator/patches/*`)
-- Перед публикацией проверять применимость патчей на чистом `winlator_bionic`
-- Для `Contents`/WCP обязательно валидировать `contents/contents.json`
-- Rolling и stable релизы поддерживаются отдельно (`*-latest` и `v0.2b` / `wcp-v0.2b`)
-
-## Credits and Thanks
+## **Credits / Thanks**
 
 - **Original Winlator** — [brunodev85](https://github.com/brunodev85/winlator)
 - **Winlator Bionic** — [Pipetto-crypto](https://github.com/Pipetto-crypto/winlator)
-- **Winlator Ludashi / upstream base for this fork** — [StevenMXZ](https://github.com/StevenMXZ)
+- **Winlator Ludashi (upstream base for this fork)** — [StevenMXZ](https://github.com/StevenMXZ)
 - **Ludashi backup** — [StevenMX-backup](https://github.com/StevenMX-backup/Ludashi-Backup)
-- **Winlator (coffincolors fork)** — [coffincolors](https://github.com/coffincolors/winlator)
-- **Box86/Box64** — [ptitSeb](https://github.com/ptitSeb)
-- **FEX-Emu** — [FEX-Emu](https://github.com/FEX-Emu/FEX)
+- **coffincolors fork** — [coffincolors/winlator](https://github.com/coffincolors/winlator)
+- **Box64** — [ptitSeb/box64](https://github.com/ptitSeb/box64)
+- **FEX-Emu** — [FEX-Emu/FEX](https://github.com/FEX-Emu/FEX)
 - **Mesa / Turnip / Zink / VirGL** — [mesa3d.org](https://www.mesa3d.org)
 - **Wine** — [winehq.org](https://www.winehq.org/)
 - **DXVK** — [doitsujin/dxvk](https://github.com/doitsujin/dxvk)
-- **VKD3D** — [winehq GitLab](https://gitlab.winehq.org/wine/vkd3d)
+- **VKD3D** — [winehq GitLab / vkd3d](https://gitlab.winehq.org/wine/vkd3d)
 - **D8VK** — [AlpyneDreams/d8vk](https://github.com/AlpyneDreams/d8vk)
 - **CNC DDraw** — [FunkyFr3sh/cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw)
 - **PRoot** — [proot-me.github.io](https://proot-me.github.io)
-- **Ubuntu RootFs (Bionic Beaver)** — [releases.ubuntu.com/bionic](https://releases.ubuntu.com/bionic/)
 
-Отдельная благодарность Ludashi-ветке за базу, графику README и практические идеи по package naming / benchmark-режимам.
+*Отдельная благодарность Ludashi-ветке за практическую базу, UI-идеи и исходный импульс форка.*
