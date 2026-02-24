@@ -14,8 +14,8 @@ middle of the stack.
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
-- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion
-  and upscale runtime binding gates
+- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion,
+  upscale runtime binding gates, and forensic log sink reliability fixes
 
 ## Upscale patch consolidation note
 
@@ -35,6 +35,8 @@ consolidated into:
   - expands FEX preset env-var editor to track upstream FEX config options and uses inline help text parsed from the source config descriptions
 - `0031-upscale-runtime-binding-gate-service-processes.patch`
   - binds ScaleForce/SWFG activation to graphics-eligible shortcut launches (Vulkan/OpenGL) and disables it for container shell/service processes with forensic reasons
+- `0032-forensicslogger-fallback-to-app-private-jsonl-sink.patch`
+  - falls back from `/sdcard/Winlator/logs/forensics` to app-private `files/Winlator/logs/forensics` when external storage writes fail (EACCES), and logs sink switches
 
 ## Known high-overlap files (intentional)
 
