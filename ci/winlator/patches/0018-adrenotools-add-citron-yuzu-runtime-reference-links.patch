@@ -1,0 +1,35 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 1188374..e6ca9da 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -443,6 +443,17 @@ public class AdrenotoolsFragment extends Fragment {
+                 .append(linkHtml("Arihany / WinlatorWCPHub", "https://github.com/Arihany/WinlatorWCPHub"))
+                 .append("<br/><br/>");
+ 
++        sb.append("<b>").append(getString(R.string.driver_catalog_runtime_refs_header)).append("</b><br/><br/>")
++                .append(htmlEscape(getString(R.string.driver_catalog_runtime_refs_desc)))
++                .append("<br/><br/>");
++        appendLinkLine(sb, "Citron", "Emulator source (Forgejo)",
++                "https://git.citron-emu.org/Citron/Emulator");
++        appendLinkLine(sb, "yuzu-mirror", "yuzu source mirror (GitHub)",
++                "https://github.com/yuzu-mirror/yuzu");
++        appendLinkLine(sb, "yuzu-mirror", "site/docs mirror source (GitHub Pages repo)",
++                "https://github.com/yuzu-mirror/yuzu-mirror.github.io");
++        sb.append("<br/>");
++
+         sb.append("<b>").append(getString(R.string.driver_catalog_quick_info_header)).append("</b><br/><br/>")
+                 .append("<b>").append(getString(R.string.driver_catalog_qualcomm_header)).append("</b><br/>")
+                 .append(htmlEscape(getString(R.string.driver_catalog_qualcomm_desc)))
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 0acea95..7fa922f 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -632,6 +632,8 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="driver_catalog_wcphub_graphics_header">WCP Hub ARM64EC graphics layers (dynamic)</string>
+     <string name="driver_catalog_wcphub_unavailable">WCP Hub graphics catalog is unavailable right now.</string>
+     <string name="driver_catalog_reference_header">Reference source</string>
++    <string name="driver_catalog_runtime_refs_header">Runtime graphics references (research)</string>
++    <string name="driver_catalog_runtime_refs_desc">Citron/Eden/Yuzu source references for future runtime upscaler and graphics integration. These are reference links, not installable Adreno drivers.</string>
+     <string name="driver_catalog_quick_info_header">Quick info</string>
+     <string name="driver_catalog_qualcomm_header">Qualcomm driver</string>
+     <string name="driver_catalog_turnip_header">Mesa Turnip driver</string>
