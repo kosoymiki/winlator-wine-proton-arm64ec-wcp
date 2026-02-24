@@ -1,0 +1,65 @@
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index 90ba970..6f9f4a2 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -1009,17 +1009,8 @@ public class ContainerDetailFragment extends Fragment {
+ 
+ 
+         view.findViewById(R.id.LLWineVersion).setVisibility(View.VISIBLE);
+-        String[] versions = getResources().getStringArray(R.array.wine_entries);
+         ArrayList<String> wineVersions = new ArrayList<>();
+         ImageFs imageFs = ImageFs.find(context);
+-        File optDir = imageFs != null ? new File(imageFs.getRootDir(), "opt") : null;
+-        for (String version : versions) {
+-            if (optDir != null) {
+-                File candidate = new File(optDir, version);
+-                if (!candidate.isDirectory()) continue;
+-            }
+-            wineVersions.add(version);
+-        }
+         List<ContentProfile> installedWineProfiles = contentsManager.getProfiles(ContentProfile.ContentType.CONTENT_TYPE_WINE);
+         if (installedWineProfiles != null) {
+             for (ContentProfile profile : installedWineProfiles) {
+@@ -1029,6 +1020,7 @@ public class ContainerDetailFragment extends Fragment {
+                 if (!wineVersions.contains(entryName)) wineVersions.add(entryName);
+             }
+         }
++        addLocalEmbeddedWineEntries(imageFs, wineVersions);
+         if (wineVersions.isEmpty()) {
+             wineVersions.add(unavailableWinePlaceholder);
+         }
+@@ -1036,8 +1028,32 @@ public class ContainerDetailFragment extends Fragment {
+         sWineVersion.setEnabled(!isEditMode() && !wineVersions.contains(unavailableWinePlaceholder));
+         if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, container.getWineVersion());
+     }
+-
+-    public String getControllerMapping(View view) {
++
++    private void addLocalEmbeddedWineEntries(ImageFs imageFs, ArrayList<String> wineVersions) {
++        if (imageFs == null) return;
++        File optDir = new File(imageFs.getRootDir(), "opt");
++        File[] entries = optDir.listFiles(File::isDirectory);
++        if (entries == null) return;
++
++        for (File dir : entries) {
++            if (!looksLikeLocalWineRuntime(dir)) continue;
++            String name = dir.getName();
++            if (name == null || name.trim().isEmpty()) continue;
++            if (!wineVersions.contains(name)) wineVersions.add(name);
++        }
++    }
++
++    private boolean looksLikeLocalWineRuntime(File dir) {
++        if (dir == null || !dir.isDirectory()) return false;
++        File binDir = new File(dir, "bin");
++        if (!binDir.isDirectory()) return false;
++
++        File wineBin = new File(binDir, "wine");
++        File wineserverBin = new File(binDir, "wineserver");
++        return wineBin.isFile() || wineserverBin.isFile();
++    }
++
++    public String getControllerMapping(View view) {
+         //The order has to be the same like Container.XrControllerMapping
+         int[] ids = {
+                 R.id.SButtonA, R.id.SButtonB, R.id.SButtonX, R.id.SButtonY, R.id.SButtonGrip, R.id.SButtonTrigger,
