@@ -37,10 +37,16 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
 : "${WCP_GLIBC_SOURCE_MODE:=host}"
 : "${WCP_GLIBC_VERSION:=host-system}"
+: "${WCP_GLIBC_TARGET_VERSION:=2.43}"
 : "${WCP_GLIBC_SOURCE_URL:=}"
 : "${WCP_GLIBC_SOURCE_SHA256:=}"
 : "${WCP_GLIBC_SOURCE_REF:=}"
 : "${WCP_GLIBC_PATCHSET_ID:=}"
+: "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:=}"
+: "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:=}"
+: "${WCP_RUNTIME_BUNDLE_LOCK_ID:=glibc-2.43-bundle-v1}"
+: "${WCP_RUNTIME_BUNDLE_LOCK_FILE:=${ROOT_DIR}/ci/runtime-bundle/locks/glibc-2.43-bundle-v1.env}"
+: "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:=0}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }

@@ -69,6 +69,32 @@ winlator_extract_glibc_runtime_archive() {
   rm -rf "${tmp_extract}"
 }
 
+winlator_apply_glibc_runtime_patchset() {
+  local runtime_dir="$1"
+  local overlay_dir="${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}"
+  local patch_script="${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}"
+  local patchset_id="${WCP_GLIBC_PATCHSET_ID:-}"
+
+  [[ -d "${runtime_dir}" ]] || fail "glibc runtime dir not found for patchset apply: ${runtime_dir}"
+
+  if [[ -n "${overlay_dir}" ]]; then
+    [[ -d "${overlay_dir}" ]] || fail "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR not found: ${overlay_dir}"
+    cp -a "${overlay_dir}/." "${runtime_dir}/"
+    log "Applied glibc runtime overlay patchset (${patchset_id:-overlay-only}) from ${overlay_dir}"
+  fi
+
+  if [[ -n "${patch_script}" ]]; then
+    [[ -x "${patch_script}" ]] || fail "WCP_GLIBC_RUNTIME_PATCH_SCRIPT is not executable: ${patch_script}"
+    "${patch_script}" "${runtime_dir}"
+    log "Applied glibc runtime patch script (${patchset_id:-script-only}) via ${patch_script}"
+  fi
+
+  [[ -e "${runtime_dir}/ld-linux-aarch64.so.1" ]] || fail "glibc runtime patchset removed loader symlink"
+  local loader_target
+  loader_target="$(readlink -f "${runtime_dir}/ld-linux-aarch64.so.1" 2>/dev/null || true)"
+  [[ -n "${loader_target}" && -e "${loader_target}" ]] || fail "glibc runtime patchset left broken loader symlink"
+}
+
 winlator_bundle_glibc_runtime_from_pinned_source() {
   local runtime_dir="$1"
   local source_dir="${WCP_GLIBC_RUNTIME_DIR:-}"
@@ -97,10 +123,7 @@ winlator_bundle_glibc_runtime() {
   local runtime_dir="$1"
   local -a seed_sonames=()
   local extra_sonames
-  local -a elf_roots=(
-    "${WCP_ROOT}/bin"
-    "${WCP_ROOT}/lib/wine/aarch64-unix"
-  )
+  local -a elf_roots=()
   local root f dep host_path real_name loader_name
   local -a queue=()
   declare -A seen=()
@@ -108,9 +131,15 @@ winlator_bundle_glibc_runtime() {
 
   if [[ "${glibc_mode}" != "host" ]]; then
     winlator_bundle_glibc_runtime_from_pinned_source "${runtime_dir}"
+    winlator_apply_glibc_runtime_patchset "${runtime_dir}"
     log "Winlator glibc runtime bundled from pinned source mode (${glibc_mode})"
     return 0
   fi
+
+  elf_roots=(
+    "${WCP_ROOT}/bin"
+    "${WCP_ROOT}/lib/wine/aarch64-unix"
+  )
 
   mkdir -p "${runtime_dir}"
 
@@ -185,6 +214,8 @@ winlator_bundle_glibc_runtime() {
       [[ -n "${dep}" ]] && queue+=("${dep}")
     done < <(winlator_collect_needed_sonames "${host_path}")
   done
+
+  winlator_apply_glibc_runtime_patchset "${runtime_dir}"
 }
 
 winlator_write_glibc_wrapper() {

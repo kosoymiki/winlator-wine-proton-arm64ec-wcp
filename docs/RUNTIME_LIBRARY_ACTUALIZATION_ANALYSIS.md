@@ -11,6 +11,8 @@ This document tracks which runtime libraries in the WCP packaging pipeline shoul
 - Glibc-wrapped runtimes (e.g. `Wine 11`) still show early `signal_31` (`SIGSYS`) in some device scenarios, despite wrapper mitigations:
   - `unset LD_PRELOAD`
   - `GLIBC_TUNABLES=glibc.pthread.rseq=0`
+- Repo now has **glibc runtime lane plumbing** (`host` vs `pinned-source`) and WCP forensics provenance fields, but the default build mode is still `host`.
+- Repo now records a **glibc runtime bundle inventory** and **version markers** (`glibc-runtime-libs.tsv`, `glibc-runtime-version-markers.tsv`) and can run lock validation in audit/enforce mode.
 
 ## Reflexive analysis
 
@@ -82,6 +84,13 @@ These libraries are copied transitively into `wcp-glibc-runtime` and are part of
 2. Add glibc runtime provenance + inventory to WCP forensics.
 3. Compare device forensic logs (`host 2.39` vs `glibc 2.43`) on the same containers.
 
+### Implemented groundwork (what is already done in repo)
+- `WCP_GLIBC_SOURCE_MODE`, `WCP_GLIBC_RUNTIME_DIR`, `WCP_GLIBC_RUNTIME_ARCHIVE` support in CI runtime bundling.
+- `WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR` / `WCP_GLIBC_RUNTIME_PATCH_SCRIPT` hooks for runtime-bundle patching.
+- `WCP_RUNTIME_BUNDLE_LOCK_*` metadata + audit/enforce validation hooks.
+- `glibc-runtime-libs.tsv` + `glibc-runtime-version-markers.tsv` forensic outputs in every WCP.
+- Default lock target metadata for all WCP builders: `glibc-2.43-bundle-v1` (audit mode by default).
+
 ### P1 (next)
 4. Align bundled runtime adjacents (`libstdc++`, `libgcc_s`, `libz`, `nss/resolv`, `SDL2`).
 5. If needed, prepare minimal glibc patchset (only after proof from logs).
@@ -101,3 +110,21 @@ Do not patch glibc source until the following comparison exists and is archived:
 - same Winlator build
 - only glibc runtime line changed (`2.39 host` vs `2.43 pinned-source`)
 
+## Reflexive execution notes (current cycle)
+
+### Before
+- The main risk was mixing a glibc source experiment with runtime launcher fixes and losing causality.
+- The immediate engineering gap was not "missing patches", but missing **bundle-level reproducibility** (glibc and adjacent libs drifting with host).
+
+### During
+- The implementation avoided changing Winlator app/runtime behavior and focused on CI/runtime packaging invariants:
+  - lane selection
+  - provenance
+  - inventory/markers
+  - audit/enforce lock semantics
+- Patch hooks were added to the runtime bundle path so future library modifications are explicit and traceable.
+
+### After
+- We can now run a controlled `glibc 2.43` experiment across **all** WCP builds without changing launcher logic.
+- We can also prove whether mismatches are from glibc itself or from adjacent runtime-bundle libs.
+- The next causal step is to supply/build a pinned 2.43 runtime bundle and run device forensic comparison on the same containers.

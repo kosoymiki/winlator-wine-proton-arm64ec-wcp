@@ -32,6 +32,8 @@ wcp_fail() {
   fi
 }
 
+source "${WCP_COMMON_DIR}/runtime-bundle-lock.sh"
+
 wcp_require_cmd() {
   command -v "$1" >/dev/null 2>&1 || wcp_fail "Required command not found: $1"
 }
@@ -327,10 +329,16 @@ compose_wcp_tree_from_stage() {
   : "${WCP_RELEASE_TAG:=wcp-latest}"
   : "${WCP_GLIBC_SOURCE_MODE:=host}"
   : "${WCP_GLIBC_VERSION:=host-system}"
+  : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
   : "${WCP_GLIBC_SOURCE_URL:=}"
   : "${WCP_GLIBC_SOURCE_SHA256:=}"
   : "${WCP_GLIBC_SOURCE_REF:=}"
   : "${WCP_GLIBC_PATCHSET_ID:=}"
+  : "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:=}"
+  : "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:=}"
+  : "${WCP_RUNTIME_BUNDLE_LOCK_ID:=glibc-2.43-bundle-v1}"
+  : "${WCP_RUNTIME_BUNDLE_LOCK_FILE:=}"
+  : "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:=0}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
 
@@ -381,7 +389,7 @@ EOF_PROFILE
 wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
-  local glibc_runtime_index glibc_runtime_present
+  local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
   local -a critical_paths
   local rel hash
 
@@ -397,6 +405,7 @@ wcp_write_forensic_manifest() {
   index_file="${forensic_root}/file-index.txt"
   hashes_file="${forensic_root}/critical-sha256.tsv"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
+  glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
   repo_commit=""
@@ -448,10 +457,16 @@ wcp_write_forensic_manifest() {
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
     echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
     echo "WCP_GLIBC_VERSION=${WCP_GLIBC_VERSION:-}"
+    echo "WCP_GLIBC_TARGET_VERSION=${WCP_GLIBC_TARGET_VERSION:-}"
     echo "WCP_GLIBC_SOURCE_URL=${WCP_GLIBC_SOURCE_URL:-}"
     echo "WCP_GLIBC_SOURCE_SHA256=${WCP_GLIBC_SOURCE_SHA256:-}"
     echo "WCP_GLIBC_SOURCE_REF=${WCP_GLIBC_SOURCE_REF:-}"
     echo "WCP_GLIBC_PATCHSET_ID=${WCP_GLIBC_PATCHSET_ID:-}"
+    echo "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR=${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}"
+    echo "WCP_GLIBC_RUNTIME_PATCH_SCRIPT=${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}"
+    echo "WCP_RUNTIME_BUNDLE_LOCK_ID=${WCP_RUNTIME_BUNDLE_LOCK_ID:-}"
+    echo "WCP_RUNTIME_BUNDLE_LOCK_FILE=${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}"
+    echo "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK=${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -480,10 +495,16 @@ wcp_write_forensic_manifest() {
     "FEX_SOURCE_MODE": "$(wcp_json_escape "${FEX_SOURCE_MODE:-}")",
     "WCP_GLIBC_SOURCE_MODE": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_MODE:-}")",
     "WCP_GLIBC_VERSION": "$(wcp_json_escape "${WCP_GLIBC_VERSION:-}")",
+    "WCP_GLIBC_TARGET_VERSION": "$(wcp_json_escape "${WCP_GLIBC_TARGET_VERSION:-}")",
     "WCP_GLIBC_SOURCE_URL": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
     "WCP_GLIBC_SOURCE_SHA256": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_SHA256:-}")",
     "WCP_GLIBC_SOURCE_REF": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
-    "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")"
+    "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
+    "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
+    "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
+    "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
+    "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
+    "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")"
   }
 }
 EOF_SOURCE_REFS
@@ -499,6 +520,7 @@ EOF_SOURCE_REFS
   else
     echo "ABSENT" > "${glibc_runtime_index}"
   fi
+  wcp_runtime_write_glibc_markers "${wcp_root}" "${glibc_runtime_markers}"
 
   cat > "${manifest_file}" <<EOF_MANIFEST
 {
@@ -516,15 +538,23 @@ EOF_SOURCE_REFS
     "present": ${glibc_runtime_present},
     "sourceMode": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_MODE:-}")",
     "version": "$(wcp_json_escape "${WCP_GLIBC_VERSION:-}")",
+    "targetVersion": "$(wcp_json_escape "${WCP_GLIBC_TARGET_VERSION:-}")",
     "sourceUrl": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
     "sourceRef": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
     "patchsetId": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
-    "libsIndex": "share/wcp-forensics/glibc-runtime-libs.tsv"
+    "runtimeLockId": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
+    "runtimeLockFile": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
+    "runtimeLockEnforce": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
+    "runtimePatchOverlayDir": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
+    "runtimePatchScript": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
+    "libsIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
+    "versionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv"
   },
   "files": {
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
+    "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
     "buildEnv": "share/wcp-forensics/build-env.txt",
     "sourceRefs": "share/wcp-forensics/source-refs.json"
   }
@@ -543,6 +573,7 @@ wcp_validate_forensic_manifest() {
     "${wcp_root}/share/wcp-forensics/manifest.json"
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
+    "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
     "${wcp_root}/share/wcp-forensics/file-index.txt"
     "${wcp_root}/share/wcp-forensics/build-env.txt"
     "${wcp_root}/share/wcp-forensics/source-refs.json"
@@ -599,6 +630,7 @@ validate_wcp_tree_arm64ec() {
 
   winlator_validate_launchers
   wcp_validate_forensic_manifest "${wcp_root}"
+  wcp_runtime_verify_glibc_lock "${wcp_root}"
   wcp_log "ARM64EC WCP tree validation passed"
 }
 
