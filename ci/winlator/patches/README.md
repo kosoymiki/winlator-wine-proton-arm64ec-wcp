@@ -14,6 +14,7 @@ middle of the stack.
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
+- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting
 
 ## Upscale patch consolidation note
 
