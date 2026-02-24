@@ -13,7 +13,7 @@ middle of the stack.
 - `0001-0005` - base fork, runtime/FEX, branding, CI compatibility
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
-- `0025-0026` - upscale transfer (consolidated runtime + launcher + container UI flow)
+- `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
 
 ## Upscale patch consolidation note
 
@@ -25,6 +25,8 @@ consolidated into:
   - historical steps: old `0025`, `0026`, `0027`
 - `0026-upscale-container-bridge-launch-normalization-and-ui.patch`
   - historical steps: old `0028`, `0029`, `0030`
+- `0027-upscale-container-settings-own-config-and-env-migration.patch`
+  - moves upscale config ownership to container settings UI and strips legacy raw env overrides from generic env editor
 
 ## Known high-overlap files (intentional)
 

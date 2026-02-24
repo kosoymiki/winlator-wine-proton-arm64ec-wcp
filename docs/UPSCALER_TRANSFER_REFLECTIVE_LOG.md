@@ -132,6 +132,23 @@ consolidated in the patch stack to reduce maintenance overhead:
   - problematic Wine/GE/GameNative containers
 - Citron/Eden source-path comparison for deeper renderer/apscaler execution behavior
 
+## Patch `0027` - Container Settings Own Upscale Config (UI + migration guard)
+
+### Before
+- Upscale UI controls existed, but raw `WINLATOR_SWFG_*` / `WINLATOR_PERF_PRESET` values could still live in the generic Env Vars editor.
+- This created duplicate sources of truth (container upscale UI vs manual env string) and made behavior harder to reason about.
+
+### During
+- Kept the runtime path unchanged and focused only on `ContainerDetailFragment`.
+- Added legacy env fallback import for old containers (reads old `WINLATOR_*` values into upscale UI when structured `extraData` is missing).
+- Stripped upscale/runtime telemetry vars from the generic env editor and from saved env string so container settings own the config path.
+- Added simple UI state guard (`SWFG policy = off` disables detail controls) to reduce invalid combinations.
+
+### After
+- Container settings are the canonical UI/config source for upscale behavior.
+- Legacy containers still open with sensible values (migrated from raw env at edit time).
+- Generic Env Vars tab no longer silently conflicts with upscale container settings.
+
 ## Repo-Level Audit Step (post-`0030`)
 
 ### Before
