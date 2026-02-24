@@ -20,7 +20,7 @@ index 73d846e..87a646a 100644
 +            envVars.put("WINLATOR_UPSCALER_BINDING_GUARD_REASON", "deferred:" + upscaleBinding.reason);
          }
          envVars.put("WINLATOR_UPSCALER_BINDING_ELIGIBLE", upscaleBinding.eligible ? "1" : "0");
-+        envVars.put("WINLATOR_UPSCALER_BINDING_DEFERRED", upscaleBinding.deferred ? "1" : envVars.getOrDefault("WINLATOR_UPSCALER_BINDING_DEFERRED", "0"));
++        envVars.put("WINLATOR_UPSCALER_BINDING_DEFERRED", upscaleBinding.deferred ? "1" : (envVars.has("WINLATOR_UPSCALER_BINDING_DEFERRED") ? envVars.get("WINLATOR_UPSCALER_BINDING_DEFERRED") : "0"));
          envVars.put("WINLATOR_UPSCALER_BINDING_BACKEND", upscaleBinding.backend);
          envVars.put("WINLATOR_UPSCALER_BINDING_EXECUTABLE", upscaleBinding.executable);
          ForensicLogger.logEvent(this,
