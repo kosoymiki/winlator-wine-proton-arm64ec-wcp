@@ -1,0 +1,271 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 8b723c1..545fe27 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -87,6 +87,9 @@ import com.winlator.cmod.inputcontrols.ControlsProfile;
+ import com.winlator.cmod.inputcontrols.ExternalController;
+ import com.winlator.cmod.inputcontrols.InputControlsManager;
+ import com.winlator.cmod.graphics.DriverProbeResult;
++import com.winlator.cmod.graphics.FrameGenerationConfig;
++import com.winlator.cmod.graphics.PerfPresetResolver;
++import com.winlator.cmod.graphics.ScaleForceProfile;
+ import com.winlator.cmod.math.Mathf;
+ import com.winlator.cmod.math.XForm;
+ import com.winlator.cmod.midi.MidiHandler;
+@@ -1747,13 +1750,44 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             envVars.put("WRAPPER_VMEM_MAX_SIZE", maxDeviceMemory);
+         
+         String presentMode = graphicsDriverConfig.get("presentMode");
+-        if (presentMode.contains("immediate")) {
+-            envVars.put("WRAPPER_MAX_IMAGE_COUNT", "1");
+-        }
+-        envVars.put("MESA_VK_WSI_PRESENT_MODE", presentMode);
+-
+-        String resourceType = graphicsDriverConfig.get("resourceType");
+-        envVars.put("WRAPPER_RESOURCE_TYPE", resourceType);
++        if (presentMode.contains("immediate")) {
++            envVars.put("WRAPPER_MAX_IMAGE_COUNT", "1");
++        }
++        envVars.put("MESA_VK_WSI_PRESENT_MODE", presentMode);
++
++        // Apply a deterministic performance/upscale control plane before late-stage wrapper env tweaks.
++        ScaleForceProfile perfProfile = PerfPresetResolver.resolve(this, envVars, driverProbe);
++        PerfPresetResolver.apply(perfProfile, envVars, this.graphicsDriverConfig);
++        FrameGenerationConfig fgConfig = FrameGenerationConfig.fromEnv(envVars, perfProfile);
++        fgConfig.applyTo(envVars);
++        ForensicLogger.logEvent(this,
++                ScaleForceProfile.SAFE.equals(perfProfile.getName()) ? "warn" : "info",
++                "RUNTIME_PERF_PRESET_RESOLVED",
++                forensicTraceId,
++                "graphics_perf",
++                "resolved performance preset",
++                ForensicLogger.fields(
++                        "perf_preset", perfProfile.getName(),
++                        "perf_preset_source", perfProfile.getSource(),
++                        "driver_probe_status", driverProbe.isUsable() ? "usable" : "fallback",
++                        "scaleforce_enabled", envVars.get("WINLATOR_SCALEFORCE_ENABLED"),
++                        "present_mode_effective", envVars.get("MESA_VK_WSI_PRESENT_MODE")));
++        ForensicLogger.logEvent(this,
++                "info",
++                "RUNTIME_SWFG_CONTRACT",
++                forensicTraceId,
++                "graphics_fg",
++                "applied software frame-generation control plane",
++                ForensicLogger.fields(
++                        "swfg_requested", envVars.get("WINLATOR_SWFG"),
++                        "swfg_enabled", envVars.get("WINLATOR_SWFG_ENABLED"),
++                        "swfg_mode", envVars.get("WINLATOR_SWFG_MODE"),
++                        "swfg_multiplier", envVars.get("WINLATOR_SWFG_MULTIPLIER"),
++                        "swfg_latency_budget_ms", envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"),
++                        "swfg_artifact_guard", envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD")));
++
++        String resourceType = graphicsDriverConfig.get("resourceType");
++        envVars.put("WRAPPER_RESOURCE_TYPE", resourceType);
+ 
+         String syncFrame = graphicsDriverConfig.get("syncFrame");
+         if (syncFrame.equals("1"))
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java b/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java
+new file mode 100644
+index 0000000..ae87b50
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/FrameGenerationConfig.java
+@@ -0,0 +1,67 @@
++package com.winlator.cmod.graphics;
++
++import com.winlator.cmod.core.EnvVars;
++
++public class FrameGenerationConfig {
++    private final boolean enabled;
++    private final String mode;
++    private final int multiplier;
++    private final int latencyBudgetMs;
++    private final String artifactGuard;
++
++    public FrameGenerationConfig(boolean enabled, String mode, int multiplier, int latencyBudgetMs, String artifactGuard) {
++        this.enabled = enabled;
++        this.mode = mode;
++        this.multiplier = multiplier;
++        this.latencyBudgetMs = latencyBudgetMs;
++        this.artifactGuard = artifactGuard;
++    }
++
++    public static FrameGenerationConfig fromEnv(EnvVars envVars, ScaleForceProfile profile) {
++        String fgMode = envVars.get("WINLATOR_SWFG_MODE");
++        if (fgMode.isEmpty()) fgMode = "off";
++
++        boolean enabled = parseBoolean(envVars.get("WINLATOR_SWFG"));
++        if (!enabled && "mv_fg".equalsIgnoreCase(fgMode)) {
++            enabled = true;
++        }
++
++        if (!enabled && profile != null && profile.isSoftwareFgRecommended() && parseBoolean(envVars.get("WINLATOR_SWFG_AUTO"))) {
++            enabled = true;
++            fgMode = "mv_fg";
++        }
++
++        if (profile != null && ScaleForceProfile.SAFE.equals(profile.getName())) {
++            enabled = false;
++            fgMode = "off";
++        }
++
++        int multiplier = parseInt(envVars.get("WINLATOR_SWFG_MULTIPLIER"), 2);
++        int latencyBudgetMs = parseInt(envVars.get("WINLATOR_SWFG_LATENCY_BUDGET_MS"), 8);
++        String guard = envVars.get("WINLATOR_SWFG_ARTIFACT_GUARD");
++        if (guard.isEmpty()) guard = "balanced";
++
++        return new FrameGenerationConfig(enabled, fgMode, multiplier, latencyBudgetMs, guard);
++    }
++
++    public void applyTo(EnvVars envVars) {
++        envVars.put("WINLATOR_SWFG_ENABLED", enabled ? "1" : "0");
++        envVars.put("WINLATOR_SWFG_MODE", mode);
++        envVars.put("WINLATOR_SWFG_MULTIPLIER", String.valueOf(multiplier));
++        envVars.put("WINLATOR_SWFG_LATENCY_BUDGET_MS", String.valueOf(latencyBudgetMs));
++        envVars.put("WINLATOR_SWFG_ARTIFACT_GUARD", artifactGuard);
++    }
++
++    private static boolean parseBoolean(String value) {
++        String lowered = value != null ? value.trim().toLowerCase() : "";
++        return "1".equals(lowered) || "true".equals(lowered) || "yes".equals(lowered) || "on".equals(lowered);
++    }
++
++    private static int parseInt(String value, int fallback) {
++        try {
++            return Integer.parseInt(value);
++        } catch (Exception ignored) {
++            return fallback;
++        }
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java b/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java
+new file mode 100644
+index 0000000..4aca83b
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/PerfPresetResolver.java
+@@ -0,0 +1,77 @@
++package com.winlator.cmod.graphics;
++
++import android.content.Context;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.util.HashMap;
++
++public class PerfPresetResolver {
++    private PerfPresetResolver() {}
++
++    public static ScaleForceProfile resolve(Context context, EnvVars envVars, DriverProbeResult probeResult) {
++        String explicitPreset = envVars.get("WINLATOR_PERF_PRESET");
++        if (!explicitPreset.isEmpty()) {
++            return buildExplicitPreset(explicitPreset);
++        }
++
++        String packageName = context != null ? context.getPackageName().toLowerCase() : "";
++        boolean vendorHint = packageName.contains("ludashi") || packageName.contains("redmagic");
++        if (vendorHint) {
++            return new ScaleForceProfile(ScaleForceProfile.SCALEFORCE, "vendor-package", true, true);
++        }
++
++        if (probeResult != null && !probeResult.isUsable()) {
++            return new ScaleForceProfile(ScaleForceProfile.SAFE, "driver-fallback", false, false);
++        }
++
++        return new ScaleForceProfile(ScaleForceProfile.BALANCED, "default", false, false);
++    }
++
++    public static void apply(ScaleForceProfile profile, EnvVars envVars, HashMap<String, String> graphicsDriverConfig) {
++        if (profile == null) {
++            profile = new ScaleForceProfile(ScaleForceProfile.BALANCED, "null-profile", false, false);
++        }
++
++        envVars.put("WINLATOR_PERF_PRESET", profile.getName());
++        envVars.put("WINLATOR_PERF_PRESET_SOURCE", profile.getSource());
++
++        String presentMode = graphicsDriverConfig != null ? graphicsDriverConfig.get("presentMode") : "";
++        if (presentMode == null) presentMode = "";
++
++        if (ScaleForceProfile.SCALEFORCE.equals(profile.getName())) {
++            envVars.put("WINLATOR_SCALEFORCE_ENABLED", "1");
++
++            if (!"immediate".equalsIgnoreCase(presentMode) && "0".equals(envVars.get("WRAPPER_MAX_IMAGE_COUNT"))) {
++                envVars.put("WRAPPER_MAX_IMAGE_COUNT", "2");
++            }
++
++            if (!envVars.has("mesa_glthread")) envVars.put("mesa_glthread", "true");
++            if (!envVars.has("WINEESYNC")) envVars.put("WINEESYNC", "1");
++            return;
++        }
++
++        if (ScaleForceProfile.SAFE.equals(profile.getName())) {
++            envVars.put("WINLATOR_SCALEFORCE_ENABLED", "0");
++            envVars.put("WINLATOR_SWFG", "0");
++
++            if ("mailbox".equalsIgnoreCase(presentMode)) {
++                envVars.put("MESA_VK_WSI_PRESENT_MODE", "fifo");
++            }
++            return;
++        }
++
++        envVars.put("WINLATOR_SCALEFORCE_ENABLED", "0");
++    }
++
++    private static ScaleForceProfile buildExplicitPreset(String presetValue) {
++        String preset = presetValue != null ? presetValue.trim().toLowerCase() : "";
++        if (ScaleForceProfile.SCALEFORCE.equals(preset)) {
++            return new ScaleForceProfile(ScaleForceProfile.SCALEFORCE, "explicit", true, true);
++        }
++        if (ScaleForceProfile.SAFE.equals(preset)) {
++            return new ScaleForceProfile(ScaleForceProfile.SAFE, "explicit", false, false);
++        }
++        return new ScaleForceProfile(ScaleForceProfile.BALANCED, "explicit", false, false);
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java b/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java
+new file mode 100644
+index 0000000..08bab38
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/graphics/ScaleForceProfile.java
+@@ -0,0 +1,43 @@
++package com.winlator.cmod.graphics;
++
++public class ScaleForceProfile {
++    public static final String SCALEFORCE = "scaleforce";
++    public static final String BALANCED = "balanced";
++    public static final String SAFE = "safe";
++
++    private final String name;
++    private final String source;
++    private final boolean aggressiveTuning;
++    private final boolean softwareFgRecommended;
++
++    public ScaleForceProfile(String name, String source, boolean aggressiveTuning, boolean softwareFgRecommended) {
++        this.name = normalizeName(name);
++        this.source = source != null ? source : "unknown";
++        this.aggressiveTuning = aggressiveTuning;
++        this.softwareFgRecommended = softwareFgRecommended;
++    }
++
++    private static String normalizeName(String value) {
++        if (value == null) return BALANCED;
++        String lowered = value.trim().toLowerCase();
++        if (SCALEFORCE.equals(lowered)) return SCALEFORCE;
++        if (SAFE.equals(lowered)) return SAFE;
++        return BALANCED;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public String getSource() {
++        return source;
++    }
++
++    public boolean isAggressiveTuning() {
++        return aggressiveTuning;
++    }
++
++    public boolean isSoftwareFgRecommended() {
++        return softwareFgRecommended;
++    }
++}
