@@ -333,10 +333,12 @@ WINETOOLS
 
 compose_wcp_tree_from_stage() {
   local stage_dir="$1" wcp_root="$2"
-  local prefix_pack_path profile_name profile_type utc_now
+  local prefix_pack_path profile_name profile_type utc_now runtime_class_detected
 
   : "${ROOT_DIR:=$(cd -- "${WCP_COMMON_DIR}/../.." && pwd)}"
   : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
+  : "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
+  : "${WCP_RUNTIME_CLASS_ENFORCE:=0}"
   : "${WCP_VERSION_NAME:=arm64ec}"
   : "${WCP_VERSION_CODE:=0}"
   : "${WCP_DESCRIPTION:=ARM64EC WCP package}"
@@ -348,7 +350,13 @@ compose_wcp_tree_from_stage() {
   : "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
   : "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
   : "${WCP_RELEASE_TAG:=wcp-latest}"
-  : "${WCP_GLIBC_SOURCE_MODE:=pinned-source}"
+  if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
+    if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
+      WCP_GLIBC_SOURCE_MODE="pinned-source"
+    else
+      WCP_GLIBC_SOURCE_MODE="host"
+    fi
+  fi
   : "${WCP_GLIBC_VERSION:=2.43}"
   : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
   : "${WCP_GLIBC_SOURCE_URL:=https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz}"
@@ -365,6 +373,8 @@ compose_wcp_tree_from_stage() {
   : "${WCP_FEX_EXPECTATION_MODE:=external}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
+  wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
+  wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
 
@@ -384,6 +394,7 @@ compose_wcp_tree_from_stage() {
 
   winlator_wrap_glibc_launchers
   generate_winetools_layer "${wcp_root}"
+  runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
 
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   cat > "${wcp_root}/profile.json" <<EOF_PROFILE
@@ -406,6 +417,8 @@ compose_wcp_tree_from_stage() {
   },
   "runtime": {
     "target": "${WCP_TARGET_RUNTIME}",
+    "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET}")",
+    "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   },
@@ -421,7 +434,7 @@ wcp_write_forensic_manifest() {
   local glibc_stage_reports_index glibc_stage_reports_dir
   local fex_bundled_present=0
   local -a critical_paths
-  local rel hash
+  local rel hash runtime_class_detected
 
   : "${WCP_FORENSICS_ALWAYS_ON:=1}"
   [[ "${WCP_FORENSICS_ALWAYS_ON}" == "1" ]] || return 0
@@ -487,6 +500,8 @@ wcp_write_forensic_manifest() {
     echo "WCP_PROFILE_NAME=${WCP_PROFILE_NAME:-}"
     echo "WCP_PROFILE_TYPE=${WCP_PROFILE_TYPE:-Wine}"
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
+    echo "WCP_RUNTIME_CLASS_TARGET=${WCP_RUNTIME_CLASS_TARGET:-}"
+    echo "WCP_RUNTIME_CLASS_ENFORCE=${WCP_RUNTIME_CLASS_ENFORCE:-}"
     echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
     echo "WCP_GLIBC_VERSION=${WCP_GLIBC_VERSION:-}"
     echo "WCP_GLIBC_TARGET_VERSION=${WCP_GLIBC_TARGET_VERSION:-}"
@@ -537,6 +552,8 @@ wcp_write_forensic_manifest() {
     "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
+    "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
+    "WCP_RUNTIME_CLASS_ENFORCE": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_ENFORCE:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
     "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
@@ -577,6 +594,7 @@ EOF_SOURCE_REFS
   if [[ -f "${wcp_root}/lib/wine/aarch64-windows/libarm64ecfex.dll" || -f "${wcp_root}/lib/wine/aarch64-windows/libwow64fex.dll" ]]; then
     fex_bundled_present=1
   fi
+  runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
 
   cat > "${manifest_file}" <<EOF_MANIFEST
 {
@@ -589,6 +607,8 @@ EOF_SOURCE_REFS
     "versionName": "$(wcp_json_escape "${WCP_VERSION_NAME:-}")",
     "versionCode": ${WCP_VERSION_CODE:-0},
     "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")",
+    "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
+    "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
     "fexBundledInWcp": ${fex_bundled_present},
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   },

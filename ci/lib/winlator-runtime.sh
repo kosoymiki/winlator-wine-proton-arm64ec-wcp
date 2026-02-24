@@ -4,6 +4,50 @@ set -euo pipefail
 # Shared helpers for packaging Wine/Proton runtimes for Winlator bionic.
 # Expects caller to define: log(), fail(), WCP_TARGET_RUNTIME, WCP_ROOT.
 
+winlator_detect_runtime_class() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local wine_bin wine_real
+  [[ -n "${wcp_root}" ]] || { printf '%s' "unknown"; return 0; }
+
+  wine_bin="${wcp_root}/bin/wine"
+  wine_real="${wcp_root}/bin/wine.glibc-real"
+
+  if [[ -f "${wine_real}" ]]; then
+    printf '%s' "glibc-wrapped"
+    return 0
+  fi
+
+  if winlator_is_glibc_launcher "${wine_bin}"; then
+    printf '%s' "glibc-raw"
+    return 0
+  fi
+
+  if [[ -f "${wine_bin}" ]]; then
+    printf '%s' "bionic-native"
+    return 0
+  fi
+
+  printf '%s' "unknown"
+}
+
+winlator_runtime_target_is_glibc_wrapped() {
+  [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "glibc-wrapped" ]]
+}
+
+winlator_runtime_target_enforced() {
+  [[ "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]
+}
+
+winlator_report_runtime_class_mismatch() {
+  local detected="$1"
+  local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  local msg="Runtime class target=${target} but detected=${detected}"
+  if winlator_runtime_target_enforced; then
+    fail "${msg}"
+  fi
+  log "runtime-class warning: ${msg} (continuing because WCP_RUNTIME_CLASS_ENFORCE=0)"
+}
+
 winlator_is_glibc_launcher() {
   local bin_path="$1"
   [[ -f "${bin_path}" ]] || return 1
@@ -311,6 +355,8 @@ EOF_WRAPPER
 winlator_wrap_glibc_launchers() {
   local wine_bin wineserver_bin runtime_dir
   local wine_real wineserver_real
+  local target_class
+  local detected_before
 
   [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return
 
@@ -319,8 +365,18 @@ winlator_wrap_glibc_launchers() {
   [[ -f "${wine_bin}" ]] || return
   [[ -f "${wineserver_bin}" ]] || return
 
+  detected_before="$(winlator_detect_runtime_class "${WCP_ROOT}")"
+  target_class="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+
   if ! winlator_is_glibc_launcher "${wine_bin}"; then
+    if [[ "${target_class}" == "glibc-wrapped" && "${detected_before}" != "glibc-wrapped" ]]; then
+      winlator_report_runtime_class_mismatch "${detected_before}"
+    fi
     return
+  fi
+
+  if [[ "${target_class}" != "glibc-wrapped" ]]; then
+    winlator_report_runtime_class_mismatch "glibc-raw"
   fi
 
   runtime_dir="${WCP_ROOT}/lib/wine/wcp-glibc-runtime"
@@ -334,6 +390,28 @@ winlator_wrap_glibc_launchers() {
   winlator_write_glibc_wrapper "${wine_bin}" "${wine_real}" "1"
   winlator_write_glibc_wrapper "${wineserver_bin}" "${wineserver_real}" "0"
   log "Winlator bionic wrapper enabled for glibc Wine launchers"
+}
+
+winlator_validate_runtime_class_target() {
+  local detected target
+  [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return 0
+  target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  detected="$(winlator_detect_runtime_class "${WCP_ROOT}")"
+  case "${target}" in
+    bionic-native)
+      if [[ "${detected}" == "glibc-wrapped" || "${detected}" == "glibc-raw" ]]; then
+        winlator_report_runtime_class_mismatch "${detected}"
+      fi
+      ;;
+    glibc-wrapped)
+      if [[ "${detected}" != "glibc-wrapped" ]]; then
+        winlator_report_runtime_class_mismatch "${detected}"
+      fi
+      ;;
+    *)
+      fail "Unsupported WCP_RUNTIME_CLASS_TARGET: ${target}"
+      ;;
+  esac
 }
 
 winlator_validate_launchers() {
@@ -360,4 +438,6 @@ winlator_validate_launchers() {
     grep -Fq 'unset LD_PRELOAD' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must clear LD_PRELOAD for Android bionic preload compatibility"
     grep -Fq 'glibc.pthread.rseq=0' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must disable glibc rseq on Android"
   fi
+
+  winlator_validate_runtime_class_target
 }

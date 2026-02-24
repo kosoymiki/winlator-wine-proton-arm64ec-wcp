@@ -1,7 +1,10 @@
 # Runtime Bundle (glibc group)
 
-This directory tracks the reproducible runtime bundle policy for glibc-wrapped
-Wine/Proton launchers (`lib/wine/wcp-glibc-runtime`).
+This directory tracks the reproducible runtime bundle policy for the optional
+`glibc-wrapped` Wine/Proton launcher mode (`lib/wine/wcp-glibc-runtime`).
+
+Default WCP builds now target `bionic/native` runtime class and do not bundle
+`wcp-glibc-runtime` unless `WCP_RUNTIME_CLASS_TARGET=glibc-wrapped`.
 
 ## What is covered
 
@@ -42,6 +45,11 @@ WCP forensics emits:
 Lock verification runs during `validate_wcp_tree_arm64ec()` in audit mode by
 default and auto-switches to enforce mode for `pinned-source` runtime builds.
 
-Current builder defaults target:
+Current `glibc-wrapped` lane targets:
 - `WCP_GLIBC_SOURCE_MODE=pinned-source`
 - `WCP_GLIBC_VERSION=2.43`
+
+Default builder runtime policy:
+- `WCP_RUNTIME_CLASS_TARGET=bionic-native`
+- `WCP_INCLUDE_FEX_DLLS=0`
+- `WCP_FEX_EXPECTATION_MODE=external`

@@ -35,7 +35,15 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${STRIP_STAGE:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
-: "${WCP_GLIBC_SOURCE_MODE:=pinned-source}"
+: "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
+: "${WCP_RUNTIME_CLASS_ENFORCE:=0}"
+if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
+  if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
+    WCP_GLIBC_SOURCE_MODE="pinned-source"
+  else
+    WCP_GLIBC_SOURCE_MODE="host"
+  fi
+fi
 : "${WCP_GLIBC_VERSION:=2.43}"
 : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
 : "${WCP_GLIBC_SOURCE_URL:=https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz}"
@@ -423,6 +431,8 @@ WINETOOLS
   },
   "runtime": {
     "target": "$(printf '%s' "${WCP_TARGET_RUNTIME}" | sed 's/"/\\"/g')",
+    "runtimeClassTarget": "$(printf '%s' "${WCP_RUNTIME_CLASS_TARGET}" | sed 's/"/\\"/g')",
+    "runtimeClassDetected": "$(printf '%s' "$(winlator_detect_runtime_class "${WCP_ROOT}")" | sed 's/"/\\"/g')",
     "fexExpectationMode": "$(printf '%s' "${WCP_FEX_EXPECTATION_MODE}" | sed 's/"/\\"/g')",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   }
@@ -497,6 +507,7 @@ validate_wcp_tree() {
 
   winlator_validate_launchers
   wcp_validate_forensic_manifest "${WCP_ROOT}"
+  wcp_runtime_verify_glibc_lock "${WCP_ROOT}"
   log "WCP layout validation passed"
 }
 
@@ -550,8 +561,10 @@ main() {
   require_cmd pkg-config
 
   require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+  require_bool_flag WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   require_bool_flag WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
   case "${WCP_FEX_EXPECTATION_MODE}" in
     external|bundled) ;;

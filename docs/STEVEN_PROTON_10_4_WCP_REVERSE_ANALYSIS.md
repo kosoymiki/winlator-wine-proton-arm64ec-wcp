@@ -90,3 +90,14 @@ This matches the new repo policy introduced in CI:
 ## Next engineering implication
 
 The remaining `Wine 11` failure (`signal_31`) should be treated as a **glibc runtime-class issue**, not as a Wine payload metadata or Turnip issue. Steven 10.4 remains the bionic/native baseline for runtime behavioral comparison.
+
+## Baseline policy extracted from this reference
+
+Use Steven 10.4 as the structural target for default WCP builds:
+
+- **runtime class:** `bionic/native`
+- **glibc bundle:** absent by default
+- **FEX payload:** external (not bundled in WCP)
+
+This is now the intended default policy for our `Wine / Proton GE / ProtonWine GameNative`
+builders, while `glibc-wrapped` remains an explicit compat/experimental mode.

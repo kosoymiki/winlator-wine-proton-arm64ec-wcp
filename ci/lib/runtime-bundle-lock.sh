@@ -91,8 +91,16 @@ wcp_runtime_verify_glibc_lock() {
   local noncore_mismatch_count=0
   local msg_prefix="[wcp-runtime-lock]"
   local actual
+  local runtime_dir="${wcp_root}/lib/wine/wcp-glibc-runtime"
+  local runtime_target="${WCP_RUNTIME_CLASS_TARGET:-}"
 
   [[ -n "${lock_file}" ]] || return 0
+  if [[ ! -d "${runtime_dir}" ]]; then
+    if [[ "${runtime_target:-bionic-native}" == "bionic-native" ]]; then
+      wcp_log "${msg_prefix} glibc runtime absent (bionic-native target), skipping lock validation"
+      return 0
+    fi
+  fi
   [[ -f "${lock_file}" ]] || {
     if [[ "${effective_enforce}" == "1" ]]; then
       wcp_fail "Runtime bundle lock file not found: ${lock_file}"

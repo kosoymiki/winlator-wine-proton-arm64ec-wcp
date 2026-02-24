@@ -40,9 +40,17 @@ fi
 : "${WCP_DESCRIPTION:=Proton GE10 ARM64EC WCP (Valve base + ARM64EC series + GE patches)}"
 : "${WCP_PROFILE_NAME:=Proton GE10 ARM64EC}"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
+: "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
+: "${WCP_RUNTIME_CLASS_ENFORCE:=0}"
 : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
 : "${WCP_ENABLE_SDL2_RUNTIME:=1}"
-: "${WCP_GLIBC_SOURCE_MODE:=pinned-source}"
+if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
+  if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
+    WCP_GLIBC_SOURCE_MODE="pinned-source"
+  else
+    WCP_GLIBC_SOURCE_MODE="host"
+  fi
+fi
 : "${WCP_GLIBC_VERSION:=2.43}"
 : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
 : "${WCP_GLIBC_SOURCE_URL:=https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz}"
@@ -73,7 +81,9 @@ preflight_runtime_profile() {
   [[ -n "${WCP_TARGET_RUNTIME}" ]] || fail "WCP_TARGET_RUNTIME must not be empty"
   wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
   wcp_require_bool WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
+  wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
   if [[ "${WCP_FEX_EXPECTATION_MODE}" == "bundled" && "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]]; then

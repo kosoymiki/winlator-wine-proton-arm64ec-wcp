@@ -43,9 +43,9 @@ index ffeb40868bf3340591783aa2941e8da5c49618d9..3c7f985f97906b5669f1bc0550293d51
 -
 -        builder.setMessage(getString(R.string.driver_browser_source_hint, author.getPrimarySourceLabel()));
 -        builder.show();
-+        AlertDialog dialog = builder.create();
-+        dialog.setCustomTitle(buildDriverVersionPickerHeaderView(author, family));
-+        dialog.show();
++        AlertDialog versionDialog = builder.create();
++        versionDialog.setCustomTitle(buildDriverVersionPickerHeaderView(author, family));
++        versionDialog.show();
      }
  
      private void showDriverVersionDetailsDialog(DriverSourceAuthor author, DriverFamily family,
