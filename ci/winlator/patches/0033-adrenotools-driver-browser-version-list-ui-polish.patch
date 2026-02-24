@@ -1,0 +1,211 @@
+From 08731aed6ef14431c24801be3e4c10c88765d06c Mon Sep 17 00:00:00 2001
+From: Codex <codex@local>
+Date: Tue, 24 Feb 2026 22:44:30 +0300
+Subject: [PATCH] adrenotools version browser row ui polish
+
+---
+ .../winlator/cmod/AdrenotoolsFragment.java    | 71 ++++++++++-------
+ .../driver_browser_recommended_badge_bg.xml   |  9 +++
+ .../driver_browser_version_list_item.xml      | 78 +++++++++++++++++++
+ 3 files changed, 131 insertions(+), 27 deletions(-)
+ create mode 100644 app/src/main/res/drawable/driver_browser_recommended_badge_bg.xml
+ create mode 100644 app/src/main/res/layout/driver_browser_version_list_item.xml
+
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 2cb94f3..9560f7b 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -18,6 +18,7 @@ import android.view.View;
+ import android.view.ViewGroup;
+ import android.widget.BaseAdapter;
+ import android.widget.ImageButton;
++import android.widget.ImageView;
+ import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
+@@ -906,40 +907,56 @@ public class AdrenotoolsFragment extends Fragment {
+ 
+         @Override
+         public View getView(int position, View convertView, ViewGroup parent) {
+-            TextView tv = convertView instanceof TextView ? (TextView) convertView : new TextView(context);
+-            int hp = (int) (context.getResources().getDisplayMetrics().density * 16);
+-            int vp = (int) (context.getResources().getDisplayMetrics().density * 10);
+-            tv.setPadding(hp, vp, hp, vp);
+-            tv.setTextSize(14);
+-            tv.setLineSpacing(0f, 1.15f);
+-
+             RemoteDriverAssetItem item = items.get(position);
+-            SpannableStringBuilder sb = new SpannableStringBuilder();
+-            int tStart = sb.length();
+-            sb.append(item.displayTitle != null ? item.displayTitle : item.label);
+-            sb.setSpan(new StyleSpan(Typeface.BOLD), tStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+-            if (item.recommended) {
+-                sb.append("  ");
+-                int rStart = sb.length();
+-                sb.append(getString(R.string.driver_browser_recommended));
+-                sb.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), rStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+-            }
+ 
+-            if (!TextUtils.isEmpty(item.displaySubtitle)) {
+-                sb.append('\n');
+-                int sStart = sb.length();
+-                sb.append(item.displaySubtitle);
+-                sb.setSpan(new StyleSpan(Typeface.ITALIC), sStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
++            View row = convertView;
++            DriverVersionRowHolder holder;
++            if (row == null) {
++                row = LayoutInflater.from(context).inflate(R.layout.driver_browser_version_list_item, parent, false);
++                holder = new DriverVersionRowHolder(row);
++                row.setTag(holder);
++            } else {
++                holder = (DriverVersionRowHolder) row.getTag();
+             }
+-            if (!TextUtils.isEmpty(item.displayMeta)) {
+-                sb.append('\n');
+-                sb.append(item.displayMeta);
++
++            holder.ivIcon.setImageResource(resolveDriverBrowserItemIcon(item));
++            holder.tvTitle.setText(!TextUtils.isEmpty(item.displayTitle) ? item.displayTitle : item.label);
++            holder.tvSubtitle.setText(item.displaySubtitle);
++            holder.tvMeta.setText(item.displayMeta);
++            holder.tvSubtitle.setVisibility(TextUtils.isEmpty(item.displaySubtitle) ? View.GONE : View.VISIBLE);
++            holder.tvMeta.setVisibility(TextUtils.isEmpty(item.displayMeta) ? View.GONE : View.VISIBLE);
++            if (item.recommended) {
++                holder.tvRecommended.setVisibility(View.VISIBLE);
++            } else {
++                holder.tvRecommended.setVisibility(View.GONE);
+             }
+-            tv.setText(sb);
+-            return tv;
++            return row;
+         }
+     }
+ 
++    private static class DriverVersionRowHolder {
++        final ImageView ivIcon;
++        final TextView tvTitle;
++        final TextView tvSubtitle;
++        final TextView tvMeta;
++        final TextView tvRecommended;
++
++        DriverVersionRowHolder(View view) {
++            ivIcon = view.findViewById(R.id.IVIcon);
++            tvTitle = view.findViewById(R.id.TVTitle);
++            tvSubtitle = view.findViewById(R.id.TVSubtitle);
++            tvMeta = view.findViewById(R.id.TVMeta);
++            tvRecommended = view.findViewById(R.id.TVRecommended);
++        }
++    }
++
++    private int resolveDriverBrowserItemIcon(RemoteDriverAssetItem item) {
++        if (item == null) return android.R.drawable.ic_menu_info_details;
++        if ("qualcomm".equals(item.familyId)) return android.R.drawable.ic_menu_manage;
++        if ("turnip".equals(item.familyId)) return android.R.drawable.ic_menu_upload;
++        return android.R.drawable.ic_menu_info_details;
++    }
++
+     private class DriversAdapter extends RecyclerView.Adapter<DriversAdapter.ViewHolder> {
+         private final ArrayList<String> driversList;
+ 
+diff --git a/app/src/main/res/drawable/driver_browser_recommended_badge_bg.xml b/app/src/main/res/drawable/driver_browser_recommended_badge_bg.xml
+new file mode 100644
+index 0000000..1dae088
+--- /dev/null
++++ b/app/src/main/res/drawable/driver_browser_recommended_badge_bg.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle">
++    <corners android:radius="12dp" />
++    <solid android:color="#220B8F6A" />
++    <stroke
++        android:width="1dp"
++        android:color="#550B8F6A" />
++</shape>
+diff --git a/app/src/main/res/layout/driver_browser_version_list_item.xml b/app/src/main/res/layout/driver_browser_version_list_item.xml
+new file mode 100644
+index 0000000..e23e32a
+--- /dev/null
++++ b/app/src/main/res/layout/driver_browser_version_list_item.xml
+@@ -0,0 +1,78 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:gravity="center_vertical"
++    android:minHeight="56dp"
++    android:orientation="horizontal"
++    android:paddingLeft="16dp"
++    android:paddingTop="10dp"
++    android:paddingRight="16dp"
++    android:paddingBottom="10dp">
++
++    <ImageView
++        android:id="@+id/IVIcon"
++        android:layout_width="28dp"
++        android:layout_height="28dp"
++        android:layout_marginEnd="14dp"
++        android:tint="@color/colorAccent" />
++
++    <LinearLayout
++        android:layout_width="0dp"
++        android:layout_height="wrap_content"
++        android:layout_weight="1"
++        android:orientation="vertical">
++
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:gravity="center_vertical"
++            android:orientation="horizontal">
++
++            <TextView
++                android:id="@+id/TVTitle"
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_weight="1"
++                android:ellipsize="end"
++                android:maxLines="1"
++                android:textStyle="bold" />
++
++            <TextView
++                android:id="@+id/TVRecommended"
++                android:layout_width="wrap_content"
++                android:layout_height="wrap_content"
++                android:layout_marginStart="8dp"
++                android:background="@drawable/driver_browser_recommended_badge_bg"
++                android:paddingLeft="8dp"
++                android:paddingTop="2dp"
++                android:paddingRight="8dp"
++                android:paddingBottom="2dp"
++                android:text="@string/driver_browser_recommended"
++                android:textColor="@color/colorAccent"
++                android:textSize="11sp"
++                android:textStyle="bold|italic"
++                android:visibility="gone" />
++        </LinearLayout>
++
++        <TextView
++            android:id="@+id/TVSubtitle"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:alpha="0.9"
++            android:ellipsize="end"
++            android:maxLines="1"
++            android:textSize="12sp"
++            android:textStyle="italic" />
++
++        <TextView
++            android:id="@+id/TVMeta"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:alpha="0.78"
++            android:ellipsize="middle"
++            android:fontFamily="monospace"
++            android:maxLines="1"
++            android:textSize="11sp" />
++    </LinearLayout>
++</LinearLayout>
+-- 
+2.43.0
+

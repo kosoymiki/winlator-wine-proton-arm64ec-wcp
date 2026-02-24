@@ -14,8 +14,8 @@ middle of the stack.
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
-- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish and sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion,
-  upscale runtime binding gates, and forensic log sink reliability fixes
+- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion,
+  upscale runtime binding gates, forensic log sink reliability fixes, and follow-up driver browser UI/source pruning fixes
 
 ## Upscale patch consolidation note
 
@@ -37,6 +37,10 @@ consolidated into:
   - binds ScaleForce/SWFG activation to graphics-eligible shortcut launches (Vulkan/OpenGL) and disables it for container shell/service processes with forensic reasons
 - `0032-forensicslogger-fallback-to-app-private-jsonl-sink.patch`
   - falls back from `/sdcard/Winlator/logs/forensics` to app-private `files/Winlator/logs/forensics` when external storage writes fail (EACCES), and logs sink switches
+- `0033-adrenotools-driver-browser-version-list-ui-polish.patch`
+  - makes the driver-version picker rows look and behave closer to `Contents` (icon + structured metadata rows + recommended badge)
+- `0034-adrenotools-contents-style-version-rows-and-disable-dead-xforyoux.patch`
+  - temporarily removes dead `XForYouX` release source entries (404) from the in-app driver browser pending a valid upstream source
 
 ## Known high-overlap files (intentional)
 
