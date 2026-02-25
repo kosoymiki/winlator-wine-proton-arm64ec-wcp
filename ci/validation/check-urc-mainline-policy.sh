@@ -34,12 +34,17 @@ from pathlib import Path
 map_path = Path(sys.argv[1])
 data = json.loads(map_path.read_text(encoding="utf-8"))
 packages = data.get("packages") or {}
+baselines = data.get("baselines") or {}
 required = (
     "wine-11-arm64ec",
     "proton-ge10-arm64ec",
     "protonwine10-gamenative-arm64ec",
 )
 errors = []
+
+steven = ((baselines.get("stevenProton10Arm64ec") or {}).get("archiveUrl") or "").strip()
+if not steven:
+    errors.append("baselines.stevenProton10Arm64ec.archiveUrl must be set")
 
 for name in required:
     entry = packages.get(name)
@@ -50,6 +55,11 @@ for name in required:
         value = entry.get(key)
         if not isinstance(value, str) or not value.strip():
             errors.append(f"packages.{name}.{key} must be a non-empty string")
+    if steven:
+        if (entry.get("launcherSourceWcpUrl") or "").strip() != steven:
+            errors.append(f"packages.{name}.launcherSourceWcpUrl must match baselines.stevenProton10Arm64ec.archiveUrl")
+        if (entry.get("unixSourceWcpUrl") or "").strip() != steven:
+            errors.append(f"packages.{name}.unixSourceWcpUrl must match baselines.stevenProton10Arm64ec.archiveUrl")
     for key in ("launcherSourceSha256", "unixSourceSha256"):
         value = (entry.get(key) or "").lower()
         if not re.fullmatch(r"[0-9a-f]{64}", value):
