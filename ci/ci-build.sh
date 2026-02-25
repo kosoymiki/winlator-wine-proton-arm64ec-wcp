@@ -68,6 +68,8 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=0}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+: "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
+: "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -637,6 +639,7 @@ main() {
   ld.lld --version | sed -n '1,2p'
 
   fetch_wine_sources
+  wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
   build_wine
   if [[ "${WCP_INCLUDE_FEX_DLLS}" == "1" ]]; then
     install_fex_dlls

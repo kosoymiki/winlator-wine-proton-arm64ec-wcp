@@ -535,6 +535,98 @@ wcp_ensure_configure_script() {
   chmod +x "${wine_src_dir}/configure" || true
 }
 
+wcp_patch_winemenubuilder_for_winlator() {
+  local wine_src_dir="$1"
+  local menu_builder
+
+  menu_builder="${wine_src_dir}/programs/winemenubuilder/winemenubuilder.c"
+  [[ -f "${menu_builder}" ]] || wcp_fail "Missing ${menu_builder}"
+
+  if ! grep -Fq 'c:\\proton_shortcuts' "${menu_builder}" \
+    && grep -Fq 'WINECONFIGDIR' "${menu_builder}" \
+    && grep -Eq 'icons\\\\hicolor' "${menu_builder}" \
+    && grep -Eq 'fprintf\(file, "wine' "${menu_builder}"; then
+    wcp_log "winemenubuilder Winlator shortcuts patch: already applied"
+    return
+  fi
+
+  if ! grep -Fq 'c:\\proton_shortcuts' "${menu_builder}"; then
+    wcp_fail "winemenubuilder layout is unsupported: no proton_shortcuts marker and patch is not present"
+  fi
+
+  python3 - "${menu_builder}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+updated, icon_count = re.subn(
+    r'iconsDir = heap_wprintf\(L"%s", L"c:\\\\proton_shortcuts\\\\icons"\);\n\s*create_directories\(iconsDir\);\n',
+    lambda _m: 'iconsDir = heap_wprintf(L"%s\\\\icons\\\\hicolor", xdg_data_dir);\n',
+    updated,
+    count=1,
+)
+
+updated, decl_count = re.subn(
+    r'^\s*WCHAR \*shortcuts_dir;\n',
+    '    const WCHAR *prefix = _wgetenv( L"WINECONFIGDIR" );\n',
+    updated,
+    count=1,
+    flags=re.MULTILINE,
+)
+
+updated, location_count = re.subn(
+    r'name = PathFindFileNameW\( linkname \);\n'
+    r'\s*\n'
+    r'\s*shortcuts_dir = heap_wprintf\(L"%s", L"c:\\\\proton_shortcuts"\);\n'
+    r'\s*create_directories\(shortcuts_dir\);\n'
+    r'\s*location = heap_wprintf\(L"%s\\\\%s\.desktop", shortcuts_dir, name\);\n'
+    r'\s*heap_free\(shortcuts_dir\);\n'
+    r'\s*needs_chmod = TRUE;',
+    lambda _m: (
+        'name = PathFindFileNameW( linkname );\n'
+        '    if(!location)\n'
+        '    {\n'
+        '        location = heap_wprintf(L"%s\\\\%s.desktop", xdg_desktop_dir, name);\n'
+        '        needs_chmod = TRUE;\n'
+        '    }'
+    ),
+    updated,
+    count=1,
+)
+
+updated, exec_count = re.subn(
+    r'fprintf\(file, "Exec=" \);\n'
+    r'(?:\s*\n)?'
+    r'\s*fprintf\(file, "%s", escape\(path\)\);',
+    'fprintf(file, "Exec=" );\n'
+    '    if (prefix)\n'
+    '    {\n'
+    '        char *path = wine_get_unix_file_name( prefix );\n'
+    '        fprintf(file, "env WINEPREFIX=\\"%s\\" ", path);\n'
+    '        heap_free( path );\n'
+    '    }\n'
+    '\n'
+    '    fprintf(file, "wine %s", escape(path));',
+    updated,
+    count=1,
+)
+
+if not all((icon_count, decl_count, location_count, exec_count)):
+    raise SystemExit(
+        "failed to patch winemenubuilder.c "
+        f"(icon={icon_count}, decl={decl_count}, location={location_count}, exec={exec_count})"
+    )
+
+path.write_text(updated, encoding="utf-8")
+PY
+
+  wcp_log "winemenubuilder Winlator shortcuts patch: applied"
+}
+
 build_wine_tools_host() {
   local wine_src_dir="$1" build_dir="$2"
   local -a configure_args

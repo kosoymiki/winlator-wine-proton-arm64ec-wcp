@@ -69,6 +69,8 @@ fi
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=0}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+: "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
+: "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
 : "${PATCHLOG_FATAL_REGEX:=\bfatal:|^error:|\[[^]]*\]\[error\]|Traceback \(most recent call last\)}"
 : "${PATCHLOG_FALSE_POSITIVE_REGEX:=Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file|0 errors|0 failures|without errors}"
 
@@ -261,6 +263,7 @@ main() {
   ensure_llvm_mingw
   run_arm64ec_flow
   apply_proton_ge_patches
+  wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
   fix_winnt_interlocked_types
   fix_winebus_sdl_stub
   build_wine

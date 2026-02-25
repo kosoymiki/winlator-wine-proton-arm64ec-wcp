@@ -94,6 +94,7 @@ TOKEN="$(gh auth token)"
 [[ -n "${TOKEN}" ]] || { echo "gh auth token is empty" >&2; exit 1; }
 
 JOB_LOG_ENDPOINT="https://api.github.com/repos/${REPO}/actions/jobs/${JOB_ID}/logs"
+JOB_META_ENDPOINT="https://api.github.com/repos/${REPO}/actions/jobs/${JOB_ID}"
 RAW_URL="$(
   curl -sSI \
     -H "Authorization: Bearer ${TOKEN}" \
@@ -105,7 +106,25 @@ RAW_URL="$(
 )"
 
 [[ -n "${RAW_URL}" ]] || {
-  echo "Failed to resolve raw log URL for job ${JOB_ID} (${REPO})" >&2
+  job_status="$(
+    curl -sS \
+      -H "Authorization: Bearer ${TOKEN}" \
+      -H "Accept: application/vnd.github+json" \
+      "${JOB_META_ENDPOINT}" \
+      | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))'
+  )"
+  job_conclusion="$(
+    curl -sS \
+      -H "Authorization: Bearer ${TOKEN}" \
+      -H "Accept: application/vnd.github+json" \
+      "${JOB_META_ENDPOINT}" \
+      | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("conclusion",""))'
+  )"
+  if [[ "${job_status}" != "completed" ]]; then
+    echo "[job-log] repo=${REPO} job=${JOB_ID} status=${job_status} conclusion=${job_conclusion:-<none>} raw-log-not-ready"
+    exit 0
+  fi
+  echo "Failed to resolve raw log URL for completed job ${JOB_ID} (${REPO})" >&2
   exit 1
 }
 
