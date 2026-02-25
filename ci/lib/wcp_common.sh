@@ -1064,6 +1064,10 @@ validate_wcp_tree_arm64ec() {
     wcp_log "runtime-class warning: unix ABI is ${unix_abi} while target is bionic-native (continuing because WCP_RUNTIME_CLASS_ENFORCE=0)"
   fi
 
+  if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && -d "${wcp_root}/lib/wine/wcp-glibc-runtime" ]]; then
+    wcp_fail "Bionic runtime target forbids bundled glibc runtime payload: lib/wine/wcp-glibc-runtime"
+  fi
+
   winlator_validate_launchers
   wcp_validate_forensic_manifest "${wcp_root}"
   wcp_runtime_verify_glibc_lock "${wcp_root}"
