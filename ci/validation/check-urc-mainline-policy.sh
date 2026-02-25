@@ -180,6 +180,7 @@ main() {
   require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH'
   require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_DONOR_PREFLIGHT_DONE'
   require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'bionicDonorPreflightDone'
+  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'bionic-source-entry.json'
   require_contains "ci/ci-build.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/proton-ge10/ci-build-proton-ge10-wcp.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/protonwine10/ci-build-protonwine10-wcp.sh" 'winlator_preflight_bionic_source_contract'
