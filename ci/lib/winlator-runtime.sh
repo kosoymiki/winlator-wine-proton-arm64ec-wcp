@@ -6,7 +6,7 @@ set -euo pipefail
 
 winlator_detect_runtime_class() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
-  local wine_bin wine_real
+  local wine_bin wine_real unix_abi
   [[ -n "${wcp_root}" ]] || { printf '%s' "unknown"; return 0; }
 
   wine_bin="${wcp_root}/bin/wine"
@@ -23,6 +23,11 @@ winlator_detect_runtime_class() {
   fi
 
   if [[ -f "${wine_bin}" ]]; then
+    unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+    if [[ "${unix_abi}" == "glibc-unix" ]]; then
+      printf '%s' "bionic-launcher-glibc-unix"
+      return 0
+    fi
     printf '%s' "bionic-native"
     return 0
   fi
@@ -60,6 +65,33 @@ winlator_is_bionic_launcher() {
   readelf -l "${bin_path}" 2>/dev/null | grep -q 'Requesting program interpreter: /system/bin/linker64'
 }
 
+winlator_detect_unix_module_abi() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local ntdll soname
+  local has_libc=0 has_libc6=0
+
+  [[ -n "${wcp_root}" ]] || { printf '%s' "unknown"; return 0; }
+  ntdll="${wcp_root}/lib/wine/aarch64-unix/ntdll.so"
+  [[ -f "${ntdll}" ]] || { printf '%s' "missing"; return 0; }
+
+  while IFS= read -r soname; do
+    case "${soname}" in
+      libc.so) has_libc=1 ;;
+      libc.so.6) has_libc6=1 ;;
+    esac
+  done < <(winlator_collect_needed_sonames "${ntdll}" || true)
+
+  if [[ "${has_libc6}" == "1" ]]; then
+    printf '%s' "glibc-unix"
+    return 0
+  fi
+  if [[ "${has_libc}" == "1" ]]; then
+    printf '%s' "bionic-unix"
+    return 0
+  fi
+  printf '%s' "unknown"
+}
+
 winlator_extract_wcp_archive() {
   local archive="$1" out_dir="$2"
   [[ -f "${archive}" ]] || return 1
@@ -79,7 +111,7 @@ winlator_adopt_bionic_launchers() {
   local wine_bin wineserver_bin
   local source_wcp source_url cache_dir archive_path
   local tmp_extract src_wine src_wineserver src_preloader
-  local detected
+  local detected unix_abi
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
@@ -90,6 +122,12 @@ winlator_adopt_bionic_launchers() {
   [[ -f "${wine_bin}" ]] || return 0
   [[ -f "${wineserver_bin}" ]] || return 0
   winlator_is_glibc_launcher "${wine_bin}" || return 0
+
+  unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  if [[ "${unix_abi}" == "glibc-unix" ]]; then
+    log "Skipping bionic launcher adoption: unix runtime is glibc-linked (ntdll needs libc.so.6)"
+    return 0
+  fi
 
   source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
   source_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
@@ -144,6 +182,36 @@ winlator_adopt_bionic_launchers() {
     fail "Bionic launcher adoption failed: detected runtime class is ${detected}"
   fi
   log "Adopted bionic-native Wine launchers from source WCP"
+}
+
+winlator_ensure_arm64ec_unix_loader_compat_links() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local unix_dir compat_dir dst mod
+  local -a compat_modules
+
+  [[ -n "${wcp_root}" ]] || return 0
+  unix_dir="${wcp_root}/lib/wine/aarch64-unix"
+  compat_dir="${wcp_root}/lib/wine"
+  [[ -d "${unix_dir}" && -d "${compat_dir}" ]] || return 0
+
+  compat_modules=(
+    "ntdll.so"
+    "win32u.so"
+    "ws2_32.so"
+    "winevulkan.so"
+    "winebus.so"
+    "winebus.sys.so"
+  )
+
+  for mod in "${compat_modules[@]}"; do
+    [[ -f "${unix_dir}/${mod}" ]] || continue
+    dst="${compat_dir}/${mod}"
+    if [[ -e "${dst}" && ! -L "${dst}" ]]; then
+      # Keep explicit files from upstream layouts; add links only for missing targets.
+      continue
+    fi
+    ln -sfn "aarch64-unix/${mod}" "${dst}"
+  done
 }
 
 winlator_resolve_host_lib() {
@@ -491,7 +559,7 @@ winlator_validate_runtime_class_target() {
   detected="$(winlator_detect_runtime_class "${WCP_ROOT}")"
   case "${target}" in
     bionic-native)
-      if [[ "${detected}" == "glibc-wrapped" || "${detected}" == "glibc-raw" ]]; then
+      if [[ "${detected}" == "glibc-wrapped" || "${detected}" == "glibc-raw" || "${detected}" == "bionic-launcher-glibc-unix" ]]; then
         winlator_report_runtime_class_mismatch "${detected}"
       fi
       ;;

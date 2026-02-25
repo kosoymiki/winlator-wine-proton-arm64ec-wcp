@@ -394,6 +394,7 @@ compose_wcp_tree_from_stage() {
 
   winlator_adopt_bionic_launchers "${wcp_root}"
   winlator_wrap_glibc_launchers
+  winlator_ensure_arm64ec_unix_loader_compat_links "${wcp_root}"
   generate_winetools_layer "${wcp_root}"
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
 
@@ -674,7 +675,7 @@ wcp_validate_forensic_manifest() {
 validate_wcp_tree_arm64ec() {
   local wcp_root="$1"
   local -a required_paths required_modules
-  local p mod
+  local p mod unix_abi
 
   required_paths=(
     "${wcp_root}/bin"
@@ -718,6 +719,14 @@ validate_wcp_tree_arm64ec() {
     if [[ ! -f "${wcp_root}/lib/wine/aarch64-unix/winebus.so" && ! -f "${wcp_root}/lib/wine/aarch64-unix/winebus.sys.so" ]]; then
       wcp_fail "Wine unix module missing: lib/wine/aarch64-unix/winebus.so (or winebus.sys.so)"
     fi
+  fi
+
+  unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && "${unix_abi}" != "bionic-unix" ]]; then
+    if [[ "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
+      wcp_fail "Bionic runtime target requires bionic-linked unix modules; detected unix ABI=${unix_abi} (expected bionic-unix)"
+    fi
+    wcp_log "runtime-class warning: unix ABI is ${unix_abi} while target is bionic-native (continuing because WCP_RUNTIME_CLASS_ENFORCE=0)"
   fi
 
   winlator_validate_launchers

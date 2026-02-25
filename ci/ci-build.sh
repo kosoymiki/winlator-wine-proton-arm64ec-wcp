@@ -326,6 +326,7 @@ compose_wcp_tree() {
   rsync -a "${STAGE_DIR}/usr/" "${WCP_ROOT}/"
   winlator_adopt_bionic_launchers "${WCP_ROOT}"
   winlator_wrap_glibc_launchers
+  winlator_ensure_arm64ec_unix_loader_compat_links "${WCP_ROOT}"
 
   if [[ -f "${WCP_ROOT}/bin/wine" && ! -e "${WCP_ROOT}/bin/wine64" ]]; then
     ln -s wine "${WCP_ROOT}/bin/wine64"
