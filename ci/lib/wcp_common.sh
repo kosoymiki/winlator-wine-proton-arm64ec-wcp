@@ -584,6 +584,7 @@ compose_wcp_tree_from_stage() {
   mkdir -p "${wcp_root}/share"
   cp -f "${prefix_pack_path}" "${wcp_root}/prefixPack.txz"
 
+  winlator_preflight_bionic_source_contract
   winlator_adopt_bionic_unix_core_modules "${wcp_root}"
   winlator_adopt_bionic_launchers "${wcp_root}"
   winlator_wrap_glibc_launchers

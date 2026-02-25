@@ -311,6 +311,10 @@ winlator_preflight_bionic_source_contract() {
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" ]] || return 0
+  : "${WCP_BIONIC_DONOR_PREFLIGHT_DONE:=0}"
+  if [[ "${WCP_BIONIC_DONOR_PREFLIGHT_DONE}" == "1" ]]; then
+    return 0
+  fi
   if winlator_bionic_mainline_strict; then
     strict_mode=1
   fi
