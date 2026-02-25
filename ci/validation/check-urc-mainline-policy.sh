@@ -115,6 +115,8 @@ main() {
   require_contains "ci/lib/wcp_common.sh" 'wcp_enforce_mainline_external_runtime_policy\(\)'
   require_contains "ci/lib/wcp_common.sh" 'WCP_WRAPPER_POLICY_VERSION'
   require_contains "ci/lib/wcp_common.sh" 'WCP_POLICY_SOURCE'
+  require_contains "ci/lib/wcp_common.sh" 'share/wcp-forensics/unix-module-abi.tsv'
+  require_contains "ci/lib/wcp_common.sh" '"unixModuleAbiIndex"'
 
   require_file "docs/GN_GH_BACKLOG_MATRIX.md"
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameNative'
