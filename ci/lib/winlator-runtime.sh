@@ -63,6 +63,38 @@ winlator_verify_sha256() {
   log "Verified ${label} SHA256 (${expected_sha,,})"
 }
 
+winlator_download_cached_archive() {
+  local url="$1"
+  local cache_path="$2"
+  local expected_sha="${3:-}"
+  local label="${4:-archive}"
+  local actual_sha
+
+  [[ -n "${url}" ]] || fail "Cannot download ${label}: empty URL"
+  command -v curl >/dev/null 2>&1 || fail "curl is required to download ${label}"
+  command -v sha256sum >/dev/null 2>&1 || fail "sha256sum is required to verify ${label}"
+  mkdir -p "$(dirname "${cache_path}")"
+
+  if [[ -f "${cache_path}" ]]; then
+    if [[ -n "${expected_sha}" ]]; then
+      actual_sha="$(sha256sum "${cache_path}" | awk '{print tolower($1)}')"
+      if [[ "${actual_sha}" == "${expected_sha,,}" ]]; then
+        log "Using cached ${label} (${cache_path})"
+        return 0
+      fi
+      log "Cached ${label} SHA256 mismatch; re-downloading (${cache_path})"
+    else
+      log "Using cached ${label} (${cache_path})"
+      return 0
+    fi
+  fi
+
+  log "Downloading ${label}: ${url}"
+  curl -fL --retry 5 --retry-delay 2 -o "${cache_path}.tmp" "${url}" || fail "Failed to download ${label} from ${url}"
+  mv -f "${cache_path}.tmp" "${cache_path}"
+  winlator_verify_sha256 "${cache_path}" "${expected_sha}" "${label}"
+}
+
 winlator_detect_launcher_abi() {
   local bin_path="$1"
   [[ -e "${bin_path}" ]] || { printf '%s' "missing"; return 0; }
@@ -348,16 +380,15 @@ winlator_adopt_bionic_unix_core_modules() {
   fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
-    command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic unix source WCP"
-    mkdir -p "${cache_dir}"
     archive_path="${cache_dir}/unix-source.wcp"
-    log "Downloading bionic unix source WCP: ${source_url}"
-    curl -fL --retry 5 --retry-delay 2 -o "${archive_path}.tmp" "${source_url}" || fail "Failed to download bionic unix source WCP from ${source_url}"
-    mv -f "${archive_path}.tmp" "${archive_path}"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" "bionic unix source WCP"
     source_wcp="${archive_path}"
   fi
 
   if [[ -z "${source_wcp}" ]]; then
+    if winlator_bionic_mainline_strict; then
+      fail "Bionic unix source WCP is required in strict mainline mode but not configured (WCP_BIONIC_UNIX_SOURCE_WCP_URL/PATH)"
+    fi
     log "Bionic unix source WCP is not configured (WCP_BIONIC_UNIX_SOURCE_WCP_URL/PATH)"
     return 0
   fi
@@ -464,16 +495,15 @@ winlator_adopt_bionic_launchers() {
   fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
-    command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic launcher source WCP"
-    mkdir -p "${cache_dir}"
     archive_path="${cache_dir}/launcher-source.wcp"
-    log "Downloading bionic launcher source WCP: ${source_url}"
-    curl -fL --retry 5 --retry-delay 2 -o "${archive_path}.tmp" "${source_url}" || fail "Failed to download bionic launcher source WCP from ${source_url}"
-    mv -f "${archive_path}.tmp" "${archive_path}"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" "bionic launcher source WCP"
     source_wcp="${archive_path}"
   fi
 
   if [[ -z "${source_wcp}" ]]; then
+    if winlator_bionic_mainline_strict; then
+      fail "Bionic launcher source WCP is required in strict mainline mode but not configured (WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL/PATH)"
+    fi
     log "Bionic launcher source WCP is not configured (WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL/PATH)"
     winlator_report_runtime_class_mismatch "glibc-raw"
     return 0
