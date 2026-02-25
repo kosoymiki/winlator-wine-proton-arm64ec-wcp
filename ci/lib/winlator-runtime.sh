@@ -473,7 +473,7 @@ PY
 winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
-  local unix_abi source_wcp source_url cache_dir archive_path
+  local unix_abi source_wcp source_url source_sha cache_dir archive_path
   local tmp_extract src_unix dst_unix mod source_unix_abi src_mod_abi
   local copied_count=0
   local -a core_modules
@@ -499,16 +499,17 @@ winlator_adopt_bionic_unix_core_modules() {
     fi
   fi
 
-  source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
+  source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}}"
   source_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}}"
+  source_sha="${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}}"
   cache_dir="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}"
-  if winlator_bionic_mainline_strict && [[ -z "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" ]]; then
+  if winlator_bionic_mainline_strict && [[ -z "${source_sha}" ]]; then
     fail "Strict bionic mainline requires WCP_BIONIC_UNIX_SOURCE_WCP_SHA256"
   fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     archive_path="${cache_dir}/unix-source.wcp"
-    winlator_download_cached_archive "${source_url}" "${archive_path}" "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" "bionic unix source WCP"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "bionic unix source WCP"
     source_wcp="${archive_path}"
   fi
 
@@ -520,7 +521,7 @@ winlator_adopt_bionic_unix_core_modules() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic unix source WCP not found: ${source_wcp}"
-  winlator_verify_sha256 "${source_wcp}" "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" "bionic unix source WCP"
+  winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic unix source WCP"
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
@@ -609,7 +610,7 @@ winlator_adopt_bionic_launchers() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
   local wine_bin wineserver_bin
-  local source_wcp source_url cache_dir archive_path
+  local source_wcp source_url source_sha cache_dir archive_path
   local tmp_extract src_wine src_wineserver src_preloader
   local detected unix_abi
 
@@ -633,16 +634,17 @@ winlator_adopt_bionic_launchers() {
     return 0
   fi
 
-  source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
+  source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}}"
   source_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+  source_sha="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}}"
   cache_dir="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}"
-  if winlator_bionic_mainline_strict && [[ -z "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" ]]; then
+  if winlator_bionic_mainline_strict && [[ -z "${source_sha}" ]]; then
     fail "Strict bionic mainline requires WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256"
   fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     archive_path="${cache_dir}/launcher-source.wcp"
-    winlator_download_cached_archive "${source_url}" "${archive_path}" "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" "bionic launcher source WCP"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "bionic launcher source WCP"
     source_wcp="${archive_path}"
   fi
 
@@ -655,7 +657,7 @@ winlator_adopt_bionic_launchers() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic launcher source WCP not found: ${source_wcp}"
-  winlator_verify_sha256 "${source_wcp}" "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" "bionic launcher source WCP"
+  winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic launcher source WCP"
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then

@@ -130,6 +130,8 @@ main() {
   require_contains "ci/lib/winlator-runtime.sh" 'winlator_preflight_bionic_source_contract\(\)'
   require_contains "ci/lib/winlator-runtime.sh" 'Strict bionic mainline requires WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256'
   require_contains "ci/lib/winlator-runtime.sh" 'Strict bionic mainline requires WCP_BIONIC_UNIX_SOURCE_WCP_SHA256'
+  require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH'
+  require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH'
   require_contains "ci/ci-build.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/proton-ge10/ci-build-proton-ge10-wcp.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/protonwine10/ci-build-protonwine10-wcp.sh" 'winlator_preflight_bionic_source_contract'
