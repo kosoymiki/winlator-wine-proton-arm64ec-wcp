@@ -65,6 +65,8 @@ consolidated into:
   - introduces guarded runtime app-compat rules (env defaults only, executable-token matched), applies them in launcher pre-exec path, and emits rule-level forensic telemetry (`RUNTIME_APPCOMPAT_APPLIED` + submit-stage fields)
 - `0047-driver-fallback-chain-ranking-and-telemetry.patch`
   - upgrades graphics-driver fallback from single-candidate to ranked fallback chain, adds scored candidate ranking in `AdrenotoolsManager`, and exports attempt/ranking telemetry into forensic events and runtime env markers
+- `0048-adrenotools-source-trust-and-fallback-orchestration.patch`
+  - adds Adrenotools source orchestration with trust-scored repo fallback chain (primary/fallback/discovered), deduplicates mirrored assets by identity, and prioritizes version list ordering/recommendation using source trust + semantic recency
 
 ## Known high-overlap files (intentional)
 
