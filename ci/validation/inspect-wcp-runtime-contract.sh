@@ -68,6 +68,11 @@ main() {
   if [[ -f "${wcp_root}/profile.json" ]]; then
     log "profileRuntimeFields:"
     grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"|"bionic(SourceMap|LauncherSource|UnixSource)"' "${wcp_root}/profile.json" || true
+    if [[ "${strict_bionic}" == "1" ]]; then
+      if ! grep -qE '"bionicDonorPreflightDone": ("1"|1)' "${wcp_root}/profile.json"; then
+        fail "Strict bionic check failed: profile.json is missing bionicDonorPreflightDone=1"
+      fi
+    fi
   fi
   if [[ -f "${wcp_root}/share/wcp-forensics/source-refs.json" ]]; then
     log "forensicSourceRefs:"
