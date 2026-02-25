@@ -132,7 +132,7 @@ jobs:
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          ProtonWine10 GameNative ARM64EC WCP (rolling nightly / 0.9a line)
+          ProtonWine10 GameNative ARM64EC WCP (rolling nightly)
 
           RU:
           - Канал: nightly (protonwine10-gamenative-arm64ec-latest)
@@ -153,7 +153,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: protonwine10-gamenative-arm64ec-latest
-          name: ProtonWine10 GameNative ARM64EC Latest (0.9a line)
+          name: ProtonWine10 GameNative ARM64EC Latest
           allowUpdates: true
           prerelease: true
           removeArtifacts: true

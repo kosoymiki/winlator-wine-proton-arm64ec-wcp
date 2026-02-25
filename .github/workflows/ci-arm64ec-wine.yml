@@ -125,7 +125,7 @@ jobs:
           set -euxo pipefail
           cp "${WCP_OUTPUT_DIR}/SHA256SUMS" "${WCP_OUTPUT_DIR}/SHA256SUMS-${WCP_NAME}.txt"
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Wine 11 ARM64EC WCP (rolling nightly / 0.9a line)
+          Wine 11 ARM64EC WCP (rolling nightly)
 
           RU:
           - Канал: nightly (wine-11-arm64ec-latest)
@@ -146,7 +146,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: wine-11-arm64ec-latest
-          name: Wine 11 ARM64EC Latest (0.9a line)
+          name: Wine 11 ARM64EC Latest
           allowUpdates: true
           prerelease: true
           removeArtifacts: true
