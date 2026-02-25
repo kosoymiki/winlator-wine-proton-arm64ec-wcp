@@ -10,6 +10,7 @@ This folder stores the curated Android patchset imported from:
 The integration model is manifest-driven:
 
 - `patchsets/28c3a06/android/patches/` — source patch files
+- `patchsets/28c3a06/android/android_sysvshm/sys/shm.h` — Android sysvshm shim header injected into non-GameNative trees when needed
 - `patchsets/28c3a06/manifest.tsv` — per-patch action matrix for `wine` and `proton-ge`
 - `apply-android-patchset.sh` — applies/validates/backports according to the manifest
 

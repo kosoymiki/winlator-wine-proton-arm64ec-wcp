@@ -9,6 +9,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WCP_GN_PATCHSET_VERIFY_AUTOFIX:=1}"
 : "${WCP_GN_PATCHSET_MANIFEST:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/manifest.tsv}"
 : "${WCP_GN_PATCHSET_PATCH_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/patches}"
+: "${WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/android_sysvshm}"
 : "${WCP_GN_PATCHSET_REPORT:=}"
 
 TARGET=""
@@ -25,6 +26,7 @@ Env:
   WCP_GN_PATCHSET_VERIFY_AUTOFIX default: 1 (apply clean verify-missing patches)
   WCP_GN_PATCHSET_MANIFEST      default: ci/gamenative/patchsets/28c3a06/manifest.tsv
   WCP_GN_PATCHSET_PATCH_ROOT    default: ci/gamenative/patchsets/28c3a06/android/patches
+  WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT default: ci/gamenative/patchsets/28c3a06/android/android_sysvshm
   WCP_GN_PATCHSET_REPORT        optional TSV report path
 USAGE
 }
@@ -519,9 +521,25 @@ run_backport_action() {
   report "${patch}" "${action}" "applied" "targeted-backport"
 }
 
+ensure_android_sysvshm_header() {
+  local src_shm_h dst_shm_h
+  src_shm_h="${WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT}/sys/shm.h"
+  [[ -f "${src_shm_h}" ]] || return 0
+
+  dst_shm_h="${SOURCE_DIR}/android/android_sysvshm/sys/shm.h"
+  if [[ -f "${dst_shm_h}" ]]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname -- "${dst_shm_h}")"
+  cp -f "${src_shm_h}" "${dst_shm_h}"
+  log "Injected android sysvshm shim header: ${dst_shm_h}"
+}
+
 log "Applying GameNative patchset ${WCP_GN_PATCHSET_REF} to target=${TARGET}"
 log "manifest=${WCP_GN_PATCHSET_MANIFEST}"
 log "source=${SOURCE_DIR}"
+ensure_android_sysvshm_header
 
 line_no=0
 while IFS=$'\t' read -r patch wine_action protonge_action required note; do
