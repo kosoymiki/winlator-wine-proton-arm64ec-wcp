@@ -270,6 +270,7 @@ main() {
   prepare_layout
   ensure_llvm_mingw
   run_arm64ec_flow
+  apply_proton_ge_patches
   if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
     WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
       WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
@@ -279,7 +280,6 @@ main() {
   else
     log "GameNative patchset integration disabled for proton-ge (WCP_GN_PATCHSET_ENABLE=0)"
   fi
-  apply_proton_ge_patches
   wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
   fix_winnt_interlocked_types
   fix_winebus_sdl_stub
