@@ -265,6 +265,13 @@ run_verify_action() {
     return 0
   fi
 
+  if [[ "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" == "1" ]]; then
+    if git_apply_3way "${patch_file}"; then
+      report "${patch}" "verify" "autofixed" "applied-3way"
+      return 0
+    fi
+  fi
+
   if verify_patch_contract_markers "${patch}"; then
     report "${patch}" "verify" "verified" "contract-markers"
     return 0
