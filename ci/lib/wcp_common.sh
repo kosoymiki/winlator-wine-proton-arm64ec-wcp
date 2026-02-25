@@ -70,8 +70,12 @@ wcp_require_enum() {
 wcp_enforce_mainline_bionic_policy() {
   : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
   : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
+  : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
+  : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=1}"
   wcp_require_bool WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
   wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
+  wcp_require_bool WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
+  wcp_require_bool WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
 
   [[ "${WCP_MAINLINE_BIONIC_ONLY}" == "1" ]] || return 0
   [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" ]] || \
@@ -80,6 +84,14 @@ wcp_enforce_mainline_bionic_policy() {
     wcp_fail "Mainline bionic-only policy requires WCP_RUNTIME_CLASS_ENFORCE=1"
   [[ "${WCP_ALLOW_GLIBC_EXPERIMENTAL}" == "0" ]] || \
     wcp_fail "Mainline bionic-only policy forbids WCP_ALLOW_GLIBC_EXPERIMENTAL=1"
+  [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" ]] || \
+    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_FORCE=1"
+  [[ "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" == "1" ]] || \
+    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_REQUIRED=1"
+  [[ -n "${WCP_BIONIC_SOURCE_MAP_FILE:-}" ]] || \
+    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_FILE"
+  [[ -f "${WCP_BIONIC_SOURCE_MAP_FILE}" ]] || \
+    wcp_fail "Mainline bionic-only policy requires existing source-map file: ${WCP_BIONIC_SOURCE_MAP_FILE}"
 }
 
 wcp_enforce_mainline_external_runtime_policy() {
