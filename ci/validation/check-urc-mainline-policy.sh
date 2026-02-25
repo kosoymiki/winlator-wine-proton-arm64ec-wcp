@@ -118,13 +118,41 @@ check_workflow_env_contract() {
   require_not_contains "${wf}" 'WCP_INCLUDE_FEX_DLLS: "1"'
 }
 
+check_workflow_source_map_binding() {
+  local wf="$1" pkg="$2"
+  local map_file="ci/runtime-sources/bionic-source-map.json"
+  local url sha
+  read -r url sha < <(python3 - "${map_file}" "${pkg}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+map_file = Path(sys.argv[1])
+pkg = sys.argv[2]
+data = json.loads(map_file.read_text(encoding="utf-8"))
+entry = (data.get("packages") or {}).get(pkg) or {}
+url = (entry.get("launcherSourceWcpUrl") or "").strip()
+sha = (entry.get("launcherSourceSha256") or "").strip().lower()
+print(url, sha)
+PY
+)
+  [[ -n "${url}" && -n "${sha}" ]] || fail "Unable to resolve source-map binding for workflow ${wf} package ${pkg}"
+  grep -qF "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL: ${url}" "${wf}" || fail "Workflow ${wf} launcher URL does not match source-map for ${pkg}"
+  grep -qF "WCP_BIONIC_UNIX_SOURCE_WCP_URL: ${url}" "${wf}" || fail "Workflow ${wf} unix URL does not match source-map for ${pkg}"
+  grep -qF "WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256: ${sha}" "${wf}" || fail "Workflow ${wf} launcher SHA256 does not match source-map for ${pkg}"
+  grep -qF "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256: ${sha}" "${wf}" || fail "Workflow ${wf} unix SHA256 does not match source-map for ${pkg}"
+}
+
 main() {
   cd "${ROOT_DIR}"
 
+  check_bionic_source_map
   check_workflow_env_contract ".github/workflows/ci-arm64ec-wine.yml"
   check_workflow_env_contract ".github/workflows/ci-proton-ge10-wcp.yml"
   check_workflow_env_contract ".github/workflows/ci-protonwine10-wcp.yml"
-  check_bionic_source_map
+  check_workflow_source_map_binding ".github/workflows/ci-arm64ec-wine.yml" "wine-11-arm64ec"
+  check_workflow_source_map_binding ".github/workflows/ci-proton-ge10-wcp.yml" "proton-ge10-arm64ec"
+  check_workflow_source_map_binding ".github/workflows/ci-protonwine10-wcp.yml" "protonwine10-gamenative-arm64ec"
 
   require_file "ci/lib/wcp_common.sh"
   require_contains "ci/lib/wcp_common.sh" 'wcp_enforce_mainline_bionic_policy\(\)'
