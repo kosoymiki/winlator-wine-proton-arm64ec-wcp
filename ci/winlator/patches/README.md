@@ -67,6 +67,10 @@ consolidated into:
   - upgrades graphics-driver fallback from single-candidate to ranked fallback chain, adds scored candidate ranking in `AdrenotoolsManager`, and exports attempt/ranking telemetry into forensic events and runtime env markers
 - `0048-adrenotools-source-trust-and-fallback-orchestration.patch`
   - adds Adrenotools source orchestration with trust-scored repo fallback chain (primary/fallback/discovered), deduplicates mirrored assets by identity, and prioritizes version list ordering/recommendation using source trust + semantic recency
+- `0049-upscale-eden-render-controls-and-runtime-contract.patch`
+  - extends container-owned upscale controls with Eden-aligned render knobs (resolution, scaling filter, FSR sharpness, frame pacing, anisotropy, vsync, Vulkan-call logging), persists them in `extraData`, bridges to runtime env aliases, and adds forensic render-policy telemetry plus launcher-side normalization of the expanded contract
+- `0050-upscale-eden-advanced-renderer-runtime-controls.patch`
+  - extends the upscale contract with Eden-style advanced renderer controls (backend selection, async shaders, disk shader cache, speed-limit policy/values, force-max-clock), adds container UI persistence and legacy env migration for those keys, bridges them into runtime env aliases, and normalizes the full control set in launcher pre-exec telemetry
 
 ## Known high-overlap files (intentional)
 

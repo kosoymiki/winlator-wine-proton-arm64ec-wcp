@@ -132,6 +132,36 @@ consolidated in the patch stack to reduce maintenance overhead:
   - problematic Wine/GE/GameNative containers
 - Citron/Eden source-path comparison for deeper renderer/apscaler execution behavior
 
+## Patch `0049` - Eden Render Control Expansion
+
+### Before
+- Upscale stack controlled preset/SWFG, but lacked Eden-style render knobs in container settings.
+- Missing parity keys for resolution/filter/FSR sharpness/frame pacing/vsync/anisotropy/Vulkan-call logging.
+
+### During
+- Extended container schema/UI with new structured upscale fields.
+- Added env bridge aliases (`RENDERER_*`, `FRAME_PACING_MODE`, `MAX_ANISOTROPY`, `GPU_LOG_VULKAN_CALLS`) plus Winlator-prefixed contract keys.
+- Added runtime render-policy resolution and launcher final normalization/telemetry for the expanded key set.
+
+### After
+- Container settings remain the single source of truth, now including Eden-aligned render controls.
+- Upscale runtime/launcher path gains deterministic normalization and forensic visibility for render knobs.
+
+## Patch `0050` - Eden Advanced Renderer Controls (backend/shaders/speed policy)
+
+### Before
+- `0049` covered core render knobs but not deeper Eden-style renderer policy controls.
+- Missing structured UI/schema/runtime path for backend selection, shader-cache behavior, and speed-limit policy.
+
+### During
+- Extended container upscale UI with advanced controls: backend, async shaders, disk shader cache, use-speed-limit, speed limit, turbo speed limit, force max clock.
+- Added `Container` extraData keys with normalization, legacy env migration path, and env-editor strip-list ownership.
+- Bridged the new keys into runtime env aliases (`RENDERER_BACKEND`, `RENDERER_ASYNCHRONOUS_SHADERS`, `RENDERER_USE_DISK_SHADER_CACHE`, `RENDERER_USE_SPEED_LIMIT`, `RENDERER_SPEED_LIMIT`, `RENDERER_TURBO_SPEED_LIMIT`, `RENDERER_FORCE_MAX_CLOCK`) and launcher final normalization.
+
+### After
+- Container settings now own an extended Eden-compatible renderer policy surface end-to-end.
+- Runtime and launcher emit forensic fields for advanced renderer policy resolution, reducing opaque behavior during crash/perf triage.
+
 ## Patch `0027` - Container Settings Own Upscale Config (UI + migration guard)
 
 ### Before
