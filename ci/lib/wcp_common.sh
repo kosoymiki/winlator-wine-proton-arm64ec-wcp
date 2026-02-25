@@ -638,6 +638,10 @@ compose_wcp_tree_from_stage() {
     "bionicLauncherSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
     "bionicUnixSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
     "bionicUnixSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
+    "bionicLauncherSourceResolvedPath": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "bionicLauncherSourceResolvedSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-}")",
+    "bionicUnixSourceResolvedPath": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "bionicUnixSourceResolvedSha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-}")",
     "bionicUnixCoreAdopt": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
     "bionicUnixCoreModules": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")",
     "boxedRuntimeInWcpDetected": false,
@@ -779,6 +783,10 @@ wcp_write_forensic_manifest() {
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256=${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}"
     echo "WCP_BIONIC_UNIX_CORE_ADOPT=${WCP_BIONIC_UNIX_CORE_ADOPT:-0}"
     echo "WCP_BIONIC_UNIX_CORE_MODULES=${WCP_BIONIC_UNIX_CORE_MODULES:-}"
+    echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-}"
+    echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-}"
+    echo "WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH=${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-}"
+    echo "WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256=${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -855,7 +863,11 @@ wcp_write_forensic_manifest() {
     "WCP_BIONIC_UNIX_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
     "WCP_BIONIC_UNIX_CORE_ADOPT": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
-    "WCP_BIONIC_UNIX_CORE_MODULES": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")"
+    "WCP_BIONIC_UNIX_CORE_MODULES": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")",
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-}")",
+    "WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-}")"
   }
 }
 EOF_SOURCE_REFS
