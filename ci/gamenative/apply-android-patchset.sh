@@ -63,7 +63,8 @@ done
 [[ -n "${TARGET}" ]] || fail "--target is required"
 [[ -n "${SOURCE_DIR}" ]] || fail "--source-dir is required"
 [[ -d "${SOURCE_DIR}" ]] || fail "source dir not found: ${SOURCE_DIR}"
-[[ -d "${SOURCE_DIR}/.git" ]] || fail "source dir is not a git tree: ${SOURCE_DIR}"
+git -C "${SOURCE_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+  || fail "source dir is not a git tree: ${SOURCE_DIR}"
 [[ -f "${WCP_GN_PATCHSET_MANIFEST}" ]] || fail "manifest not found: ${WCP_GN_PATCHSET_MANIFEST}"
 [[ -d "${WCP_GN_PATCHSET_PATCH_ROOT}" ]] || fail "patch root not found: ${WCP_GN_PATCHSET_PATCH_ROOT}"
 
