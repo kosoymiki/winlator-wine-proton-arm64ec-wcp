@@ -22,6 +22,52 @@ require_not_contains() {
   fi
 }
 
+check_bionic_source_map() {
+  local map_file="ci/runtime-sources/bionic-source-map.json"
+  require_file "${map_file}"
+  python3 - "${map_file}" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+map_path = Path(sys.argv[1])
+data = json.loads(map_path.read_text(encoding="utf-8"))
+packages = data.get("packages") or {}
+required = (
+    "wine-11-arm64ec",
+    "proton-ge10-arm64ec",
+    "protonwine10-gamenative-arm64ec",
+)
+errors = []
+
+for name in required:
+    entry = packages.get(name)
+    if not isinstance(entry, dict):
+        errors.append(f"missing packages.{name}")
+        continue
+    for key in ("launcherSourceWcpUrl", "unixSourceWcpUrl", "launcherSourceSha256", "unixSourceSha256"):
+        value = entry.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"packages.{name}.{key} must be a non-empty string")
+    for key in ("launcherSourceSha256", "unixSourceSha256"):
+        value = (entry.get(key) or "").lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            errors.append(f"packages.{name}.{key} must be 64 lowercase hex chars")
+    if int(entry.get("unixCoreAdopt", 0)) != 1:
+        errors.append(f"packages.{name}.unixCoreAdopt must be 1")
+    modules = entry.get("unixCoreModules") or []
+    if not isinstance(modules, list) or "ntdll.so" not in modules:
+        errors.append(f"packages.{name}.unixCoreModules must include ntdll.so")
+
+if errors:
+    print("[urc-check][error] Invalid bionic source map:")
+    for err in errors:
+        print(f"[urc-check][error] - {err}")
+    sys.exit(1)
+PY
+}
+
 detect_winlator_release_line() {
   local patch
   patch="$(ls ci/winlator/patches/0007-aeroso-version-*.patch 2>/dev/null | head -n1 || true)"
@@ -50,6 +96,7 @@ main() {
   check_workflow_env_contract ".github/workflows/ci-arm64ec-wine.yml"
   check_workflow_env_contract ".github/workflows/ci-proton-ge10-wcp.yml"
   check_workflow_env_contract ".github/workflows/ci-protonwine10-wcp.yml"
+  check_bionic_source_map
 
   require_file "ci/lib/wcp_common.sh"
   require_contains "ci/lib/wcp_common.sh" 'wcp_enforce_mainline_bionic_policy\(\)'
