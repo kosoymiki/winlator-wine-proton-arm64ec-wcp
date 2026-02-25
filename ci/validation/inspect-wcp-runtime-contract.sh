@@ -61,7 +61,7 @@ main() {
   else
     log "unixModuleAbiFile=ABSENT"
     if [[ "${strict_bionic}" == "1" ]]; then
-      fail "Strict bionic check failed: unix-module-abi.tsv is missing"
+      fail "Strict bionic check failed: unix-module-abi.tsv is missing (expected Aero.so WCP forensic bundle)"
     fi
   fi
 
