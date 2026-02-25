@@ -69,6 +69,10 @@ fi
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=0}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+: "${WCP_GN_PATCHSET_ENABLE:=1}"
+: "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
+: "${WCP_GN_PATCHSET_STRICT:=1}"
+: "${WCP_GN_PATCHSET_REPORT:=${LOG_DIR}/gamenative-patchset-protonge.tsv}"
 : "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
 : "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
 : "${PATCHLOG_FATAL_REGEX:=\bfatal:|^error:|\[[^]]*\]\[error\]|Traceback \(most recent call last\)}"
@@ -94,6 +98,8 @@ preflight_runtime_profile() {
   wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
+  wcp_require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
+  wcp_require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
@@ -262,10 +268,20 @@ main() {
   prepare_layout
   ensure_llvm_mingw
   run_arm64ec_flow
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
+    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+      WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
+      WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
+      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
+  else
+    log "GameNative patchset integration disabled for proton-ge (WCP_GN_PATCHSET_ENABLE=0)"
+  fi
   apply_proton_ge_patches
   wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
   fix_winnt_interlocked_types
   fix_winebus_sdl_stub
+  WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
   build_wine
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"

@@ -1,0 +1,415 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+: "${WCP_GN_PATCHSET_ENABLE:=1}"
+: "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
+: "${WCP_GN_PATCHSET_STRICT:=1}"
+: "${WCP_GN_PATCHSET_MANIFEST:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/manifest.tsv}"
+: "${WCP_GN_PATCHSET_PATCH_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/patches}"
+: "${WCP_GN_PATCHSET_REPORT:=}"
+
+TARGET=""
+SOURCE_DIR=""
+
+usage() {
+  cat <<USAGE
+Usage: $(basename "$0") --target <wine|protonge> --source-dir <path>
+
+Env:
+  WCP_GN_PATCHSET_ENABLE        default: 1
+  WCP_GN_PATCHSET_REF           default: 28c3a06ba773f6d29b9f3ed23b9297f94af4771c
+  WCP_GN_PATCHSET_STRICT        default: 1
+  WCP_GN_PATCHSET_MANIFEST      default: ci/gamenative/patchsets/28c3a06/manifest.tsv
+  WCP_GN_PATCHSET_PATCH_ROOT    default: ci/gamenative/patchsets/28c3a06/android/patches
+  WCP_GN_PATCHSET_REPORT        optional TSV report path
+USAGE
+}
+
+log() { printf '[gamenative][patchset] %s\n' "$*"; }
+fail() { printf '[gamenative][patchset][error] %s\n' "$*" >&2; exit 1; }
+
+require_bool() {
+  local name="$1" value="$2"
+  case "${value}" in
+    0|1) ;;
+    *) fail "${name} must be 0 or 1 (got: ${value})" ;;
+  esac
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target)
+      TARGET="${2:-}"
+      shift 2
+      ;;
+    --source-dir)
+      SOURCE_DIR="${2:-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "Unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -n "${TARGET}" ]] || fail "--target is required"
+[[ -n "${SOURCE_DIR}" ]] || fail "--source-dir is required"
+[[ -d "${SOURCE_DIR}" ]] || fail "source dir not found: ${SOURCE_DIR}"
+[[ -d "${SOURCE_DIR}/.git" ]] || fail "source dir is not a git tree: ${SOURCE_DIR}"
+[[ -f "${WCP_GN_PATCHSET_MANIFEST}" ]] || fail "manifest not found: ${WCP_GN_PATCHSET_MANIFEST}"
+[[ -d "${WCP_GN_PATCHSET_PATCH_ROOT}" ]] || fail "patch root not found: ${WCP_GN_PATCHSET_PATCH_ROOT}"
+
+case "${TARGET}" in
+  wine|protonge) ;;
+  *) fail "target must be wine or protonge (got: ${TARGET})" ;;
+esac
+
+require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
+require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
+
+if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
+  log "Patchset integration disabled (WCP_GN_PATCHSET_ENABLE=0)"
+  exit 0
+fi
+
+if [[ -z "${WCP_GN_PATCHSET_REPORT}" ]]; then
+  WCP_GN_PATCHSET_REPORT="${SOURCE_DIR}/../gamenative-patchset-${TARGET}.tsv"
+fi
+mkdir -p "$(dirname -- "${WCP_GN_PATCHSET_REPORT}")"
+
+echo -e "target\tpatch\taction\tresult\tdetail" > "${WCP_GN_PATCHSET_REPORT}"
+
+report() {
+  local patch="$1" action="$2" result="$3" detail="$4"
+  printf '%s\t%s\t%s\t%s\t%s\n' "${TARGET}" "${patch}" "${action}" "${result}" "${detail}" >> "${WCP_GN_PATCHSET_REPORT}"
+}
+
+git_apply_check() {
+  local patch_file="$1"
+  git -C "${SOURCE_DIR}" apply --check "${patch_file}" >/dev/null 2>&1
+}
+
+git_reverse_check() {
+  local patch_file="$1"
+  git -C "${SOURCE_DIR}" apply --check --reverse "${patch_file}" >/dev/null 2>&1
+}
+
+run_apply_action() {
+  local patch="$1" patch_file="$2"
+
+  if git_reverse_check "${patch_file}"; then
+    report "${patch}" "apply" "already" "reverse-check-ok"
+    return 0
+  fi
+
+  if git_apply_check "${patch_file}"; then
+    git -C "${SOURCE_DIR}" apply "${patch_file}" || fail "git apply failed for ${patch}"
+    report "${patch}" "apply" "applied" "applied-clean"
+    return 0
+  fi
+
+  report "${patch}" "apply" "conflict" "cannot-apply"
+  if [[ "${WCP_GN_PATCHSET_STRICT}" == "1" ]]; then
+    fail "patch ${patch} is marked apply but cannot be applied"
+  fi
+  return 0
+}
+
+run_verify_action() {
+  local patch="$1" patch_file="$2"
+
+  if git_reverse_check "${patch_file}"; then
+    report "${patch}" "verify" "verified" "reverse-check-ok"
+    return 0
+  fi
+
+  if git_apply_check "${patch_file}"; then
+    report "${patch}" "verify" "missing" "would-apply-clean"
+    return 0
+  fi
+
+  report "${patch}" "verify" "unknown" "apply-and-reverse-failed"
+  return 0
+}
+
+backport_wineboot_xstate() {
+  local file
+  file="${SOURCE_DIR}/programs/wineboot/wineboot.c"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  if grep -Fq 'xstate->AllFeatureSize = 0x340;' "${file}" \
+    && grep -Fq 'initialize_xstate_features(struct _KUSER_SHARED_DATA *data)' "${file}"; then
+    return 0
+  fi
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+marker = "#elif defined(__aarch64__)"
+if marker not in text:
+    raise SystemExit("aarch64 block marker not found")
+
+head, tail = text.split(marker, 1)
+if "#else" not in tail:
+    raise SystemExit("missing #else delimiter in wineboot.c")
+
+aarch64_block, rest = tail.split("#else", 1)
+if "initialize_xstate_features(struct _KUSER_SHARED_DATA *data)" in aarch64_block:
+    raise SystemExit(0)
+
+inject = """
+
+static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
+{
+    XSTATE_CONFIGURATION *xstate = &data->XState;
+
+    xstate->EnabledFeatures = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX);
+    xstate->EnabledVolatileFeatures = xstate->EnabledFeatures;
+    xstate->AllFeatureSize = 0x340;
+
+    xstate->OptimizedSave = 0;
+    xstate->CompactionEnabled = 0;
+
+    xstate->Features[0].Size = xstate->AllFeatures[0] = offsetof(XSAVE_FORMAT, XmmRegisters);
+    xstate->Features[1].Size = xstate->AllFeatures[1] = sizeof(M128A) * 16;
+    xstate->Features[1].Offset = xstate->Features[0].Size;
+    xstate->Features[2].Offset = 0x240;
+    xstate->Features[2].Size = 0x100;
+    xstate->Size = 0x340;
+}
+"""
+
+path.write_text(head + marker + aarch64_block + inject + "\n#else" + rest, encoding="utf-8")
+PY
+}
+
+backport_protonge_hodll() {
+  local file
+  file="${SOURCE_DIR}/dlls/wow64/syscall.c"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  if grep -Fq 'wow64GetEnvironmentVariableW' "${file}" && grep -Fq 'L"HODLL"' "${file}"; then
+    return 0
+  fi
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+if "wow64GetEnvironmentVariableW" not in updated:
+    helper = """
+
+/**********************************************************************
+ *           wow64GetEnvironmentVariableW
+ */
+static DWORD wow64GetEnvironmentVariableW( LPCWSTR name, LPWSTR val, DWORD size )
+{
+    UNICODE_STRING us_name, us_value;
+    NTSTATUS status;
+    DWORD len;
+
+    RtlInitUnicodeString( &us_name, name );
+    us_value.Length = 0;
+    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+    us_value.Buffer = val;
+
+    status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
+    len = us_value.Length / sizeof(WCHAR);
+    if (status == STATUS_BUFFER_TOO_SMALL) return len + 1;
+    if (status) return 0;
+    if (!size) return len + 1;
+    val[len] = 0;
+    return len;
+}
+"""
+    marker = "return module;\n}\n"
+    pos = updated.find(marker)
+    if pos < 0:
+      raise SystemExit("load_64bit_module() marker not found")
+    pos += len(marker)
+    updated = updated[:pos] + helper + updated[pos:]
+
+if 'L"HODLL"' not in updated:
+    pattern = (
+        r'(\s*HANDLE key;\n\s*ULONG size;\n)\n'
+        r'(\s*switch \(current_machine\))'
+    )
+    replace = (
+        r'\1\n'
+        r'    WCHAR *cpu_dll = (WCHAR*)buffer;\n'
+        r'    UINT res;\n'
+        r'    if ((res = wow64GetEnvironmentVariableW( L"HODLL", cpu_dll, ARRAY_SIZE(buffer))) &&\n'
+        r'        res < ARRAY_SIZE(buffer))\n'
+        r'        return cpu_dll;\n\n'
+        r'\2'
+    )
+    updated, count = re.subn(pattern, replace, updated, count=1)
+    if count != 1:
+        raise SystemExit("HODLL override insertion point not found")
+
+path.write_text(updated, encoding="utf-8")
+PY
+}
+
+backport_protonge_winex11() {
+  local file
+  file="${SOURCE_DIR}/dlls/winex11.drv/window.c"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  if grep -Fq 'class_hints->res_name = process_name;' "${file}" && grep -Fq '#ifdef __ANDROID__' "${file}"; then
+    return 0
+  fi
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+old_block = re.compile(
+    r'\s*static char steam_proton\[\] = "steam_proton";\n'
+    r'\s*const char \*app_id = getenv\("SteamAppId"\);\n'
+    r'\s*char proton_app_class\[128\];\n\n'
+    r'\s*if\(app_id && \*app_id\)\{\n'
+    r'\s*snprintf\(proton_app_class, sizeof\(proton_app_class\), "steam_app_%s", app_id\);\n'
+    r'\s*class_hints->res_name = proton_app_class;\n'
+    r'\s*class_hints->res_class = proton_app_class;\n'
+    r'\s*\}else\{\n'
+    r'\s*class_hints->res_name = steam_proton;\n'
+    r'\s*class_hints->res_class = steam_proton;\n'
+    r'\s*\}\n'
+)
+new_block = (
+    '        #ifdef __ANDROID__\n'
+    '        class_hints->res_name = process_name;\n'
+    '        class_hints->res_class = process_name;\n'
+    '        #else\n'
+    '        static char steam_proton[] = "steam_proton";\n'
+    '        const char *app_id = getenv("SteamAppId");\n'
+    '        char proton_app_class[128];\n\n'
+    '        if(app_id && *app_id){\n'
+    '            snprintf(proton_app_class, sizeof(proton_app_class), "steam_app_%s", app_id);\n'
+    '            class_hints->res_name = proton_app_class;\n'
+    '            class_hints->res_class = proton_app_class;\n'
+    '        }else{\n'
+    '            class_hints->res_name = steam_proton;\n'
+    '            class_hints->res_class = steam_proton;\n'
+    '        }\n'
+    '        #endif\n'
+)
+updated, class_count = old_block.subn(new_block, updated, count=1)
+if class_count != 1:
+    raise SystemExit("class hints replacement failed")
+
+pid_block = re.compile(
+    r'(\s*/\* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties \*/\n'
+    r'\s*XSetWMProperties\(display, window, NULL, NULL, NULL, 0, NULL, NULL, NULL\);\n)'
+    r'(\s*/\* set the pid\. together, these properties are needed so the window manager can kill us if we freeze \*/\n'
+    r'\s*i = getpid\(\);\n'
+    r'\s*XChangeProperty\(display, window, x11drv_atom\(_NET_WM_PID\),\n'
+    r'\s*XA_CARDINAL, 32, PropModeReplace, \(unsigned char \*\)&i, 1\);\n)'
+)
+updated, pid_count = pid_block.subn(r'\1#ifndef __ANDROID__\n\2#endif\n', updated, count=1)
+if pid_count != 1:
+    raise SystemExit("pid guard insertion failed")
+
+if 'NtUserGetWindowThread( hwnd, &pid );' not in updated:
+    marker = "    XFlush( data->display );\n"
+    insert = (
+        "    XFlush( data->display );\n"
+        "\n"
+        "#ifdef __ANDROID__\n"
+        "    DWORD pid = 0;\n"
+        "\n"
+        "    NtUserGetWindowThread( hwnd, &pid );\n"
+        "    XChangeProperty( data->display, window, x11drv_atom(_NET_WM_PID),\n"
+        "                     XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1 );\n"
+        "#endif\n"
+    )
+    if marker not in updated:
+        raise SystemExit("set_net_active_window marker not found")
+    updated = updated.replace(marker, insert, 1)
+
+path.write_text(updated, encoding="utf-8")
+PY
+}
+
+run_backport_action() {
+  local patch="$1" action="$2"
+
+  case "${action}" in
+    backport_wineboot_xstate)
+      backport_wineboot_xstate
+      ;;
+    backport_protonge_hodll)
+      backport_protonge_hodll
+      ;;
+    backport_protonge_winex11)
+      backport_protonge_winex11
+      ;;
+    *)
+      fail "Unsupported backport action: ${action}"
+      ;;
+  esac
+
+  report "${patch}" "${action}" "applied" "targeted-backport"
+}
+
+log "Applying GameNative patchset ${WCP_GN_PATCHSET_REF} to target=${TARGET}"
+log "manifest=${WCP_GN_PATCHSET_MANIFEST}"
+log "source=${SOURCE_DIR}"
+
+line_no=0
+while IFS=$'\t' read -r patch wine_action protonge_action required note; do
+  line_no=$((line_no + 1))
+  if [[ ${line_no} -eq 1 ]]; then
+    continue
+  fi
+  [[ -n "${patch}" ]] || continue
+  [[ "${patch}" =~ ^# ]] && continue
+
+  case "${TARGET}" in
+    wine) action="${wine_action}" ;;
+    protonge) action="${protonge_action}" ;;
+  esac
+
+  patch_file="${WCP_GN_PATCHSET_PATCH_ROOT}/${patch}"
+  [[ -f "${patch_file}" ]] || fail "patch file missing: ${patch_file}"
+
+  case "${action}" in
+    skip)
+      report "${patch}" "skip" "skipped" "not-applicable-for-${TARGET}"
+      ;;
+    apply)
+      run_apply_action "${patch}" "${patch_file}"
+      ;;
+    verify)
+      run_verify_action "${patch}" "${patch_file}"
+      ;;
+    backport_*)
+      run_backport_action "${patch}" "${action}"
+      ;;
+    *)
+      fail "Unknown action '${action}' for patch ${patch}"
+      ;;
+  esac
+done < "${WCP_GN_PATCHSET_MANIFEST}"
+
+log "Patchset report: ${WCP_GN_PATCHSET_REPORT}"

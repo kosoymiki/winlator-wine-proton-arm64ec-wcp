@@ -1,0 +1,55 @@
+patch	wine_action	protonge_action	required	note
+android_network.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_advapi32_advapi_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_amd_ags_x64_unixlib_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_nsiproxy_sys_ip_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_ntdll_loader_c.patch	verify	verify	both	already present in modern trees; enforce via contract
+dlls_ntdll_ntdll_spec.patch	verify	verify	both	already present upstream; verify-only gate
+dlls_ntdll_unix_esync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_ntdll_unix_fsync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_ntdll_unix_loader_c.patch	apply	skip	wine	clean apply only on wine source tree
+dlls_ntdll_unix_server_c.patch	apply	apply	both	clean apply on both source trees
+dlls_ntdll_unix_signal_x86_64_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_ntdll_unix_virtual_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_user32_clipboard_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_user32_makefile_in.patch	apply	apply	both	clean apply on both source trees
+dlls_wdscore_wdscore_spec.patch	verify	verify	both	already present upstream; verify-only gate
+dlls_win32u_clipboard_c.patch	apply	apply	both	clean apply on both source trees
+dlls_winebus_sys_bus_sdl_c.patch	apply	apply	both	clean apply on both source trees
+dlls_winepulse_drv_pulse_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_bitblt_c.patch	apply	apply	both	clean apply on both source trees
+dlls_winex11_drv_desktop_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_mouse_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_opengl_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_window_c.patch	verify	backport_protonge_winex11	protonge	android class-hints/x11 integration for proton-ge
+dlls_winex11_drv_x11drv_h.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_x11drv_main_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_wow64_syscall_c.patch	verify	backport_protonge_hodll	protonge	HODLL override + wow64 env resolver for proton-ge
+loader_preloader_c.patch	apply	apply	both	clean apply on both source trees
+loader_wine_inf_in.patch	apply	skip	wine	clean apply only on wine source tree
+midi_support.patch	apply	apply	both	clean apply on both source trees
+programs_explorer_desktop_c.patch	apply	apply	both	clean apply on both source trees
+programs_wineboot_wineboot_c.patch	backport_wineboot_xstate	verify	wine	xstate init backport for Andre wine
+programs_winebrowser_main_c.patch	apply	apply	both	clean apply on both source trees
+programs_winebrowser_makefile_in.patch	apply	apply	both	clean apply on both source trees
+server_esync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+server_fsync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+test-bylaws/dlls_ntdll_loader_c.patch	verify	verify	both	skip-thread-attach/loader-init contract already in trees
+test-bylaws/dlls_ntdll_ntdll_misc_h.patch	verify	verify	both	already present upstream; verify-only gate
+test-bylaws/dlls_ntdll_signal_arm64_c.patch	verify	verify	both	wow64 suspend path contract check only
+test-bylaws/dlls_ntdll_signal_arm64ec_c.patch	verify	verify	both	arm64ec exception path contract check only
+test-bylaws/dlls_ntdll_signal_x86_64_c.patch	verify	verify	both	x86_64 wow64 suspend contract check only
+test-bylaws/dlls_ntdll_unix_process_c.patch	apply	skip	wine	clean apply only on wine source tree
+test-bylaws/dlls_ntdll_unix_thread_c.patch	verify	verify	both	thread flags contract check only
+test-bylaws/dlls_ntdll_unix_virtual_c.patch	verify	verify	both	fex stats mapping contract check only
+test-bylaws/dlls_ntdll_unwind_h.patch	apply	skip	wine	clean apply only on wine source tree
+test-bylaws/dlls_wow64_process_c.patch	verify	verify	both	RtlWow64SuspendThread wiring contract check only
+test-bylaws/dlls_wow64_syscall_c.patch	verify	verify	both	wow64 suspend export contract check only
+test-bylaws/dlls_wow64_virtual_c.patch	apply	skip	wine	clean apply only on wine source tree
+test-bylaws/dlls_wow64_wow64_spec.patch	verify	verify	both	already present upstream; verify-only gate
+test-bylaws/include_winnt_h.patch	apply	skip	wine	clean apply only on wine source tree
+test-bylaws/include_winternl_h.patch	verify	verify	both	thread/create flags and fex enums contract check only
+test-bylaws/server_process_c.patch	verify	verify	both	already present upstream; verify-only gate
+test-bylaws/server_thread_c.patch	verify	verify	both	process freeze bypass contract check only
+test-bylaws/server_thread_h.patch	verify	verify	both	thread structure contract check only
+test-bylaws/tools_makedep_c.patch	verify	verify	both	arm64ec install-dir contract check only

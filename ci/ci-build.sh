@@ -68,6 +68,10 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=0}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+: "${WCP_GN_PATCHSET_ENABLE:=1}"
+: "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
+: "${WCP_GN_PATCHSET_STRICT:=1}"
+: "${WCP_GN_PATCHSET_REPORT:=${OUT_DIR}/logs/gamenative-patchset-wine.tsv}"
 : "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
 : "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
 
@@ -616,6 +620,8 @@ main() {
   require_bool_flag WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
   require_bool_flag WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
   require_bool_flag WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
+  require_bool_flag WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
+  require_bool_flag WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
@@ -639,7 +645,18 @@ main() {
   ld.lld --version | sed -n '1,2p'
 
   fetch_wine_sources
+  mkdir -p "${OUT_DIR}/logs"
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
+    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+      WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
+      WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
+      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
+  else
+    log "GameNative patchset integration disabled for wine (WCP_GN_PATCHSET_ENABLE=0)"
+  fi
   wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
+  WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   build_wine
   if [[ "${WCP_INCLUDE_FEX_DLLS}" == "1" ]]; then
     install_fex_dlls
