@@ -161,6 +161,7 @@ main() {
   require_file "docs/REFLECTIVE_HARVARD_LEDGER.md"
   require_contains "docs/REFLECTIVE_HARVARD_LEDGER.md" 'Hypothesis'
   require_contains "docs/REFLECTIVE_HARVARD_LEDGER.md" 'Counter-evidence'
+  require_contains "docs/REFLECTIVE_HARVARD_LEDGER.md" 'bionic-donor-contract-hardening'
 
   local winlator_line
   winlator_line="$(detect_winlator_release_line)"
