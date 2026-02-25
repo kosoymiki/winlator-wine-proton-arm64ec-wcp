@@ -3,7 +3,7 @@ android_network.patch	skip	apply	protonge	clean apply only on proton-ge source t
 dlls_advapi32_advapi_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_amd_ags_x64_unixlib_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_nsiproxy_sys_ip_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
-dlls_ntdll_loader_c.patch	verify	verify	both	already present in modern trees; enforce via contract
+dlls_ntdll_loader_c.patch	verify	skip	wine	covered by test-bylaws loader patch on proton-ge; verify-only on wine
 dlls_ntdll_ntdll_spec.patch	verify	verify	both	already present upstream; verify-only gate
 dlls_ntdll_unix_esync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_ntdll_unix_fsync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
@@ -35,7 +35,7 @@ programs_winebrowser_makefile_in.patch	apply	apply	both	clean apply on both sour
 programs_winemenubuilder_winemenubuilder_c.patch	verify	verify	both	winemenubuilder shortcut contract; autofix/apply when tree is missing patch
 server_esync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 server_fsync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
-test-bylaws/dlls_ntdll_loader_c.patch	verify	verify	both	skip-thread-attach/loader-init contract already in trees
+test-bylaws/dlls_ntdll_loader_c.patch	verify	apply	both	skip-thread-attach/loader-init + arm64ec loader path; apply on proton-ge
 test-bylaws/dlls_ntdll_ntdll_misc_h.patch	verify	verify	both	already present upstream; verify-only gate
 test-bylaws/dlls_ntdll_signal_arm64_c.patch	verify	verify	both	wow64 suspend path contract check only
 test-bylaws/dlls_ntdll_signal_arm64ec_c.patch	skip	verify	protonge	arm64ec exception path uses proton-ge path; skip on wine
