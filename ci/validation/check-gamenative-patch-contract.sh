@@ -114,9 +114,24 @@ fi
 
 if [[ "${TARGET}" == "protonge" ]]; then
   f_window="${SOURCE_DIR}/dlls/winex11.drv/window.c"
+  f_signal_arm64ec="${SOURCE_DIR}/dlls/ntdll/signal_arm64ec.c"
+  f_virtual="${SOURCE_DIR}/dlls/ntdll/unix/virtual.c"
+  f_wow64_process="${SOURCE_DIR}/dlls/wow64/process.c"
+  f_makedep="${SOURCE_DIR}/tools/makedep.c"
   [[ -f "${f_window}" ]] || fail "required source file missing: ${f_window}"
+  [[ -f "${f_signal_arm64ec}" ]] || fail "required source file missing: ${f_signal_arm64ec}"
+  [[ -f "${f_virtual}" ]] || fail "required source file missing: ${f_virtual}"
+  [[ -f "${f_wow64_process}" ]] || fail "required source file missing: ${f_wow64_process}"
+  [[ -f "${f_makedep}" ]] || fail "required source file missing: ${f_makedep}"
   check_fixed "${f_wow64_syscall}" 'wow64GetEnvironmentVariableW' 'wow64 syscall has env helper for HODLL override'
   check_fixed "${f_wow64_syscall}" 'L"HODLL"' 'wow64 syscall supports HODLL override'
+  check_fixed "${f_wow64_syscall}" 'Wow64SuspendLocalThread' 'wow64 syscall exposes Wow64SuspendLocalThread'
+  check_fixed "${f_wow64_process}" 'RtlWow64SuspendThread' 'wow64 process path uses RtlWow64SuspendThread'
+  check_fixed "${f_signal_arm64ec}" 'ARM64EC_NT_XCONTEXT' 'arm64ec signal path has extended context union'
+  check_fixed "${f_virtual}" 'fex_stats_shm' 'ntdll unix virtual path exposes fex stats shared mapping'
+  check_fixed "${f_winternl}" 'ProcessFexHardwareTso' 'winternl includes ProcessFexHardwareTso enum'
+  check_fixed "${f_winternl}" 'MemoryFexStatsShm' 'winternl includes MemoryFexStatsShm enum'
+  check_regex "${f_makedep}" 'aarch64-windows|%s-windows' 'makedep installs arm64ec unix libs into aarch64-windows path'
   check_fixed "${f_window}" 'class_hints->res_name = process_name;' 'winex11 class hints use process_name on Android'
   check_fixed "${f_window}" '#ifdef __ANDROID__' 'winex11 has Android-specific class hints branch'
 fi
