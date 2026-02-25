@@ -54,6 +54,98 @@ winlator_is_glibc_launcher() {
   readelf -l "${bin_path}" 2>/dev/null | grep -q 'Requesting program interpreter: /lib/ld-linux-aarch64.so.1'
 }
 
+winlator_is_bionic_launcher() {
+  local bin_path="$1"
+  [[ -f "${bin_path}" ]] || return 1
+  readelf -l "${bin_path}" 2>/dev/null | grep -q 'Requesting program interpreter: /system/bin/linker64'
+}
+
+winlator_extract_wcp_archive() {
+  local archive="$1" out_dir="$2"
+  [[ -f "${archive}" ]] || return 1
+  mkdir -p "${out_dir}"
+  if tar -xJf "${archive}" -C "${out_dir}" >/dev/null 2>&1; then
+    return 0
+  fi
+  if tar --zstd -xf "${archive}" -C "${out_dir}" >/dev/null 2>&1; then
+    return 0
+  fi
+  tar -xf "${archive}" -C "${out_dir}" >/dev/null 2>&1
+}
+
+winlator_adopt_bionic_launchers() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  local wine_bin wineserver_bin
+  local source_wcp source_url cache_dir archive_path
+  local tmp_extract src_wine src_wineserver src_preloader
+  local detected
+
+  [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
+  [[ "${target}" == "bionic-native" ]] || return 0
+  [[ -n "${wcp_root}" ]] || return 0
+
+  wine_bin="${wcp_root}/bin/wine"
+  wineserver_bin="${wcp_root}/bin/wineserver"
+  [[ -f "${wine_bin}" ]] || return 0
+  [[ -f "${wineserver_bin}" ]] || return 0
+  winlator_is_glibc_launcher "${wine_bin}" || return 0
+
+  source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
+  source_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+  cache_dir="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}"
+
+  if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
+    command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic launcher source WCP"
+    mkdir -p "${cache_dir}"
+    archive_path="${cache_dir}/launcher-source.wcp"
+    log "Downloading bionic launcher source WCP: ${source_url}"
+    curl -fL --retry 5 --retry-delay 2 -o "${archive_path}.tmp" "${source_url}" || fail "Failed to download bionic launcher source WCP from ${source_url}"
+    mv -f "${archive_path}.tmp" "${archive_path}"
+    source_wcp="${archive_path}"
+  fi
+
+  if [[ -z "${source_wcp}" ]]; then
+    log "Bionic launcher source WCP is not configured (WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL/PATH)"
+    winlator_report_runtime_class_mismatch "glibc-raw"
+    return 0
+  fi
+  [[ -f "${source_wcp}" ]] || fail "Bionic launcher source WCP not found: ${source_wcp}"
+
+  tmp_extract="$(mktemp -d)"
+  if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
+    rm -rf "${tmp_extract}"
+    fail "Unable to extract bionic launcher source WCP: ${source_wcp}"
+  fi
+
+  src_wine="$(find "${tmp_extract}" -type f -path '*/bin/wine' | head -n1 || true)"
+  src_wineserver="$(find "${tmp_extract}" -type f -path '*/bin/wineserver' | head -n1 || true)"
+  src_preloader="$(find "${tmp_extract}" -type f -path '*/bin/wine-preloader' | head -n1 || true)"
+
+  [[ -n "${src_wine}" ]] || { rm -rf "${tmp_extract}"; fail "Bionic launcher source WCP is missing bin/wine"; }
+  [[ -n "${src_wineserver}" ]] || { rm -rf "${tmp_extract}"; fail "Bionic launcher source WCP is missing bin/wineserver"; }
+
+  winlator_is_bionic_launcher "${src_wine}" || { rm -rf "${tmp_extract}"; fail "Source bin/wine is not bionic-native (/system/bin/linker64)"; }
+  winlator_is_bionic_launcher "${src_wineserver}" || { rm -rf "${tmp_extract}"; fail "Source bin/wineserver is not bionic-native (/system/bin/linker64)"; }
+
+  cp -f "${src_wine}" "${wine_bin}"
+  cp -f "${src_wineserver}" "${wineserver_bin}"
+  chmod +x "${wine_bin}" "${wineserver_bin}"
+  if [[ -n "${src_preloader}" ]]; then
+    cp -f "${src_preloader}" "${wcp_root}/bin/wine-preloader"
+    chmod +x "${wcp_root}/bin/wine-preloader"
+  fi
+  [[ -e "${wcp_root}/bin/wine64" ]] || ln -sfn wine "${wcp_root}/bin/wine64"
+
+  rm -rf "${tmp_extract}"
+
+  detected="$(winlator_detect_runtime_class "${wcp_root}")"
+  if [[ "${detected}" != "bionic-native" ]]; then
+    fail "Bionic launcher adoption failed: detected runtime class is ${detected}"
+  fi
+  log "Adopted bionic-native Wine launchers from source WCP"
+}
+
 winlator_resolve_host_lib() {
   local soname="$1" dir
   for dir in \

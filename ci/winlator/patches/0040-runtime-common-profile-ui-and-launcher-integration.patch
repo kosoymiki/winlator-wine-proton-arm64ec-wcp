@@ -1,45 +1,35 @@
 diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
-index 23b873d..20b90fe 100644
+index 23b873d..de9527d 100644
 --- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
 +++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
-@@ -57,11 +57,13 @@ import com.winlator.cmod.core.StringUtils;
- import com.winlator.cmod.core.WineInfo;
- import com.winlator.cmod.core.WineRegistryEditor;
- import com.winlator.cmod.core.WineThemeManager;
--import com.winlator.cmod.fexcore.FEXCoreManager;
--import com.winlator.cmod.fexcore.FEXCorePreset;
--import com.winlator.cmod.fexcore.FEXCorePresetManager;
--import com.winlator.cmod.midi.MidiManager;
--import com.winlator.cmod.widget.CPUListView;
-+import com.winlator.cmod.fexcore.FEXCoreManager;
-+import com.winlator.cmod.fexcore.FEXCorePreset;
-+import com.winlator.cmod.fexcore.FEXCorePresetManager;
-+import com.winlator.cmod.midi.MidiManager;
+@@ -61,6 +61,8 @@ import com.winlator.cmod.fexcore.FEXCoreManager;
+ import com.winlator.cmod.fexcore.FEXCorePreset;
+ import com.winlator.cmod.fexcore.FEXCorePresetManager;
+ import com.winlator.cmod.midi.MidiManager;
 +import com.winlator.cmod.runtimeprofile.RuntimeProfile;
 +import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
-+import com.winlator.cmod.widget.CPUListView;
+ import com.winlator.cmod.widget.CPUListView;
  import com.winlator.cmod.widget.ColorPickerView;
  import com.winlator.cmod.widget.EnvVarsView;
- import com.winlator.cmod.widget.ImagePickerView;
 @@ -201,6 +203,9 @@ public class ContainerDetailFragment extends Fragment {
          Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
          sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
- 
+
 +        Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
 +        sRuntimeProfile.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
 +
          Spinner sStartupSelection = view.findViewById(R.id.SStartupSelection);
          sStartupSelection.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
- 
+
 @@ -436,6 +441,9 @@ public class ContainerDetailFragment extends Fragment {
          final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
          FEXCorePresetManager.loadSpinner(sFEXCorePreset, isEditMode() ? container.getFEXCorePreset() : preferences.getString("fexcore_preset", FEXCorePreset.INTERMEDIATE));
- 
+
 +        final Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
 +        RuntimeProfileManager.loadSpinner(sRuntimeProfile, isEditMode() ? container.getRuntimeProfile() : preferences.getString("runtime_profile", RuntimeProfile.AUTO));
 +
          setupUpscaleConfigSection(view);
- 
+
          String selectedDriver = sGraphicsDriver.getSelectedItem().toString();
 @@ -507,6 +515,7 @@ public class ContainerDetailFragment extends Fragment {
                  String fexcoreVersion = sFEXCoreVersion.getSelectedItem().toString();
@@ -49,115 +39,72 @@ index 23b873d..20b90fe 100644
                  UpscaleUiConfig upscaleUiConfig = readUpscaleConfigSection(view);
                  String desktopTheme = getDesktopTheme(view);
                  // Capture missing properties
-@@ -558,9 +567,10 @@ public class ContainerDetailFragment extends Fragment {
-                     container.setInputType(finalInputType);
-                     container.setStartupSelection(startupSelection);
-                     container.setBox64Version(box64Version);
--                    container.setBox64Preset(box64Preset);
-+                    container.setBox64Preset(box64Preset);
+@@ -561,6 +570,7 @@ public class ContainerDetailFragment extends Fragment {
+                     container.setBox64Preset(box64Preset);
                      container.setFEXCoreVersion(fexcoreVersion);
                      container.setFEXCorePreset(fexcorePreset);
 +                    container.setRuntimeProfile(runtimeProfile);
                      container.setDesktopTheme(desktopTheme);
                      applyUpscaleConfigToContainer(container, upscaleUiConfig);
                      container.setMidiSoundFont(midiSoundFont);
-@@ -610,10 +620,12 @@ public class ContainerDetailFragment extends Fragment {
- 
- 
+@@ -612,6 +622,8 @@ public class ContainerDetailFragment extends Fragment {
                      manager.createContainerAsync(data, contentsManager, (container) -> {
--                        if (container != null) {
--                            this.container = container;
--                            saveWineRegistryKeys(view);
--                        }
-+                        if (container != null) {
-+                            this.container = container;
+                         if (container != null) {
+                             this.container = container;
 +                            container.setRuntimeProfile(runtimeProfile);
 +                            container.saveData();
-+                            saveWineRegistryKeys(view);
-+                        }
+                             saveWineRegistryKeys(view);
+                         }
                          preloaderDialog.close();
-                         getActivity().onBackPressed();
-                     });
 diff --git a/app/src/main/java/com/winlator/cmod/SettingsFragment.java b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
-index b95364a..b00d179 100644
+index b95364a..d2f9f1a 100644
 --- a/app/src/main/java/com/winlator/cmod/SettingsFragment.java
 +++ b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
-@@ -51,13 +51,15 @@ import com.winlator.cmod.core.Callback;
- import com.winlator.cmod.core.FileUtils;
- import com.winlator.cmod.core.PreloaderDialog;
- import com.winlator.cmod.core.TarCompressorUtils;
--import com.winlator.cmod.fexcore.FEXCoreEditPresetDialog;
--import com.winlator.cmod.fexcore.FEXCorePreset;
--import com.winlator.cmod.fexcore.FEXCorePresetManager;
--import com.winlator.cmod.inputcontrols.ControlElement;
--import com.winlator.cmod.inputcontrols.ExternalController;
--import com.winlator.cmod.inputcontrols.PreferenceKeys;
--import com.winlator.cmod.midi.MidiManager;
-+import com.winlator.cmod.fexcore.FEXCoreEditPresetDialog;
-+import com.winlator.cmod.fexcore.FEXCorePreset;
-+import com.winlator.cmod.fexcore.FEXCorePresetManager;
-+import com.winlator.cmod.inputcontrols.ControlElement;
-+import com.winlator.cmod.inputcontrols.ExternalController;
-+import com.winlator.cmod.inputcontrols.PreferenceKeys;
-+import com.winlator.cmod.midi.MidiManager;
+@@ -58,6 +58,8 @@ import com.winlator.cmod.inputcontrols.ControlElement;
+ import com.winlator.cmod.inputcontrols.ExternalController;
+ import com.winlator.cmod.inputcontrols.PreferenceKeys;
+ import com.winlator.cmod.midi.MidiManager;
 +import com.winlator.cmod.runtimeprofile.RuntimeProfile;
 +import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
  import com.winlator.cmod.widget.InputControlsView;
  import com.winlator.cmod.xenvironment.ImageFsInstaller;
- 
-@@ -200,8 +202,11 @@ public class SettingsFragment extends Fragment {
-         final Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
-         loadBox64PresetSpinners(view, sBox64Preset);
- 
--        final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
--        loadFEXCorePresetSpinners(view, sFEXCorePreset);
-+        final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
-+        loadFEXCorePresetSpinners(view, sFEXCorePreset);
-+
+
+@@ -203,6 +205,9 @@ public class SettingsFragment extends Fragment {
+         final Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
+         loadFEXCorePresetSpinners(view, sFEXCorePreset);
+
 +        final Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
 +        RuntimeProfileManager.loadSpinner(sRuntimeProfile, preferences.getString("runtime_profile", RuntimeProfile.AUTO));
- 
++
          final Spinner sMIDISoundFont = view.findViewById(R.id.SMIDISoundFont);
- 
-@@ -321,8 +326,9 @@ public class SettingsFragment extends Fragment {
- 
-             // Save Dark Mode setting
+
+         sMIDISoundFont.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+@@ -323,6 +328,7 @@ public class SettingsFragment extends Fragment {
              editor.putBoolean("dark_mode", cbDarkMode.isChecked());
--            editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
--            editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
-+            editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
-+            editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
+             editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
+             editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
 +            editor.putString("runtime_profile", RuntimeProfileManager.getSpinnerSelectedId(sRuntimeProfile));
              editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
              editor.putBoolean("use_xr", cbUseXR.isChecked());
              editor.putFloat("cursor_speed", sbCursorSpeed.getProgress() / 100.0f);
-@@ -382,8 +388,11 @@ public class SettingsFragment extends Fragment {
-         Spinner sBox64Preset = view.findViewById(R.id.SBox64Preset);
-         sBox64Preset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
- 
--        Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
--        sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
-+        Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
-+        sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+@@ -384,6 +390,9 @@ public class SettingsFragment extends Fragment {
+
+         Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
+         sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
 +
 +        Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
 +        sRuntimeProfile.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
      }
- 
+
      private void applyDynamicStylesRecursively(View view) {
 diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
-index 862bb51..e9f4066 100644
+index 862bb51..c8f3a97 100644
 --- a/app/src/main/java/com/winlator/cmod/container/Container.java
 +++ b/app/src/main/java/com/winlator/cmod/container/Container.java
-@@ -287,10 +287,18 @@ public class Container {
-         }
+@@ -288,6 +288,14 @@ public class Container {
          return emulator;
      }
--
--    public File getRootDir() {
--        return rootDir;
--    }
-+
+
 +    public String getRuntimeProfile() {
 +        return getExtra("runtimeProfile", "");
 +    }
@@ -166,12 +113,9 @@ index 862bb51..e9f4066 100644
 +        putExtra("runtimeProfile", runtimeProfile != null && !runtimeProfile.trim().isEmpty() ? runtimeProfile.trim() : null);
 +    }
 +
-+    public File getRootDir() {
-+        return rootDir;
-+    }
- 
-     public void setRootDir(File rootDir) {
-         this.rootDir = rootDir;
+     public File getRootDir() {
+         return rootDir;
+     }
 diff --git a/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java b/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java
 index 5395885..39087c4 100644
 --- a/app/src/main/java/com/winlator/cmod/container/ContainerForensicSnapshot.java
@@ -193,7 +137,7 @@ index d9292d0..2c300d5 100644
  import com.winlator.cmod.core.WineInfo;
  import com.winlator.cmod.fexcore.FEXCorePreset;
 +import com.winlator.cmod.runtimeprofile.RuntimeProfile;
- 
+
  import org.json.JSONArray;
  import org.json.JSONException;
 @@ -32,6 +33,7 @@ public final class ContainerNormalizer {
@@ -201,7 +145,7 @@ index d9292d0..2c300d5 100644
          result.rawFexcoreVersion = safe(container.getFEXCoreVersion());
          result.rawLcAll = safe(container.getLC_ALL());
 +        result.rawRuntimeProfile = safe(resolveShortcutOverride(shortcut, "runtimeProfile", container.getRuntimeProfile()));
- 
+
          result.wineVersion = fallback(result.rawWineVersion, WineInfo.MAIN_WINE_VERSION.identifier());
          result.graphicsDriver = fallback(result.rawGraphicsDriver, Container.DEFAULT_GRAPHICS_DRIVER);
 @@ -45,6 +47,7 @@ public final class ContainerNormalizer {
@@ -209,7 +153,7 @@ index d9292d0..2c300d5 100644
          result.fexcoreVersion = trimToEmpty(result.rawFexcoreVersion);
          result.lcAll = trimToEmpty(result.rawLcAll);
 +        result.runtimeProfile = fallback(result.rawRuntimeProfile, RuntimeProfile.AUTO);
- 
+
          result.noteChange("wineVersion", result.rawWineVersion, result.wineVersion);
          result.noteChange("graphicsDriver", result.rawGraphicsDriver, result.graphicsDriver);
 @@ -58,6 +61,7 @@ public final class ContainerNormalizer {
@@ -217,7 +161,7 @@ index d9292d0..2c300d5 100644
          result.noteChange("fexcoreVersion", result.rawFexcoreVersion, result.fexcoreVersion);
          result.noteChange("lc_all", result.rawLcAll, result.lcAll);
 +        result.noteChange("runtimeProfile", result.rawRuntimeProfile, result.runtimeProfile);
- 
+
          return result;
      }
 @@ -120,6 +124,7 @@ public final class ContainerNormalizer {
@@ -225,7 +169,7 @@ index d9292d0..2c300d5 100644
          public String rawFexcoreVersion = "";
          public String rawLcAll = "";
 +        public String rawRuntimeProfile = "";
- 
+
          public String wineVersion = "";
          public String graphicsDriver = "";
 @@ -133,6 +138,7 @@ public final class ContainerNormalizer {
@@ -233,9 +177,9 @@ index d9292d0..2c300d5 100644
          public String fexcoreVersion = "";
          public String lcAll = "";
 +        public String runtimeProfile = "";
- 
+
          private final ArrayList<String> changedFields = new ArrayList<>();
- 
+
 @@ -166,6 +172,7 @@ public final class ContainerNormalizer {
                  obj.put("env_hash", com.winlator.cmod.core.ForensicLogger.sha256Hex(envVars));
                  obj.put("box64_preset", box64Preset);
@@ -244,6 +188,136 @@ index d9292d0..2c300d5 100644
              }
              catch (JSONException ignored) {}
              return obj;
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 6f94a39..ca477c4 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -28,6 +28,8 @@ import com.winlator.cmod.core.WineInfo;
+ import com.winlator.cmod.fexcore.FEXCoreManager;
+ import com.winlator.cmod.fexcore.FEXCorePreset;
+ import com.winlator.cmod.fexcore.FEXCorePresetManager;
++import com.winlator.cmod.runtimeprofile.RuntimeProfile;
++import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
+ import com.winlator.cmod.xconnector.UnixSocketConfig;
+ import com.winlator.cmod.xenvironment.EnvironmentComponent;
+ import com.winlator.cmod.xenvironment.ImageFs;
+@@ -280,6 +282,24 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         addBox64EnvVars(envVars, enableBox64Logs);
+         envVars.putAll(FEXCorePresetManager.getEnvVars(context, fexcorePreset));
+
++        String runtimeProfile = preferences.getString("runtime_profile", RuntimeProfile.AUTO);
++        if (container != null && !isEmpty(container.getRuntimeProfile()))
++            runtimeProfile = container.getRuntimeProfile();
++        if (shortcut != null)
++            runtimeProfile = shortcut.getExtra("runtimeProfile", runtimeProfile);
++        if (isEmpty(runtimeProfile))
++            runtimeProfile = RuntimeProfile.AUTO;
++        envVars.putAll(RuntimeProfileManager.getEnvVars(context, runtimeProfile));
++
++        if (forensicMode || !isEmpty(forensicTraceId)) {
++            ForensicLogger.logEvent(context, "info", "RUNTIME_COMMON_PROFILE_APPLIED", forensicTraceId, "launcher",
++                    "Applied common runtime profile overlay",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "runtime_profile", runtimeProfile));
++        }
++
+         String renderer = GPUInformation.getRenderer(null, null);
+
+         if (renderer.contains("Mali"))
+@@ -504,6 +524,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "wine_version", container != null ? container.getWineVersion() : "",
+                             "wine_path", imageFs.getWinePath(),
+                             "emulator", emulator,
++                            "runtime_profile", runtimeProfile,
+                             "box64_preset", box64Preset,
+                             "fexcore_preset", fexcorePreset,
+                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
+diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
+index d78eaf4..3960f2e 100644
+--- a/app/src/main/res/layout/container_detail_fragment.xml
++++ b/app/src/main/res/layout/container_detail_fragment.xml
+@@ -598,6 +598,32 @@
+
+                 </FrameLayout>
+
++                <FrameLayout
++                    android:id="@+id/runtimeProfileFrame"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:layout_marginTop="8dp">
++
++                    <LinearLayout style="@style/FieldSet">
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/runtime_profile" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SRuntimeProfile"
++                            android:layout_width="match_parent"
++                            android:spinnerMode="dialog" />
++                    </LinearLayout>
++
++                    <TextView
++                        android:id="@+id/TVRuntimeProfile"
++                        style="@style/FieldSetLabel"
++                        android:text="@string/runtime_profile_common" />
++
++                </FrameLayout>
++
+                 <FrameLayout
+                     android:id="@+id/upscaleFrame"
+                     android:layout_width="match_parent"
+diff --git a/app/src/main/res/layout/settings_fragment.xml b/app/src/main/res/layout/settings_fragment.xml
+index 597d9e5..e2bc6b3 100644
+--- a/app/src/main/res/layout/settings_fragment.xml
++++ b/app/src/main/res/layout/settings_fragment.xml
+@@ -181,6 +181,29 @@
+                     android:text="@string/fexcore_config" />
+             </FrameLayout>
+
++            <FrameLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content">
++
++                <LinearLayout style="@style/FieldSet">
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="@string/runtime_profile" />
++
++                    <Spinner
++                        style="@style/ComboBox"
++                        android:id="@+id/SRuntimeProfile"
++                        android:layout_width="match_parent"
++                        android:spinnerMode="dialog" />
++                </LinearLayout>
++
++                <TextView
++                    android:id="@+id/TVRuntimeProfile"
++                    style="@style/FieldSetLabel"
++                    android:text="@string/runtime_profile_common" />
++            </FrameLayout>
++
+             <FrameLayout
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content">
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 4ebe91f..699334d 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -619,6 +619,8 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="pref_summary_requiresTrackpadAndNative">Requires "Touchscreen input mode" to be "Trackpad" and "Display resolution mode" to be not "native"</string>
+     <string name="fexcore_config">FEXCore</string>
+     <string name="fexcore_preset">FEXCore Preset</string>
++    <string name="runtime_profile">Runtime Profile</string>
++    <string name="runtime_profile_common">Runtime (Common)</string>
+     <string name="adrenotools_gpu_drivers">Adrenotools GPU Drivers</string>
+     <string name="install_drivers">Install Drivers</string>
+     <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>
 diff --git a/app/src/main/java/com/winlator/cmod/runtimeprofile/RuntimeProfile.java b/app/src/main/java/com/winlator/cmod/runtimeprofile/RuntimeProfile.java
 new file mode 100644
 index 0000000..ce7cae1
@@ -399,192 +473,3 @@ index 0000000..2499062
 +        return RuntimeProfile.AUTO;
 +    }
 +}
-diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
-index 6f94a39..47f1489 100644
---- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
-+++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
-@@ -25,9 +25,11 @@ import com.winlator.cmod.core.ProcessHelper;
- import com.winlator.cmod.core.TarCompressorUtils;
- import com.winlator.cmod.core.WinlatorLogUtils;
- import com.winlator.cmod.core.WineInfo;
--import com.winlator.cmod.fexcore.FEXCoreManager;
--import com.winlator.cmod.fexcore.FEXCorePreset;
--import com.winlator.cmod.fexcore.FEXCorePresetManager;
-+import com.winlator.cmod.fexcore.FEXCoreManager;
-+import com.winlator.cmod.fexcore.FEXCorePreset;
-+import com.winlator.cmod.fexcore.FEXCorePresetManager;
-+import com.winlator.cmod.runtimeprofile.RuntimeProfile;
-+import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
- import com.winlator.cmod.xconnector.UnixSocketConfig;
- import com.winlator.cmod.xenvironment.EnvironmentComponent;
- import com.winlator.cmod.xenvironment.ImageFs;
-@@ -275,10 +277,28 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
-             envVars.put("WINE_TO_ANDROID_CLIPBOARD", "1");
-         }
- 
--        EnvVars envVars = new EnvVars();
--
--        addBox64EnvVars(envVars, enableBox64Logs);
--        envVars.putAll(FEXCorePresetManager.getEnvVars(context, fexcorePreset));
-+        EnvVars envVars = new EnvVars();
-+
-+        addBox64EnvVars(envVars, enableBox64Logs);
-+        envVars.putAll(FEXCorePresetManager.getEnvVars(context, fexcorePreset));
-+
-+        String runtimeProfile = preferences.getString("runtime_profile", RuntimeProfile.AUTO);
-+        if (container != null && !isEmpty(container.getRuntimeProfile()))
-+            runtimeProfile = container.getRuntimeProfile();
-+        if (shortcut != null)
-+            runtimeProfile = shortcut.getExtra("runtimeProfile", runtimeProfile);
-+        if (isEmpty(runtimeProfile))
-+            runtimeProfile = RuntimeProfile.AUTO;
-+        envVars.putAll(RuntimeProfileManager.getEnvVars(context, runtimeProfile));
-+
-+        if (forensicMode || !isEmpty(forensicTraceId)) {
-+            ForensicLogger.logEvent(context, "info", "RUNTIME_COMMON_PROFILE_APPLIED", forensicTraceId, "launcher",
-+                    "Applied common runtime profile overlay",
-+                    ForensicLogger.fields(
-+                            "container_id", container != null ? container.id : 0,
-+                            "route", forensicRouteSource,
-+                            "runtime_profile", runtimeProfile));
-+        }
- 
-         String renderer = GPUInformation.getRenderer(null, null);
- 
-@@ -504,6 +524,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
-                             "wine_version", container != null ? container.getWineVersion() : "",
-                             "wine_path", imageFs.getWinePath(),
-                             "emulator", emulator,
-+                            "runtime_profile", runtimeProfile,
-                             "box64_preset", box64Preset,
-                             "fexcore_preset", fexcorePreset,
-                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
-diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
-index d78eaf4..91bf850 100644
---- a/app/src/main/res/layout/container_detail_fragment.xml
-+++ b/app/src/main/res/layout/container_detail_fragment.xml
-@@ -596,11 +596,37 @@
-                         style="@style/FieldSetLabel"
-                         android:text="@string/fexcore_config" />
- 
--                </FrameLayout>
--
--                <FrameLayout
--                    android:id="@+id/upscaleFrame"
--                    android:layout_width="match_parent"
-+                </FrameLayout>
-+
-+                <FrameLayout
-+                    android:id="@+id/runtimeProfileFrame"
-+                    android:layout_width="match_parent"
-+                    android:layout_height="wrap_content"
-+                    android:layout_marginTop="8dp">
-+
-+                    <LinearLayout style="@style/FieldSet">
-+                        <TextView
-+                            android:layout_width="wrap_content"
-+                            android:layout_height="wrap_content"
-+                            android:text="@string/runtime_profile" />
-+
-+                        <Spinner
-+                            style="@style/ComboBox"
-+                            android:id="@+id/SRuntimeProfile"
-+                            android:layout_width="match_parent"
-+                            android:spinnerMode="dialog" />
-+                    </LinearLayout>
-+
-+                    <TextView
-+                        android:id="@+id/TVRuntimeProfile"
-+                        style="@style/FieldSetLabel"
-+                        android:text="@string/runtime_profile_common" />
-+
-+                </FrameLayout>
-+
-+                <FrameLayout
-+                    android:id="@+id/upscaleFrame"
-+                    android:layout_width="match_parent"
-                     android:layout_height="wrap_content"
-                     android:layout_marginTop="8dp">
- 
-diff --git a/app/src/main/res/layout/settings_fragment.xml b/app/src/main/res/layout/settings_fragment.xml
-index 597d9e5..bb74cca 100644
---- a/app/src/main/res/layout/settings_fragment.xml
-+++ b/app/src/main/res/layout/settings_fragment.xml
-@@ -13,9 +13,9 @@
-             android:orientation="vertical"
-             android:padding="16dp">
- 
--            <FrameLayout
--                android:layout_width="match_parent"
--                android:layout_height="wrap_content">
-+            <FrameLayout
-+                android:layout_width="match_parent"
-+                android:layout_height="wrap_content">
- 
-                 <LinearLayout style="@style/FieldSet">
-                     <TextView
-@@ -175,15 +175,38 @@
-                     </LinearLayout>
-                 </LinearLayout>
- 
--                <TextView
--                    android:id="@+id/TVFEXCore"
--                    style="@style/FieldSetLabel"
--                    android:text="@string/fexcore_config" />
--            </FrameLayout>
--
--            <FrameLayout
--                android:layout_width="match_parent"
--                android:layout_height="wrap_content">
-+                <TextView
-+                    android:id="@+id/TVFEXCore"
-+                    style="@style/FieldSetLabel"
-+                    android:text="@string/fexcore_config" />
-+            </FrameLayout>
-+
-+            <FrameLayout
-+                android:layout_width="match_parent"
-+                android:layout_height="wrap_content">
-+
-+                <LinearLayout style="@style/FieldSet">
-+                    <TextView
-+                        android:layout_width="wrap_content"
-+                        android:layout_height="wrap_content"
-+                        android:text="@string/runtime_profile" />
-+
-+                    <Spinner
-+                        style="@style/ComboBox"
-+                        android:id="@+id/SRuntimeProfile"
-+                        android:layout_width="match_parent"
-+                        android:spinnerMode="dialog" />
-+                </LinearLayout>
-+
-+                <TextView
-+                    android:id="@+id/TVRuntimeProfile"
-+                    style="@style/FieldSetLabel"
-+                    android:text="@string/runtime_profile_common" />
-+            </FrameLayout>
-+
-+            <FrameLayout
-+                android:layout_width="match_parent"
-+                android:layout_height="wrap_content">
- 
-                 <LinearLayout style="@style/FieldSet">
- 
-diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
-index 4ebe91f..3431a40 100644
---- a/app/src/main/res/values/strings.xml
-+++ b/app/src/main/res/values/strings.xml
-@@ -617,8 +617,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
-     <string name="pref_summary_requiresExactOrCustom">Requires "display resolution mode" to be "exact" or "custom"</string>
-     <string name="pref_summary_requiresIntercepting">Requires intercepting system shortcuts with Dex mode or with Accessibility service</string>
-     <string name="pref_summary_requiresTrackpadAndNative">Requires "Touchscreen input mode" to be "Trackpad" and "Display resolution mode" to be not "native"</string>
--    <string name="fexcore_config">FEXCore</string>
--    <string name="fexcore_preset">FEXCore Preset</string>
-+    <string name="fexcore_config">FEXCore</string>
-+    <string name="fexcore_preset">FEXCore Preset</string>
-+    <string name="runtime_profile">Runtime Profile</string>
-+    <string name="runtime_profile_common">Runtime (Common)</string>
-     <string name="adrenotools_gpu_drivers">Adrenotools GPU Drivers</string>
-     <string name="install_drivers">Install Drivers</string>
-     <string name="install_drivers_message">You will now be prompted to pick a driver. These must be the same ones used in other emulators like Yuzu, Dolphin, Citra, etc.</string>

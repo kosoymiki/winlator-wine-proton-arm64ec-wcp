@@ -23,20 +23,20 @@ apply_one() {
   local name; name="$(basename -- "$patch")"
 
   # If patch already applied, reverse-check succeeds -> skip
-  if git -C "$WINLATOR_SRC_DIR" apply --reverse --check --recount "$patch" >/dev/null 2>&1; then
+  if git -C "$WINLATOR_SRC_DIR" apply --reverse --check --recount --ignore-whitespace "$patch" >/dev/null 2>&1; then
     log "Already applied: $name (skipping)"
     return 0
   fi
 
   # Try clean apply (3way + stage)
-  if git -C "$WINLATOR_SRC_DIR" apply --index --3way --recount --whitespace=nowarn "$patch" >/dev/null 2>&1; then
+  if git -C "$WINLATOR_SRC_DIR" apply --index --3way --recount --whitespace=nowarn --ignore-whitespace "$patch" >/dev/null 2>&1; then
     log "Applied: $name"
     return 0
   fi
 
   # Fallback: generate rejects (NO --3way with --reject)
   log "Conflicts, generating *.rej: $name"
-  git -C "$WINLATOR_SRC_DIR" apply --recount --reject --whitespace=nowarn "$patch" || true
+  git -C "$WINLATOR_SRC_DIR" apply --recount --reject --whitespace=nowarn --ignore-whitespace "$patch" || true
 
   fail "Failed to apply $name. Show *.rej:\n  find \"$WINLATOR_SRC_DIR\" -name '*.rej' -maxdepth 4 -print -exec sed -n '1,160p' {} \\;"
 }

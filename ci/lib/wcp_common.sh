@@ -392,6 +392,7 @@ compose_wcp_tree_from_stage() {
   mkdir -p "${wcp_root}/share"
   cp -f "${prefix_pack_path}" "${wcp_root}/prefixPack.txz"
 
+  winlator_adopt_bionic_launchers "${wcp_root}"
   winlator_wrap_glibc_launchers
   generate_winetools_layer "${wcp_root}"
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
@@ -517,6 +518,8 @@ wcp_write_forensic_manifest() {
     echo "WCP_RUNTIME_BUNDLE_LOCK_MODE=${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}"
     echo "WCP_INCLUDE_FEX_DLLS=${WCP_INCLUDE_FEX_DLLS:-}"
     echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
+    echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
+    echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -559,7 +562,9 @@ wcp_write_forensic_manifest() {
     "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_MODE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}")",
     "WCP_INCLUDE_FEX_DLLS": "$(wcp_json_escape "${WCP_INCLUDE_FEX_DLLS:-}")",
-    "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
+    "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")",
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}")",
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")"
   }
 }
 EOF_SOURCE_REFS
