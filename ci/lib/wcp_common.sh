@@ -773,6 +773,7 @@ wcp_write_forensic_manifest() {
     echo "WCP_BIONIC_SOURCE_MAP_FORCE=${WCP_BIONIC_SOURCE_MAP_FORCE:-1}"
     echo "WCP_BIONIC_SOURCE_MAP_REQUIRED=${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}"
     echo "WCP_BIONIC_SOURCE_MAP_APPLIED=${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}"
+    echo "WCP_BIONIC_SOURCE_MAP_RESOLVED=${WCP_BIONIC_SOURCE_MAP_RESOLVED:-0}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_PATH=${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_URL=${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256=${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}"
@@ -849,6 +850,7 @@ wcp_write_forensic_manifest() {
     "WCP_BIONIC_SOURCE_MAP_FORCE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FORCE:-1}")",
     "WCP_BIONIC_SOURCE_MAP_REQUIRED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}")",
     "WCP_BIONIC_SOURCE_MAP_APPLIED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
+    "WCP_BIONIC_SOURCE_MAP_RESOLVED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_RESOLVED:-0}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
@@ -953,6 +955,7 @@ EOF_SOURCE_REFS
     "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aeroso-mainline}")",
     "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
     "bionicSourceMapApplied": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
+    "bionicSourceMapResolved": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_RESOLVED:-0}")",
     "bionicLauncherSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
     "bionicLauncherSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
     "bionicUnixSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
