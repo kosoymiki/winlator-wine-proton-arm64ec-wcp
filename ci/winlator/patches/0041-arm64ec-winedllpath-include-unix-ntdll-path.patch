@@ -1,0 +1,28 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 90c9fb9..6d4a3ec 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -326,7 +326,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                 "LD_LIBRARY_PATH",
+                 wineLibPath + ":" + wineLib64Path + ":" + wineUnixPath + ":" + rootDir.getPath() + "/usr/lib" + ":" + rootDir.getPath() + "/usr/lib64" + ":" + "/system/lib64"
+         );
+-        envVars.put("WINEDLLPATH", wineDllPath + "/aarch64-windows:" + wineDllPath + "/i386-windows:" + wineDllPath);
++        envVars.put("WINEDLLPATH", wineUnixPath + ":" + wineDllPath + "/aarch64-windows:" + wineDllPath + "/i386-windows:" + wineDllPath);
+         envVars.put("XDG_CONFIG_DIRS", rootDir.getPath() + "/usr/etc/xdg");
+         envVars.put("GST_PLUGIN_PATH", rootDir.getPath() + "/usr/lib/gstreamer-1.0");
+         envVars.put("FONTCONFIG_PATH", rootDir.getPath() + "/usr/etc/fonts");
+@@ -390,6 +390,14 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             envVars.putAll(this.envVars);
+         }
+ 
++        if (wineInfo.isArm64EC()) {
++            String resolvedWineDllPath = envVars.get("WINEDLLPATH");
++            if (isEmpty(resolvedWineDllPath))
++                envVars.put("WINEDLLPATH", wineUnixPath);
++            else if (!resolvedWineDllPath.contains(wineUnixPath))
++                envVars.put("WINEDLLPATH", wineUnixPath + ":" + resolvedWineDllPath);
++        }
++
+         String glibcRemovedPreload = stripIncompatibleGlibcPreloadEnvVar(envVars, wineBinPath);
+         boolean glibcCompatApplied = applyGlibcRuntimeCompatEnvVars(envVars, wineBinPath);
+ 
