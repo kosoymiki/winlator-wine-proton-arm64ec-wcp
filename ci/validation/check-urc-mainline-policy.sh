@@ -96,6 +96,8 @@ check_workflow_env_contract() {
   require_contains "${wf}" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:'
   require_contains "${wf}" 'WCP_BIONIC_UNIX_SOURCE_WCP_URL:'
   require_contains "${wf}" 'WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:'
+  require_contains "${wf}" 'Cache bionic donor archives'
+  require_contains "${wf}" 'bionic-donor-\$\{\{ env\.WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256 \}\}-\$\{\{ env\.WCP_BIONIC_UNIX_SOURCE_WCP_SHA256 \}\}'
 
   require_not_contains "${wf}" 'WCP_RUNTIME_CLASS_TARGET: glibc-wrapped'
   require_not_contains "${wf}" 'WCP_FEX_EXPECTATION_MODE: bundled'

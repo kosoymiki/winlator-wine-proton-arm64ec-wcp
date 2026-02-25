@@ -34,6 +34,7 @@ permissions:
   contents: write
 
 env:
+  CACHE_DIR: ${{ github.workspace }}/.cache
   WCP_NAME: wine-11-arm64ec
   WCP_OUTPUT_DIR: ${{ github.workspace }}/out/wine
   WINE_REF: ${{ github.event.inputs.wine_ref || 'arm64ec' }}
@@ -113,6 +114,14 @@ jobs:
         with:
           path: ${{ env.TOOLCHAIN_DIR }}
           key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
+
+      - name: Cache bionic donor archives
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.CACHE_DIR }}/wcp-bionic-launcher-cache
+            ${{ env.CACHE_DIR }}/wcp-bionic-unix-cache
+          key: bionic-donor-${{ env.WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256 }}-${{ env.WCP_BIONIC_UNIX_SOURCE_WCP_SHA256 }}
 
       - name: Build Wine 11 ARM64EC WCP
         run: |
