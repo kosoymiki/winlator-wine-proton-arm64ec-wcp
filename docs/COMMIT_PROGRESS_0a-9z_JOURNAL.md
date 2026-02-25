@@ -1,7 +1,7 @@
 # Commit Progression Journal (0a-9z)
 
 - База отсчёта: `1cd36fb` (первый commit в текущей длинной линии работ)
-- Текущий диапазон: `0a..2x` (76 commit(s))
+- Текущий диапазон: `0a..2z` (78 commit(s))
 - Схема версий: `0a..0z`, `1a..1z`, `2a..2z` ... до `9z` (260 слотов)
 - Назначение: фиксировать этапы и причины добавления commit-ов без потери причинной истории patch-stack
 
@@ -33,6 +33,9 @@
 
 ### `2q-2x` — Стабилизация Winlator патчей, FEX separation, bionic-native mainline и релизная линия (Winlator 0.9b / WCP stable)
 - Зачем добавлялись: Compile-fix патчей Adrenotools, разделение FEX/WCP, Steven reverse analysis, bionic-native mainline policy и обновление stable line (Winlator 0.9b, WCP stable без номера).
+
+### `2y-2z` — Полный импорт Box/WoWBox параметров и runtime-common профили
+- Зачем добавлялись: Расширение Box/WoWBox env surface и device-tier пресетов, плюс внедрение унифицированной runtime-common профильной модели в container/settings/launcher path.
 
 ## Полная карта commit -> версия
 
@@ -114,6 +117,8 @@
 | `2v` | `ef4933d` | winlator: fix deferred upscale binding patch for EnvVars API |
 | `2w` | `3dc2d5a` | ci/winlator: default WCP runtime class to bionic-native and fix 0035 compile patch |
 | `2x` | `3b91bcf` | ci/release: switch mainline WCP to bionic-native and switch mainline WCP to bionic-native and stabilize release naming |
+| `2y` | `a30f123` | winlator: add 0039/0040 box tiers and runtime common profile patches |
+| `2z` | `708a942` | docs: document 0040 patch stack and 2026 device tier profile model |
 
 ## Примечания
 
