@@ -115,6 +115,13 @@ winlator_adopt_bionic_unix_core_modules() {
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
   [[ -n "${wcp_root}" ]] || return 0
+  # Cross-version unix core replacement can create hard ABI drift with the package's
+  # own aarch64-windows DLL set (observed as early wineboot crashes). Keep disabled
+  # by default; enable only for controlled experiments with matching source payloads.
+  : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+  if [[ "${WCP_BIONIC_UNIX_CORE_ADOPT}" != "1" ]]; then
+    return 0
+  fi
 
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   [[ "${unix_abi}" == "glibc-unix" ]] || return 0
