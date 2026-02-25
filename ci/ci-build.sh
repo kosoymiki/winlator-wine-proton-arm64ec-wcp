@@ -42,6 +42,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
 : "${WCP_RUNTIME_CLASS_TARGET:=bionic-native}"
 : "${WCP_RUNTIME_CLASS_ENFORCE:=1}"
+: "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
 : "${WCP_GLIBC_SOURCE_MODE:=host}"
 : "${WCP_GLIBC_VERSION:=2.43}"
 : "${WCP_GLIBC_TARGET_VERSION:=2.43}"
@@ -504,6 +505,7 @@ validate_wcp_tree() {
   done
 
   wcp_assert_mainline_external_runtime_clean_tree "${WCP_ROOT}"
+  wcp_assert_pruned_external_runtime_components "${WCP_ROOT}"
 
   local required_unix_modules=(
     "ntdll.so"
@@ -598,6 +600,7 @@ main() {
 
   require_bool_flag WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
   require_bool_flag WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
+  require_bool_flag WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
   require_bool_flag WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   require_bool_flag WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
   require_bool_flag WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
@@ -634,6 +637,7 @@ main() {
   fi
   strip_stage_payload
   compose_wcp_tree
+  wcp_prune_external_runtime_components "${WCP_ROOT}" "${OUT_DIR}/logs/pruned-components.txt"
   wcp_write_forensic_manifest "${WCP_ROOT}"
   validate_wcp_tree
   pack_wcp

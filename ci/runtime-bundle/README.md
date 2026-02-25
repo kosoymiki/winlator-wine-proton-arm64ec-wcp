@@ -41,6 +41,7 @@ Default WCP builds now target `bionic/native` runtime class and do not bundle
 WCP forensics emits:
 - `share/wcp-forensics/glibc-runtime-libs.tsv`
 - `share/wcp-forensics/glibc-runtime-version-markers.tsv`
+- `share/wcp-forensics/external-runtime-components.tsv`
 
 Lock verification runs during `validate_wcp_tree_arm64ec()` in audit mode by
 default and auto-switches to enforce mode for `pinned-source` runtime builds.
@@ -51,6 +52,7 @@ Current `glibc-wrapped` lane targets:
 
 Default builder runtime policy:
 - `WCP_RUNTIME_CLASS_TARGET=bionic-native`
+- `WCP_PRUNE_EXTERNAL_COMPONENTS=1`
 - `WCP_INCLUDE_FEX_DLLS=0`
 - `WCP_FEX_EXPECTATION_MODE=external`
 - `WCP_MAINLINE_FEX_EXTERNAL_ONLY=1` (forbid bundled FEX/Box/WoWBox runtime payload in WCP)

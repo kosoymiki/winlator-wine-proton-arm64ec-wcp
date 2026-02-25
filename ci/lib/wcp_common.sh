@@ -84,46 +84,62 @@ wcp_enforce_mainline_bionic_policy() {
 
 wcp_enforce_mainline_external_runtime_policy() {
   : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
   wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
   [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]] || return 0
 
   [[ "${WCP_FEX_EXPECTATION_MODE:-external}" == "external" ]] || \
     wcp_fail "Mainline external-runtime policy requires WCP_FEX_EXPECTATION_MODE=external"
   [[ "${WCP_INCLUDE_FEX_DLLS:-0}" == "0" ]] || \
     wcp_fail "Mainline external-runtime policy requires WCP_INCLUDE_FEX_DLLS=0"
+  [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]] || \
+    wcp_fail "Mainline external-runtime policy requires WCP_PRUNE_EXTERNAL_COMPONENTS=1"
+}
+
+wcp_external_runtime_component_paths() {
+  cat <<'EOF_EXTERNAL_COMPONENTS'
+fex	lib/wine/aarch64-windows/libarm64ecfex.dll
+fex	lib/wine/aarch64-windows/libwow64fex.dll
+fex	lib/wine/i386-windows/libwow64fex.dll
+fex	lib/wine/fexcore
+fex	lib/fexcore
+fex	share/fexcore
+fex	bin/FEXInterpreter
+fex	bin/FEXBash
+fex	lib/fex-emu
+fex	share/fex-emu
+box64	bin/box64
+wowbox64	bin/wowbox64
+box64	lib/box64
+wowbox64	lib/wowbox64
+box64	share/box64
+wowbox64	share/wowbox64
+box64	lib/wine/box64
+wowbox64	lib/wine/wowbox64
+dxvk	lib/wine/dxvk
+vkd3d	lib/wine/vkd3d
+vkd3d	lib/wine/vk3d
+dxvk	lib/dxvk
+vkd3d	lib/vkd3d
+dxvk	share/dxvk
+vkd3d	share/vkd3d
+driver	share/vulkan/icd.d
+driver	share/vulkan/implicit_layer.d
+driver	share/vulkan/explicit_layer.d
+EOF_EXTERNAL_COMPONENTS
 }
 
 wcp_list_external_runtime_policy_hits() {
   local wcp_root="$1"
-  local rel
-  local -a exact_forbidden
+  local rel category
 
   [[ -d "${wcp_root}" ]] || return 0
 
-  exact_forbidden=(
-    "lib/wine/aarch64-windows/libarm64ecfex.dll"
-    "lib/wine/aarch64-windows/libwow64fex.dll"
-    "lib/wine/i386-windows/libwow64fex.dll"
-    "lib/wine/fexcore"
-    "lib/fexcore"
-    "share/fexcore"
-    "bin/FEXInterpreter"
-    "bin/FEXBash"
-    "lib/fex-emu"
-    "share/fex-emu"
-    "bin/box64"
-    "bin/wowbox64"
-    "lib/box64"
-    "lib/wowbox64"
-    "share/box64"
-    "share/wowbox64"
-    "lib/wine/box64"
-    "lib/wine/wowbox64"
-  )
-
-  for rel in "${exact_forbidden[@]}"; do
+  while IFS=$'\t' read -r category rel; do
+    [[ -n "${rel}" ]] || continue
     [[ -e "${wcp_root}/${rel}" ]] && printf '%s\n' "${rel}"
-  done
+  done < <(wcp_external_runtime_component_paths)
 
   find "${wcp_root}" -mindepth 1 \
     \( -iname '*box64*' -o -iname '*wowbox64*' -o -iname '*fexcore*' \) \
@@ -141,7 +157,78 @@ wcp_assert_mainline_external_runtime_clean_tree() {
   violations="$(wcp_list_external_runtime_policy_hits "${wcp_root}" | LC_ALL=C sort -u || true)"
   [[ -z "${violations}" ]] && return 0
 
-  wcp_fail "Mainline external-runtime policy forbids bundled FEX/Box/WoWBox artifacts in WCP:\n${violations}"
+  wcp_fail "Mainline external-runtime policy forbids bundled external runtime payload in WCP:\n${violations}"
+}
+
+wcp_prune_external_runtime_components() {
+  local wcp_root="$1"
+  local report_file="${2:-}"
+  local category rel removed_count
+
+  : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
+  wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
+  [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]] || return 0
+  [[ -d "${wcp_root}" ]] || wcp_fail "WCP root not found for prune step: ${wcp_root}"
+
+  removed_count=0
+  if [[ -n "${report_file}" ]]; then
+    mkdir -p "$(dirname "${report_file}")"
+    : > "${report_file}"
+  fi
+
+  while IFS=$'\t' read -r category rel; do
+    [[ -n "${rel}" ]] || continue
+    if [[ -e "${wcp_root}/${rel}" ]]; then
+      rm -rf "${wcp_root:?}/${rel}"
+      removed_count=$((removed_count + 1))
+      if [[ -n "${report_file}" ]]; then
+        printf '%s\t%s\n' "${category}" "${rel}" >> "${report_file}"
+      fi
+    fi
+  done < <(wcp_external_runtime_component_paths)
+
+  if [[ -n "${report_file}" && "${removed_count}" -eq 0 ]]; then
+    echo "none" > "${report_file}"
+  fi
+  wcp_log "Pruned external runtime components from WCP tree (removed=${removed_count})"
+}
+
+wcp_assert_pruned_external_runtime_components() {
+  local wcp_root="$1"
+  local category rel
+  local hits=""
+
+  : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
+  wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
+  [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]] || return 0
+  [[ -d "${wcp_root}" ]] || wcp_fail "WCP root not found for prune validation: ${wcp_root}"
+
+  while IFS=$'\t' read -r category rel; do
+    [[ -n "${rel}" ]] || continue
+    if [[ -e "${wcp_root}/${rel}" ]]; then
+      hits+="${category}:${rel}"$'\n'
+    fi
+  done < <(wcp_external_runtime_component_paths)
+
+  [[ -z "${hits}" ]] || wcp_fail "External component prune policy violation in WCP tree:\n${hits%$'\n'}"
+}
+
+wcp_write_external_runtime_component_audit() {
+  local wcp_root="$1"
+  local out_file="$2"
+  local category rel present
+
+  [[ -d "${wcp_root}" ]] || wcp_fail "WCP root not found for external component audit: ${wcp_root}"
+  mkdir -p "$(dirname "${out_file}")"
+  {
+    printf 'category\tpath\tpresent\n'
+    while IFS=$'\t' read -r category rel; do
+      [[ -n "${rel}" ]] || continue
+      present=0
+      [[ -e "${wcp_root}/${rel}" ]] && present=1
+      printf '%s\t%s\t%s\n' "${category}" "${rel}" "${present}"
+    done < <(wcp_external_runtime_component_paths)
+  } > "${out_file}"
 }
 
 wcp_json_escape() {
@@ -538,6 +625,7 @@ EOF_PROFILE
 wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
+  local external_runtime_audit_file
   local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
   local glibc_stage_reports_index glibc_stage_reports_dir
   local fex_bundled_present=0 boxed_runtime_detected=0
@@ -556,6 +644,7 @@ wcp_write_forensic_manifest() {
   env_file="${forensic_root}/build-env.txt"
   index_file="${forensic_root}/file-index.txt"
   hashes_file="${forensic_root}/critical-sha256.tsv"
+  external_runtime_audit_file="${forensic_root}/external-runtime-components.tsv"
   policy_violations_file="${forensic_root}/policy-violations.txt"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
@@ -641,6 +730,7 @@ wcp_write_forensic_manifest() {
     echo "WCP_RUNTIME_BUNDLE_LOCK_FILE=${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}"
     echo "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK=${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}"
     echo "WCP_RUNTIME_BUNDLE_LOCK_MODE=${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}"
+    echo "WCP_PRUNE_EXTERNAL_COMPONENTS=${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}"
     echo "WCP_INCLUDE_FEX_DLLS=${WCP_INCLUDE_FEX_DLLS:-}"
     echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
     echo "WCP_MAINLINE_FEX_EXTERNAL_ONLY=${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}"
@@ -710,6 +800,7 @@ wcp_write_forensic_manifest() {
     "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
     "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_MODE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}")",
+    "WCP_PRUNE_EXTERNAL_COMPONENTS": "$(wcp_json_escape "${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}")",
     "WCP_INCLUDE_FEX_DLLS": "$(wcp_json_escape "${WCP_INCLUDE_FEX_DLLS:-}")",
     "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")",
     "WCP_MAINLINE_FEX_EXTERNAL_ONLY": "$(wcp_json_escape "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}")",
@@ -725,6 +816,7 @@ wcp_write_forensic_manifest() {
   }
 }
 EOF_SOURCE_REFS
+  wcp_write_external_runtime_component_audit "${wcp_root}" "${external_runtime_audit_file}"
 
   glibc_runtime_present=0
   : > "${glibc_runtime_index}"
@@ -808,6 +900,7 @@ EOF_SOURCE_REFS
     "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
     "boxedRuntimeInWcpDetected": ${boxed_runtime_detected},
     "policyViolationReason": "$(wcp_json_escape "${policy_violation_reason}")",
+    "pruneExternalComponents": "$(wcp_json_escape "${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}")",
     "fexBundledInWcp": ${fex_bundled_present},
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   },
@@ -832,6 +925,7 @@ EOF_SOURCE_REFS
   "files": {
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
+    "externalRuntimeAudit": "share/wcp-forensics/external-runtime-components.tsv",
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
     "glibcStageReportsIndex": "share/wcp-forensics/glibc-stage-reports-index.tsv",
@@ -853,6 +947,7 @@ wcp_validate_forensic_manifest() {
   local required=(
     "${wcp_root}/share/wcp-forensics/manifest.json"
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
+    "${wcp_root}/share/wcp-forensics/external-runtime-components.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-stage-reports-index.tsv"
@@ -900,6 +995,7 @@ validate_wcp_tree_arm64ec() {
   fi
 
   wcp_assert_mainline_external_runtime_clean_tree "${wcp_root}"
+  wcp_assert_pruned_external_runtime_components "${wcp_root}"
 
   if [[ -d "${wcp_root}/lib/wine/arm64ec-windows" ]]; then
     wcp_log "Detected explicit arm64ec-windows layer"
@@ -991,6 +1087,7 @@ smoke_check_wcp() {
   grep -qx 'profile.json' "${normalized_file}" || wcp_fail "Missing profile.json"
   grep -qx 'share/wcp-forensics/manifest.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/manifest.json"
   grep -qx 'share/wcp-forensics/critical-sha256.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/critical-sha256.tsv"
+  grep -qx 'share/wcp-forensics/external-runtime-components.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/external-runtime-components.tsv"
   grep -qx 'share/wcp-forensics/file-index.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/file-index.txt"
   grep -qx 'share/wcp-forensics/build-env.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/build-env.txt"
   grep -qx 'share/wcp-forensics/source-refs.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/source-refs.json"
@@ -999,10 +1096,17 @@ smoke_check_wcp() {
   grep -q '^lib/wine/i386-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/i386-windows"
 
   : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
   wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  wcp_require_bool WCP_PRUNE_EXTERNAL_COMPONENTS "${WCP_PRUNE_EXTERNAL_COMPONENTS}"
   if [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]]; then
     forbidden="$(grep -Ei '(^|/)(libarm64ecfex\.dll|libwow64fex\.dll|fexcore|box64|wowbox64)($|/)' "${normalized_file}" || true)"
     [[ -z "${forbidden}" ]] || wcp_fail "Mainline external-runtime policy violation inside archive:\n${forbidden}"
+  fi
+
+  if [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]]; then
+    forbidden="$(grep -Ei '^(lib/wine/(dxvk|vkd3d|vk3d)(/|$)|lib/(dxvk|vkd3d)(/|$)|share/(dxvk|vkd3d)(/|$)|share/vulkan/(icd\.d|implicit_layer\.d|explicit_layer\.d)(/|$))' "${normalized_file}" || true)"
+    [[ -z "${forbidden}" ]] || wcp_fail "External component prune policy violation inside archive:\n${forbidden}"
   fi
 
   if grep -qx 'bin/wine.glibc-real' "${normalized_file}"; then

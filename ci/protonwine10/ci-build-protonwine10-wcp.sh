@@ -130,39 +130,6 @@ validate_sdl2_runtime_payload() {
   fi
 }
 
-prune_external_runtime_components() {
-  local path
-
-  [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]] || return
-
-  local prune_paths=(
-    "lib/wine/aarch64-windows/libarm64ecfex.dll"
-    "lib/wine/aarch64-windows/libwow64fex.dll"
-    "lib/wine/i386-windows/libwow64fex.dll"
-    "lib/wine/fexcore"
-    "lib/fexcore"
-    "share/fexcore"
-    "lib/wine/dxvk"
-    "lib/wine/vkd3d"
-    "lib/wine/vk3d"
-    "lib/dxvk"
-    "lib/vkd3d"
-    "share/dxvk"
-    "share/vkd3d"
-    "share/vulkan/icd.d"
-    "share/vulkan/implicit_layer.d"
-    "share/vulkan/explicit_layer.d"
-  )
-
-  : > "${LOG_DIR}/pruned-components.txt"
-  for path in "${prune_paths[@]}"; do
-    if [[ -e "${WCP_ROOT}/${path}" ]]; then
-      rm -rf "${WCP_ROOT:?}/${path}"
-      printf '%s\n' "${path}" >> "${LOG_DIR}/pruned-components.txt"
-    fi
-  done
-}
-
 run_upstream_analysis_and_fixes() {
   export ROOT_DIR WORK_DIR WCP_OUTPUT_DIR="${OUT_DIR}" WINE_SRC_DIR
   export PROTONWINE_REPO PROTONWINE_REF
@@ -227,7 +194,7 @@ main() {
   build_wine
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"
-  prune_external_runtime_components
+  wcp_prune_external_runtime_components "${WCP_ROOT}" "${LOG_DIR}/pruned-components.txt"
   wcp_write_forensic_manifest "${WCP_ROOT}"
   validate_wcp_tree_arm64ec "${WCP_ROOT}"
   artifact="$(pack_wcp "${WCP_ROOT}" "${OUT_DIR}" "${WCP_NAME}")"

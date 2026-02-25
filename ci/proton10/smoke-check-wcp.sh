@@ -37,6 +37,7 @@ grep -q '^lib/wine/' "${normalized_file}" || fail "Missing lib/wine/"
 grep -q '^share/' "${normalized_file}" || fail "Missing share/"
 grep -qx 'prefixPack.txz' "${normalized_file}" || fail "Missing prefixPack.txz"
 grep -qx 'profile.json' "${normalized_file}" || fail "Missing profile.json"
+grep -qx 'share/wcp-forensics/external-runtime-components.tsv' "${normalized_file}" || fail "Missing share/wcp-forensics/external-runtime-components.tsv"
 
 if grep -qx 'bin/wine.glibc-real' "${normalized_file}"; then
   grep -qx 'bin/wineserver.glibc-real' "${normalized_file}" || fail "Missing bin/wineserver.glibc-real"
