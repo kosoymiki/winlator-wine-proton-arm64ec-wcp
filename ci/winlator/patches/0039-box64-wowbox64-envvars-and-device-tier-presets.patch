@@ -1,0 +1,2077 @@
+diff --git a/app/src/main/assets/box64_env_vars.json b/app/src/main/assets/box64_env_vars.json
+index a67cfb1..a0a200b 100644
+--- a/app/src/main/assets/box64_env_vars.json
++++ b/app/src/main/assets/box64_env_vars.json
+@@ -1,143 +1,1804 @@
+ [
+   {
+-    "name": "BOX64_DYNAREC_SAFEFLAGS",
+-    "group": "Dynarec",
+-    "desc": ["Controls how safely dynarec preserves CPU flags (higher = safer, lower = faster)."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "1"
++    "name": "BOX64_DYNAREC",
++    "group": "Performance",
++    "desc": [
++      "Enable/disable the Dynamic Recompiler (a.k.a DynaRec). This option defaults to 1 if it's enabled in the build options for a supported architecture."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_ALIGNED_ATOMICS",
++    "group": "Performance",
++    "desc": [
++      "Generate aligned atomics only (only available on Arm64 for now)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_BIGBLOCK",
++    "group": "Performance",
++    "desc": [
++      "Enable building bigger DynaRec code blocks for better performance."
++    ],
++    "defaultValue": "2",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_CALLRET",
++    "group": "Performance",
++    "desc": [
++      "Optimize CALL/RET opcodes."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_DF",
++    "group": "Performance",
++    "desc": [
++      "Enable or disable the use of deferred flags."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_DIRTY",
++    "group": "Performance",
++    "desc": [
++      "Allow continue running a block that is unprotected and potentially dirty."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_NOHOTPAGE",
++    "group": "Performance",
++    "desc": [
++      "Disable detection of hot page (where code is executed and data written at the same time)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_HOTPAGE_ALT",
++    "group": "Performance",
++    "desc": [
++      "Use alternative way to detect HotPages (legacy way)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+     "name": "BOX64_DYNAREC_FASTNAN",
+-    "group": "Dynarec",
+-    "desc": ["Use fast NaN handling. Improves speed but may change floating-point edge behavior."],
+-    "values": ["0", "1"],
++    "group": "Performance",
++    "desc": [
++      "Enable or disable fast NaN handling."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+     "name": "BOX64_DYNAREC_FASTROUND",
+-    "group": "Dynarec",
+-    "desc": ["Rounding optimization level for dynarec floating-point operations."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "1"
++    "group": "Performance",
++    "desc": [
++      "Enable or disable fast rounding."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
+   },
+   {
+-    "name": "BOX64_DYNAREC_X87DOUBLE",
+-    "group": "Dynarec",
+-    "desc": ["Precision mode used for X87 emulation (more precise can improve compatibility)."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "0"
++    "name": "BOX64_DYNAREC_FORWARD",
++    "group": "Performance",
++    "desc": [
++      "Define max allowed forward value when building block."
++    ],
++    "defaultValue": "128",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "128"
++    ],
++    "editText": true
+   },
+   {
+-    "name": "BOX64_DYNAREC_BIGBLOCK",
+-    "group": "Dynarec",
+-    "desc": ["Controls dynarec block size. Larger blocks can improve throughput but may reduce stability."],
+-    "values": ["0", "1", "2", "3"],
+-    "defaultValue": "2"
++    "name": "BOX64_DYNAREC_NATIVEFLAGS",
++    "group": "Performance",
++    "desc": [
++      "Enable or disable the use of native flags."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_STRONGMEM",
+-    "group": "Dynarec",
+-    "desc": ["Memory ordering strictness for dynarec. Higher values improve compatibility but cost performance."],
+-    "values": ["0", "1", "2", "3"],
+-    "defaultValue": "0"
++    "name": "BOX64_DYNAREC_PAUSE",
++    "group": "Performance",
++    "desc": [
++      "Enable x86 PAUSE emulation, may help the performance of spinlocks."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3"
++    ]
+   },
+   {
+-    "name": "BOX64_DYNAREC_FORWARD",
+-    "group": "Dynarec",
+-    "desc": ["Max forward jump distance considered when building dynarec blocks."],
+-    "values": ["0", "128", "256", "512", "1024"],
+-    "defaultValue": "512"
++    "name": "BOX64_DYNAREC_PURGE",
++    "group": "Performance",
++    "desc": [
++      "Purge dynablocks that haven't been executed recently, based on tick age threshold (BOX64_DYNAREC_PURGE_AGE)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_CALLRET",
+-    "group": "Dynarec",
+-    "desc": ["Enable CALL/RET optimization in dynarec."],
+-    "values": ["0", "1"],
++    "name": "BOX64_DYNAREC_PURGE_AGE",
++    "group": "Performance",
++    "desc": [
++      "Tick age threshold for dynablock purging (requires BOX64_DYNAREC_PURGE=1)."
++    ],
++    "defaultValue": "4096",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "4096"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_DYNAREC_SAFEFLAGS",
++    "group": "Performance",
++    "desc": [
++      "Behaviour of flags emulation on CALL/RET opcodes and other edge cases."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_STRONGMEM",
++    "group": "Performance",
++    "desc": [
++      "Enable the emulation of x86 strong memory model."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3",
++      "4"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_VOLATILE_METADATA",
++    "group": "Performance",
++    "desc": [
++      "Use volatile metadata parsed from PE files, only valid for 64bit Windows games."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "0"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+     "name": "BOX64_DYNAREC_WAIT",
+-    "group": "Dynarec",
+-    "desc": ["Make dynarec wait for background block generation when needed (compatibility vs latency)."],
+-    "values": ["0", "1"],
++    "group": "Performance",
++    "desc": [
++      "Wait or not for the building of a DynaRec code block to be ready."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_WEAKBARRIER",
++    "group": "Performance",
++    "desc": [
++      "Tweak the memory barriers to reduce the performance impact by strong memory emualtion."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNACACHE",
++    "group": "Performance",
++    "desc": [
++      "Enable/disable the Dynamic Recompiler Cache (a.k.a DynaCache). This option defaults to 2 (to read cache if present but not generate any). DynaCache write file to home folder by default, and can grow without limit."
++    ],
++    "defaultValue": "2",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNACACHE_FOLDER",
++    "group": "Performance",
++    "desc": [
++      "Set the folder for DynaCache files. Default is $XDG_CACHE_HOME/box64 or $HOME/.cache/box64 if $XDG_CACHE_HOME is not set."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_DYNACACHE_MIN",
++    "group": "Performance",
++    "desc": [
++      "Minimum size, in KB, for a DynaCache to be written to disk. Default size is 350KB"
++    ],
++    "defaultValue": "350",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "350"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_MMAP32",
++    "group": "Performance",
++    "desc": [
++      "Force 32-bit compatible memory mappings on 64-bit programs that run 32-bit code (like Wine WOW64), can improve performance."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NODYNAREC",
++    "group": "Performance",
++    "desc": [
++      "Forbid dynablock creation in the address range specified, helpful for debugging behaviour difference between Dynarec and Interpreter."
++    ],
++    "defaultValue": "0xXXXXXXXX-0xYYYYYYYY",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0xXXXXXXXX-0xYYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_NOARCH",
++    "group": "Performance",
++    "desc": [
++      "Remove Architecture metatdata from Dynarec blocks (used on signal)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_RDTSC_1GHZ",
++    "group": "Performance",
++    "desc": [
++      "Use hardware counter for rdtsc if available."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_ARGS",
++    "group": "Arguments",
++    "desc": [
++      "Arguments to pass to the guest program, only valid if there is no existing arguments."
++    ],
++    "defaultValue": "XXXX YYYY ZZZZ",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX YYYY ZZZZ"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_INSERT_ARGS",
++    "group": "Arguments",
++    "desc": [
++      "Prepend arguments to the command line."
++    ],
++    "defaultValue": "XXXX YYYY ZZZZ",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX YYYY ZZZZ"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_INPROCESSGPU",
++    "group": "Arguments",
++    "desc": [
++      "Add --in-process-gpu argument to the guest program."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NOSANDBOX",
++    "group": "Arguments",
++    "desc": [
++      "Add --no-sandbox argument to the guest program."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_AES",
++    "group": "Compatibility",
++    "desc": [
++      "Expose AES capabilities."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_ARCH",
++    "group": "Compatibility",
++    "desc": [
++      "Specify the architecture in rcfiles to which the current entry applies. This option only takes effect when used inside rcfiles."
++    ],
++    "defaultValue": "`<empty>`",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "`arm64`",
++      "`la64`",
++      "`rv64`",
++      "`<empty>`"
++    ],
++    "editText": true
+   },
+   {
+     "name": "BOX64_AVX",
+-    "group": "CPU",
+-    "desc": ["Advertised AVX support level exposed to applications."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "1"
++    "group": "Compatibility",
++    "desc": [
++      "Expose AVX extension to CPUID and cpuinfo file. Default value is 2 on Arm64 because it's fully implemented in DynaRec, 0 otherwise."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_BASH",
++    "group": "Compatibility",
++    "desc": [
++      "Path to the bash executable."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_CPUTYPE",
++    "group": "Compatibility",
++    "desc": [
++      "Specify the CPU type to emulate."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_CRASHHANDLER",
++    "group": "Compatibility",
++    "desc": [
++      "Use a dummy crash handler or not."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_BLEEDING_EDGE",
++    "group": "Compatibility",
++    "desc": [
++      "Detect MonoBleedingEdge and apply conservative settings (Linux only)."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_DIV0",
++    "group": "Compatibility",
++    "desc": [
++      "Enable or disable the generation of division-by-zero exception."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_TBB",
++    "group": "Compatibility",
++    "desc": [
++      "Enable or disable libtbb detection."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_X87DOUBLE",
++    "group": "Compatibility",
++    "desc": [
++      "Force the use of float/double for x87 emulation."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_INTERP_SIGNAL",
++    "group": "Compatibility",
++    "desc": [
++      "Allow the use of Dynarec in Signal Handlers."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_EXIT",
++    "group": "Compatibility",
++    "desc": [
++      "Just exit, do not try to run the program."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_FIX_64BIT_INODES",
++    "group": "Compatibility",
++    "desc": [
++      "Fix 64bit inodes."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_FORCE_LD_PRELOAD",
++    "group": "Compatibility",
++    "desc": [
++      "Force symbols from BOX64_LD_PRELOAD libraries to be resolved by RTLD_NEXT."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_IGNOREINT3",
++    "group": "Compatibility",
++    "desc": [
++      "Ignore INT3 instructions."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_JVM",
++    "group": "Compatibility",
++    "desc": [
++      "Detect libjvm and apply conservative settings."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_LIBCEF",
++    "group": "Compatibility",
++    "desc": [
++      "Detect libcef and apply BOX64_MALLOC_HACK settings."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_MALLOC_HACK",
++    "group": "Compatibility",
++    "desc": [
++      "Behaviour when hooking malloc operators."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
+   },
+   {
+     "name": "BOX64_MAXCPU",
+-    "group": "CPU",
+-    "desc": ["Maximum CPU count reported to the guest. 0 keeps Box64 default behavior."],
+-    "values": ["0", "4", "8", "16", "32", "64"],
+-    "defaultValue": "0"
++    "group": "Compatibility",
++    "desc": [
++      "Maximum CPU cores exposed."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_NORCFILES",
++    "group": "Compatibility",
++    "desc": [
++      "Do not load any rc files."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_PATH",
++    "group": "Compatibility",
++    "desc": [
++      "Path to look for x86_64 binaries."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_PCLMULQDQ",
++    "group": "Compatibility",
++    "desc": [
++      "Expose PCLMULQDQ capabilities."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_PROFILE",
++    "group": "Compatibility",
++    "desc": [
++      "Predefined sets of environment variables with compatibility or performance in mind."
++    ],
++    "defaultValue": "default",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "safest",
++      "safe",
++      "default",
++      "fast",
++      "fastest"
++    ]
++  },
++  {
++    "name": "BOX64_PYTHON3",
++    "group": "Compatibility",
++    "desc": [
++      "Path to a python3 executable."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_RCFILE",
++    "group": "Compatibility",
++    "desc": [
++      "Path to the rc file to load."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_RESERVE_HIGH",
++    "group": "Compatibility",
++    "desc": [
++      "Reserve high memory area for the program, always enabled on Box32."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SDL2_JGUID",
++    "group": "Compatibility",
++    "desc": [
++      "Use a workaround for SDL_GetJoystickGUIDInfo function for wrapped SDL2."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SHAEXT",
++    "group": "Compatibility",
++    "desc": [
++      "Expose SHAEXT (a.k.a. SHA_NI) capabilities."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SSE_FLUSHTO0",
++    "group": "Compatibility",
++    "desc": [
++      "Behaviour of SSE Flush to 0 flags. Also tracking SSE exception flags."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SSE42",
++    "group": "Compatibility",
++    "desc": [
++      "Expose SSE4.2 capabilities."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_STEAM_VULKAN",
++    "group": "Compatibility",
++    "desc": [
++      "Force Vulkan for Linux Steam UI."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SYNC_ROUNDING",
++    "group": "Compatibility",
++    "desc": [
++      "Synchronize rounding mode between x86 and native."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+     "name": "BOX64_UNITYPLAYER",
+-    "group": "Game Hacks",
+-    "desc": ["Apply UnityPlayer-specific compatibility adjustments."],
+-    "values": ["0", "1"],
++    "group": "Compatibility",
++    "desc": [
++      "Detect UnityPlayer and apply conservative settings."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_WEAKBARRIER",
+-    "group": "Dynarec",
+-    "desc": ["Barrier optimization strength. Lower is safer, higher can be faster."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "0"
++    "name": "BOX64_UNITY",
++    "group": "Compatibility",
++    "desc": [
++      "Games is a Unity one."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_ALIGNED_ATOMICS",
+-    "group": "Dynarec",
+-    "desc": ["Assume aligned atomics where possible for faster code generation."],
+-    "values": ["0", "1"],
++    "name": "BOX64_X11GLX",
++    "group": "Compatibility",
++    "desc": [
++      "Force Xorg GLX extension to be present."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "0"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_DF",
+-    "group": "Dynarec",
+-    "desc": ["Direction Flag handling optimization in dynarec."],
+-    "values": ["0", "1"],
++    "name": "BOX64_X11SYNC",
++    "group": "Compatibility",
++    "desc": [
++      "Force synchronized operation on X11 display."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_DIRTY",
+-    "group": "Dynarec",
+-    "desc": ["Controls dirty-page tracking behavior used by dynarec self-modifying code handling."],
+-    "values": ["0", "1", "2"],
+-    "defaultValue": "0"
++    "name": "BOX64_X11THREADS",
++    "group": "Compatibility",
++    "desc": [
++      "Call XInitThreads when loading X11. This is mostly for old Loki games with the Loki_Compat library."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_NATIVEFLAGS",
+-    "group": "Dynarec",
+-    "desc": ["Use native host flags assumptions where possible for speed."],
+-    "values": ["0", "1"],
++    "name": "BOX64_X87_NO80BITS",
++    "group": "Compatibility",
++    "desc": [
++      "Behavoiur of x87 80bits long double."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_DYNAREC_PAUSE",
+-    "group": "Dynarec",
+-    "desc": ["Pause instruction handling strategy in dynarec."],
+-    "values": ["0", "1", "2", "3"],
+-    "defaultValue": "0"
++    "name": "BOX64_DLSYM_ERROR",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable the logging of dlsym errors."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   },
+   {
+-    "name": "BOX64_MMAP32",
+-    "group": "Memory",
+-    "desc": ["Prefer allocations in 32-bit address space for compatibility with some titles."],
+-    "values": ["0", "1"],
++    "name": "BOX64_DUMP",
++    "group": "Debugging",
++    "desc": [
++      "Dump elfloader debug information."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_DUMP",
++    "group": "Debugging",
++    "desc": [
++      "Enable DynaRec dump."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_DUMP_RANGE",
++    "group": "Debugging",
++    "desc": [
++      "Dump DynaRec blocks in the specified range."
++    ],
++    "defaultValue": "0xXXXXXXXX-0xYYYYYYYY",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0xXXXXXXXX-0xYYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_GDBJIT",
++    "group": "Debugging",
++    "desc": [
++      "The GDBJIT debugging support, only available on build with `-DGDBJIT=ON`, enable it with gdb command: jit-reader-load /usr/local/lib/libbox64gdbjitreader.so."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3",
++      "0xXXXXXXX-0xYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_LOG",
++    "group": "Debugging",
++    "desc": [
++      "Disable or enable DynaRec logs."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_MISSING",
++    "group": "Debugging",
++    "desc": [
++      "Print missing opcodes."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_NOHOSTEXT",
++    "group": "Debugging",
++    "desc": [
++      "Disable optional host extensions."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "xxx,yyy,zzz"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_PERFMAP",
++    "group": "Debugging",
++    "desc": [
++      "Generate map file for Linux perf tool."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_TEST",
++    "group": "Debugging",
++    "desc": [
++      "Enable DynaRec execution comparison with the interpreter, very slow, only for testing."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "0xXXXXXXXX-0xYYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_DYNAREC_TEST_NODUP",
++    "group": "Debugging",
++    "desc": [
++      "Enable deduplication of IP address where COSIM find a difference."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_TEST_NODUMP",
++    "group": "Debugging",
++    "desc": [
++      "Do not dump test code when BOX64_DYNAREC_DUMP is enabled."
++    ],
++    "defaultValue": "1",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_DYNAREC_TRACE",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable DynaRec trace."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_JITGDB",
++    "group": "Debugging",
++    "desc": [
++      "Launch gdb or not for SIGSEGV, SIGILL, and SIGBUS."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3"
++    ]
++  },
++  {
++    "name": "BOX64_LOAD_ADDR",
++    "group": "Debugging",
++    "desc": [
++      "Set the address where the program is loaded, only active for PIE guest programs."
++    ],
++    "defaultValue": "0xXXXXXXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0xXXXXXXXX"
++    ]
++  },
++  {
++    "name": "BOX64_LOG",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable Box64 logs, default value is 0 if stdout is not terminal, 1 otherwise."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "2",
++      "3"
++    ]
++  },
++  {
++    "name": "BOX64_NOBANNER",
++    "group": "Debugging",
++    "desc": [
++      "Disable the Box64 banner."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NODYNAREC_DELAY",
++    "group": "Debugging",
++    "desc": [
++      "Remove NoDynarec range after a delay."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": true,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NOSIGSEGV",
++    "group": "Debugging",
++    "desc": [
++      "Disable the handling of SIGSEGV."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NOSIGILL",
++    "group": "Debugging",
++    "desc": [
++      "Disable the handling of SIGILL."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_ROLLING_LOG",
++    "group": "Debugging",
++    "desc": [
++      "Show last few wrapped function call when a signal is caught."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_SHOWBT",
++    "group": "Debugging",
++    "desc": [
++      "Show native and emulated backtrace when a signal is caught."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_SHOWSEGV",
++    "group": "Debugging",
++    "desc": [
++      "Always show SIGSEGV signal detailes."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_TRACE_COLOR",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable colored trace output."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_TRACE_EMM",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable EMM (i.e. MMX) trace output."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_TRACE_FILE",
++    "group": "Debugging",
++    "desc": [
++      "Send all log and trace to a file instead of `stdout`."
++    ],
++    "defaultValue": "stderr",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX%pid",
++      "stderr",
++      "stdout"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_TRACE_INIT",
++    "group": "Debugging",
++    "desc": [
++      "Same as BOX64_TRACE but starts the trace immediately."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "symbolname",
++      "0xXXXXXXX-0xYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_TRACE_START",
++    "group": "Debugging",
++    "desc": [
++      "Start trace after N opcodes executed."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_TRACE_XMM",
++    "group": "Debugging",
++    "desc": [
++      "Enable or disable XMM (i.e. SSE) trace output."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_TRACE",
++    "group": "Debugging",
++    "desc": [
++      "Only available on box64 build with trace. Adds trace of all instructions executed, along with a register dump."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1",
++      "symbolname",
++      "0xXXXXXXX-0xYYYYYYY"
++    ]
++  },
++  {
++    "name": "BOX64_ENV",
++    "group": "Environment",
++    "desc": [
++      "Add an environment variable."
++    ],
++    "defaultValue": "XXXX=yyyy",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX=yyyy"
++    ]
++  },
++  {
++    "name": "BOX64_ADDLIBS",
++    "group": "Libraries",
++    "desc": [
++      "Add extras to the needed libraries list, rarely needed."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_ALLOWMISSINGLIBS",
++    "group": "Libraries",
++    "desc": [
++      "Allow missing libraries to be ignored."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_EMULATED_LIBS",
++    "group": "Libraries",
++    "desc": [
++      "Force the use of emulated libraries."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_LD_LIBRARY_PATH",
++    "group": "Libraries",
++    "desc": [
++      "Path to look for x86_64 libraries."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_LD_PRELOAD",
++    "group": "Libraries",
++    "desc": [
++      "Force loading libraries with the binary."
++    ],
++    "defaultValue": "XXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "XXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_LIBGL",
++    "group": "Libraries",
++    "desc": [
++      "Set the name for libGL."
++    ],
++    "defaultValue": "libXXXX",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "libXXXX",
++      "/path/to/libXXXX"
++    ],
++    "editText": true
++  },
++  {
++    "name": "BOX64_NOGTK",
++    "group": "Libraries",
++    "desc": [
++      "Do not load wrapped GTK libraries."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NOPULSE",
++    "group": "Libraries",
++    "desc": [
++      "Do not load PulseAudio libraries (both native and x86_64)."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_NOVULKAN",
++    "group": "Libraries",
++    "desc": [
++      "Do not load Vulkan libraries."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_PREFER_EMULATED",
++    "group": "Libraries",
++    "desc": [
++      "Prefer emulated libraries over native ones."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_PREFER_WRAPPED",
++    "group": "Libraries",
++    "desc": [
++      "Prefer wrapped libs first even if the lib is specified with absolute path."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
++    "toggleSwitch": true,
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
++  },
++  {
++    "name": "BOX64_WRAP_EGL",
++    "group": "Libraries",
++    "desc": [
++      "Prefer wrapped libs for EGL and GLESv2."
++    ],
++    "defaultValue": "0",
++    "availableInWowBox64": false,
++    "source": "https://github.com/ptitSeb/box64/blob/main/docs/USAGE.md",
++    "values": [
++      "0",
++      "1"
++    ],
+     "toggleSwitch": true,
+-    "defaultValue": "1"
++    "toggleOnValue": "1",
++    "toggleOffValue": "0"
+   }
+ ]
+diff --git a/app/src/main/java/com/winlator/cmod/box64/Box64Preset.java b/app/src/main/java/com/winlator/cmod/box64/Box64Preset.java
+index e6a3ff0..4127e57 100644
+--- a/app/src/main/java/com/winlator/cmod/box64/Box64Preset.java
++++ b/app/src/main/java/com/winlator/cmod/box64/Box64Preset.java
+@@ -7,6 +7,11 @@ public class Box64Preset {
+     public static final String COMPATIBILITY = "COMPATIBILITY";
+     public static final String INTERMEDIATE = "INTERMEDIATE";
+     public static final String PERFORMANCE = "PERFORMANCE";
++    public static final String DEVICE_LEGACY_LOW_2026 = "DEVICE_LEGACY_LOW_2026";
++    public static final String DEVICE_MID_2026 = "DEVICE_MID_2026";
++    public static final String DEVICE_UPPER_MID_2026 = "DEVICE_UPPER_MID_2026";
++    public static final String DEVICE_FLAGSHIP_2026 = "DEVICE_FLAGSHIP_2026";
++    public static final String DEVICE_S8G1_SUPER = "DEVICE_S8G1_SUPER";
+     public static final String CUSTOM = "CUSTOM";
+     public final String id;
+     public final String name;
+@@ -25,4 +30,4 @@ public class Box64Preset {
+     public String toString() {
+         return name;
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/app/src/main/java/com/winlator/cmod/box64/Box64PresetManager.java b/app/src/main/java/com/winlator/cmod/box64/Box64PresetManager.java
+index 587c6a8..01b63d4 100644
+--- a/app/src/main/java/com/winlator/cmod/box64/Box64PresetManager.java
++++ b/app/src/main/java/com/winlator/cmod/box64/Box64PresetManager.java
+@@ -99,6 +99,52 @@ public abstract class Box64PresetManager {
+ 
+             }
+         }
++        else if (id.equals(Box64Preset.DEVICE_LEGACY_LOW_2026)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.STABILITY));
++            envVars.put(ucPrefix+"_DYNAREC_BIGBLOCK", "0");
++            envVars.put(ucPrefix+"_DYNAREC_FORWARD", "64");
++            envVars.put(ucPrefix+"_DYNAREC_WAIT", "1");
++            envVars.put(ucPrefix+"_DYNAREC_PAUSE", "1");
++            envVars.put(ucPrefix+"_DYNACACHE", "2");
++        }
++        else if (id.equals(Box64Preset.DEVICE_MID_2026)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.COMPATIBILITY));
++            envVars.put(ucPrefix+"_DYNAREC_BIGBLOCK", "1");
++            envVars.put(ucPrefix+"_DYNAREC_FORWARD", "128");
++            envVars.put(ucPrefix+"_DYNAREC_WAIT", "1");
++            envVars.put(ucPrefix+"_DYNAREC_PAUSE", "1");
++            envVars.put(ucPrefix+"_DYNACACHE", "2");
++        }
++        else if (id.equals(Box64Preset.DEVICE_UPPER_MID_2026)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.INTERMEDIATE));
++            envVars.put(ucPrefix+"_DYNAREC_BIGBLOCK", "2");
++            envVars.put(ucPrefix+"_DYNAREC_FORWARD", "512");
++            envVars.put(ucPrefix+"_DYNAREC_PAUSE", "3");
++            envVars.put(ucPrefix+"_DYNAREC_WEAKBARRIER", "1");
++            envVars.put(ucPrefix+"_DYNACACHE", "1");
++        }
++        else if (id.equals(Box64Preset.DEVICE_FLAGSHIP_2026)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.PERFORMANCE));
++            envVars.put(ucPrefix+"_DYNAREC_SAFEFLAGS", "0");
++            envVars.put(ucPrefix+"_DYNAREC_FASTROUND", "2");
++            envVars.put(ucPrefix+"_DYNAREC_BIGBLOCK", "3");
++            envVars.put(ucPrefix+"_DYNAREC_FORWARD", "1024");
++            envVars.put(ucPrefix+"_DYNAREC_PAUSE", "3");
++            envVars.put(ucPrefix+"_DYNAREC_WEAKBARRIER", "2");
++            envVars.put(ucPrefix+"_DYNACACHE", "1");
++        }
++        else if (id.equals(Box64Preset.DEVICE_S8G1_SUPER)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.DEVICE_FLAGSHIP_2026));
++            envVars.put(ucPrefix+"_DYNAREC_CALLRET", "1");
++            envVars.put(ucPrefix+"_DYNAREC_WAIT", "0");
++            envVars.put(ucPrefix+"_DYNAREC_NATIVEFLAGS", "1");
++            envVars.put(ucPrefix+"_DYNAREC_STRONGMEM", "0");
++            envVars.put(ucPrefix+"_DYNACACHE", "1");
++            if (ucPrefix.equals("BOX64")) {
++                envVars.put("BOX64_MMAP32", "1");
++                envVars.put("BOX64_UNITYPLAYER", "0");
++            }
++        }
+         else if (id.startsWith(Box64Preset.CUSTOM)) {
+             for (String[] preset : customPresetsIterator(prefix, context)) {
+                 if (preset[0].equals(id)) {
+@@ -117,6 +163,11 @@ public abstract class Box64PresetManager {
+         presets.add(new Box64Preset(Box64Preset.COMPATIBILITY, context.getString(R.string.compatibility)));
+         presets.add(new Box64Preset(Box64Preset.INTERMEDIATE, context.getString(R.string.intermediate)));
+         presets.add(new Box64Preset(Box64Preset.PERFORMANCE, context.getString(R.string.performance)));
++        presets.add(new Box64Preset(Box64Preset.DEVICE_LEGACY_LOW_2026, "2026 Legacy / Low-end"));
++        presets.add(new Box64Preset(Box64Preset.DEVICE_MID_2026, "2026 Mid-range"));
++        presets.add(new Box64Preset(Box64Preset.DEVICE_UPPER_MID_2026, "2026 Upper-mid"));
++        presets.add(new Box64Preset(Box64Preset.DEVICE_FLAGSHIP_2026, "2026 Flagship"));
++        presets.add(new Box64Preset(Box64Preset.DEVICE_S8G1_SUPER, "S8+G1 Super (Box64)"));
+         for (String[] preset : customPresetsIterator(prefix, context)) presets.add(new Box64Preset(preset[0], preset[1]));
+         return presets;
+     }
+diff --git a/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePreset.java b/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePreset.java
+index a10c1b3..4ac86d0 100644
+--- a/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePreset.java
++++ b/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePreset.java
+@@ -7,6 +7,11 @@ public class FEXCorePreset {
+     public static final String COMPATIBILITY = "COMPATIBILITY";
+     public static final String INTERMEDIATE = "INTERMEDIATE";
+     public static final String PERFORMANCE = "PERFORMANCE";
++    public static final String DEVICE_LEGACY_LOW_2026 = "DEVICE_LEGACY_LOW_2026";
++    public static final String DEVICE_MID_2026 = "DEVICE_MID_2026";
++    public static final String DEVICE_UPPER_MID_2026 = "DEVICE_UPPER_MID_2026";
++    public static final String DEVICE_FLAGSHIP_2026 = "DEVICE_FLAGSHIP_2026";
++    public static final String DEVICE_S8G1_SUPER = "DEVICE_S8G1_SUPER";
+     public static final String CUSTOM = "CUSTOM";
+     public final String id;
+     public final String name;
+diff --git a/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePresetManager.java b/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePresetManager.java
+index 7191934..adbfb33 100644
+--- a/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePresetManager.java
++++ b/app/src/main/java/com/winlator/cmod/fexcore/FEXCorePresetManager.java
+@@ -62,6 +62,54 @@ public class FEXCorePresetManager {
+             envVars.put("FEX_X87REDUCEDPRECISION", "1");
+             envVars.put("FEX_MULTIBLOCK", "1");
+         }
++        else if (id.equals(FEXCorePreset.DEVICE_LEGACY_LOW_2026)) {
++            envVars.putAll(getEnvVars(context, FEXCorePreset.STABILITY));
++            envVars.put("FEX_ENABLECODECACHINGWIP", "0");
++            envVars.put("FEX_SMALLTSCSCALE", "1");
++            envVars.put("FEX_HIDEHYBRID", "1");
++            envVars.put("FEX_DISABLETELEMETRY", "1");
++            envVars.put("FEX_SILENTLOG", "1");
++        }
++        else if (id.equals(FEXCorePreset.DEVICE_MID_2026)) {
++            envVars.putAll(getEnvVars(context, FEXCorePreset.COMPATIBILITY));
++            envVars.put("FEX_ENABLECODECACHINGWIP", "1");
++            envVars.put("FEX_MAXINST", "6000");
++            envVars.put("FEX_SMALLTSCSCALE", "1");
++            envVars.put("FEX_HIDEHYBRID", "1");
++            envVars.put("FEX_DISABLETELEMETRY", "1");
++            envVars.put("FEX_SILENTLOG", "1");
++        }
++        else if (id.equals(FEXCorePreset.DEVICE_UPPER_MID_2026)) {
++            envVars.putAll(getEnvVars(context, FEXCorePreset.INTERMEDIATE));
++            envVars.put("FEX_ENABLECODECACHINGWIP", "1");
++            envVars.put("FEX_MAXINST", "9000");
++            envVars.put("FEX_SMALLTSCSCALE", "1");
++            envVars.put("FEX_HIDEHYBRID", "1");
++            envVars.put("FEX_DISABLETELEMETRY", "1");
++            envVars.put("FEX_SILENTLOG", "1");
++        }
++        else if (id.equals(FEXCorePreset.DEVICE_FLAGSHIP_2026)) {
++            envVars.putAll(getEnvVars(context, FEXCorePreset.PERFORMANCE));
++            envVars.put("FEX_ENABLECODECACHINGWIP", "1");
++            envVars.put("FEX_MAXINST", "12000");
++            envVars.put("FEX_SMALLTSCSCALE", "1");
++            envVars.put("FEX_HIDEHYBRID", "1");
++            envVars.put("FEX_DISABLETELEMETRY", "1");
++            envVars.put("FEX_SILENTLOG", "1");
++            envVars.put("FEX_SMCCHECKS", "0");
++        }
++        else if (id.equals(FEXCorePreset.DEVICE_S8G1_SUPER)) {
++            envVars.putAll(getEnvVars(context, FEXCorePreset.PERFORMANCE));
++            envVars.put("FEX_ENABLECODECACHINGWIP", "1");
++            envVars.put("FEX_MAXINST", "16384");
++            envVars.put("FEX_SMALLTSCSCALE", "1");
++            envVars.put("FEX_HIDEHYBRID", "1");
++            envVars.put("FEX_DISABLETELEMETRY", "1");
++            envVars.put("FEX_SILENTLOG", "1");
++            envVars.put("FEX_SMCCHECKS", "0");
++            envVars.put("FEX_ENABLECODECACHEVALIDATION", "0");
++            envVars.put("FEX_STRICTINPROCESSSPLITLOCKS", "0");
++        }
+         else if (id.startsWith(FEXCorePreset.CUSTOM)) {
+             for (String[] preset : customPresetsIterator(context)) {
+                 if (preset[0].equals(id)) {
+@@ -80,6 +128,11 @@ public class FEXCorePresetManager {
+         presets.add(new FEXCorePreset(FEXCorePreset.COMPATIBILITY, context.getString(R.string.compatibility)));
+         presets.add(new FEXCorePreset(FEXCorePreset.INTERMEDIATE, context.getString(R.string.intermediate)));
+         presets.add(new FEXCorePreset(FEXCorePreset.PERFORMANCE, context.getString(R.string.performance)));
++        presets.add(new FEXCorePreset(FEXCorePreset.DEVICE_LEGACY_LOW_2026, "2026 Legacy / Low-end"));
++        presets.add(new FEXCorePreset(FEXCorePreset.DEVICE_MID_2026, "2026 Mid-range"));
++        presets.add(new FEXCorePreset(FEXCorePreset.DEVICE_UPPER_MID_2026, "2026 Upper-mid"));
++        presets.add(new FEXCorePreset(FEXCorePreset.DEVICE_FLAGSHIP_2026, "2026 Flagship"));
++        presets.add(new FEXCorePreset(FEXCorePreset.DEVICE_S8G1_SUPER, "S8+G1 Super (FEX)"));
+         for (String[] preset : customPresetsIterator(context)) presets.add(new FEXCorePreset(preset[0], preset[1]));
+         return presets;
+     }

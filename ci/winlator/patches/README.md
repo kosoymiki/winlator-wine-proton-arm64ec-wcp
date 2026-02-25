@@ -15,7 +15,7 @@ middle of the stack.
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
 - `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX/Box preset editor surface expansion,
-  upscale runtime binding gates, forensic log sink reliability fixes, and follow-up driver browser UI/source pruning fixes
+  upscale runtime binding gates, forensic log sink reliability fixes, common runtime profile system, and follow-up driver browser UI/source pruning fixes
 
 ## Upscale patch consolidation note
 
@@ -49,6 +49,10 @@ consolidated into:
   - hardens FEX/Box preset JSON boolean parsing (`true`/`false`/`1`/`0`), supports explicit toggle on/off values and labels, and upgrades Box preset help to use inline JSON descriptions
 - `0038-contents-list-title-layout-for-long-package-names.patch`
   - improves `Contents` list rows for long package names (2-line title, ellipsis, tighter action spacing) to avoid truncated/awkward package labels
+- `0039-box64-wowbox64-envvars-and-device-tier-presets.patch`
+  - imports a fuller Box64/WoWBox64 env-var surface with typed toggle metadata and extends FEX/Box preset managers with 2026 device-tier profiles (including S8+G1 performance-focused presets)
+- `0040-runtime-common-profile-ui-and-launcher-integration.patch`
+  - adds a runtime-common profile layer (independent from FEX/Box presets), persists it in container/settings UI, bridges it into launcher env overlays, and emits forensic telemetry for applied common profile selection
 
 ## Known high-overlap files (intentional)
 
