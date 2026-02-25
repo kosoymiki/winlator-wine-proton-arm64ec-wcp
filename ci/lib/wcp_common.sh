@@ -44,6 +44,48 @@ wcp_make_jobs() {
   nproc
 }
 
+wcp_build_log_file() {
+  if [[ -n "${WCP_BUILD_LOG_FILE:-}" ]]; then
+    printf '%s' "${WCP_BUILD_LOG_FILE}"
+    return
+  fi
+  if [[ -n "${WCP_OUTPUT_DIR:-}" ]]; then
+    printf '%s' "${WCP_OUTPUT_DIR}/logs/wine-build.log"
+    return
+  fi
+  printf ''
+}
+
+wcp_make_logged() {
+  local jobs="$1" log_file="$2"
+  shift 2
+
+  if [[ -n "${log_file}" ]]; then
+    mkdir -p "$(dirname -- "${log_file}")"
+    make -j"${jobs}" "$@" 2>&1 | tee -a "${log_file}"
+    return "${PIPESTATUS[0]}"
+  fi
+
+  make -j"${jobs}" "$@"
+}
+
+wcp_make_with_serial_retry() {
+  local jobs="$1" log_file="$2"
+  shift 2
+
+  if wcp_make_logged "${jobs}" "${log_file}" "$@"; then
+    return 0
+  fi
+
+  if [[ "${jobs}" != "1" ]]; then
+    wcp_log "Parallel make failed with -j${jobs}; retrying serial build (-j1)"
+    wcp_make_logged "1" "${log_file}" "$@"
+    return $?
+  fi
+
+  return 1
+}
+
 source "${WCP_COMMON_DIR}/runtime-bundle-lock.sh"
 
 wcp_require_cmd() {
@@ -394,6 +436,7 @@ wcp_ensure_configure_script() {
 build_wine_tools_host() {
   local wine_src_dir="$1" build_dir="$2"
   local -a configure_args
+  local jobs build_log
 
   wcp_ensure_configure_script "${wine_src_dir}"
   mkdir -p "${build_dir}"
@@ -410,7 +453,9 @@ build_wine_tools_host() {
     "${configure_args[@]}"
   fi
 
-  if ! make -j"$(wcp_make_jobs)" tools; then
+  jobs="$(wcp_make_jobs)"
+  build_log="$(wcp_build_log_file)"
+  if ! wcp_make_with_serial_retry "${jobs}" "${build_log}" tools; then
     wcp_log "make tools target is unavailable; continuing with full build path"
   fi
   popd >/dev/null
@@ -419,6 +464,7 @@ build_wine_tools_host() {
 build_wine_multiarc_arm64ec() {
   local wine_src_dir="$1" build_dir="$2" stage_dir="$3"
   local -a configure_args
+  local jobs build_log
 
   wcp_ensure_configure_script "${wine_src_dir}"
 
@@ -446,8 +492,15 @@ build_wine_multiarc_arm64ec() {
     wcp_fail "configure did not include ARM64EC target support"
   fi
 
-  make -j"$(wcp_make_jobs)"
-  make install DESTDIR="${stage_dir}"
+  jobs="$(wcp_make_jobs)"
+  build_log="$(wcp_build_log_file)"
+
+  if ! wcp_make_with_serial_retry "${jobs}" "${build_log}"; then
+    wcp_fail "Wine build failed (jobs=${jobs}); see ${build_log:-<stdout>}"
+  fi
+  if ! wcp_make_logged "1" "${build_log}" install DESTDIR="${stage_dir}"; then
+    wcp_fail "Wine install failed; see ${build_log:-<stdout>}"
+  fi
   popd >/dev/null
 }
 

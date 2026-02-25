@@ -128,7 +128,7 @@ fetch_wine_sources() {
 }
 
 build_wine() {
-  local make_vulkan_log
+  local make_vulkan_log build_log jobs
 
   ensure_sdl2_tooling
   export TARGET_HOST
@@ -153,8 +153,14 @@ build_wine() {
     fail "configure did not include ARM64EC target support"
   fi
 
-  make -j"$(wine_make_jobs)"
-  make install DESTDIR="${STAGE_DIR}"
+  jobs="$(wine_make_jobs)"
+  build_log="$(wcp_build_log_file)"
+  if ! wcp_make_with_serial_retry "${jobs}" "${build_log}"; then
+    fail "Wine build failed (jobs=${jobs}); see ${build_log:-<stdout>}"
+  fi
+  if ! wcp_make_logged "1" "${build_log}" install DESTDIR="${STAGE_DIR}"; then
+    fail "Wine install failed; see ${build_log:-<stdout>}"
+  fi
   validate_sdl2_runtime_payload
   popd >/dev/null
 }

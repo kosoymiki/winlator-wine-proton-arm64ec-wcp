@@ -49,8 +49,9 @@ env:
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
   TARGET_HOST: aarch64-linux-gnu
   WCP_ENABLE_SDL2_RUNTIME: "1"
-  WCP_WINE_BUILD_JOBS: "2"
+  WCP_WINE_BUILD_JOBS: "1"
   WCP_FEX_BUILD_JOBS: "2"
+  WCP_BUILD_LOG_FILE: ${{ github.workspace }}/out/wine/logs/wine-build.log
   WCP_RUNTIME_CLASS_TARGET: bionic-native
   WCP_RUNTIME_CLASS_ENFORCE: "1"
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
@@ -141,6 +142,17 @@ jobs:
             out/wine/SHA256SUMS
             out/wine/logs/**
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-11-diagnostics
+          path: |
+            out/wine/logs/**
+            out/wine/SHA256SUMS
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Prepare release notes
