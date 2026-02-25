@@ -120,7 +120,7 @@
 - Исторические журналы (`docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md` и др.) сохраняют исходные метки `0.2b`; они не переписывались как архивные артефакты.
 - Эта карта отражает инженерную последовательность commit-ов в `main`, а не маркетинговые релизные версии.
 
-## Карта patch-stack (`0001..0036`) по этапам
+## Карта patch-stack (`0001..0038`) по этапам
 
 ### `0001-0004` — Базовый форк, runtime/FEX и тема
 - `0001`: базовый ARM64EC runtime/FEX patch-stack поверх `winlator_bionic`
@@ -156,7 +156,7 @@
 - `0026`: container bridge + launch normalization + upscale UI layer
 - `0027`: container settings как owner upscale config + legacy env migration
 
-### `0028-0036` — Adrenotools UX, forensic telemetry, FEX/FEXCore UI, upscale binding refinements
+### `0028-0038` — Adrenotools UX, forensic telemetry, FEX/Box/FEXCore UI, upscale binding refinements, Contents row polish
 - `0028`: native GameNative browser + version sorting + `Recommended`
 - `0029`: launcher pre-exec forensic telemetry
 - `0030`: FEXCore upstream config vars + inline help
@@ -164,6 +164,8 @@
 - `0032`: ForensicLogger app-private JSONL fallback
 - `0033-0035`: `Adrenotools` version-list UI, contents-style rows, version dialog/GameNative UX fixes
 - `0036`: defer upscale binding на shell launch до child graphics
+- `0037`: FEX/Box preset toggle semantics + Box inline descriptions
+- `0038`: `Contents` row layout polish для длинных названий пакетов
 
 ## Что можно безопасно объединять (кандидаты)
 

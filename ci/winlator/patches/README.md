@@ -14,7 +14,7 @@ middle of the stack.
 - `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
-- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX config surface expansion,
+- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX/Box preset editor surface expansion,
   upscale runtime binding gates, forensic log sink reliability fixes, and follow-up driver browser UI/source pruning fixes
 
 ## Upscale patch consolidation note
@@ -45,6 +45,10 @@ consolidated into:
   - fixes OEM AlertDialog list/message collision in version picker (source hint moved into custom clickable header), improves GameNative native parsing/filter labels, and hardens driver row readability in themed dialogs
 - `0036-upscale-binding-defer-shell-to-child-graphics.patch`
   - defers ScaleForce/SWFG binding decisions at container-shell/service launches so child graphics launches can apply upscale policy later instead of being preemptively downgraded
+- `0037-fex-box-preset-switch-semantics-and-box-descriptions.patch`
+  - hardens FEX/Box preset JSON boolean parsing (`true`/`false`/`1`/`0`), supports explicit toggle on/off values and labels, and upgrades Box preset help to use inline JSON descriptions
+- `0038-contents-list-title-layout-for-long-package-names.patch`
+  - improves `Contents` list rows for long package names (2-line title, ellipsis, tighter action spacing) to avoid truncated/awkward package labels
 
 ## Known high-overlap files (intentional)
 
