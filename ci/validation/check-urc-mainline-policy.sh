@@ -136,6 +136,7 @@ main() {
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/unix-module-abi.tsv'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicLauncherSourceResolvedSha256'
+  require_file "ci/validation/inspect-wcp-runtime-contract.sh"
 
   require_file "docs/REFLECTIVE_HARVARD_LEDGER.md"
   require_contains "docs/REFLECTIVE_HARVARD_LEDGER.md" 'Hypothesis'
