@@ -259,6 +259,10 @@ winlator_apply_bionic_source_map_overrides() {
   : "${WCP_BIONIC_SOURCE_MAP_FILE:=}"
   : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
   : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=0}"
+  : "${WCP_BIONIC_SOURCE_MAP_RESOLVED:=0}"
+  if [[ "${WCP_BIONIC_SOURCE_MAP_RESOLVED}" == "1" ]]; then
+    return 0
+  fi
   if winlator_bionic_mainline_strict; then
     WCP_BIONIC_SOURCE_MAP_FORCE="1"
     WCP_BIONIC_SOURCE_MAP_REQUIRED="1"
@@ -342,6 +346,8 @@ PY
   if [[ "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}" == "1" ]]; then
     log "Applied bionic source-map overrides for ${pkg_name}"
   fi
+  WCP_BIONIC_SOURCE_MAP_RESOLVED="1"
+  export WCP_BIONIC_SOURCE_MAP_RESOLVED
 }
 
 winlator_adopt_bionic_unix_core_modules() {
