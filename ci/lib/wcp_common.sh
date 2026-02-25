@@ -661,7 +661,7 @@ EOF_PROFILE
 wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
-  local external_runtime_audit_file unix_module_abi_file
+  local external_runtime_audit_file unix_module_abi_file bionic_source_entry_file
   local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
   local glibc_stage_reports_index glibc_stage_reports_dir
   local fex_bundled_present=0 boxed_runtime_detected=0
@@ -682,6 +682,7 @@ wcp_write_forensic_manifest() {
   hashes_file="${forensic_root}/critical-sha256.tsv"
   external_runtime_audit_file="${forensic_root}/external-runtime-components.tsv"
   unix_module_abi_file="${forensic_root}/unix-module-abi.tsv"
+  bionic_source_entry_file="${forensic_root}/bionic-source-entry.json"
   policy_violations_file="${forensic_root}/policy-violations.txt"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
@@ -882,6 +883,34 @@ wcp_write_forensic_manifest() {
 }
 EOF_SOURCE_REFS
   wcp_write_external_runtime_component_audit "${wcp_root}" "${external_runtime_audit_file}"
+  cat > "${bionic_source_entry_file}" <<EOF_BIONIC_SOURCE
+{
+  "packageName": "$(wcp_json_escape "${WCP_NAME:-}")",
+  "sourceMap": {
+    "path": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_PATH_EFFECTIVE:-${WCP_BIONIC_SOURCE_MAP_FILE:-}}")",
+    "sha256": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_SHA256:-}")",
+    "applied": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
+    "resolved": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_RESOLVED:-0}")"
+  },
+  "launcherSource": {
+    "url": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "sha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
+    "resolvedPath": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "resolvedSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-}")"
+  },
+  "unixSource": {
+    "url": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
+    "sha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
+    "resolvedPath": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-}")",
+    "resolvedSha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-}")"
+  },
+  "unixCore": {
+    "adopt": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
+    "modules": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")"
+  },
+  "donorPreflightDone": "$(wcp_json_escape "${WCP_BIONIC_DONOR_PREFLIGHT_DONE:-0}")"
+}
+EOF_BIONIC_SOURCE
   : > "${unix_module_abi_file}"
   if [[ -d "${wcp_root}/lib/wine/aarch64-unix" ]]; then
     while IFS= read -r rel; do
@@ -1019,6 +1048,7 @@ EOF_SOURCE_REFS
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
     "externalRuntimeAudit": "share/wcp-forensics/external-runtime-components.tsv",
+    "bionicSourceEntry": "share/wcp-forensics/bionic-source-entry.json",
     "unixModuleAbiIndex": "share/wcp-forensics/unix-module-abi.tsv",
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
@@ -1042,6 +1072,7 @@ wcp_validate_forensic_manifest() {
     "${wcp_root}/share/wcp-forensics/manifest.json"
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
     "${wcp_root}/share/wcp-forensics/external-runtime-components.tsv"
+    "${wcp_root}/share/wcp-forensics/bionic-source-entry.json"
     "${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
@@ -1196,6 +1227,7 @@ smoke_check_wcp() {
   grep -qx 'share/wcp-forensics/manifest.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/manifest.json"
   grep -qx 'share/wcp-forensics/critical-sha256.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/critical-sha256.tsv"
   grep -qx 'share/wcp-forensics/external-runtime-components.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/external-runtime-components.tsv"
+  grep -qx 'share/wcp-forensics/bionic-source-entry.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/bionic-source-entry.json"
   grep -qx 'share/wcp-forensics/unix-module-abi.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/unix-module-abi.tsv"
   grep -qx 'share/wcp-forensics/file-index.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/file-index.txt"
   grep -qx 'share/wcp-forensics/build-env.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/build-env.txt"
