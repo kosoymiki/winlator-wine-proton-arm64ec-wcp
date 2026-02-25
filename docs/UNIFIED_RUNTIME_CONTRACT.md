@@ -49,8 +49,9 @@ The package/runtime metadata must expose:
 ### Unix ABI forensic contract
 
 1. Every WCP must include `share/wcp-forensics/unix-module-abi.tsv`.
-2. In strict bionic mode, `lib/wine/aarch64-unix/ntdll.so` must be `bionic-unix`.
-3. In strict bionic mode, any `glibc-unix` entry in `unix-module-abi.tsv` is a hard failure.
+2. Every WCP must include `share/wcp-forensics/bionic-source-entry.json` with source-map and resolved donor hashes.
+3. In strict bionic mode, `lib/wine/aarch64-unix/ntdll.so` must be `bionic-unix`.
+4. In strict bionic mode, any `glibc-unix` entry in `unix-module-abi.tsv` is a hard failure.
 
 ## Translator Overlay Migration Rules
 
