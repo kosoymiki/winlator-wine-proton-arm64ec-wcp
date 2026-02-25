@@ -349,6 +349,7 @@ WINETOOLS
 compose_wcp_tree_from_stage() {
   local stage_dir="$1" wcp_root="$2"
   local prefix_pack_path profile_name profile_type utc_now runtime_class_detected unix_abi_detected
+  local wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason
 
   : "${ROOT_DIR:=$(cd -- "${WCP_COMMON_DIR}/../.." && pwd)}"
   : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
@@ -365,6 +366,11 @@ compose_wcp_tree_from_stage() {
   : "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
   : "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
   : "${WCP_RELEASE_TAG:=wcp-latest}"
+  : "${WCP_SOURCE_TYPE:=github-release}"
+  : "${WCP_SOURCE_VERSION:=rolling-latest}"
+  : "${WCP_ARTIFACT_NAME:=${WCP_NAME}.wcp}"
+  : "${WCP_SHA256_ARTIFACT_NAME:=SHA256SUMS-${WCP_NAME}.txt}"
+  : "${WCP_SHA256_URL:=https://github.com/${WCP_SOURCE_REPO}/releases/download/${WCP_RELEASE_TAG}/${WCP_SHA256_ARTIFACT_NAME}}"
   if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
     if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
       WCP_GLIBC_SOURCE_MODE="pinned-source"
@@ -415,6 +421,9 @@ compose_wcp_tree_from_stage() {
   generate_winetools_layer "${wcp_root}"
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
   unix_abi_detected="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  wine_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
+  wineserver_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
+  runtime_mismatch_reason="$(winlator_detect_runtime_mismatch_reason "${wcp_root}" "${WCP_RUNTIME_CLASS_TARGET}")"
 
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   cat > "${wcp_root}/profile.json" <<EOF_PROFILE
@@ -428,7 +437,11 @@ compose_wcp_tree_from_stage() {
   "delivery": "$(wcp_json_escape "${WCP_DELIVERY}")",
   "displayCategory": "$(wcp_json_escape "${WCP_DISPLAY_CATEGORY}")",
   "sourceRepo": "$(wcp_json_escape "${WCP_SOURCE_REPO}")",
+  "sourceType": "$(wcp_json_escape "${WCP_SOURCE_TYPE}")",
+  "sourceVersion": "$(wcp_json_escape "${WCP_SOURCE_VERSION}")",
   "releaseTag": "$(wcp_json_escape "${WCP_RELEASE_TAG}")",
+  "artifactName": "$(wcp_json_escape "${WCP_ARTIFACT_NAME}")",
+  "sha256Url": "$(wcp_json_escape "${WCP_SHA256_URL}")",
   "files": [],
   "wine": {
     "binPath": "bin",
@@ -440,6 +453,9 @@ compose_wcp_tree_from_stage() {
     "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET}")",
     "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
     "unixAbiDetected": "$(wcp_json_escape "${unix_abi_detected}")",
+    "wineLauncherAbi": "$(wcp_json_escape "${wine_launcher_abi}")",
+    "wineserverLauncherAbi": "$(wcp_json_escape "${wineserver_launcher_abi}")",
+    "runtimeMismatchReason": "$(wcp_json_escape "${runtime_mismatch_reason}")",
     "runtimeClassAutoPromoted": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
@@ -456,7 +472,7 @@ wcp_write_forensic_manifest() {
   local glibc_stage_reports_index glibc_stage_reports_dir
   local fex_bundled_present=0
   local -a critical_paths
-  local rel hash runtime_class_detected
+  local rel hash runtime_class_detected unix_abi_detected wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason
 
   : "${WCP_FORENSICS_ALWAYS_ON:=1}"
   [[ "${WCP_FORENSICS_ALWAYS_ON}" == "1" ]] || return 0
@@ -521,10 +537,23 @@ wcp_write_forensic_manifest() {
     echo "WCP_VERSION_CODE=${WCP_VERSION_CODE:-}"
     echo "WCP_PROFILE_NAME=${WCP_PROFILE_NAME:-}"
     echo "WCP_PROFILE_TYPE=${WCP_PROFILE_TYPE:-Wine}"
+    echo "WCP_CHANNEL=${WCP_CHANNEL:-stable}"
+    echo "WCP_DELIVERY=${WCP_DELIVERY:-remote}"
+    echo "WCP_DISPLAY_CATEGORY=${WCP_DISPLAY_CATEGORY:-}"
+    echo "WCP_SOURCE_REPO=${WCP_SOURCE_REPO:-}"
+    echo "WCP_SOURCE_TYPE=${WCP_SOURCE_TYPE:-}"
+    echo "WCP_SOURCE_VERSION=${WCP_SOURCE_VERSION:-}"
+    echo "WCP_RELEASE_TAG=${WCP_RELEASE_TAG:-}"
+    echo "WCP_ARTIFACT_NAME=${WCP_ARTIFACT_NAME:-}"
+    echo "WCP_SHA256_URL=${WCP_SHA256_URL:-}"
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
     echo "WCP_RUNTIME_CLASS_TARGET=${WCP_RUNTIME_CLASS_TARGET:-}"
     echo "WCP_RUNTIME_CLASS_ENFORCE=${WCP_RUNTIME_CLASS_ENFORCE:-}"
     echo "WCP_RUNTIME_CLASS_AUTO_PROMOTED=${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}"
+    echo "WCP_RUNTIME_UNIX_ABI_DETECTED=$(winlator_detect_unix_module_abi "${wcp_root}")"
+    echo "WCP_RUNTIME_WINE_LAUNCHER_ABI=$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
+    echo "WCP_RUNTIME_WINESERVER_LAUNCHER_ABI=$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
+    echo "WCP_RUNTIME_MISMATCH_REASON=$(winlator_detect_runtime_mismatch_reason "${wcp_root}" "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}")"
     echo "WCP_ALLOW_GLIBC_EXPERIMENTAL=${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}"
     echo "WCP_MAINLINE_BIONIC_ONLY=${WCP_MAINLINE_BIONIC_ONLY:-1}"
     echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
@@ -586,9 +615,22 @@ wcp_write_forensic_manifest() {
     "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
+    "WCP_CHANNEL": "$(wcp_json_escape "${WCP_CHANNEL:-stable}")",
+    "WCP_DELIVERY": "$(wcp_json_escape "${WCP_DELIVERY:-remote}")",
+    "WCP_DISPLAY_CATEGORY": "$(wcp_json_escape "${WCP_DISPLAY_CATEGORY:-}")",
+    "WCP_SOURCE_REPO": "$(wcp_json_escape "${WCP_SOURCE_REPO:-}")",
+    "WCP_SOURCE_TYPE": "$(wcp_json_escape "${WCP_SOURCE_TYPE:-}")",
+    "WCP_SOURCE_VERSION": "$(wcp_json_escape "${WCP_SOURCE_VERSION:-}")",
+    "WCP_RELEASE_TAG": "$(wcp_json_escape "${WCP_RELEASE_TAG:-}")",
+    "WCP_ARTIFACT_NAME": "$(wcp_json_escape "${WCP_ARTIFACT_NAME:-}")",
+    "WCP_SHA256_URL": "$(wcp_json_escape "${WCP_SHA256_URL:-}")",
     "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "WCP_RUNTIME_CLASS_ENFORCE": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_ENFORCE:-}")",
     "WCP_RUNTIME_CLASS_AUTO_PROMOTED": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
+    "WCP_RUNTIME_UNIX_ABI_DETECTED": "$(wcp_json_escape "$(winlator_detect_unix_module_abi "${wcp_root}")")",
+    "WCP_RUNTIME_WINE_LAUNCHER_ABI": "$(wcp_json_escape "$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")")",
+    "WCP_RUNTIME_WINESERVER_LAUNCHER_ABI": "$(wcp_json_escape "$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")")",
+    "WCP_RUNTIME_MISMATCH_REASON": "$(wcp_json_escape "$(winlator_detect_runtime_mismatch_reason "${wcp_root}" "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}")")",
     "WCP_ALLOW_GLIBC_EXPERIMENTAL": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
     "WCP_MAINLINE_BIONIC_ONLY": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
@@ -641,6 +683,10 @@ EOF_SOURCE_REFS
     fex_bundled_present=1
   fi
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
+  unix_abi_detected="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  wine_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
+  wineserver_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
+  runtime_mismatch_reason="$(winlator_detect_runtime_mismatch_reason "${wcp_root}" "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}")"
 
   cat > "${manifest_file}" <<EOF_MANIFEST
 {
@@ -652,9 +698,22 @@ EOF_SOURCE_REFS
     "profileType": "$(wcp_json_escape "${WCP_PROFILE_TYPE:-Wine}")",
     "versionName": "$(wcp_json_escape "${WCP_VERSION_NAME:-}")",
     "versionCode": ${WCP_VERSION_CODE:-0},
+    "channel": "$(wcp_json_escape "${WCP_CHANNEL:-stable}")",
+    "delivery": "$(wcp_json_escape "${WCP_DELIVERY:-remote}")",
+    "displayCategory": "$(wcp_json_escape "${WCP_DISPLAY_CATEGORY:-}")",
+    "sourceRepo": "$(wcp_json_escape "${WCP_SOURCE_REPO:-}")",
+    "sourceType": "$(wcp_json_escape "${WCP_SOURCE_TYPE:-}")",
+    "sourceVersion": "$(wcp_json_escape "${WCP_SOURCE_VERSION:-}")",
+    "releaseTag": "$(wcp_json_escape "${WCP_RELEASE_TAG:-}")",
+    "artifactName": "$(wcp_json_escape "${WCP_ARTIFACT_NAME:-}")",
+    "sha256Url": "$(wcp_json_escape "${WCP_SHA256_URL:-}")",
     "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")",
     "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
+    "unixModuleAbi": "$(wcp_json_escape "${unix_abi_detected}")",
+    "wineLauncherAbi": "$(wcp_json_escape "${wine_launcher_abi}")",
+    "wineserverLauncherAbi": "$(wcp_json_escape "${wineserver_launcher_abi}")",
+    "runtimeMismatchReason": "$(wcp_json_escape "${runtime_mismatch_reason}")",
     "allowGlibcExperimental": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
     "mainlineBionicOnly": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "fexBundledInWcp": ${fex_bundled_present},

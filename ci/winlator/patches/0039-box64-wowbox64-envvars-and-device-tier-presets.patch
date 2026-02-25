@@ -1909,6 +1909,7 @@ index e6a3ff0..4127e57 100644
 +    public static final String DEVICE_UPPER_MID_2026 = "DEVICE_UPPER_MID_2026";
 +    public static final String DEVICE_FLAGSHIP_2026 = "DEVICE_FLAGSHIP_2026";
 +    public static final String DEVICE_S8G1_SUPER = "DEVICE_S8G1_SUPER";
++    public static final String XAW64_BASELINE = "XAW64_BASELINE";
      public static final String CUSTOM = "CUSTOM";
      public final String id;
      public final String name;
@@ -1973,6 +1974,21 @@ index 587c6a8..01b63d4 100644
 +                envVars.put("BOX64_UNITYPLAYER", "0");
 +            }
 +        }
++        else if (id.equals(Box64Preset.XAW64_BASELINE)) {
++            envVars.putAll(getEnvVars(prefix, context, Box64Preset.INTERMEDIATE));
++            envVars.put(ucPrefix+"_DYNAREC", "1");
++            envVars.put(ucPrefix+"_DYNAREC_SAFEFLAGS", "2");
++            envVars.put(ucPrefix+"_DYNAREC_DF", "1");
++            envVars.put(ucPrefix+"_DYNAREC_FASTNAN", "1");
++            envVars.put(ucPrefix+"_DYNAREC_FASTROUND", "1");
++            envVars.put(ucPrefix+"_DYNAREC_BIGBLOCK", "2");
++            envVars.put(ucPrefix+"_DYNAREC_FORWARD", "128");
++            envVars.put(ucPrefix+"_DYNAREC_WAIT", "1");
++            envVars.put(ucPrefix+"_DYNAREC_PAUSE", "1");
++            envVars.put(ucPrefix+"_DYNAREC_CALLRET", "0");
++            envVars.put(ucPrefix+"_DYNAREC_STRONGMEM", "0");
++            envVars.put(ucPrefix+"_MMAP32", "1");
++        }
          else if (id.startsWith(Box64Preset.CUSTOM)) {
              for (String[] preset : customPresetsIterator(prefix, context)) {
                  if (preset[0].equals(id)) {
@@ -1985,6 +2001,7 @@ index 587c6a8..01b63d4 100644
 +        presets.add(new Box64Preset(Box64Preset.DEVICE_UPPER_MID_2026, "2026 Upper-mid"));
 +        presets.add(new Box64Preset(Box64Preset.DEVICE_FLAGSHIP_2026, "2026 Flagship"));
 +        presets.add(new Box64Preset(Box64Preset.DEVICE_S8G1_SUPER, "S8+G1 Super (Box64)"));
++        presets.add(new Box64Preset(Box64Preset.XAW64_BASELINE, "xaw64 Baseline (Stable)"));
          for (String[] preset : customPresetsIterator(prefix, context)) presets.add(new Box64Preset(preset[0], preset[1]));
          return presets;
      }

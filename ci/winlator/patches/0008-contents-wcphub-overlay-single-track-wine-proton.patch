@@ -130,6 +130,15 @@ index 349c112..003e937 100644
              descBuilder.append("\nRelease tag: ").append(profile.releaseTag);
          }
 -        tvDescription.setText(descBuilder.toString());
++        if (profile.sourceVersion != null && !profile.sourceVersion.isEmpty()) {
++            descBuilder.append("\nSource version: ").append(profile.sourceVersion);
++        }
++        if (profile.artifactName != null && !profile.artifactName.isEmpty()) {
++            descBuilder.append("\nArtifact: ").append(profile.artifactName);
++        }
++        if (profile.sha256Url != null && !profile.sha256Url.isEmpty()) {
++            descBuilder.append("\nSHA256: ").append(profile.sha256Url);
++        }
 +        tvDescription.setText(descBuilder.length() == 0 ? DASH_PLACEHOLDER : descBuilder.toString());
          recyclerView.setAdapter(new ContentInfoFileAdapter(profile.fileList == null ? Collections.emptyList() : profile.fileList));
          recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
@@ -266,4 +275,3 @@ index cc5d1a4..a26a658 100644
      <string name="channel_nightly">Nightly</string>
 -- 
 2.43.0
-

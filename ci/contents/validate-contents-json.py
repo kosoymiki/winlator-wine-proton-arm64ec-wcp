@@ -39,6 +39,11 @@ def main() -> None:
         channel = str(item.get("channel", "stable")).strip().lower()
         delivery = str(item.get("delivery", "")).strip().lower()
         remote_url = str(item["remoteUrl"])
+        source_repo = str(item.get("sourceRepo", "")).strip()
+        release_tag = str(item.get("releaseTag", "")).strip()
+        source_version = str(item.get("sourceVersion", "")).strip()
+        artifact_name = str(item.get("artifactName", "")).strip()
+        sha256_url = str(item.get("sha256Url", "")).strip()
 
         if channel not in ALLOWED_CHANNELS:
             fail(f"entry {idx} has invalid channel: {channel}")
@@ -48,6 +53,24 @@ def main() -> None:
             fail(f"entry {idx} remoteUrl must point to this repo releases: {remote_url}")
         if type_name.lower() == "wine" and not WINE_VERSION_RE.match(ver_name):
             fail(f"entry {idx} verName is not Winlator-parseable: {ver_name}")
+        if not source_repo:
+            fail(f"entry {idx} missing sourceRepo")
+        if not release_tag:
+            fail(f"entry {idx} missing releaseTag")
+        if not source_version:
+            fail(f"entry {idx} missing sourceVersion")
+        if not artifact_name:
+            fail(f"entry {idx} missing artifactName")
+        if not remote_url.endswith("/" + artifact_name):
+            fail(f"entry {idx} remoteUrl must end with artifactName ({artifact_name}): {remote_url}")
+        if not sha256_url:
+            fail(f"entry {idx} missing sha256Url")
+        if not sha256_url.startswith("https://github.com/kosoymiki/winlator-wine-proton-arm64ec-wcp/releases/download/"):
+            fail(f"entry {idx} sha256Url must point to this repo releases: {sha256_url}")
+        if f"/{release_tag}/" not in sha256_url:
+            fail(f"entry {idx} sha256Url must use matching releaseTag {release_tag}: {sha256_url}")
+        if not artifact_name.endswith(".wcp"):
+            fail(f"entry {idx} artifactName must end with .wcp: {artifact_name}")
 
         key = (type_name.lower(), ver_name, ver_code)
         if key in seen:

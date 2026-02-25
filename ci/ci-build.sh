@@ -27,6 +27,11 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_DISPLAY_CATEGORY:=Wine/Proton}"
 : "${WCP_SOURCE_REPO:=${GITHUB_REPOSITORY:-kosoymiki/winlator-wine-proton-arm64ec-wcp}}"
 : "${WCP_RELEASE_TAG:=wcp-latest}"
+: "${WCP_SOURCE_TYPE:=github-release}"
+: "${WCP_SOURCE_VERSION:=rolling-latest}"
+: "${WCP_ARTIFACT_NAME:=${WCP_NAME}.wcp}"
+: "${WCP_SHA256_ARTIFACT_NAME:=SHA256SUMS-${WCP_NAME}.txt}"
+: "${WCP_SHA256_URL:=https://github.com/${WCP_SOURCE_REPO}/releases/download/${WCP_RELEASE_TAG}/${WCP_SHA256_ARTIFACT_NAME}}"
 : "${TARGET_HOST:=aarch64-linux-gnu}"
 : "${FEX_SOURCE_MODE:=auto}"
 : "${FEX_WCP_URL:=https://github.com/Arihany/WinlatorWCPHub/releases/download/FEXCore-Nightly/FEXCore-2601-260217-49a37c7.wcp}"
@@ -424,7 +429,11 @@ WINETOOLS
   "delivery": "${WCP_DELIVERY}",
   "displayCategory": "${WCP_DISPLAY_CATEGORY}",
   "sourceRepo": "${WCP_SOURCE_REPO}",
+  "sourceType": "${WCP_SOURCE_TYPE}",
+  "sourceVersion": "${WCP_SOURCE_VERSION}",
   "releaseTag": "${WCP_RELEASE_TAG}",
+  "artifactName": "${WCP_ARTIFACT_NAME}",
+  "sha256Url": "${WCP_SHA256_URL}",
   "files": [],
   "wine": {
     "binPath": "bin",
@@ -438,6 +447,10 @@ WINETOOLS
     "target": "$(printf '%s' "${WCP_TARGET_RUNTIME}" | sed 's/"/\\"/g')",
     "runtimeClassTarget": "$(printf '%s' "${WCP_RUNTIME_CLASS_TARGET}" | sed 's/"/\\"/g')",
     "runtimeClassDetected": "$(printf '%s' "$(winlator_detect_runtime_class "${WCP_ROOT}")" | sed 's/"/\\"/g')",
+    "unixAbiDetected": "$(printf '%s' "$(winlator_detect_unix_module_abi "${WCP_ROOT}")" | sed 's/"/\\"/g')",
+    "wineLauncherAbi": "$(printf '%s' "$(winlator_detect_launcher_abi "${WCP_ROOT}/bin/wine")" | sed 's/"/\\"/g')",
+    "wineserverLauncherAbi": "$(printf '%s' "$(winlator_detect_launcher_abi "${WCP_ROOT}/bin/wineserver")" | sed 's/"/\\"/g')",
+    "runtimeMismatchReason": "$(printf '%s' "$(winlator_detect_runtime_mismatch_reason "${WCP_ROOT}" "${WCP_RUNTIME_CLASS_TARGET}")" | sed 's/"/\\"/g')",
     "fexExpectationMode": "$(printf '%s' "${WCP_FEX_EXPECTATION_MODE}" | sed 's/"/\\"/g')",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   }
@@ -506,11 +519,19 @@ validate_wcp_tree() {
     [[ -f "${WCP_ROOT}/lib/wine/aarch64-unix/${mod}" ]] || fail "Wine unix module missing: lib/wine/aarch64-unix/${mod}"
   done
 
+  local unix_abi runtime_mismatch_reason
+  unix_abi="$(winlator_detect_unix_module_abi "${WCP_ROOT}")"
+  if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "bionic-native" && "${unix_abi}" != "bionic-unix" ]]; then
+    fail "Bionic runtime target requires bionic-linked unix modules; detected unix ABI=${unix_abi} (expected bionic-unix)"
+  fi
+
   if [[ "${REQUIRE_PREFIX_PACK}" == "1" ]]; then
     [[ -f "${WCP_ROOT}/prefixPack.txz" ]] || fail "WCP layout is incomplete, missing: prefixPack.txz"
   fi
 
   winlator_validate_launchers
+  runtime_mismatch_reason="$(winlator_detect_runtime_mismatch_reason "${WCP_ROOT}" "${WCP_RUNTIME_CLASS_TARGET}")"
+  [[ "${runtime_mismatch_reason}" == "none" ]] || fail "Runtime mismatch after validation: ${runtime_mismatch_reason}"
   wcp_validate_forensic_manifest "${WCP_ROOT}"
   wcp_runtime_verify_glibc_lock "${WCP_ROOT}"
   log "WCP layout validation passed"

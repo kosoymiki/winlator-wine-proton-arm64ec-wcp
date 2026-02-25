@@ -43,6 +43,76 @@ winlator_runtime_target_enforced() {
   [[ "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]
 }
 
+winlator_detect_launcher_abi() {
+  local bin_path="$1"
+  [[ -e "${bin_path}" ]] || { printf '%s' "missing"; return 0; }
+  if winlator_is_bionic_launcher "${bin_path}"; then
+    printf '%s' "bionic"
+    return 0
+  fi
+  if winlator_is_glibc_launcher "${bin_path}"; then
+    printf '%s' "glibc"
+    return 0
+  fi
+  if head -n1 "${bin_path}" 2>/dev/null | grep -q '^#!'; then
+    printf '%s' "wrapper-script"
+    return 0
+  fi
+  printf '%s' "unknown"
+}
+
+winlator_detect_runtime_mismatch_reason() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local target="${2:-${WCP_RUNTIME_CLASS_TARGET:-bionic-native}}"
+  local detected unix_abi wine_abi wineserver_abi
+
+  [[ -n "${wcp_root}" ]] || { printf '%s' "missing-wcp-root"; return 0; }
+  detected="$(winlator_detect_runtime_class "${wcp_root}")"
+  unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  wine_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
+  wineserver_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
+
+  case "${target}" in
+    bionic-native)
+      if [[ "${detected}" != "bionic-native" ]]; then
+        printf '%s' "runtime-class:${detected}"
+        return 0
+      fi
+      if [[ "${unix_abi}" != "bionic-unix" ]]; then
+        printf '%s' "unix-abi:${unix_abi}"
+        return 0
+      fi
+      if [[ "${wine_abi}" != "bionic" ]]; then
+        printf '%s' "wine-launcher-abi:${wine_abi}"
+        return 0
+      fi
+      if [[ "${wineserver_abi}" != "bionic" ]]; then
+        printf '%s' "wineserver-launcher-abi:${wineserver_abi}"
+        return 0
+      fi
+      ;;
+    glibc-wrapped)
+      if [[ "${detected}" != "glibc-wrapped" ]]; then
+        printf '%s' "runtime-class:${detected}"
+        return 0
+      fi
+      if [[ "${wine_abi}" != "wrapper-script" ]]; then
+        printf '%s' "wine-launcher-abi:${wine_abi}"
+        return 0
+      fi
+      if [[ "${wineserver_abi}" != "wrapper-script" ]]; then
+        printf '%s' "wineserver-launcher-abi:${wineserver_abi}"
+        return 0
+      fi
+      ;;
+    *)
+      printf '%s' "unknown-target:${target}"
+      return 0
+      ;;
+  esac
+  printf '%s' "none"
+}
+
 winlator_report_runtime_class_mismatch() {
   local detected="$1"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
@@ -757,7 +827,7 @@ winlator_validate_runtime_class_target() {
 }
 
 winlator_validate_launchers() {
-  local wine_bin wineserver_bin
+  local wine_bin wineserver_bin runtime_mismatch_reason
 
   [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return
 
@@ -768,6 +838,9 @@ winlator_validate_launchers() {
 
   if winlator_is_glibc_launcher "${wine_bin}"; then
     fail "bin/wine is a raw glibc launcher for /lib/ld-linux-aarch64.so.1; Winlator bionic cannot execute it directly"
+  fi
+  if winlator_is_glibc_launcher "${wineserver_bin}"; then
+    fail "bin/wineserver is a raw glibc launcher for /lib/ld-linux-aarch64.so.1; Winlator bionic cannot execute it directly"
   fi
 
   if [[ -f "${WCP_ROOT}/bin/wine.glibc-real" ]]; then
@@ -782,4 +855,6 @@ winlator_validate_launchers() {
   fi
 
   winlator_validate_runtime_class_target
+  runtime_mismatch_reason="$(winlator_detect_runtime_mismatch_reason "${WCP_ROOT}" "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}")"
+  [[ "${runtime_mismatch_reason}" == "none" ]] || fail "runtime mismatch detected after launcher validation: ${runtime_mismatch_reason}"
 }

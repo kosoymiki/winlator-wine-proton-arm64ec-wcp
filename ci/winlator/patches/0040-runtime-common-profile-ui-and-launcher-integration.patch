@@ -28,6 +28,10 @@ index 23b873d..de9527d 100644
 +        final Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
 +        RuntimeProfileManager.loadSpinner(sRuntimeProfile, isEditMode() ? container.getRuntimeProfile() : preferences.getString("runtime_profile", RuntimeProfile.AUTO));
 +
++        String configuredBox64Preset = preferences.getString("box64_preset", "");
++        if (!isEditMode() && (configuredBox64Preset == null || configuredBox64Preset.trim().isEmpty())) {
++            Box64PresetManager.loadSpinner(sBox64Preset, Box64Preset.XAW64_BASELINE);
++        }
          setupUpscaleConfigSection(view);
 
          String selectedDriver = sGraphicsDriver.getSelectedItem().toString();
