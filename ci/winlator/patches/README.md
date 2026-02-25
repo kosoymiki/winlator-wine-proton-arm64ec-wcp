@@ -61,6 +61,8 @@ consolidated into:
   - introduces a launch precheck contract between `XServerDisplayActivity` and `GuestProgramLauncherComponent` (route/kind/target/reason/shell-fallback markers), hardens missing-shortcut or empty-command launches with deterministic shell fallback, and adds reason-coded forensic telemetry for launch acceptance and runtime preset migration guards
 - `0045-graphics-driver-fallback-chain-and-telemetry.patch`
   - adds deterministic graphics driver probe fallback chain (`requested -> fallback candidate -> system`), exports probe-chain env telemetry for runtime triage, and refines graphics suitability fallback severity when a usable non-system fallback driver is selected
+- `0046-runtime-appcompat-guarded-rules-and-forensics.patch`
+  - introduces guarded runtime app-compat rules (env defaults only, executable-token matched), applies them in launcher pre-exec path, and emits rule-level forensic telemetry (`RUNTIME_APPCOMPAT_APPLIED` + submit-stage fields)
 
 ## Known high-overlap files (intentional)
 

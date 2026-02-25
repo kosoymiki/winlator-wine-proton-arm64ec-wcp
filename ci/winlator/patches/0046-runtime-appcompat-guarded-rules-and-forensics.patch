@@ -1,0 +1,291 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index b74582a..50da013 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -7,13 +7,14 @@ import android.net.ConnectivityManager;
+ import android.os.Process;
+ import android.util.Log;
+ 
+-import androidx.preference.PreferenceManager;
+-
+-import com.winlator.cmod.box64.Box64Preset;
+-import com.winlator.cmod.box64.Box64PresetManager;
+-import com.winlator.cmod.container.Container;
+-import com.winlator.cmod.container.Shortcut;
+-import com.winlator.cmod.contents.ContentProfile;
++import androidx.preference.PreferenceManager;
++
++import com.winlator.cmod.compat.AppCompatRegistry;
++import com.winlator.cmod.box64.Box64Preset;
++import com.winlator.cmod.box64.Box64PresetManager;
++import com.winlator.cmod.container.Container;
++import com.winlator.cmod.container.Shortcut;
++import com.winlator.cmod.contents.ContentProfile;
+ import com.winlator.cmod.contents.ContentsManager;
+ import com.winlator.cmod.core.Callback;
+ import com.winlator.cmod.core.EnvVars;
+@@ -42,10 +43,11 @@ import java.io.InputStreamReader;
+ import java.net.InetAddress;
+ import java.net.URL;
+ import java.nio.file.Files;
+-import java.nio.file.Path;
+-import java.nio.file.Paths;
+-import java.nio.file.StandardCopyOption;
+-import java.util.ArrayList;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
++import java.util.ArrayList;
++import java.util.List;
+ 
+ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+     private String guestExecutable;
+@@ -413,13 +415,13 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+ 
+         envVars.put("LD_PRELOAD", ld_preload);
+ 
+-        if (this.envVars.has("MANGOHUD")) {
+-            this.envVars.remove("MANGOHUD");
+-        }
+-
+-        if (this.envVars.has("MANGOHUD_CONFIG")) {
+-            this.envVars.remove("MANGOHUD_CONFIG");
+-        }
++        if (this.envVars != null && this.envVars.has("MANGOHUD")) {
++            this.envVars.remove("MANGOHUD");
++        }
++
++        if (this.envVars != null && this.envVars.has("MANGOHUD_CONFIG")) {
++            this.envVars.remove("MANGOHUD_CONFIG");
++        }
+         
+         // Merge any additional environment variables from external sources
+         if (this.envVars != null) {
+@@ -430,6 +432,25 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         if (!isEmpty(launchPrecheckReason)) envVars.put("WINLATOR_LAUNCH_PRECHECK_REASON", launchPrecheckReason);
+         envVars.put("WINLATOR_LAUNCH_PRECHECK_FALLBACK", launchPrecheckShellFallback ? "1" : "0");
+ 
++        String compatExecutable = !isEmpty(launchTargetExecutable) ? launchTargetExecutable : guestExecutable;
++        AppCompatRegistry appCompatRegistry = AppCompatRegistry.defaultRegistry();
++        List<String> appliedCompatRules = appCompatRegistry.apply(compatExecutable, envVars);
++        if (!appliedCompatRules.isEmpty()) {
++            String appCompatRules = appCompatRegistry.describeRuleIds(appliedCompatRules);
++            envVars.put("WINLATOR_APPCOMPAT_RULES", appCompatRules);
++            envVars.put("WINLATOR_APPCOMPAT_EXECUTABLE", compatExecutable);
++            if (forensicMode || !isEmpty(forensicTraceId)) {
++                ForensicLogger.logEvent(context, "info", "RUNTIME_APPCOMPAT_APPLIED", forensicTraceId, "launcher",
++                        "Applied guarded runtime compat rules",
++                        ForensicLogger.fields(
++                                "container_id", container != null ? container.id : 0,
++                                "route", forensicRouteSource,
++                                "executable", compatExecutable,
++                                "rule_ids", appCompatRules,
++                                "rule_details", appCompatRegistry.describeRules(appliedCompatRules)));
++            }
++        }
++
+         if (wineInfo.isArm64EC()) {
+             String resolvedWineDllPath = envVars.get("WINEDLLPATH");
+             if (isEmpty(resolvedWineDllPath))
+@@ -613,6 +634,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "launch_target_executable", launchTargetExecutable,
+                             "launch_precheck_reason", launchPrecheckReason,
+                             "launch_precheck_shell_fallback", launchPrecheckShellFallback ? "1" : "0",
++                            "appcompat_rules", envVars.get("WINLATOR_APPCOMPAT_RULES"),
++                            "appcompat_executable", envVars.get("WINLATOR_APPCOMPAT_EXECUTABLE"),
+                             "runtime_preset_guard_reason", runtimePresetGuardReason,
+                             "perf_preset", envVars.get("WINLATOR_PERF_PRESET"),
+                             "perf_preset_source", envVars.get("WINLATOR_PERF_PRESET_SOURCE"),
+diff --git a/app/src/main/java/com/winlator/cmod/compat/AppCompatRule.java b/app/src/main/java/com/winlator/cmod/compat/AppCompatRule.java
+new file mode 100644
+index 0000000..2c59ebc
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/compat/AppCompatRule.java
+@@ -0,0 +1,98 @@
++package com.winlator.cmod.compat;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++
++public final class AppCompatRule {
++    private final String id;
++    private final String description;
++    private final List<String> executableTokens;
++    private final Map<String, String> envDefaults;
++
++    public AppCompatRule(
++            String id,
++            String description,
++            List<String> executableTokens,
++            Map<String, String> envDefaults) {
++        this.id = sanitizeId(id);
++        this.description = description != null ? description.trim() : "";
++        this.executableTokens = normalizeTokens(executableTokens);
++        this.envDefaults = normalizeEnvDefaults(envDefaults);
++    }
++
++    public String getId() {
++        return id;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public List<String> getExecutableTokens() {
++        return executableTokens;
++    }
++
++    public Map<String, String> getEnvDefaults() {
++        return envDefaults;
++    }
++
++    public boolean matches(String executable) {
++        if (executable == null || executable.trim().isEmpty()) return false;
++        if (executableTokens.isEmpty()) return false;
++        String normalized = executable.trim().toLowerCase(Locale.US);
++        for (String token : executableTokens) {
++            if (!token.isEmpty() && normalized.contains(token)) return true;
++        }
++        return false;
++    }
++
++    public boolean applyTo(EnvVars envVars) {
++        if (envVars == null) return false;
++        boolean changed = false;
++        for (Map.Entry<String, String> entry : envDefaults.entrySet()) {
++            String key = entry.getKey();
++            if (key == null || key.trim().isEmpty()) continue;
++            String existing = envVars.get(key);
++            if (existing != null && !existing.trim().isEmpty()) continue;
++            envVars.put(key, entry.getValue() != null ? entry.getValue() : "");
++            changed = true;
++        }
++        return changed;
++    }
++
++    private static String sanitizeId(String id) {
++        if (id == null || id.trim().isEmpty()) return "rule-unknown";
++        return id.trim();
++    }
++
++    private static List<String> normalizeTokens(List<String> tokens) {
++        ArrayList<String> normalized = new ArrayList<>();
++        if (tokens != null) {
++            for (String token : tokens) {
++                if (token == null) continue;
++                String lowered = token.trim().toLowerCase(Locale.US);
++                if (!lowered.isEmpty()) normalized.add(lowered);
++            }
++        }
++        return Collections.unmodifiableList(normalized);
++    }
++
++    private static Map<String, String> normalizeEnvDefaults(Map<String, String> envDefaults) {
++        LinkedHashMap<String, String> normalized = new LinkedHashMap<>();
++        if (envDefaults != null) {
++            for (Map.Entry<String, String> entry : envDefaults.entrySet()) {
++                if (entry.getKey() == null) continue;
++                String key = entry.getKey().trim();
++                if (key.isEmpty()) continue;
++                normalized.put(key, entry.getValue() != null ? entry.getValue() : "");
++            }
++        }
++        return Collections.unmodifiableMap(normalized);
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/compat/AppCompatRegistry.java b/app/src/main/java/com/winlator/cmod/compat/AppCompatRegistry.java
+new file mode 100644
+index 0000000..bd80290
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/compat/AppCompatRegistry.java
+@@ -0,0 +1,83 @@
++package com.winlator.cmod.compat;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.LinkedHashMap;
++import java.util.List;
++
++public final class AppCompatRegistry {
++    private final ArrayList<AppCompatRule> rules = new ArrayList<>();
++
++    private AppCompatRegistry() {}
++
++    public static AppCompatRegistry defaultRegistry() {
++        AppCompatRegistry registry = new AppCompatRegistry();
++
++        LinkedHashMap<String, String> legacyDx9 = new LinkedHashMap<>();
++        legacyDx9.put("MESA_EXTENSION_MAX_YEAR", "2003");
++        registry.addRule(new AppCompatRule(
++                "legacy-dx9-year-cap",
++                "Caps extension year for legacy DX9 startup paths.",
++                Arrays.asList("dx9", "d3d9"),
++                legacyDx9
++        ));
++
++        LinkedHashMap<String, String> safePresent = new LinkedHashMap<>();
++        safePresent.put("MESA_VK_WSI_PRESENT_MODE", "fifo");
++        registry.addRule(new AppCompatRule(
++                "launcher-present-mode-safe",
++                "Uses FIFO present mode for launcher/updater bootstrap executables.",
++                Arrays.asList("launcher", "updater", "patcher", "bootstrap"),
++                safePresent
++        ));
++
++        return registry;
++    }
++
++    public void addRule(AppCompatRule rule) {
++        if (rule != null) rules.add(rule);
++    }
++
++    public List<AppCompatRule> getRules() {
++        return new ArrayList<>(rules);
++    }
++
++    public List<String> apply(String executable, EnvVars envVars) {
++        ArrayList<String> appliedRuleIds = new ArrayList<>();
++        if (envVars == null || executable == null || executable.trim().isEmpty()) return appliedRuleIds;
++
++        for (AppCompatRule rule : rules) {
++            if (!rule.matches(executable)) continue;
++            if (rule.applyTo(envVars)) {
++                appliedRuleIds.add(rule.getId());
++            }
++        }
++        return appliedRuleIds;
++    }
++
++    public String describeRuleIds(List<String> ruleIds) {
++        if (ruleIds == null || ruleIds.isEmpty()) return "";
++        ArrayList<String> ids = new ArrayList<>();
++        for (String id : ruleIds) {
++            if (id != null && !id.trim().isEmpty()) ids.add(id.trim());
++        }
++        return String.join(",", ids);
++    }
++
++    public String describeRules(List<String> ruleIds) {
++        if (ruleIds == null || ruleIds.isEmpty()) return "";
++        ArrayList<String> descriptions = new ArrayList<>();
++        for (String id : ruleIds) {
++            if (id == null || id.trim().isEmpty()) continue;
++            String normalized = id.trim();
++            for (AppCompatRule rule : rules) {
++                if (!normalized.equals(rule.getId())) continue;
++                descriptions.add(rule.getId() + ":" + rule.getDescription());
++                break;
++            }
++        }
++        return String.join(" | ", descriptions);
++    }
++}
