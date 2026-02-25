@@ -63,3 +63,13 @@ bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 1. Убедитесь, что container Wine — именно ARM64EC build.
 2. Для ARM64EC выберите `FEXCore` как emulator (не `Box64`).
 3. Снимите логи по гайду: `docs/winlator-container-hang-debug.md`.
+
+## Проверка WCP runtime-контракта (локально)
+
+После сборки можно проверить forensic/runtime сигнатуру архива:
+
+```bash
+bash ci/validation/inspect-wcp-runtime-contract.sh \
+  out/proton-ge10/proton-ge10-arm64ec.wcp \
+  --strict-bionic
+```
