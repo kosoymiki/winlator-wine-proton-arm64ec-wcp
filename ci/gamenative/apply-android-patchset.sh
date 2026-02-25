@@ -343,6 +343,95 @@ path.write_text(head + marker + aarch64_block + inject + "\n#else" + rest, encod
 PY
 }
 
+backport_include_winternl_fex() {
+  local file
+  file="${SOURCE_DIR}/include/winternl.h"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+def patch_enum(block_name: str, closing_name: str, inject_after: str, inject_tail: str):
+    global updated
+    pattern = rf'(typedef enum _{block_name} \{{.*?)(\n\}}\s*{closing_name};)'
+    m = re.search(pattern, updated, flags=re.S)
+    if not m:
+        raise SystemExit(f"{block_name} enum block not found")
+    head = m.group(1)
+    if inject_after in head:
+        return
+    if "ProcessWineUnixDebuggerPid = 1100," in head and block_name == "PROCESSINFOCLASS":
+        head = re.sub(
+            r'(ProcessWineUnixDebuggerPid\s*=\s*1100,\s*\n\s*#endif)',
+            r'\1\n    ProcessFexHardwareTso = 2000,\n    ProcessFexUnalignAtomic,',
+            head,
+            count=1,
+        )
+    elif "MemoryWineUnixWow64Funcs," in head and block_name == "MEMORY_INFORMATION_CLASS":
+        head = re.sub(
+            r'(MemoryWineUnixWow64Funcs,\s*\n\s*#endif)',
+            r'\1\n    MemoryFexStatsShm = 2000,',
+            head,
+            count=1,
+        )
+    else:
+        head = head.rstrip() + "\n" + inject_tail
+    updated = updated[:m.start(1)] + head + updated[m.start(2):]
+
+patch_enum(
+    block_name="PROCESSINFOCLASS",
+    closing_name="PROCESSINFOCLASS",
+    inject_after="ProcessFexHardwareTso",
+    inject_tail="    ProcessFexHardwareTso = 2000,\n    ProcessFexUnalignAtomic,",
+)
+
+if "FEX_UNALIGN_ATOMIC_EMULATE" not in updated:
+    marker = "#define MEM_EXECUTE_OPTION_DISABLE"
+    if marker not in updated:
+        raise SystemExit("MEM_EXECUTE_OPTION_DISABLE marker not found")
+    updated = updated.replace(
+        marker,
+        "/* These match the prctl flag values */\n"
+        "#define FEX_UNALIGN_ATOMIC_EMULATE            (1ULL << 0)\n"
+        "#define FEX_UNALIGN_ATOMIC_BACKPATCH          (1ULL << 1)\n"
+        "#define FEX_UNALIGN_ATOMIC_STRICT_SPLIT_LOCKS (1ULL << 2)\n\n"
+        + marker,
+        1,
+    )
+
+patch_enum(
+    block_name="MEMORY_INFORMATION_CLASS",
+    closing_name="MEMORY_INFORMATION_CLASS",
+    inject_after="MemoryFexStatsShm",
+    inject_tail="    MemoryFexStatsShm = 2000,",
+)
+
+if "MEMORY_FEX_STATS_SHM_INFORMATION" not in updated:
+    marker = "} MEMORY_REGION_INFORMATION, *PMEMORY_REGION_INFORMATION;\n"
+    if marker not in updated:
+        raise SystemExit("MEMORY_REGION_INFORMATION marker not found")
+    updated = updated.replace(
+        marker,
+        marker
+        + "\n"
+        + "typedef struct _MEMORY_FEX_STATS_SHM_INFORMATION\n"
+        + "{\n"
+        + "    void *shm_base;\n"
+        + "    SIZE_T map_size;\n"
+        + "} MEMORY_FEX_STATS_SHM_INFORMATION, *PMEMORY_FEX_STATS_SHM_INFORMATION;\n",
+        1,
+    )
+
+path.write_text(updated, encoding="utf-8")
+PY
+}
+
 backport_protonge_hodll() {
   local file
   file="${SOURCE_DIR}/dlls/wow64/syscall.c"
@@ -514,6 +603,9 @@ run_backport_action() {
       ;;
     backport_protonge_winex11)
       backport_protonge_winex11
+      ;;
+    backport_include_winternl_fex)
+      backport_include_winternl_fex
       ;;
     *)
       fail "Unsupported backport action: ${action}"
