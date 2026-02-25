@@ -162,6 +162,50 @@ consolidated in the patch stack to reduce maintenance overhead:
 - Container settings now own an extended Eden-compatible renderer policy surface end-to-end.
 - Runtime and launcher emit forensic fields for advanced renderer policy resolution, reducing opaque behavior during crash/perf triage.
 
+## Patch `0051` - Eden Shader/Debug Renderer Controls Expansion
+
+### Before
+- `0050` covered backend/cache/speed policy, but several Eden renderer flags were still outside structured container-owned config.
+- Missing parity for shader-debug and low-level renderer toggles (`GPU_LOG_SHADER_DUMPS`, `IR3_SHADER_DEBUG`, `RENDERER_DESCRIPTOR_INDEXING`, etc.) plus `RENDERER_SLOW_SPEED_LIMIT`.
+
+### During
+- Extended `Container` extraData schema and normalizers with advanced Eden flags:
+  - shader/debug telemetry toggles
+  - descriptor/dynamic/reactive/provoking/sample/spirv toggles
+  - legacy QCOM patching + NVDEC emulation
+  - slow speed limit
+- Expanded Advanced tab UI with dedicated controls for these fields.
+- Bridged all keys into launcher/runtime contracts:
+  - `WINLATOR_UPSCALE_*` normalized keys
+  - Eden aliases (`RENDERER_*`, `GPU_LOG_SHADER_DUMPS`, etc.)
+  - enriched forensic fields in `XServerDisplayActivity` and `GuestProgramLauncherComponent`.
+
+### After
+- Upscale transfer reaches broader Eden renderer parity without relying on raw env hacks.
+- Container settings remain the canonical source, while launcher/runtime still normalize and mirror values for deterministic behavior and forensic analysis.
+
+## Patch `0052` - Eden Renderer/GPU Diagnostics Control Parity
+
+### Before
+- `0051` still left a gap for several Eden renderer/GPU diagnostics controls (`RENDERER_ACCURACY`, ASTC policy tokens, GPU logging/unswizzle controls, VRAM usage mode, GPU model/time tokens, Mesa debug).
+- These keys could still appear only as ad-hoc raw env values, outside container-owned schema and migration logic.
+
+### During
+- Extended container schema/UI and legacy-env migration with a structured set of renderer/GPU diagnostic controls:
+  - renderer quality/policy tokens (accuracy/AA/aspect/ASTC/screen-layout/VRAM mode)
+  - low-level GPU diagnostics (logging master/driver-debug/level/memory/ring-buffer)
+  - unswizzle controls (enabled/chunk/stream/texture size)
+  - GPU model/time + Mesa debug token fields
+- Added normalization + env-editor strip ownership so these controls stay container-owned.
+- Bridged normalized values in both runtime and launcher paths into:
+  - `WINLATOR_UPSCALE_*` keys
+  - Eden-compatible aliases (`RENDERER_*`, `GPU_*`, `MESA_DEBUG`)
+  - expanded forensic submit fields.
+
+### After
+- Eden renderer/upscaler transfer reaches near-complete env-contract coverage without fallback to unmanaged raw env hacks.
+- Runtime and launcher now converge on the same normalized diagnostics policy surface, improving reproducibility for crash/perf forensics.
+
 ## Patch `0027` - Container Settings Own Upscale Config (UI + migration guard)
 
 ### Before

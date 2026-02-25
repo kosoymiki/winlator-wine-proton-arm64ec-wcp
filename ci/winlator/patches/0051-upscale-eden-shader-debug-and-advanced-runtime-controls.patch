@@ -1,0 +1,1098 @@
+From 2cfc9f4269ffd5bf97984ce411a886ee7d1fe22f Mon Sep 17 00:00:00 2001
+From: codex <codex@local>
+Date: Wed, 25 Feb 2026 22:27:26 +0300
+Subject: [PATCH] upscale: extend eden renderer contract with advanced
+ shader/debug controls
+
+---
+ .../cmod/ContainerDetailFragment.java         | 280 +++++++++++++++++-
+ .../winlator/cmod/XServerDisplayActivity.java | 137 ++++++++-
+ .../winlator/cmod/container/Container.java    |  70 +++++
+ .../GuestProgramLauncherComponent.java        | 173 ++++++++++-
+ .../res/layout/container_detail_fragment.xml  | 156 ++++++++++
+ app/src/main/res/values/strings.xml           |  14 +
+ 6 files changed, 825 insertions(+), 5 deletions(-)
+
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index f3c9399..1a93530 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -254,6 +254,45 @@ public class ContainerDetailFragment extends Fragment {
+ 
+         Spinner sUpscaleForceMaxClock = view.findViewById(R.id.SUpscaleForceMaxClock);
+         sUpscaleForceMaxClock.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleGpuLogShaderDumps = view.findViewById(R.id.SUpscaleGpuLogShaderDumps);
++        sUpscaleGpuLogShaderDumps.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleIr3ShaderDebug = view.findViewById(R.id.SUpscaleIr3ShaderDebug);
++        sUpscaleIr3ShaderDebug.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleShowShadersBuilding = view.findViewById(R.id.SUpscaleShowShadersBuilding);
++        sUpscaleShowShadersBuilding.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleDropShaderCache = view.findViewById(R.id.SUpscaleDropShaderCache);
++        sUpscaleDropShaderCache.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleRendererDebug = view.findViewById(R.id.SUpscaleRendererDebug);
++        sUpscaleRendererDebug.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleDescriptorIndexing = view.findViewById(R.id.SUpscaleDescriptorIndexing);
++        sUpscaleDescriptorIndexing.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleDynaState = view.findViewById(R.id.SUpscaleDynaState);
++        sUpscaleDynaState.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleReactiveFlushing = view.findViewById(R.id.SUpscaleReactiveFlushing);
++        sUpscaleReactiveFlushing.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleProvokeVertex = view.findViewById(R.id.SUpscaleProvokeVertex);
++        sUpscaleProvokeVertex.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleSampleShading = view.findViewById(R.id.SUpscaleSampleShading);
++        sUpscaleSampleShading.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleOptimizeSpirvOutput = view.findViewById(R.id.SUpscaleOptimizeSpirvOutput);
++        sUpscaleOptimizeSpirvOutput.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscalePatchOldQcomDrivers = view.findViewById(R.id.SUpscalePatchOldQcomDrivers);
++        sUpscalePatchOldQcomDrivers.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sUpscaleNvdecEmulation = view.findViewById(R.id.SUpscaleNvdecEmulation);
++        sUpscaleNvdecEmulation.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+     }
+ 
+     private void applyDynamicStylesRecursively(View view, boolean isDarkMode) {
+@@ -704,11 +743,25 @@ public class ContainerDetailFragment extends Fragment {
+         Spinner sDiskShaderCache = view.findViewById(R.id.SUpscaleDiskShaderCache);
+         Spinner sUseSpeedLimit = view.findViewById(R.id.SUpscaleUseSpeedLimit);
+         Spinner sForceMaxClock = view.findViewById(R.id.SUpscaleForceMaxClock);
++        Spinner sGpuLogShaderDumps = view.findViewById(R.id.SUpscaleGpuLogShaderDumps);
++        Spinner sIr3ShaderDebug = view.findViewById(R.id.SUpscaleIr3ShaderDebug);
++        Spinner sShowShadersBuilding = view.findViewById(R.id.SUpscaleShowShadersBuilding);
++        Spinner sDropShaderCache = view.findViewById(R.id.SUpscaleDropShaderCache);
++        Spinner sRendererDebug = view.findViewById(R.id.SUpscaleRendererDebug);
++        Spinner sDescriptorIndexing = view.findViewById(R.id.SUpscaleDescriptorIndexing);
++        Spinner sDynaState = view.findViewById(R.id.SUpscaleDynaState);
++        Spinner sReactiveFlushing = view.findViewById(R.id.SUpscaleReactiveFlushing);
++        Spinner sProvokeVertex = view.findViewById(R.id.SUpscaleProvokeVertex);
++        Spinner sSampleShading = view.findViewById(R.id.SUpscaleSampleShading);
++        Spinner sOptimizeSpirvOutput = view.findViewById(R.id.SUpscaleOptimizeSpirvOutput);
++        Spinner sPatchOldQcomDrivers = view.findViewById(R.id.SUpscalePatchOldQcomDrivers);
++        Spinner sNvdecEmulation = view.findViewById(R.id.SUpscaleNvdecEmulation);
+         EditText etMultiplier = view.findViewById(R.id.ETUpscaleSwfgMultiplier);
+         EditText etLatency = view.findViewById(R.id.ETUpscaleSwfgLatencyMs);
+         EditText etFsrSharpness = view.findViewById(R.id.ETUpscaleFsrSharpness);
+         EditText etSpeedLimit = view.findViewById(R.id.ETUpscaleSpeedLimit);
+         EditText etTurboSpeedLimit = view.findViewById(R.id.ETUpscaleTurboSpeedLimit);
++        EditText etSlowSpeedLimit = view.findViewById(R.id.ETUpscaleSlowSpeedLimit);
+ 
+         UpscaleUiConfig cfg = readUpscaleConfigFromContainerOrLegacyEnv();
+ 
+@@ -727,12 +780,26 @@ public class ContainerDetailFragment extends Fragment {
+         AppUtils.setSpinnerSelectionFromValue(sDiskShaderCache, cfg.diskShaderCache);
+         AppUtils.setSpinnerSelectionFromValue(sUseSpeedLimit, cfg.useSpeedLimit);
+         AppUtils.setSpinnerSelectionFromValue(sForceMaxClock, cfg.forceMaxClock);
++        AppUtils.setSpinnerSelectionFromValue(sGpuLogShaderDumps, cfg.gpuLogShaderDumps);
++        AppUtils.setSpinnerSelectionFromValue(sIr3ShaderDebug, cfg.ir3ShaderDebug);
++        AppUtils.setSpinnerSelectionFromValue(sShowShadersBuilding, cfg.showShadersBuilding);
++        AppUtils.setSpinnerSelectionFromValue(sDropShaderCache, cfg.dropShaderCache);
++        AppUtils.setSpinnerSelectionFromValue(sRendererDebug, cfg.rendererDebug);
++        AppUtils.setSpinnerSelectionFromValue(sDescriptorIndexing, cfg.descriptorIndexing);
++        AppUtils.setSpinnerSelectionFromValue(sDynaState, cfg.dynaState);
++        AppUtils.setSpinnerSelectionFromValue(sReactiveFlushing, cfg.reactiveFlushing);
++        AppUtils.setSpinnerSelectionFromValue(sProvokeVertex, cfg.provokingVertex);
++        AppUtils.setSpinnerSelectionFromValue(sSampleShading, cfg.sampleShading);
++        AppUtils.setSpinnerSelectionFromValue(sOptimizeSpirvOutput, cfg.optimizeSpirvOutput);
++        AppUtils.setSpinnerSelectionFromValue(sPatchOldQcomDrivers, cfg.patchOldQcomDrivers);
++        AppUtils.setSpinnerSelectionFromValue(sNvdecEmulation, cfg.nvdecEmulation);
+ 
+         etMultiplier.setText(String.valueOf(clampInt(cfg.swfgMultiplier, 1, 4, 2)));
+         etLatency.setText(String.valueOf(clampInt(cfg.swfgLatencyMs, 1, 50, 8)));
+         etFsrSharpness.setText(String.valueOf(clampInt(cfg.fsrSharpness, 0, 100, 40)));
+         etSpeedLimit.setText(String.valueOf(clampInt(cfg.speedLimit, 25, 400, 100)));
+         etTurboSpeedLimit.setText(String.valueOf(clampInt(cfg.turboSpeedLimit, 0, 600, 0)));
++        etSlowSpeedLimit.setText(String.valueOf(clampInt(cfg.slowSpeedLimit, 0, 600, 0)));
+ 
+         Runnable syncUiState = () -> {
+             String policy = normalizeChoice(String.valueOf(sSwfgPolicy.getSelectedItem()), "auto");
+@@ -748,6 +815,7 @@ public class ContainerDetailFragment extends Fragment {
+             etFsrSharpness.setEnabled(enableFsrSharpness);
+             etSpeedLimit.setEnabled(enableSpeedLimits);
+             etTurboSpeedLimit.setEnabled(enableSpeedLimits);
++            etSlowSpeedLimit.setEnabled(enableSpeedLimits);
+         };
+         AdapterView.OnItemSelectedListener syncListener = new AdapterView.OnItemSelectedListener() {
+             @Override
+@@ -782,11 +850,25 @@ public class ContainerDetailFragment extends Fragment {
+         Spinner sDiskShaderCache = view.findViewById(R.id.SUpscaleDiskShaderCache);
+         Spinner sUseSpeedLimit = view.findViewById(R.id.SUpscaleUseSpeedLimit);
+         Spinner sForceMaxClock = view.findViewById(R.id.SUpscaleForceMaxClock);
++        Spinner sGpuLogShaderDumps = view.findViewById(R.id.SUpscaleGpuLogShaderDumps);
++        Spinner sIr3ShaderDebug = view.findViewById(R.id.SUpscaleIr3ShaderDebug);
++        Spinner sShowShadersBuilding = view.findViewById(R.id.SUpscaleShowShadersBuilding);
++        Spinner sDropShaderCache = view.findViewById(R.id.SUpscaleDropShaderCache);
++        Spinner sRendererDebug = view.findViewById(R.id.SUpscaleRendererDebug);
++        Spinner sDescriptorIndexing = view.findViewById(R.id.SUpscaleDescriptorIndexing);
++        Spinner sDynaState = view.findViewById(R.id.SUpscaleDynaState);
++        Spinner sReactiveFlushing = view.findViewById(R.id.SUpscaleReactiveFlushing);
++        Spinner sProvokeVertex = view.findViewById(R.id.SUpscaleProvokeVertex);
++        Spinner sSampleShading = view.findViewById(R.id.SUpscaleSampleShading);
++        Spinner sOptimizeSpirvOutput = view.findViewById(R.id.SUpscaleOptimizeSpirvOutput);
++        Spinner sPatchOldQcomDrivers = view.findViewById(R.id.SUpscalePatchOldQcomDrivers);
++        Spinner sNvdecEmulation = view.findViewById(R.id.SUpscaleNvdecEmulation);
+         EditText etMultiplier = view.findViewById(R.id.ETUpscaleSwfgMultiplier);
+         EditText etLatency = view.findViewById(R.id.ETUpscaleSwfgLatencyMs);
+         EditText etFsrSharpness = view.findViewById(R.id.ETUpscaleFsrSharpness);
+         EditText etSpeedLimit = view.findViewById(R.id.ETUpscaleSpeedLimit);
+         EditText etTurboSpeedLimit = view.findViewById(R.id.ETUpscaleTurboSpeedLimit);
++        EditText etSlowSpeedLimit = view.findViewById(R.id.ETUpscaleSlowSpeedLimit);
+ 
+         UpscaleUiConfig cfg = new UpscaleUiConfig();
+         cfg.perfPreset = normalizeChoice(String.valueOf(sPerfPreset.getSelectedItem()), "auto");
+@@ -809,6 +891,20 @@ public class ContainerDetailFragment extends Fragment {
+         cfg.speedLimit = String.valueOf(clampInt(etSpeedLimit.getText().toString(), 25, 400, 100));
+         cfg.turboSpeedLimit = String.valueOf(clampInt(etTurboSpeedLimit.getText().toString(), 0, 600, 0));
+         cfg.forceMaxClock = normalizeOnOffAuto(String.valueOf(sForceMaxClock.getSelectedItem()), "auto");
++        cfg.gpuLogShaderDumps = normalizeOnOffAuto(String.valueOf(sGpuLogShaderDumps.getSelectedItem()), "auto");
++        cfg.ir3ShaderDebug = normalizeOnOffAuto(String.valueOf(sIr3ShaderDebug.getSelectedItem()), "auto");
++        cfg.showShadersBuilding = normalizeOnOffAuto(String.valueOf(sShowShadersBuilding.getSelectedItem()), "auto");
++        cfg.dropShaderCache = normalizeOnOffAuto(String.valueOf(sDropShaderCache.getSelectedItem()), "auto");
++        cfg.rendererDebug = normalizeOnOffAuto(String.valueOf(sRendererDebug.getSelectedItem()), "auto");
++        cfg.descriptorIndexing = normalizeOnOffAuto(String.valueOf(sDescriptorIndexing.getSelectedItem()), "auto");
++        cfg.dynaState = normalizeOnOffAuto(String.valueOf(sDynaState.getSelectedItem()), "auto");
++        cfg.reactiveFlushing = normalizeOnOffAuto(String.valueOf(sReactiveFlushing.getSelectedItem()), "auto");
++        cfg.provokingVertex = normalizeOnOffAuto(String.valueOf(sProvokeVertex.getSelectedItem()), "auto");
++        cfg.sampleShading = normalizeOnOffAuto(String.valueOf(sSampleShading.getSelectedItem()), "auto");
++        cfg.optimizeSpirvOutput = normalizeOnOffAuto(String.valueOf(sOptimizeSpirvOutput.getSelectedItem()), "auto");
++        cfg.patchOldQcomDrivers = normalizeOnOffAuto(String.valueOf(sPatchOldQcomDrivers.getSelectedItem()), "auto");
++        cfg.nvdecEmulation = normalizeOnOffAuto(String.valueOf(sNvdecEmulation.getSelectedItem()), "auto");
++        cfg.slowSpeedLimit = String.valueOf(clampInt(etSlowSpeedLimit.getText().toString(), 0, 600, 0));
+         return cfg;
+     }
+ 
+@@ -834,6 +930,20 @@ public class ContainerDetailFragment extends Fragment {
+         extraData.put(Container.EXTRA_UPSCALE_SPEED_LIMIT, cfg.speedLimit);
+         extraData.put(Container.EXTRA_UPSCALE_TURBO_SPEED_LIMIT, cfg.turboSpeedLimit);
+         extraData.put(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, cfg.forceMaxClock);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, cfg.gpuLogShaderDumps);
++        extraData.put(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, cfg.ir3ShaderDebug);
++        extraData.put(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, cfg.showShadersBuilding);
++        extraData.put(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, cfg.dropShaderCache);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_DEBUG, cfg.rendererDebug);
++        extraData.put(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, cfg.descriptorIndexing);
++        extraData.put(Container.EXTRA_UPSCALE_DYNA_STATE, cfg.dynaState);
++        extraData.put(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, cfg.reactiveFlushing);
++        extraData.put(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, cfg.provokingVertex);
++        extraData.put(Container.EXTRA_UPSCALE_SAMPLE_SHADING, cfg.sampleShading);
++        extraData.put(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, cfg.optimizeSpirvOutput);
++        extraData.put(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, cfg.patchOldQcomDrivers);
++        extraData.put(Container.EXTRA_UPSCALE_NVDEC_EMULATION, cfg.nvdecEmulation);
++        extraData.put(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, cfg.slowSpeedLimit);
+         return extraData;
+     }
+ 
+@@ -860,6 +970,20 @@ public class ContainerDetailFragment extends Fragment {
+             cfg.speedLimit = container.getExtra(Container.EXTRA_UPSCALE_SPEED_LIMIT, "");
+             cfg.turboSpeedLimit = container.getExtra(Container.EXTRA_UPSCALE_TURBO_SPEED_LIMIT, "");
+             cfg.forceMaxClock = container.getExtra(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, "");
++            cfg.gpuLogShaderDumps = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, "");
++            cfg.ir3ShaderDebug = container.getExtra(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, "");
++            cfg.showShadersBuilding = container.getExtra(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, "");
++            cfg.dropShaderCache = container.getExtra(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, "");
++            cfg.rendererDebug = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_DEBUG, "");
++            cfg.descriptorIndexing = container.getExtra(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, "");
++            cfg.dynaState = container.getExtra(Container.EXTRA_UPSCALE_DYNA_STATE, "");
++            cfg.reactiveFlushing = container.getExtra(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, "");
++            cfg.provokingVertex = container.getExtra(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, "");
++            cfg.sampleShading = container.getExtra(Container.EXTRA_UPSCALE_SAMPLE_SHADING, "");
++            cfg.optimizeSpirvOutput = container.getExtra(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, "");
++            cfg.patchOldQcomDrivers = container.getExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, "");
++            cfg.nvdecEmulation = container.getExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, "");
++            cfg.slowSpeedLimit = container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "");
+         }
+ 
+         boolean missingStructuredUpscale = cfg.perfPreset.isEmpty()
+@@ -881,7 +1005,21 @@ public class ContainerDetailFragment extends Fragment {
+                 && cfg.useSpeedLimit.isEmpty()
+                 && cfg.speedLimit.isEmpty()
+                 && cfg.turboSpeedLimit.isEmpty()
+-                && cfg.forceMaxClock.isEmpty();
++                && cfg.forceMaxClock.isEmpty()
++                && cfg.gpuLogShaderDumps.isEmpty()
++                && cfg.ir3ShaderDebug.isEmpty()
++                && cfg.showShadersBuilding.isEmpty()
++                && cfg.dropShaderCache.isEmpty()
++                && cfg.rendererDebug.isEmpty()
++                && cfg.descriptorIndexing.isEmpty()
++                && cfg.dynaState.isEmpty()
++                && cfg.reactiveFlushing.isEmpty()
++                && cfg.provokingVertex.isEmpty()
++                && cfg.sampleShading.isEmpty()
++                && cfg.optimizeSpirvOutput.isEmpty()
++                && cfg.patchOldQcomDrivers.isEmpty()
++                && cfg.nvdecEmulation.isEmpty()
++                && cfg.slowSpeedLimit.isEmpty();
+ 
+         if (missingStructuredUpscale && isEditMode()) {
+             applyLegacyUpscaleEnvFallback(cfg, new EnvVars(container.getEnvVars()));
+@@ -908,6 +1046,20 @@ public class ContainerDetailFragment extends Fragment {
+         cfg.speedLimit = String.valueOf(clampInt(cfg.speedLimit, 25, 400, 100));
+         cfg.turboSpeedLimit = String.valueOf(clampInt(cfg.turboSpeedLimit, 0, 600, 0));
+         cfg.forceMaxClock = normalizeOnOffAuto(cfg.forceMaxClock, "auto");
++        cfg.gpuLogShaderDumps = normalizeOnOffAuto(cfg.gpuLogShaderDumps, "auto");
++        cfg.ir3ShaderDebug = normalizeOnOffAuto(cfg.ir3ShaderDebug, "auto");
++        cfg.showShadersBuilding = normalizeOnOffAuto(cfg.showShadersBuilding, "auto");
++        cfg.dropShaderCache = normalizeOnOffAuto(cfg.dropShaderCache, "auto");
++        cfg.rendererDebug = normalizeOnOffAuto(cfg.rendererDebug, "auto");
++        cfg.descriptorIndexing = normalizeOnOffAuto(cfg.descriptorIndexing, "auto");
++        cfg.dynaState = normalizeOnOffAuto(cfg.dynaState, "auto");
++        cfg.reactiveFlushing = normalizeOnOffAuto(cfg.reactiveFlushing, "auto");
++        cfg.provokingVertex = normalizeOnOffAuto(cfg.provokingVertex, "auto");
++        cfg.sampleShading = normalizeOnOffAuto(cfg.sampleShading, "auto");
++        cfg.optimizeSpirvOutput = normalizeOnOffAuto(cfg.optimizeSpirvOutput, "auto");
++        cfg.patchOldQcomDrivers = normalizeOnOffAuto(cfg.patchOldQcomDrivers, "auto");
++        cfg.nvdecEmulation = normalizeOnOffAuto(cfg.nvdecEmulation, "auto");
++        cfg.slowSpeedLimit = String.valueOf(clampInt(cfg.slowSpeedLimit, 0, 600, 0));
+         return cfg;
+     }
+ 
+@@ -997,6 +1149,76 @@ public class ContainerDetailFragment extends Fragment {
+                 envVars.get("WINLATOR_UPSCALE_FORCE_MAX_CLOCK"),
+                 envVars.get("RENDERER_FORCE_MAX_CLOCK"));
+         if (!forceMaxClock.isEmpty()) cfg.forceMaxClock = normalizeOnOffAuto(forceMaxClock, cfg.forceMaxClock);
++
++        String gpuLogShaderDumps = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                envVars.get("GPU_LOG_SHADER_DUMPS"));
++        if (!gpuLogShaderDumps.isEmpty()) cfg.gpuLogShaderDumps = normalizeOnOffAuto(gpuLogShaderDumps, cfg.gpuLogShaderDumps);
++
++        String ir3ShaderDebug = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"),
++                envVars.get("IR3_SHADER_DEBUG"));
++        if (!ir3ShaderDebug.isEmpty()) cfg.ir3ShaderDebug = normalizeOnOffAuto(ir3ShaderDebug, cfg.ir3ShaderDebug);
++
++        String showShadersBuilding = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"),
++                envVars.get("SHOW_SHADERS_BUILDING"));
++        if (!showShadersBuilding.isEmpty()) cfg.showShadersBuilding = normalizeOnOffAuto(showShadersBuilding, cfg.showShadersBuilding);
++
++        String dropShaderCache = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                envVars.get("DROP_SHADER_CACHE"));
++        if (!dropShaderCache.isEmpty()) cfg.dropShaderCache = normalizeOnOffAuto(dropShaderCache, cfg.dropShaderCache);
++
++        String rendererDebug = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"),
++                envVars.get("RENDERER_DEBUG"));
++        if (!rendererDebug.isEmpty()) cfg.rendererDebug = normalizeOnOffAuto(rendererDebug, cfg.rendererDebug);
++
++        String descriptorIndexing = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"),
++                envVars.get("RENDERER_DESCRIPTOR_INDEXING"));
++        if (!descriptorIndexing.isEmpty()) cfg.descriptorIndexing = normalizeOnOffAuto(descriptorIndexing, cfg.descriptorIndexing);
++
++        String dynaState = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_DYNA_STATE"),
++                envVars.get("RENDERER_DYNA_STATE"));
++        if (!dynaState.isEmpty()) cfg.dynaState = normalizeOnOffAuto(dynaState, cfg.dynaState);
++
++        String reactiveFlushing = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"),
++                envVars.get("RENDERER_REACTIVE_FLUSHING"));
++        if (!reactiveFlushing.isEmpty()) cfg.reactiveFlushing = normalizeOnOffAuto(reactiveFlushing, cfg.reactiveFlushing);
++
++        String provokingVertex = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"),
++                envVars.get("RENDERER_PROVOKING_VERTEX"));
++        if (!provokingVertex.isEmpty()) cfg.provokingVertex = normalizeOnOffAuto(provokingVertex, cfg.provokingVertex);
++
++        String sampleShading = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"),
++                envVars.get("RENDERER_SAMPLE_SHADING"));
++        if (!sampleShading.isEmpty()) cfg.sampleShading = normalizeOnOffAuto(sampleShading, cfg.sampleShading);
++
++        String optimizeSpirvOutput = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"),
++                envVars.get("RENDERER_OPTIMIZE_SPIRV_OUTPUT"));
++        if (!optimizeSpirvOutput.isEmpty()) cfg.optimizeSpirvOutput = normalizeOnOffAuto(optimizeSpirvOutput, cfg.optimizeSpirvOutput);
++
++        String patchOldQcomDrivers = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"),
++                envVars.get("RENDERER_PATCH_OLD_QCOM_DRIVERS"));
++        if (!patchOldQcomDrivers.isEmpty()) cfg.patchOldQcomDrivers = normalizeOnOffAuto(patchOldQcomDrivers, cfg.patchOldQcomDrivers);
++
++        String nvdecEmulation = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION"),
++                envVars.get("RENDERER_NVDEC_EMULATION"));
++        if (!nvdecEmulation.isEmpty()) cfg.nvdecEmulation = normalizeOnOffAuto(nvdecEmulation, cfg.nvdecEmulation);
++
++        String slowSpeedLimit = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                envVars.get("RENDERER_SLOW_SPEED_LIMIT"));
++        if (!slowSpeedLimit.isEmpty()) cfg.slowSpeedLimit = slowSpeedLimit;
+     }
+ 
+     private static String stripUpscaleVarsFromEnv(String envString) {
+@@ -1029,6 +1251,20 @@ public class ContainerDetailFragment extends Fragment {
+         container.putExtra(Container.EXTRA_UPSCALE_SPEED_LIMIT, cfg.speedLimit);
+         container.putExtra(Container.EXTRA_UPSCALE_TURBO_SPEED_LIMIT, cfg.turboSpeedLimit);
+         container.putExtra(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, cfg.forceMaxClock);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, cfg.gpuLogShaderDumps);
++        container.putExtra(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, cfg.ir3ShaderDebug);
++        container.putExtra(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, cfg.showShadersBuilding);
++        container.putExtra(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, cfg.dropShaderCache);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_DEBUG, cfg.rendererDebug);
++        container.putExtra(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, cfg.descriptorIndexing);
++        container.putExtra(Container.EXTRA_UPSCALE_DYNA_STATE, cfg.dynaState);
++        container.putExtra(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, cfg.reactiveFlushing);
++        container.putExtra(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, cfg.provokingVertex);
++        container.putExtra(Container.EXTRA_UPSCALE_SAMPLE_SHADING, cfg.sampleShading);
++        container.putExtra(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, cfg.optimizeSpirvOutput);
++        container.putExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, cfg.patchOldQcomDrivers);
++        container.putExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, cfg.nvdecEmulation);
++        container.putExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, cfg.slowSpeedLimit);
+     }
+ 
+     private static String normalizeChoice(String value, String fallback) {
+@@ -1148,6 +1384,20 @@ public class ContainerDetailFragment extends Fragment {
+         String speedLimit = "100";
+         String turboSpeedLimit = "0";
+         String forceMaxClock = "auto";
++        String gpuLogShaderDumps = "auto";
++        String ir3ShaderDebug = "auto";
++        String showShadersBuilding = "auto";
++        String dropShaderCache = "auto";
++        String rendererDebug = "auto";
++        String descriptorIndexing = "auto";
++        String dynaState = "auto";
++        String reactiveFlushing = "auto";
++        String provokingVertex = "auto";
++        String sampleShading = "auto";
++        String optimizeSpirvOutput = "auto";
++        String patchOldQcomDrivers = "auto";
++        String nvdecEmulation = "auto";
++        String slowSpeedLimit = "0";
+     }
+ 
+     private static final String[] UPSCALE_RUNTIME_ENV_KEYS = new String[] {
+@@ -1178,6 +1428,20 @@ public class ContainerDetailFragment extends Fragment {
+             "WINLATOR_UPSCALE_SPEED_LIMIT",
+             "WINLATOR_UPSCALE_TURBO_SPEED_LIMIT",
+             "WINLATOR_UPSCALE_FORCE_MAX_CLOCK",
++            "WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS",
++            "WINLATOR_UPSCALE_IR3_SHADER_DEBUG",
++            "WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING",
++            "WINLATOR_UPSCALE_DROP_SHADER_CACHE",
++            "WINLATOR_UPSCALE_RENDERER_DEBUG",
++            "WINLATOR_UPSCALE_DESCRIPTOR_INDEXING",
++            "WINLATOR_UPSCALE_DYNA_STATE",
++            "WINLATOR_UPSCALE_REACTIVE_FLUSHING",
++            "WINLATOR_UPSCALE_PROVOKING_VERTEX",
++            "WINLATOR_UPSCALE_SAMPLE_SHADING",
++            "WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT",
++            "WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS",
++            "WINLATOR_UPSCALE_NVDEC_EMULATION",
++            "WINLATOR_UPSCALE_SLOW_SPEED_LIMIT",
+             "WINLATOR_UPSCALE_FILTER_EFFECTIVE",
+             "WINLATOR_UPSCALE_FILTER_SOURCE",
+             "WINLATOR_UPSCALE_FRAME_PACING_EFFECTIVE",
+@@ -1197,6 +1461,20 @@ public class ContainerDetailFragment extends Fragment {
+             "RENDERER_SPEED_LIMIT",
+             "RENDERER_TURBO_SPEED_LIMIT",
+             "RENDERER_FORCE_MAX_CLOCK",
++            "GPU_LOG_SHADER_DUMPS",
++            "IR3_SHADER_DEBUG",
++            "SHOW_SHADERS_BUILDING",
++            "DROP_SHADER_CACHE",
++            "RENDERER_DEBUG",
++            "RENDERER_DESCRIPTOR_INDEXING",
++            "RENDERER_DYNA_STATE",
++            "RENDERER_REACTIVE_FLUSHING",
++            "RENDERER_PROVOKING_VERTEX",
++            "RENDERER_SAMPLE_SHADING",
++            "RENDERER_OPTIMIZE_SPIRV_OUTPUT",
++            "RENDERER_PATCH_OLD_QCOM_DRIVERS",
++            "RENDERER_NVDEC_EMULATION",
++            "RENDERER_SLOW_SPEED_LIMIT",
+             "DXVK_MAX_ANISOTROPY",
+             "WINLATOR_GRAPHICS_SUITABILITY_TIER",
+             "WINLATOR_GRAPHICS_DRIVER_FAMILY",
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 762a189..e72c7d5 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1960,7 +1960,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "vsync_mode", envVars.get("WINLATOR_UPSCALE_VSYNC_MODE"),
+                         "renderer_backend", envVars.get("WINLATOR_UPSCALE_RENDERER_BACKEND"),
+                         "async_shaders", envVars.get("WINLATOR_UPSCALE_ASYNC_SHADERS"),
+-                        "speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT")));
++                        "speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT"),
++                        "slow_speed_limit", envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                        "shader_dumps", envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                        "drop_shader_cache", envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                        "renderer_debug", envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"),
++                        "patch_old_qcom_drivers", envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS")));
+ 
+         PerfPresetResolver.apply(perfProfile, envVars, this.graphicsDriverConfig);
+         applyUpscaleFilterPolicy(perfProfile);
+@@ -1984,7 +1989,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "async_shaders", envVars.get("WINLATOR_UPSCALE_ASYNC_SHADERS"),
+                         "disk_shader_cache", envVars.get("WINLATOR_UPSCALE_DISK_SHADER_CACHE"),
+                         "speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT"),
+-                        "turbo_speed_limit", envVars.get("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT")));
++                        "turbo_speed_limit", envVars.get("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT"),
++                        "slow_speed_limit", envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                        "shader_dumps", envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                        "ir3_shader_debug", envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"),
++                        "show_shaders_building", envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"),
++                        "drop_shader_cache", envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                        "renderer_debug", envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"),
++                        "descriptor_indexing", envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"),
++                        "dyna_state", envVars.get("WINLATOR_UPSCALE_DYNA_STATE"),
++                        "reactive_flushing", envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"),
++                        "provoking_vertex", envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"),
++                        "sample_shading", envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"),
++                        "optimize_spirv_output", envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"),
++                        "patch_old_qcom_drivers", envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"),
++                        "nvdec_emulation", envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION")));
+         FrameGenerationConfig fgConfig = FrameGenerationConfig.fromEnv(envVars, perfProfile, graphicsSuitability);
+         fgConfig.applyTo(envVars);
+         if (fgConfig.hasOverrideConflict()) {
+@@ -2062,7 +2081,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "upscale_async_shaders", envVars.get("WINLATOR_UPSCALE_ASYNC_SHADERS"),
+                         "upscale_disk_shader_cache", envVars.get("WINLATOR_UPSCALE_DISK_SHADER_CACHE"),
+                         "upscale_speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT"),
+-                        "upscale_turbo_speed_limit", envVars.get("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT")));
++                        "upscale_turbo_speed_limit", envVars.get("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT"),
++                        "upscale_slow_speed_limit", envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                        "upscale_shader_dumps", envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                        "upscale_ir3_shader_debug", envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"),
++                        "upscale_show_shaders_building", envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"),
++                        "upscale_drop_shader_cache", envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                        "upscale_renderer_debug", envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"),
++                        "upscale_descriptor_indexing", envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"),
++                        "upscale_dyna_state", envVars.get("WINLATOR_UPSCALE_DYNA_STATE"),
++                        "upscale_reactive_flushing", envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"),
++                        "upscale_provoking_vertex", envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"),
++                        "upscale_sample_shading", envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"),
++                        "upscale_optimize_spirv_output", envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"),
++                        "upscale_patch_old_qcom_drivers", envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"),
++                        "upscale_nvdec_emulation", envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION")));
+         ForensicLogger.logEvent(this,
+                 "info",
+                 "RUNTIME_SWFG_CONTRACT",
+@@ -2184,6 +2217,48 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String forceMaxClock = shortcut != null
+                 ? shortcut.getExtra(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, container.getExtra(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, "auto"))
+                 : container.getExtra(Container.EXTRA_UPSCALE_FORCE_MAX_CLOCK, "auto");
++        String gpuLogShaderDumps = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, "auto");
++        String ir3ShaderDebug = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, container.getExtra(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_IR3_SHADER_DEBUG, "auto");
++        String showShadersBuilding = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, container.getExtra(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, "auto");
++        String dropShaderCache = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, container.getExtra(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_DROP_SHADER_CACHE, "auto");
++        String rendererDebug = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_DEBUG, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_DEBUG, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_DEBUG, "auto");
++        String descriptorIndexing = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, container.getExtra(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_DESCRIPTOR_INDEXING, "auto");
++        String dynaState = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_DYNA_STATE, container.getExtra(Container.EXTRA_UPSCALE_DYNA_STATE, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_DYNA_STATE, "auto");
++        String reactiveFlushing = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, container.getExtra(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_REACTIVE_FLUSHING, "auto");
++        String provokingVertex = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, container.getExtra(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_PROVOKING_VERTEX, "auto");
++        String sampleShading = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SAMPLE_SHADING, container.getExtra(Container.EXTRA_UPSCALE_SAMPLE_SHADING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_SAMPLE_SHADING, "auto");
++        String optimizeSpirvOutput = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, container.getExtra(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, "auto");
++        String patchOldQcomDrivers = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, container.getExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, "auto");
++        String nvdecEmulation = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, container.getExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, "auto");
++        String slowSpeedLimit = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0");
+ 
+         boolean applied = false;
+         if (perfPreset != null && !perfPreset.trim().isEmpty() && !"auto".equalsIgnoreCase(perfPreset)) {
+@@ -2238,6 +2313,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String normalizedSpeedLimit = String.valueOf(clampUpscaleIntToken(speedLimit, 25, 400, 100));
+         String normalizedTurboSpeedLimit = String.valueOf(clampUpscaleIntToken(turboSpeedLimit, 0, 600, 0));
+         String normalizedForceMaxClock = normalizeUpscaleOnOffAutoToken(forceMaxClock, "auto");
++        String normalizedGpuLogShaderDumps = normalizeUpscaleOnOffAutoToken(gpuLogShaderDumps, "auto");
++        String normalizedIr3ShaderDebug = normalizeUpscaleOnOffAutoToken(ir3ShaderDebug, "auto");
++        String normalizedShowShadersBuilding = normalizeUpscaleOnOffAutoToken(showShadersBuilding, "auto");
++        String normalizedDropShaderCache = normalizeUpscaleOnOffAutoToken(dropShaderCache, "auto");
++        String normalizedRendererDebug = normalizeUpscaleOnOffAutoToken(rendererDebug, "auto");
++        String normalizedDescriptorIndexing = normalizeUpscaleOnOffAutoToken(descriptorIndexing, "auto");
++        String normalizedDynaState = normalizeUpscaleOnOffAutoToken(dynaState, "auto");
++        String normalizedReactiveFlushing = normalizeUpscaleOnOffAutoToken(reactiveFlushing, "auto");
++        String normalizedProvokingVertex = normalizeUpscaleOnOffAutoToken(provokingVertex, "auto");
++        String normalizedSampleShading = normalizeUpscaleOnOffAutoToken(sampleShading, "auto");
++        String normalizedOptimizeSpirvOutput = normalizeUpscaleOnOffAutoToken(optimizeSpirvOutput, "auto");
++        String normalizedPatchOldQcomDrivers = normalizeUpscaleOnOffAutoToken(patchOldQcomDrivers, "auto");
++        String normalizedNvdecEmulation = normalizeUpscaleOnOffAutoToken(nvdecEmulation, "auto");
++        String normalizedSlowSpeedLimit = String.valueOf(clampUpscaleIntToken(slowSpeedLimit, 0, 600, 0));
+ 
+         envVars.put("WINLATOR_UPSCALE_RENDERER_RESOLUTION", normalizedRendererResolution);
+         envVars.put("WINLATOR_UPSCALE_SCALING_FILTER", normalizedScalingFilter);
+@@ -2253,6 +2342,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("WINLATOR_UPSCALE_SPEED_LIMIT", normalizedSpeedLimit);
+         envVars.put("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT", normalizedTurboSpeedLimit);
+         envVars.put("WINLATOR_UPSCALE_FORCE_MAX_CLOCK", normalizedForceMaxClock);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS", normalizedGpuLogShaderDumps);
++        envVars.put("WINLATOR_UPSCALE_IR3_SHADER_DEBUG", normalizedIr3ShaderDebug);
++        envVars.put("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING", normalizedShowShadersBuilding);
++        envVars.put("WINLATOR_UPSCALE_DROP_SHADER_CACHE", normalizedDropShaderCache);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_DEBUG", normalizedRendererDebug);
++        envVars.put("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING", normalizedDescriptorIndexing);
++        envVars.put("WINLATOR_UPSCALE_DYNA_STATE", normalizedDynaState);
++        envVars.put("WINLATOR_UPSCALE_REACTIVE_FLUSHING", normalizedReactiveFlushing);
++        envVars.put("WINLATOR_UPSCALE_PROVOKING_VERTEX", normalizedProvokingVertex);
++        envVars.put("WINLATOR_UPSCALE_SAMPLE_SHADING", normalizedSampleShading);
++        envVars.put("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT", normalizedOptimizeSpirvOutput);
++        envVars.put("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS", normalizedPatchOldQcomDrivers);
++        envVars.put("WINLATOR_UPSCALE_NVDEC_EMULATION", normalizedNvdecEmulation);
++        envVars.put("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT", normalizedSlowSpeedLimit);
+         envVars.put("WINLATOR_UPSCALE_SOURCE", shortcut != null ? "shortcut+container" : "container");
+ 
+         // Eden-compatible key aliases are exported for transfer parity and downstream wrappers.
+@@ -2269,6 +2372,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("RENDERER_SPEED_LIMIT", normalizedSpeedLimit);
+         envVars.put("RENDERER_TURBO_SPEED_LIMIT", normalizedTurboSpeedLimit);
+         envVars.put("RENDERER_FORCE_MAX_CLOCK", toEdenBooleanToken(normalizedForceMaxClock));
++        envVars.put("GPU_LOG_SHADER_DUMPS", toEdenBooleanToken(normalizedGpuLogShaderDumps));
++        envVars.put("IR3_SHADER_DEBUG", toEdenBooleanToken(normalizedIr3ShaderDebug));
++        envVars.put("SHOW_SHADERS_BUILDING", toEdenBooleanToken(normalizedShowShadersBuilding));
++        envVars.put("DROP_SHADER_CACHE", toEdenBooleanToken(normalizedDropShaderCache));
++        envVars.put("RENDERER_DEBUG", toEdenBooleanToken(normalizedRendererDebug));
++        envVars.put("RENDERER_DESCRIPTOR_INDEXING", toEdenBooleanToken(normalizedDescriptorIndexing));
++        envVars.put("RENDERER_DYNA_STATE", toEdenBooleanToken(normalizedDynaState));
++        envVars.put("RENDERER_REACTIVE_FLUSHING", toEdenBooleanToken(normalizedReactiveFlushing));
++        envVars.put("RENDERER_PROVOKING_VERTEX", toEdenBooleanToken(normalizedProvokingVertex));
++        envVars.put("RENDERER_SAMPLE_SHADING", toEdenBooleanToken(normalizedSampleShading));
++        envVars.put("RENDERER_OPTIMIZE_SPIRV_OUTPUT", toEdenBooleanToken(normalizedOptimizeSpirvOutput));
++        envVars.put("RENDERER_PATCH_OLD_QCOM_DRIVERS", toEdenBooleanToken(normalizedPatchOldQcomDrivers));
++        envVars.put("RENDERER_NVDEC_EMULATION", toEdenBooleanToken(normalizedNvdecEmulation));
++        envVars.put("RENDERER_SLOW_SPEED_LIMIT", normalizedSlowSpeedLimit);
+         envVars.put("GPU_LOG_VULKAN_CALLS",
+                 "on".equals(normalizedGpuLogVulkan) ? "1" :
+                         ("off".equals(normalizedGpuLogVulkan) ? "0" : "auto"));
+@@ -2310,6 +2427,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                             "speed_limit", normalizedSpeedLimit,
+                             "turbo_speed_limit", normalizedTurboSpeedLimit,
+                             "force_max_clock", normalizedForceMaxClock,
++                            "gpu_log_shader_dumps", normalizedGpuLogShaderDumps,
++                            "ir3_shader_debug", normalizedIr3ShaderDebug,
++                            "show_shaders_building", normalizedShowShadersBuilding,
++                            "drop_shader_cache", normalizedDropShaderCache,
++                            "renderer_debug", normalizedRendererDebug,
++                            "descriptor_indexing", normalizedDescriptorIndexing,
++                            "dyna_state", normalizedDynaState,
++                            "reactive_flushing", normalizedReactiveFlushing,
++                            "provoking_vertex", normalizedProvokingVertex,
++                            "sample_shading", normalizedSampleShading,
++                            "optimize_spirv_output", normalizedOptimizeSpirvOutput,
++                            "patch_old_qcom_drivers", normalizedPatchOldQcomDrivers,
++                            "nvdec_emulation", normalizedNvdecEmulation,
++                            "slow_speed_limit", normalizedSlowSpeedLimit,
+                             "config_source", shortcut != null ? "shortcut+container" : "container"));
+         }
+     }
+diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
+index f17e4f7..7ac0c46 100644
+--- a/app/src/main/java/com/winlator/cmod/container/Container.java
++++ b/app/src/main/java/com/winlator/cmod/container/Container.java
+@@ -67,6 +67,20 @@ public class Container {
+     public static final String EXTRA_UPSCALE_SPEED_LIMIT = "upscaleSpeedLimit"; // 25..400
+     public static final String EXTRA_UPSCALE_TURBO_SPEED_LIMIT = "upscaleTurboSpeedLimit"; // 0..600
+     public static final String EXTRA_UPSCALE_FORCE_MAX_CLOCK = "upscaleForceMaxClock"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS = "upscaleGpuLogShaderDumps"; // auto|on|off
++    public static final String EXTRA_UPSCALE_IR3_SHADER_DEBUG = "upscaleIr3ShaderDebug"; // auto|on|off
++    public static final String EXTRA_UPSCALE_SHOW_SHADERS_BUILDING = "upscaleShowShadersBuilding"; // auto|on|off
++    public static final String EXTRA_UPSCALE_DROP_SHADER_CACHE = "upscaleDropShaderCache"; // auto|on|off
++    public static final String EXTRA_UPSCALE_RENDERER_DEBUG = "upscaleRendererDebug"; // auto|on|off
++    public static final String EXTRA_UPSCALE_DESCRIPTOR_INDEXING = "upscaleDescriptorIndexing"; // auto|on|off
++    public static final String EXTRA_UPSCALE_DYNA_STATE = "upscaleDynaState"; // auto|on|off
++    public static final String EXTRA_UPSCALE_REACTIVE_FLUSHING = "upscaleReactiveFlushing"; // auto|on|off
++    public static final String EXTRA_UPSCALE_PROVOKING_VERTEX = "upscaleProvokeVertex"; // auto|on|off
++    public static final String EXTRA_UPSCALE_SAMPLE_SHADING = "upscaleSampleShading"; // auto|on|off
++    public static final String EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT = "upscaleOptimizeSpirvOutput"; // auto|on|off
++    public static final String EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS = "upscalePatchOldQcomDrivers"; // auto|on|off
++    public static final String EXTRA_UPSCALE_NVDEC_EMULATION = "upscaleNvdecEmulation"; // auto|on|off
++    public static final String EXTRA_UPSCALE_SLOW_SPEED_LIMIT = "upscaleSlowSpeedLimit"; // 0..600
+     public final int id;
+     private String name;
+     private String screenSize = DEFAULT_SCREEN_SIZE;
+@@ -759,6 +773,62 @@ public class Container {
+             if (data.has(EXTRA_UPSCALE_FORCE_MAX_CLOCK)) {
+                 data.put(EXTRA_UPSCALE_FORCE_MAX_CLOCK, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_FORCE_MAX_CLOCK, "auto"), "auto"));
+             }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS)) {
++                data.put(EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_GPU_LOG_SHADER_DUMPS, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_IR3_SHADER_DEBUG)) {
++                data.put(EXTRA_UPSCALE_IR3_SHADER_DEBUG, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_IR3_SHADER_DEBUG, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_SHOW_SHADERS_BUILDING)) {
++                data.put(EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_SHOW_SHADERS_BUILDING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_DROP_SHADER_CACHE)) {
++                data.put(EXTRA_UPSCALE_DROP_SHADER_CACHE, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_DROP_SHADER_CACHE, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_DEBUG)) {
++                data.put(EXTRA_UPSCALE_RENDERER_DEBUG, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_RENDERER_DEBUG, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_DESCRIPTOR_INDEXING)) {
++                data.put(EXTRA_UPSCALE_DESCRIPTOR_INDEXING, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_DESCRIPTOR_INDEXING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_DYNA_STATE)) {
++                data.put(EXTRA_UPSCALE_DYNA_STATE, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_DYNA_STATE, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_REACTIVE_FLUSHING)) {
++                data.put(EXTRA_UPSCALE_REACTIVE_FLUSHING, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_REACTIVE_FLUSHING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_PROVOKING_VERTEX)) {
++                data.put(EXTRA_UPSCALE_PROVOKING_VERTEX, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_PROVOKING_VERTEX, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_SAMPLE_SHADING)) {
++                data.put(EXTRA_UPSCALE_SAMPLE_SHADING, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_SAMPLE_SHADING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT)) {
++                data.put(EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_OPTIMIZE_SPIRV_OUTPUT, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS)) {
++                data.put(EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_NVDEC_EMULATION)) {
++                data.put(EXTRA_UPSCALE_NVDEC_EMULATION, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_NVDEC_EMULATION, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_SLOW_SPEED_LIMIT)) {
++                data.put(EXTRA_UPSCALE_SLOW_SPEED_LIMIT, clampInt(data.optString(EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0"), 0, 600, 0));
++            }
+         }
+         catch (JSONException ignored) {}
+     }
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index d69c289..fbeea1b 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -550,7 +550,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "upscale_anisotropy", envVars.get("WINLATOR_UPSCALE_MAX_ANISOTROPY"),
+                             "upscale_renderer_backend", envVars.get("WINLATOR_UPSCALE_RENDERER_BACKEND"),
+                             "upscale_async_shaders", envVars.get("WINLATOR_UPSCALE_ASYNC_SHADERS"),
+-                            "upscale_speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT")));
++                            "upscale_speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT"),
++                            "upscale_slow_speed_limit", envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                            "upscale_shader_dumps", envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                            "upscale_drop_shader_cache", envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                            "upscale_renderer_debug", envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG")));
+         }
+ 
+         // Construct the command without Box64 to the Wine executable
+@@ -672,6 +676,20 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "upscale_speed_limit", envVars.get("WINLATOR_UPSCALE_SPEED_LIMIT"),
+                             "upscale_turbo_speed_limit", envVars.get("WINLATOR_UPSCALE_TURBO_SPEED_LIMIT"),
+                             "upscale_force_max_clock", envVars.get("WINLATOR_UPSCALE_FORCE_MAX_CLOCK"),
++                            "upscale_slow_speed_limit", envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
++                            "upscale_shader_dumps", envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"),
++                            "upscale_ir3_shader_debug", envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"),
++                            "upscale_show_shaders_building", envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"),
++                            "upscale_drop_shader_cache", envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"),
++                            "upscale_renderer_debug", envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"),
++                            "upscale_descriptor_indexing", envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"),
++                            "upscale_dyna_state", envVars.get("WINLATOR_UPSCALE_DYNA_STATE"),
++                            "upscale_reactive_flushing", envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"),
++                            "upscale_provoking_vertex", envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"),
++                            "upscale_sample_shading", envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"),
++                            "upscale_optimize_spirv_output", envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"),
++                            "upscale_patch_old_qcom_drivers", envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"),
++                            "upscale_nvdec_emulation", envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION"),
+                             "command", command,
+                             "env_hash", ForensicLogger.hashEnvVars(envVars)));
+         }
+@@ -947,6 +965,159 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             changed = true;
+         }
+ 
++        String gpuLogShaderDumps = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"), envVars.get("GPU_LOG_SHADER_DUMPS")), "auto");
++        if (!gpuLogShaderDumps.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOG_SHADER_DUMPS", gpuLogShaderDumps);
++            changed = true;
++        }
++        String gpuLogShaderDumpsNumeric = onOffAutoToNumeric(gpuLogShaderDumps);
++        if (!gpuLogShaderDumpsNumeric.equals(envVars.get("GPU_LOG_SHADER_DUMPS"))) {
++            envVars.put("GPU_LOG_SHADER_DUMPS", gpuLogShaderDumpsNumeric);
++            changed = true;
++        }
++
++        String ir3ShaderDebug = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"), envVars.get("IR3_SHADER_DEBUG")), "auto");
++        if (!ir3ShaderDebug.equals(envVars.get("WINLATOR_UPSCALE_IR3_SHADER_DEBUG"))) {
++            envVars.put("WINLATOR_UPSCALE_IR3_SHADER_DEBUG", ir3ShaderDebug);
++            changed = true;
++        }
++        String ir3ShaderDebugNumeric = onOffAutoToNumeric(ir3ShaderDebug);
++        if (!ir3ShaderDebugNumeric.equals(envVars.get("IR3_SHADER_DEBUG"))) {
++            envVars.put("IR3_SHADER_DEBUG", ir3ShaderDebugNumeric);
++            changed = true;
++        }
++
++        String showShadersBuilding = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"), envVars.get("SHOW_SHADERS_BUILDING")), "auto");
++        if (!showShadersBuilding.equals(envVars.get("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING"))) {
++            envVars.put("WINLATOR_UPSCALE_SHOW_SHADERS_BUILDING", showShadersBuilding);
++            changed = true;
++        }
++        String showShadersBuildingNumeric = onOffAutoToNumeric(showShadersBuilding);
++        if (!showShadersBuildingNumeric.equals(envVars.get("SHOW_SHADERS_BUILDING"))) {
++            envVars.put("SHOW_SHADERS_BUILDING", showShadersBuildingNumeric);
++            changed = true;
++        }
++
++        String dropShaderCache = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"), envVars.get("DROP_SHADER_CACHE")), "auto");
++        if (!dropShaderCache.equals(envVars.get("WINLATOR_UPSCALE_DROP_SHADER_CACHE"))) {
++            envVars.put("WINLATOR_UPSCALE_DROP_SHADER_CACHE", dropShaderCache);
++            changed = true;
++        }
++        String dropShaderCacheNumeric = onOffAutoToNumeric(dropShaderCache);
++        if (!dropShaderCacheNumeric.equals(envVars.get("DROP_SHADER_CACHE"))) {
++            envVars.put("DROP_SHADER_CACHE", dropShaderCacheNumeric);
++            changed = true;
++        }
++
++        String rendererDebug = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"), envVars.get("RENDERER_DEBUG")), "auto");
++        if (!rendererDebug.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_DEBUG"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_DEBUG", rendererDebug);
++            changed = true;
++        }
++        String rendererDebugNumeric = onOffAutoToNumeric(rendererDebug);
++        if (!rendererDebugNumeric.equals(envVars.get("RENDERER_DEBUG"))) {
++            envVars.put("RENDERER_DEBUG", rendererDebugNumeric);
++            changed = true;
++        }
++
++        String descriptorIndexing = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"), envVars.get("RENDERER_DESCRIPTOR_INDEXING")), "auto");
++        if (!descriptorIndexing.equals(envVars.get("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING"))) {
++            envVars.put("WINLATOR_UPSCALE_DESCRIPTOR_INDEXING", descriptorIndexing);
++            changed = true;
++        }
++        String descriptorIndexingNumeric = onOffAutoToNumeric(descriptorIndexing);
++        if (!descriptorIndexingNumeric.equals(envVars.get("RENDERER_DESCRIPTOR_INDEXING"))) {
++            envVars.put("RENDERER_DESCRIPTOR_INDEXING", descriptorIndexingNumeric);
++            changed = true;
++        }
++
++        String dynaState = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_DYNA_STATE"), envVars.get("RENDERER_DYNA_STATE")), "auto");
++        if (!dynaState.equals(envVars.get("WINLATOR_UPSCALE_DYNA_STATE"))) {
++            envVars.put("WINLATOR_UPSCALE_DYNA_STATE", dynaState);
++            changed = true;
++        }
++        String dynaStateNumeric = onOffAutoToNumeric(dynaState);
++        if (!dynaStateNumeric.equals(envVars.get("RENDERER_DYNA_STATE"))) {
++            envVars.put("RENDERER_DYNA_STATE", dynaStateNumeric);
++            changed = true;
++        }
++
++        String reactiveFlushing = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"), envVars.get("RENDERER_REACTIVE_FLUSHING")), "auto");
++        if (!reactiveFlushing.equals(envVars.get("WINLATOR_UPSCALE_REACTIVE_FLUSHING"))) {
++            envVars.put("WINLATOR_UPSCALE_REACTIVE_FLUSHING", reactiveFlushing);
++            changed = true;
++        }
++        String reactiveFlushingNumeric = onOffAutoToNumeric(reactiveFlushing);
++        if (!reactiveFlushingNumeric.equals(envVars.get("RENDERER_REACTIVE_FLUSHING"))) {
++            envVars.put("RENDERER_REACTIVE_FLUSHING", reactiveFlushingNumeric);
++            changed = true;
++        }
++
++        String provokingVertex = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"), envVars.get("RENDERER_PROVOKING_VERTEX")), "auto");
++        if (!provokingVertex.equals(envVars.get("WINLATOR_UPSCALE_PROVOKING_VERTEX"))) {
++            envVars.put("WINLATOR_UPSCALE_PROVOKING_VERTEX", provokingVertex);
++            changed = true;
++        }
++        String provokingVertexNumeric = onOffAutoToNumeric(provokingVertex);
++        if (!provokingVertexNumeric.equals(envVars.get("RENDERER_PROVOKING_VERTEX"))) {
++            envVars.put("RENDERER_PROVOKING_VERTEX", provokingVertexNumeric);
++            changed = true;
++        }
++
++        String sampleShading = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"), envVars.get("RENDERER_SAMPLE_SHADING")), "auto");
++        if (!sampleShading.equals(envVars.get("WINLATOR_UPSCALE_SAMPLE_SHADING"))) {
++            envVars.put("WINLATOR_UPSCALE_SAMPLE_SHADING", sampleShading);
++            changed = true;
++        }
++        String sampleShadingNumeric = onOffAutoToNumeric(sampleShading);
++        if (!sampleShadingNumeric.equals(envVars.get("RENDERER_SAMPLE_SHADING"))) {
++            envVars.put("RENDERER_SAMPLE_SHADING", sampleShadingNumeric);
++            changed = true;
++        }
++
++        String optimizeSpirvOutput = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"), envVars.get("RENDERER_OPTIMIZE_SPIRV_OUTPUT")), "auto");
++        if (!optimizeSpirvOutput.equals(envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"))) {
++            envVars.put("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT", optimizeSpirvOutput);
++            changed = true;
++        }
++        String optimizeSpirvOutputNumeric = onOffAutoToNumeric(optimizeSpirvOutput);
++        if (!optimizeSpirvOutputNumeric.equals(envVars.get("RENDERER_OPTIMIZE_SPIRV_OUTPUT"))) {
++            envVars.put("RENDERER_OPTIMIZE_SPIRV_OUTPUT", optimizeSpirvOutputNumeric);
++            changed = true;
++        }
++
++        String patchOldQcomDrivers = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"), envVars.get("RENDERER_PATCH_OLD_QCOM_DRIVERS")), "auto");
++        if (!patchOldQcomDrivers.equals(envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"))) {
++            envVars.put("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS", patchOldQcomDrivers);
++            changed = true;
++        }
++        String patchOldQcomDriversNumeric = onOffAutoToNumeric(patchOldQcomDrivers);
++        if (!patchOldQcomDriversNumeric.equals(envVars.get("RENDERER_PATCH_OLD_QCOM_DRIVERS"))) {
++            envVars.put("RENDERER_PATCH_OLD_QCOM_DRIVERS", patchOldQcomDriversNumeric);
++            changed = true;
++        }
++
++        String nvdecEmulation = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION"), envVars.get("RENDERER_NVDEC_EMULATION")), "auto");
++        if (!nvdecEmulation.equals(envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION"))) {
++            envVars.put("WINLATOR_UPSCALE_NVDEC_EMULATION", nvdecEmulation);
++            changed = true;
++        }
++        String nvdecEmulationNumeric = onOffAutoToNumeric(nvdecEmulation);
++        if (!nvdecEmulationNumeric.equals(envVars.get("RENDERER_NVDEC_EMULATION"))) {
++            envVars.put("RENDERER_NVDEC_EMULATION", nvdecEmulationNumeric);
++            changed = true;
++        }
++
++        String slowSpeedLimit = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"), envVars.get("RENDERER_SLOW_SPEED_LIMIT")), 0, 600, 0));
++        if (!slowSpeedLimit.equals(envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"))) {
++            envVars.put("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT", slowSpeedLimit);
++            changed = true;
++        }
++        if (!slowSpeedLimit.equals(envVars.get("RENDERER_SLOW_SPEED_LIMIT"))) {
++            envVars.put("RENDERER_SLOW_SPEED_LIMIT", slowSpeedLimit);
++            changed = true;
++        }
++
+         return changed;
+     }
+ 
+diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
+index f638765..6778c28 100644
+--- a/app/src/main/res/layout/container_detail_fragment.xml
++++ b/app/src/main/res/layout/container_detail_fragment.xml
+@@ -927,6 +927,162 @@
+                             android:id="@+id/SUpscaleForceMaxClock"
+                             android:layout_width="match_parent"
+                             android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_slow_speed_limit" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleSlowSpeedLimit"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number"
++                            android:maxLength="3" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_log_shader_dumps" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleGpuLogShaderDumps"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_ir3_shader_debug" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleIr3ShaderDebug"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_show_shaders_building" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleShowShadersBuilding"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_drop_shader_cache" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleDropShaderCache"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_debug" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleRendererDebug"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_descriptor_indexing" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleDescriptorIndexing"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_dyna_state" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleDynaState"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_reactive_flushing" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleReactiveFlushing"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_provoking_vertex" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleProvokeVertex"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_sample_shading" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleSampleShading"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_optimize_spirv_output" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleOptimizeSpirvOutput"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_patch_old_qcom_drivers" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscalePatchOldQcomDrivers"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_nvdec_emulation" />
++
++                        <Spinner
++                            style="@style/ComboBox"
++                            android:id="@+id/SUpscaleNvdecEmulation"
++                            android:layout_width="match_parent"
++                            android:entries="@array/upscale_on_off_auto_entries" />
+                     </LinearLayout>
+ 
+                     <TextView
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 7ca1d20..c99b459 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -160,6 +160,20 @@
+     <string name="upscale_speed_limit">Speed limit (%)</string>
+     <string name="upscale_turbo_speed_limit">Turbo speed limit (%)</string>
+     <string name="upscale_force_max_clock">Force max GPU clock</string>
++    <string name="upscale_slow_speed_limit">Slow speed limit (%)</string>
++    <string name="upscale_gpu_log_shader_dumps">Shader dump logging</string>
++    <string name="upscale_ir3_shader_debug">IR3 shader debug</string>
++    <string name="upscale_show_shaders_building">Show shaders building</string>
++    <string name="upscale_drop_shader_cache">Drop shader cache on launch</string>
++    <string name="upscale_renderer_debug">Renderer debug mode</string>
++    <string name="upscale_descriptor_indexing">Descriptor indexing</string>
++    <string name="upscale_dyna_state">Dynamic state</string>
++    <string name="upscale_reactive_flushing">Reactive flushing</string>
++    <string name="upscale_provoking_vertex">Provoking vertex</string>
++    <string name="upscale_sample_shading">Sample shading</string>
++    <string name="upscale_optimize_spirv_output">Optimize SPIR-V output</string>
++    <string name="upscale_patch_old_qcom_drivers">Patch old QCOM drivers</string>
++    <string name="upscale_nvdec_emulation">NVDEC emulation</string>
+     <string name="box64">Box64</string>
+     <string name="system">System</string>
+     <string name="box64_preset">Box64 Preset</string>
+-- 
+2.43.0
+

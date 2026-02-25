@@ -71,6 +71,10 @@ consolidated into:
   - extends container-owned upscale controls with Eden-aligned render knobs (resolution, scaling filter, FSR sharpness, frame pacing, anisotropy, vsync, Vulkan-call logging), persists them in `extraData`, bridges to runtime env aliases, and adds forensic render-policy telemetry plus launcher-side normalization of the expanded contract
 - `0050-upscale-eden-advanced-renderer-runtime-controls.patch`
   - extends the upscale contract with Eden-style advanced renderer controls (backend selection, async shaders, disk shader cache, speed-limit policy/values, force-max-clock), adds container UI persistence and legacy env migration for those keys, bridges them into runtime env aliases, and normalizes the full control set in launcher pre-exec telemetry
+- `0051-upscale-eden-shader-debug-and-advanced-runtime-controls.patch`
+  - extends the Eden transfer with advanced shader/debug renderer controls (shader dumps, IR3 debug, shader-build visibility, shader-cache drop, descriptor/dynamic/provoking/sample/spirv toggles, legacy QCOM patching, NVDEC emulation, slow speed-limit), persists them in container settings, and normalizes + mirrors them through launcher/runtime forensic contracts
+- `0052-upscale-eden-renderer-gpu-diagnostics-control-parity.patch`
+  - completes the Eden transfer surface for renderer/gpu diagnostic controls (accuracy/AA/aspect/ASTC/screen-layout/VRAM mode, vertex-input dynamic state, GPU logging and unswizzle controls, GPU model/time tokens, Mesa debug), stores them in container-owned extras, strips legacy raw env duplication, and mirrors normalized aliases through runtime + launcher forensic contracts
 
 ## Known high-overlap files (intentional)
 

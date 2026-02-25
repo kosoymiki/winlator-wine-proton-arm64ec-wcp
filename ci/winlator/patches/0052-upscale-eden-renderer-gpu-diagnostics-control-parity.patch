@@ -1,0 +1,1323 @@
+From 707bec5b7834028224deee8453d724cb88a34409 Mon Sep 17 00:00:00 2001
+From: codex <codex@local>
+Date: Wed, 25 Feb 2026 22:45:37 +0300
+Subject: [PATCH] upscale: add eden renderer/gpu diagnostics control parity
+
+---
+ .../cmod/ContainerDetailFragment.java         | 348 +++++++++++++++++-
+ .../winlator/cmod/XServerDisplayActivity.java | 147 ++++++++
+ .../winlator/cmod/container/Container.java    | 106 ++++++
+ .../GuestProgramLauncherComponent.java        | 232 ++++++++++++
+ .../res/layout/container_detail_fragment.xml  | 240 ++++++++++++
+ app/src/main/res/values/strings.xml           |  20 +
+ 6 files changed, 1092 insertions(+), 1 deletion(-)
+
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index 1a93530..e30b706 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -762,6 +762,26 @@ public class ContainerDetailFragment extends Fragment {
+         EditText etSpeedLimit = view.findViewById(R.id.ETUpscaleSpeedLimit);
+         EditText etTurboSpeedLimit = view.findViewById(R.id.ETUpscaleTurboSpeedLimit);
+         EditText etSlowSpeedLimit = view.findViewById(R.id.ETUpscaleSlowSpeedLimit);
++        EditText etRendererAccuracy = view.findViewById(R.id.ETUpscaleRendererAccuracy);
++        EditText etRendererAntiAliasing = view.findViewById(R.id.ETUpscaleRendererAntiAliasing);
++        EditText etRendererAspectRatio = view.findViewById(R.id.ETUpscaleRendererAspectRatio);
++        EditText etRendererAstcDecodeMethod = view.findViewById(R.id.ETUpscaleRendererAstcDecodeMethod);
++        EditText etRendererAstcRecompression = view.findViewById(R.id.ETUpscaleRendererAstcRecompression);
++        EditText etRendererScreenLayout = view.findViewById(R.id.ETUpscaleRendererScreenLayout);
++        EditText etRendererVramUsageMode = view.findViewById(R.id.ETUpscaleRendererVramUsageMode);
++        EditText etRendererVertexInputDynamicState = view.findViewById(R.id.ETUpscaleRendererVertexInputDynamicState);
++        EditText etGpuLoggingEnabled = view.findViewById(R.id.ETUpscaleGpuLoggingEnabled);
++        EditText etGpuLogDriverDebug = view.findViewById(R.id.ETUpscaleGpuLogDriverDebug);
++        EditText etGpuLogLevel = view.findViewById(R.id.ETUpscaleGpuLogLevel);
++        EditText etGpuLogMemoryTracking = view.findViewById(R.id.ETUpscaleGpuLogMemoryTracking);
++        EditText etGpuLogRingBufferSize = view.findViewById(R.id.ETUpscaleGpuLogRingBufferSize);
++        EditText etGpuUnswizzleEnabled = view.findViewById(R.id.ETUpscaleGpuUnswizzleEnabled);
++        EditText etGpuUnswizzleChunkSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleChunkSize);
++        EditText etGpuUnswizzleStreamSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleStreamSize);
++        EditText etGpuUnswizzleTextureSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleTextureSize);
++        EditText etGpuModel = view.findViewById(R.id.ETUpscaleGpuModel);
++        EditText etGpuTime = view.findViewById(R.id.ETUpscaleGpuTime);
++        EditText etMesaDebug = view.findViewById(R.id.ETUpscaleMesaDebug);
+ 
+         UpscaleUiConfig cfg = readUpscaleConfigFromContainerOrLegacyEnv();
+ 
+@@ -800,6 +820,26 @@ public class ContainerDetailFragment extends Fragment {
+         etSpeedLimit.setText(String.valueOf(clampInt(cfg.speedLimit, 25, 400, 100)));
+         etTurboSpeedLimit.setText(String.valueOf(clampInt(cfg.turboSpeedLimit, 0, 600, 0)));
+         etSlowSpeedLimit.setText(String.valueOf(clampInt(cfg.slowSpeedLimit, 0, 600, 0)));
++        etRendererAccuracy.setText(cfg.rendererAccuracy);
++        etRendererAntiAliasing.setText(cfg.rendererAntiAliasing);
++        etRendererAspectRatio.setText(cfg.rendererAspectRatio);
++        etRendererAstcDecodeMethod.setText(cfg.rendererAstcDecodeMethod);
++        etRendererAstcRecompression.setText(cfg.rendererAstcRecompression);
++        etRendererScreenLayout.setText(cfg.rendererScreenLayout);
++        etRendererVramUsageMode.setText(cfg.rendererVramUsageMode);
++        etRendererVertexInputDynamicState.setText(cfg.rendererVertexInputDynamicState);
++        etGpuLoggingEnabled.setText(cfg.gpuLoggingEnabled);
++        etGpuLogDriverDebug.setText(cfg.gpuLogDriverDebug);
++        etGpuLogLevel.setText(String.valueOf(clampInt(cfg.gpuLogLevel, 0, 9, 0)));
++        etGpuLogMemoryTracking.setText(cfg.gpuLogMemoryTracking);
++        etGpuLogRingBufferSize.setText(String.valueOf(clampInt(cfg.gpuLogRingBufferSize, 0, 1048576, 0)));
++        etGpuUnswizzleEnabled.setText(cfg.gpuUnswizzleEnabled);
++        etGpuUnswizzleChunkSize.setText(String.valueOf(clampInt(cfg.gpuUnswizzleChunkSize, 0, 16777216, 0)));
++        etGpuUnswizzleStreamSize.setText(String.valueOf(clampInt(cfg.gpuUnswizzleStreamSize, 0, 16777216, 0)));
++        etGpuUnswizzleTextureSize.setText(String.valueOf(clampInt(cfg.gpuUnswizzleTextureSize, 0, 16777216, 0)));
++        etGpuModel.setText(cfg.gpuModel);
++        etGpuTime.setText(cfg.gpuTime);
++        etMesaDebug.setText(cfg.mesaDebug);
+ 
+         Runnable syncUiState = () -> {
+             String policy = normalizeChoice(String.valueOf(sSwfgPolicy.getSelectedItem()), "auto");
+@@ -869,6 +909,26 @@ public class ContainerDetailFragment extends Fragment {
+         EditText etSpeedLimit = view.findViewById(R.id.ETUpscaleSpeedLimit);
+         EditText etTurboSpeedLimit = view.findViewById(R.id.ETUpscaleTurboSpeedLimit);
+         EditText etSlowSpeedLimit = view.findViewById(R.id.ETUpscaleSlowSpeedLimit);
++        EditText etRendererAccuracy = view.findViewById(R.id.ETUpscaleRendererAccuracy);
++        EditText etRendererAntiAliasing = view.findViewById(R.id.ETUpscaleRendererAntiAliasing);
++        EditText etRendererAspectRatio = view.findViewById(R.id.ETUpscaleRendererAspectRatio);
++        EditText etRendererAstcDecodeMethod = view.findViewById(R.id.ETUpscaleRendererAstcDecodeMethod);
++        EditText etRendererAstcRecompression = view.findViewById(R.id.ETUpscaleRendererAstcRecompression);
++        EditText etRendererScreenLayout = view.findViewById(R.id.ETUpscaleRendererScreenLayout);
++        EditText etRendererVramUsageMode = view.findViewById(R.id.ETUpscaleRendererVramUsageMode);
++        EditText etRendererVertexInputDynamicState = view.findViewById(R.id.ETUpscaleRendererVertexInputDynamicState);
++        EditText etGpuLoggingEnabled = view.findViewById(R.id.ETUpscaleGpuLoggingEnabled);
++        EditText etGpuLogDriverDebug = view.findViewById(R.id.ETUpscaleGpuLogDriverDebug);
++        EditText etGpuLogLevel = view.findViewById(R.id.ETUpscaleGpuLogLevel);
++        EditText etGpuLogMemoryTracking = view.findViewById(R.id.ETUpscaleGpuLogMemoryTracking);
++        EditText etGpuLogRingBufferSize = view.findViewById(R.id.ETUpscaleGpuLogRingBufferSize);
++        EditText etGpuUnswizzleEnabled = view.findViewById(R.id.ETUpscaleGpuUnswizzleEnabled);
++        EditText etGpuUnswizzleChunkSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleChunkSize);
++        EditText etGpuUnswizzleStreamSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleStreamSize);
++        EditText etGpuUnswizzleTextureSize = view.findViewById(R.id.ETUpscaleGpuUnswizzleTextureSize);
++        EditText etGpuModel = view.findViewById(R.id.ETUpscaleGpuModel);
++        EditText etGpuTime = view.findViewById(R.id.ETUpscaleGpuTime);
++        EditText etMesaDebug = view.findViewById(R.id.ETUpscaleMesaDebug);
+ 
+         UpscaleUiConfig cfg = new UpscaleUiConfig();
+         cfg.perfPreset = normalizeChoice(String.valueOf(sPerfPreset.getSelectedItem()), "auto");
+@@ -905,6 +965,26 @@ public class ContainerDetailFragment extends Fragment {
+         cfg.patchOldQcomDrivers = normalizeOnOffAuto(String.valueOf(sPatchOldQcomDrivers.getSelectedItem()), "auto");
+         cfg.nvdecEmulation = normalizeOnOffAuto(String.valueOf(sNvdecEmulation.getSelectedItem()), "auto");
+         cfg.slowSpeedLimit = String.valueOf(clampInt(etSlowSpeedLimit.getText().toString(), 0, 600, 0));
++        cfg.rendererAccuracy = normalizeEnvToken(etRendererAccuracy.getText().toString(), "auto");
++        cfg.rendererAntiAliasing = normalizeEnvToken(etRendererAntiAliasing.getText().toString(), "auto");
++        cfg.rendererAspectRatio = normalizeEnvToken(etRendererAspectRatio.getText().toString(), "auto");
++        cfg.rendererAstcDecodeMethod = normalizeEnvToken(etRendererAstcDecodeMethod.getText().toString(), "auto");
++        cfg.rendererAstcRecompression = normalizeEnvToken(etRendererAstcRecompression.getText().toString(), "auto");
++        cfg.rendererScreenLayout = normalizeEnvToken(etRendererScreenLayout.getText().toString(), "auto");
++        cfg.rendererVramUsageMode = normalizeEnvToken(etRendererVramUsageMode.getText().toString(), "auto");
++        cfg.rendererVertexInputDynamicState = normalizeOnOffAuto(etRendererVertexInputDynamicState.getText().toString(), "auto");
++        cfg.gpuLoggingEnabled = normalizeOnOffAuto(etGpuLoggingEnabled.getText().toString(), "auto");
++        cfg.gpuLogDriverDebug = normalizeOnOffAuto(etGpuLogDriverDebug.getText().toString(), "auto");
++        cfg.gpuLogLevel = String.valueOf(clampInt(etGpuLogLevel.getText().toString(), 0, 9, 0));
++        cfg.gpuLogMemoryTracking = normalizeOnOffAuto(etGpuLogMemoryTracking.getText().toString(), "auto");
++        cfg.gpuLogRingBufferSize = String.valueOf(clampInt(etGpuLogRingBufferSize.getText().toString(), 0, 1048576, 0));
++        cfg.gpuUnswizzleEnabled = normalizeOnOffAuto(etGpuUnswizzleEnabled.getText().toString(), "auto");
++        cfg.gpuUnswizzleChunkSize = String.valueOf(clampInt(etGpuUnswizzleChunkSize.getText().toString(), 0, 16777216, 0));
++        cfg.gpuUnswizzleStreamSize = String.valueOf(clampInt(etGpuUnswizzleStreamSize.getText().toString(), 0, 16777216, 0));
++        cfg.gpuUnswizzleTextureSize = String.valueOf(clampInt(etGpuUnswizzleTextureSize.getText().toString(), 0, 16777216, 0));
++        cfg.gpuModel = normalizeEnvToken(etGpuModel.getText().toString(), "");
++        cfg.gpuTime = normalizeEnvToken(etGpuTime.getText().toString(), "auto");
++        cfg.mesaDebug = normalizeEnvToken(etMesaDebug.getText().toString(), "");
+         return cfg;
+     }
+ 
+@@ -944,6 +1024,26 @@ public class ContainerDetailFragment extends Fragment {
+         extraData.put(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, cfg.patchOldQcomDrivers);
+         extraData.put(Container.EXTRA_UPSCALE_NVDEC_EMULATION, cfg.nvdecEmulation);
+         extraData.put(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, cfg.slowSpeedLimit);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, cfg.rendererAccuracy);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, cfg.rendererAntiAliasing);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, cfg.rendererAspectRatio);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, cfg.rendererAstcDecodeMethod);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, cfg.rendererAstcRecompression);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, cfg.rendererScreenLayout);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, cfg.rendererVramUsageMode);
++        extraData.put(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, cfg.rendererVertexInputDynamicState);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, cfg.gpuLoggingEnabled);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, cfg.gpuLogDriverDebug);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, cfg.gpuLogLevel);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, cfg.gpuLogMemoryTracking);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, cfg.gpuLogRingBufferSize);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, cfg.gpuUnswizzleEnabled);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, cfg.gpuUnswizzleChunkSize);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, cfg.gpuUnswizzleStreamSize);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, cfg.gpuUnswizzleTextureSize);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_MODEL, cfg.gpuModel);
++        extraData.put(Container.EXTRA_UPSCALE_GPU_TIME, cfg.gpuTime);
++        extraData.put(Container.EXTRA_UPSCALE_MESA_DEBUG, cfg.mesaDebug);
+         return extraData;
+     }
+ 
+@@ -984,6 +1084,26 @@ public class ContainerDetailFragment extends Fragment {
+             cfg.patchOldQcomDrivers = container.getExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, "");
+             cfg.nvdecEmulation = container.getExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, "");
+             cfg.slowSpeedLimit = container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "");
++            cfg.rendererAccuracy = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, "");
++            cfg.rendererAntiAliasing = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, "");
++            cfg.rendererAspectRatio = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, "");
++            cfg.rendererAstcDecodeMethod = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, "");
++            cfg.rendererAstcRecompression = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, "");
++            cfg.rendererScreenLayout = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, "");
++            cfg.rendererVramUsageMode = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, "");
++            cfg.rendererVertexInputDynamicState = container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, "");
++            cfg.gpuLoggingEnabled = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, "");
++            cfg.gpuLogDriverDebug = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, "");
++            cfg.gpuLogLevel = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, "");
++            cfg.gpuLogMemoryTracking = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, "");
++            cfg.gpuLogRingBufferSize = container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, "");
++            cfg.gpuUnswizzleEnabled = container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, "");
++            cfg.gpuUnswizzleChunkSize = container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, "");
++            cfg.gpuUnswizzleStreamSize = container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, "");
++            cfg.gpuUnswizzleTextureSize = container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, "");
++            cfg.gpuModel = container.getExtra(Container.EXTRA_UPSCALE_GPU_MODEL, "");
++            cfg.gpuTime = container.getExtra(Container.EXTRA_UPSCALE_GPU_TIME, "");
++            cfg.mesaDebug = container.getExtra(Container.EXTRA_UPSCALE_MESA_DEBUG, "");
+         }
+ 
+         boolean missingStructuredUpscale = cfg.perfPreset.isEmpty()
+@@ -1019,7 +1139,27 @@ public class ContainerDetailFragment extends Fragment {
+                 && cfg.optimizeSpirvOutput.isEmpty()
+                 && cfg.patchOldQcomDrivers.isEmpty()
+                 && cfg.nvdecEmulation.isEmpty()
+-                && cfg.slowSpeedLimit.isEmpty();
++                && cfg.slowSpeedLimit.isEmpty()
++                && cfg.rendererAccuracy.isEmpty()
++                && cfg.rendererAntiAliasing.isEmpty()
++                && cfg.rendererAspectRatio.isEmpty()
++                && cfg.rendererAstcDecodeMethod.isEmpty()
++                && cfg.rendererAstcRecompression.isEmpty()
++                && cfg.rendererScreenLayout.isEmpty()
++                && cfg.rendererVramUsageMode.isEmpty()
++                && cfg.rendererVertexInputDynamicState.isEmpty()
++                && cfg.gpuLoggingEnabled.isEmpty()
++                && cfg.gpuLogDriverDebug.isEmpty()
++                && cfg.gpuLogLevel.isEmpty()
++                && cfg.gpuLogMemoryTracking.isEmpty()
++                && cfg.gpuLogRingBufferSize.isEmpty()
++                && cfg.gpuUnswizzleEnabled.isEmpty()
++                && cfg.gpuUnswizzleChunkSize.isEmpty()
++                && cfg.gpuUnswizzleStreamSize.isEmpty()
++                && cfg.gpuUnswizzleTextureSize.isEmpty()
++                && cfg.gpuModel.isEmpty()
++                && cfg.gpuTime.isEmpty()
++                && cfg.mesaDebug.isEmpty();
+ 
+         if (missingStructuredUpscale && isEditMode()) {
+             applyLegacyUpscaleEnvFallback(cfg, new EnvVars(container.getEnvVars()));
+@@ -1060,6 +1200,26 @@ public class ContainerDetailFragment extends Fragment {
+         cfg.patchOldQcomDrivers = normalizeOnOffAuto(cfg.patchOldQcomDrivers, "auto");
+         cfg.nvdecEmulation = normalizeOnOffAuto(cfg.nvdecEmulation, "auto");
+         cfg.slowSpeedLimit = String.valueOf(clampInt(cfg.slowSpeedLimit, 0, 600, 0));
++        cfg.rendererAccuracy = normalizeEnvToken(cfg.rendererAccuracy, "auto");
++        cfg.rendererAntiAliasing = normalizeEnvToken(cfg.rendererAntiAliasing, "auto");
++        cfg.rendererAspectRatio = normalizeEnvToken(cfg.rendererAspectRatio, "auto");
++        cfg.rendererAstcDecodeMethod = normalizeEnvToken(cfg.rendererAstcDecodeMethod, "auto");
++        cfg.rendererAstcRecompression = normalizeEnvToken(cfg.rendererAstcRecompression, "auto");
++        cfg.rendererScreenLayout = normalizeEnvToken(cfg.rendererScreenLayout, "auto");
++        cfg.rendererVramUsageMode = normalizeEnvToken(cfg.rendererVramUsageMode, "auto");
++        cfg.rendererVertexInputDynamicState = normalizeOnOffAuto(cfg.rendererVertexInputDynamicState, "auto");
++        cfg.gpuLoggingEnabled = normalizeOnOffAuto(cfg.gpuLoggingEnabled, "auto");
++        cfg.gpuLogDriverDebug = normalizeOnOffAuto(cfg.gpuLogDriverDebug, "auto");
++        cfg.gpuLogLevel = String.valueOf(clampInt(cfg.gpuLogLevel, 0, 9, 0));
++        cfg.gpuLogMemoryTracking = normalizeOnOffAuto(cfg.gpuLogMemoryTracking, "auto");
++        cfg.gpuLogRingBufferSize = String.valueOf(clampInt(cfg.gpuLogRingBufferSize, 0, 1048576, 0));
++        cfg.gpuUnswizzleEnabled = normalizeOnOffAuto(cfg.gpuUnswizzleEnabled, "auto");
++        cfg.gpuUnswizzleChunkSize = String.valueOf(clampInt(cfg.gpuUnswizzleChunkSize, 0, 16777216, 0));
++        cfg.gpuUnswizzleStreamSize = String.valueOf(clampInt(cfg.gpuUnswizzleStreamSize, 0, 16777216, 0));
++        cfg.gpuUnswizzleTextureSize = String.valueOf(clampInt(cfg.gpuUnswizzleTextureSize, 0, 16777216, 0));
++        cfg.gpuModel = normalizeEnvToken(cfg.gpuModel, "");
++        cfg.gpuTime = normalizeEnvToken(cfg.gpuTime, "auto");
++        cfg.mesaDebug = normalizeEnvToken(cfg.mesaDebug, "");
+         return cfg;
+     }
+ 
+@@ -1219,6 +1379,106 @@ public class ContainerDetailFragment extends Fragment {
+                 envVars.get("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT"),
+                 envVars.get("RENDERER_SLOW_SPEED_LIMIT"));
+         if (!slowSpeedLimit.isEmpty()) cfg.slowSpeedLimit = slowSpeedLimit;
++
++        String rendererAccuracy = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_ACCURACY"),
++                envVars.get("RENDERER_ACCURACY"));
++        if (!rendererAccuracy.isEmpty()) cfg.rendererAccuracy = normalizeEnvToken(rendererAccuracy, cfg.rendererAccuracy);
++
++        String rendererAntiAliasing = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING"),
++                envVars.get("RENDERER_ANTI_ALIASING"));
++        if (!rendererAntiAliasing.isEmpty()) cfg.rendererAntiAliasing = normalizeEnvToken(rendererAntiAliasing, cfg.rendererAntiAliasing);
++
++        String rendererAspectRatio = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO"),
++                envVars.get("RENDERER_ASPECT_RATIO"));
++        if (!rendererAspectRatio.isEmpty()) cfg.rendererAspectRatio = normalizeEnvToken(rendererAspectRatio, cfg.rendererAspectRatio);
++
++        String rendererAstcDecodeMethod = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD"),
++                envVars.get("RENDERER_ASTC_DECODE_METHOD"));
++        if (!rendererAstcDecodeMethod.isEmpty()) cfg.rendererAstcDecodeMethod = normalizeEnvToken(rendererAstcDecodeMethod, cfg.rendererAstcDecodeMethod);
++
++        String rendererAstcRecompression = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION"),
++                envVars.get("RENDERER_ASTC_RECOMPRESSION"));
++        if (!rendererAstcRecompression.isEmpty()) cfg.rendererAstcRecompression = normalizeEnvToken(rendererAstcRecompression, cfg.rendererAstcRecompression);
++
++        String rendererScreenLayout = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT"),
++                envVars.get("RENDERER_SCREEN_LAYOUT"));
++        if (!rendererScreenLayout.isEmpty()) cfg.rendererScreenLayout = normalizeEnvToken(rendererScreenLayout, cfg.rendererScreenLayout);
++
++        String rendererVramUsageMode = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE"),
++                envVars.get("RENDERER_VRAM_USAGE_MODE"));
++        if (!rendererVramUsageMode.isEmpty()) cfg.rendererVramUsageMode = normalizeEnvToken(rendererVramUsageMode, cfg.rendererVramUsageMode);
++
++        String rendererVertexInputDynamicState = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE"),
++                envVars.get("RENDERER_VERTEX_INPUT_DYNAMIC_STATE"));
++        if (!rendererVertexInputDynamicState.isEmpty()) cfg.rendererVertexInputDynamicState = normalizeOnOffAuto(rendererVertexInputDynamicState, cfg.rendererVertexInputDynamicState);
++
++        String gpuLoggingEnabled = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED"),
++                envVars.get("GPU_LOGGING_ENABLED"));
++        if (!gpuLoggingEnabled.isEmpty()) cfg.gpuLoggingEnabled = normalizeOnOffAuto(gpuLoggingEnabled, cfg.gpuLoggingEnabled);
++
++        String gpuLogDriverDebug = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG"),
++                envVars.get("GPU_LOG_DRIVER_DEBUG"));
++        if (!gpuLogDriverDebug.isEmpty()) cfg.gpuLogDriverDebug = normalizeOnOffAuto(gpuLogDriverDebug, cfg.gpuLogDriverDebug);
++
++        String gpuLogLevel = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOG_LEVEL"),
++                envVars.get("GPU_LOG_LEVEL"));
++        if (!gpuLogLevel.isEmpty()) cfg.gpuLogLevel = String.valueOf(clampInt(gpuLogLevel, 0, 9, 0));
++
++        String gpuLogMemoryTracking = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING"),
++                envVars.get("GPU_LOG_MEMORY_TRACKING"));
++        if (!gpuLogMemoryTracking.isEmpty()) cfg.gpuLogMemoryTracking = normalizeOnOffAuto(gpuLogMemoryTracking, cfg.gpuLogMemoryTracking);
++
++        String gpuLogRingBufferSize = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE"),
++                envVars.get("GPU_LOG_RING_BUFFER_SIZE"));
++        if (!gpuLogRingBufferSize.isEmpty()) cfg.gpuLogRingBufferSize = String.valueOf(clampInt(gpuLogRingBufferSize, 0, 1048576, 0));
++
++        String gpuUnswizzleEnabled = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED"),
++                envVars.get("GPU_UNSWIZZLE_ENABLED"));
++        if (!gpuUnswizzleEnabled.isEmpty()) cfg.gpuUnswizzleEnabled = normalizeOnOffAuto(gpuUnswizzleEnabled, cfg.gpuUnswizzleEnabled);
++
++        String gpuUnswizzleChunkSize = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE"),
++                envVars.get("GPU_UNSWIZZLE_CHUNK_SIZE"));
++        if (!gpuUnswizzleChunkSize.isEmpty()) cfg.gpuUnswizzleChunkSize = String.valueOf(clampInt(gpuUnswizzleChunkSize, 0, 16777216, 0));
++
++        String gpuUnswizzleStreamSize = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE"),
++                envVars.get("GPU_UNSWIZZLE_STREAM_SIZE"));
++        if (!gpuUnswizzleStreamSize.isEmpty()) cfg.gpuUnswizzleStreamSize = String.valueOf(clampInt(gpuUnswizzleStreamSize, 0, 16777216, 0));
++
++        String gpuUnswizzleTextureSize = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE"),
++                envVars.get("GPU_UNSWIZZLE_TEXTURE_SIZE"));
++        if (!gpuUnswizzleTextureSize.isEmpty()) cfg.gpuUnswizzleTextureSize = String.valueOf(clampInt(gpuUnswizzleTextureSize, 0, 16777216, 0));
++
++        String gpuModel = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_MODEL"),
++                envVars.get("GPU_MODEL"));
++        if (!gpuModel.isEmpty()) cfg.gpuModel = normalizeEnvToken(gpuModel, cfg.gpuModel);
++
++        String gpuTime = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_GPU_TIME"),
++                envVars.get("GPU_TIME"));
++        if (!gpuTime.isEmpty()) cfg.gpuTime = normalizeEnvToken(gpuTime, cfg.gpuTime);
++
++        String mesaDebug = firstNonEmpty(
++                envVars.get("WINLATOR_UPSCALE_MESA_DEBUG"),
++                envVars.get("MESA_DEBUG"));
++        if (!mesaDebug.isEmpty()) cfg.mesaDebug = normalizeEnvToken(mesaDebug, cfg.mesaDebug);
+     }
+ 
+     private static String stripUpscaleVarsFromEnv(String envString) {
+@@ -1265,6 +1525,26 @@ public class ContainerDetailFragment extends Fragment {
+         container.putExtra(Container.EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS, cfg.patchOldQcomDrivers);
+         container.putExtra(Container.EXTRA_UPSCALE_NVDEC_EMULATION, cfg.nvdecEmulation);
+         container.putExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, cfg.slowSpeedLimit);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, cfg.rendererAccuracy);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, cfg.rendererAntiAliasing);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, cfg.rendererAspectRatio);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, cfg.rendererAstcDecodeMethod);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, cfg.rendererAstcRecompression);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, cfg.rendererScreenLayout);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, cfg.rendererVramUsageMode);
++        container.putExtra(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, cfg.rendererVertexInputDynamicState);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, cfg.gpuLoggingEnabled);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, cfg.gpuLogDriverDebug);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, cfg.gpuLogLevel);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, cfg.gpuLogMemoryTracking);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, cfg.gpuLogRingBufferSize);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, cfg.gpuUnswizzleEnabled);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, cfg.gpuUnswizzleChunkSize);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, cfg.gpuUnswizzleStreamSize);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, cfg.gpuUnswizzleTextureSize);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_MODEL, cfg.gpuModel);
++        container.putExtra(Container.EXTRA_UPSCALE_GPU_TIME, cfg.gpuTime);
++        container.putExtra(Container.EXTRA_UPSCALE_MESA_DEBUG, cfg.mesaDebug);
+     }
+ 
+     private static String normalizeChoice(String value, String fallback) {
+@@ -1345,6 +1625,12 @@ public class ContainerDetailFragment extends Fragment {
+         return fallback;
+     }
+ 
++    private static String normalizeEnvToken(String value, String fallback) {
++        String normalized = normalizeChoice(value, fallback).replaceAll("\\s+", "_");
++        if (normalized.isEmpty()) return fallback;
++        return normalized;
++    }
++
+     private static String firstNonEmpty(String... values) {
+         if (values == null) return "";
+         for (String value : values) {
+@@ -1398,6 +1684,26 @@ public class ContainerDetailFragment extends Fragment {
+         String patchOldQcomDrivers = "auto";
+         String nvdecEmulation = "auto";
+         String slowSpeedLimit = "0";
++        String rendererAccuracy = "auto";
++        String rendererAntiAliasing = "auto";
++        String rendererAspectRatio = "auto";
++        String rendererAstcDecodeMethod = "auto";
++        String rendererAstcRecompression = "auto";
++        String rendererScreenLayout = "auto";
++        String rendererVramUsageMode = "auto";
++        String rendererVertexInputDynamicState = "auto";
++        String gpuLoggingEnabled = "auto";
++        String gpuLogDriverDebug = "auto";
++        String gpuLogLevel = "0";
++        String gpuLogMemoryTracking = "auto";
++        String gpuLogRingBufferSize = "0";
++        String gpuUnswizzleEnabled = "auto";
++        String gpuUnswizzleChunkSize = "0";
++        String gpuUnswizzleStreamSize = "0";
++        String gpuUnswizzleTextureSize = "0";
++        String gpuModel = "";
++        String gpuTime = "auto";
++        String mesaDebug = "";
+     }
+ 
+     private static final String[] UPSCALE_RUNTIME_ENV_KEYS = new String[] {
+@@ -1475,6 +1781,46 @@ public class ContainerDetailFragment extends Fragment {
+             "RENDERER_PATCH_OLD_QCOM_DRIVERS",
+             "RENDERER_NVDEC_EMULATION",
+             "RENDERER_SLOW_SPEED_LIMIT",
++            "WINLATOR_UPSCALE_RENDERER_ACCURACY",
++            "WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING",
++            "WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO",
++            "WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD",
++            "WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION",
++            "WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT",
++            "WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE",
++            "WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE",
++            "WINLATOR_UPSCALE_GPU_LOGGING_ENABLED",
++            "WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG",
++            "WINLATOR_UPSCALE_GPU_LOG_LEVEL",
++            "WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING",
++            "WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE",
++            "WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED",
++            "WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE",
++            "WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE",
++            "WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE",
++            "WINLATOR_UPSCALE_GPU_MODEL",
++            "WINLATOR_UPSCALE_GPU_TIME",
++            "WINLATOR_UPSCALE_MESA_DEBUG",
++            "RENDERER_ACCURACY",
++            "RENDERER_ANTI_ALIASING",
++            "RENDERER_ASPECT_RATIO",
++            "RENDERER_ASTC_DECODE_METHOD",
++            "RENDERER_ASTC_RECOMPRESSION",
++            "RENDERER_SCREEN_LAYOUT",
++            "RENDERER_VRAM_USAGE_MODE",
++            "RENDERER_VERTEX_INPUT_DYNAMIC_STATE",
++            "GPU_LOGGING_ENABLED",
++            "GPU_LOG_DRIVER_DEBUG",
++            "GPU_LOG_LEVEL",
++            "GPU_LOG_MEMORY_TRACKING",
++            "GPU_LOG_RING_BUFFER_SIZE",
++            "GPU_UNSWIZZLE_ENABLED",
++            "GPU_UNSWIZZLE_CHUNK_SIZE",
++            "GPU_UNSWIZZLE_STREAM_SIZE",
++            "GPU_UNSWIZZLE_TEXTURE_SIZE",
++            "GPU_MODEL",
++            "GPU_TIME",
++            "MESA_DEBUG",
+             "DXVK_MAX_ANISOTROPY",
+             "WINLATOR_GRAPHICS_SUITABILITY_TIER",
+             "WINLATOR_GRAPHICS_DRIVER_FAMILY",
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index e72c7d5..e23be18 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -2259,6 +2259,66 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String slowSpeedLimit = shortcut != null
+                 ? shortcut.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0"))
+                 : container.getExtra(Container.EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0");
++        String rendererAccuracy = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ACCURACY, "auto");
++        String rendererAntiAliasing = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, "auto");
++        String rendererAspectRatio = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, "auto");
++        String rendererAstcDecodeMethod = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, "auto");
++        String rendererAstcRecompression = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, "auto");
++        String rendererScreenLayout = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, "auto");
++        String rendererVramUsageMode = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, "auto");
++        String rendererVertexInputDynamicState = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, "auto");
++        String gpuLoggingEnabled = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOGGING_ENABLED, "auto");
++        String gpuLogDriverDebug = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, "auto");
++        String gpuLogLevel = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_LEVEL, "0");
++        String gpuLogMemoryTracking = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, "auto");
++        String gpuLogRingBufferSize = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, "0");
++        String gpuUnswizzleEnabled = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, "auto");
++        String gpuUnswizzleChunkSize = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, "0");
++        String gpuUnswizzleStreamSize = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, "0");
++        String gpuUnswizzleTextureSize = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, "0"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, "0");
++        String gpuModel = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_MODEL, container.getExtra(Container.EXTRA_UPSCALE_GPU_MODEL, ""))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_MODEL, "");
++        String gpuTime = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_GPU_TIME, container.getExtra(Container.EXTRA_UPSCALE_GPU_TIME, "auto"))
++                : container.getExtra(Container.EXTRA_UPSCALE_GPU_TIME, "auto");
++        String mesaDebug = shortcut != null
++                ? shortcut.getExtra(Container.EXTRA_UPSCALE_MESA_DEBUG, container.getExtra(Container.EXTRA_UPSCALE_MESA_DEBUG, ""))
++                : container.getExtra(Container.EXTRA_UPSCALE_MESA_DEBUG, "");
+ 
+         boolean applied = false;
+         if (perfPreset != null && !perfPreset.trim().isEmpty() && !"auto".equalsIgnoreCase(perfPreset)) {
+@@ -2327,6 +2387,26 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String normalizedPatchOldQcomDrivers = normalizeUpscaleOnOffAutoToken(patchOldQcomDrivers, "auto");
+         String normalizedNvdecEmulation = normalizeUpscaleOnOffAutoToken(nvdecEmulation, "auto");
+         String normalizedSlowSpeedLimit = String.valueOf(clampUpscaleIntToken(slowSpeedLimit, 0, 600, 0));
++        String normalizedRendererAccuracy = normalizeUpscaleEnvToken(rendererAccuracy, "auto");
++        String normalizedRendererAntiAliasing = normalizeUpscaleEnvToken(rendererAntiAliasing, "auto");
++        String normalizedRendererAspectRatio = normalizeUpscaleEnvToken(rendererAspectRatio, "auto");
++        String normalizedRendererAstcDecodeMethod = normalizeUpscaleEnvToken(rendererAstcDecodeMethod, "auto");
++        String normalizedRendererAstcRecompression = normalizeUpscaleEnvToken(rendererAstcRecompression, "auto");
++        String normalizedRendererScreenLayout = normalizeUpscaleEnvToken(rendererScreenLayout, "auto");
++        String normalizedRendererVramUsageMode = normalizeUpscaleEnvToken(rendererVramUsageMode, "auto");
++        String normalizedRendererVertexInputDynamicState = normalizeUpscaleOnOffAutoToken(rendererVertexInputDynamicState, "auto");
++        String normalizedGpuLoggingEnabled = normalizeUpscaleOnOffAutoToken(gpuLoggingEnabled, "auto");
++        String normalizedGpuLogDriverDebug = normalizeUpscaleOnOffAutoToken(gpuLogDriverDebug, "auto");
++        String normalizedGpuLogLevel = String.valueOf(clampUpscaleIntToken(gpuLogLevel, 0, 9, 0));
++        String normalizedGpuLogMemoryTracking = normalizeUpscaleOnOffAutoToken(gpuLogMemoryTracking, "auto");
++        String normalizedGpuLogRingBufferSize = String.valueOf(clampUpscaleIntToken(gpuLogRingBufferSize, 0, 1048576, 0));
++        String normalizedGpuUnswizzleEnabled = normalizeUpscaleOnOffAutoToken(gpuUnswizzleEnabled, "auto");
++        String normalizedGpuUnswizzleChunkSize = String.valueOf(clampUpscaleIntToken(gpuUnswizzleChunkSize, 0, 16777216, 0));
++        String normalizedGpuUnswizzleStreamSize = String.valueOf(clampUpscaleIntToken(gpuUnswizzleStreamSize, 0, 16777216, 0));
++        String normalizedGpuUnswizzleTextureSize = String.valueOf(clampUpscaleIntToken(gpuUnswizzleTextureSize, 0, 16777216, 0));
++        String normalizedGpuModel = normalizeUpscaleEnvToken(gpuModel, "");
++        String normalizedGpuTime = normalizeUpscaleEnvToken(gpuTime, "auto");
++        String normalizedMesaDebug = normalizeUpscaleEnvToken(mesaDebug, "");
+ 
+         envVars.put("WINLATOR_UPSCALE_RENDERER_RESOLUTION", normalizedRendererResolution);
+         envVars.put("WINLATOR_UPSCALE_SCALING_FILTER", normalizedScalingFilter);
+@@ -2356,6 +2436,26 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS", normalizedPatchOldQcomDrivers);
+         envVars.put("WINLATOR_UPSCALE_NVDEC_EMULATION", normalizedNvdecEmulation);
+         envVars.put("WINLATOR_UPSCALE_SLOW_SPEED_LIMIT", normalizedSlowSpeedLimit);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_ACCURACY", normalizedRendererAccuracy);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING", normalizedRendererAntiAliasing);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO", normalizedRendererAspectRatio);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD", normalizedRendererAstcDecodeMethod);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION", normalizedRendererAstcRecompression);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT", normalizedRendererScreenLayout);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE", normalizedRendererVramUsageMode);
++        envVars.put("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE", normalizedRendererVertexInputDynamicState);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED", normalizedGpuLoggingEnabled);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG", normalizedGpuLogDriverDebug);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOG_LEVEL", normalizedGpuLogLevel);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING", normalizedGpuLogMemoryTracking);
++        envVars.put("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE", normalizedGpuLogRingBufferSize);
++        envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED", normalizedGpuUnswizzleEnabled);
++        envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE", normalizedGpuUnswizzleChunkSize);
++        envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE", normalizedGpuUnswizzleStreamSize);
++        envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE", normalizedGpuUnswizzleTextureSize);
++        envVars.put("WINLATOR_UPSCALE_GPU_MODEL", normalizedGpuModel);
++        envVars.put("WINLATOR_UPSCALE_GPU_TIME", normalizedGpuTime);
++        envVars.put("WINLATOR_UPSCALE_MESA_DEBUG", normalizedMesaDebug);
+         envVars.put("WINLATOR_UPSCALE_SOURCE", shortcut != null ? "shortcut+container" : "container");
+ 
+         // Eden-compatible key aliases are exported for transfer parity and downstream wrappers.
+@@ -2386,6 +2486,26 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("RENDERER_PATCH_OLD_QCOM_DRIVERS", toEdenBooleanToken(normalizedPatchOldQcomDrivers));
+         envVars.put("RENDERER_NVDEC_EMULATION", toEdenBooleanToken(normalizedNvdecEmulation));
+         envVars.put("RENDERER_SLOW_SPEED_LIMIT", normalizedSlowSpeedLimit);
++        envVars.put("RENDERER_ACCURACY", normalizedRendererAccuracy);
++        envVars.put("RENDERER_ANTI_ALIASING", normalizedRendererAntiAliasing);
++        envVars.put("RENDERER_ASPECT_RATIO", normalizedRendererAspectRatio);
++        envVars.put("RENDERER_ASTC_DECODE_METHOD", normalizedRendererAstcDecodeMethod);
++        envVars.put("RENDERER_ASTC_RECOMPRESSION", normalizedRendererAstcRecompression);
++        envVars.put("RENDERER_SCREEN_LAYOUT", normalizedRendererScreenLayout);
++        envVars.put("RENDERER_VRAM_USAGE_MODE", normalizedRendererVramUsageMode);
++        envVars.put("RENDERER_VERTEX_INPUT_DYNAMIC_STATE", toEdenBooleanToken(normalizedRendererVertexInputDynamicState));
++        envVars.put("GPU_LOGGING_ENABLED", toEdenBooleanToken(normalizedGpuLoggingEnabled));
++        envVars.put("GPU_LOG_DRIVER_DEBUG", toEdenBooleanToken(normalizedGpuLogDriverDebug));
++        envVars.put("GPU_LOG_LEVEL", normalizedGpuLogLevel);
++        envVars.put("GPU_LOG_MEMORY_TRACKING", toEdenBooleanToken(normalizedGpuLogMemoryTracking));
++        envVars.put("GPU_LOG_RING_BUFFER_SIZE", normalizedGpuLogRingBufferSize);
++        envVars.put("GPU_UNSWIZZLE_ENABLED", toEdenBooleanToken(normalizedGpuUnswizzleEnabled));
++        envVars.put("GPU_UNSWIZZLE_CHUNK_SIZE", normalizedGpuUnswizzleChunkSize);
++        envVars.put("GPU_UNSWIZZLE_STREAM_SIZE", normalizedGpuUnswizzleStreamSize);
++        envVars.put("GPU_UNSWIZZLE_TEXTURE_SIZE", normalizedGpuUnswizzleTextureSize);
++        envVars.put("GPU_MODEL", normalizedGpuModel);
++        envVars.put("GPU_TIME", normalizedGpuTime);
++        envVars.put("MESA_DEBUG", normalizedMesaDebug);
+         envVars.put("GPU_LOG_VULKAN_CALLS",
+                 "on".equals(normalizedGpuLogVulkan) ? "1" :
+                         ("off".equals(normalizedGpuLogVulkan) ? "0" : "auto"));
+@@ -2441,6 +2561,26 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                             "patch_old_qcom_drivers", normalizedPatchOldQcomDrivers,
+                             "nvdec_emulation", normalizedNvdecEmulation,
+                             "slow_speed_limit", normalizedSlowSpeedLimit,
++                            "renderer_accuracy", normalizedRendererAccuracy,
++                            "renderer_anti_aliasing", normalizedRendererAntiAliasing,
++                            "renderer_aspect_ratio", normalizedRendererAspectRatio,
++                            "renderer_astc_decode_method", normalizedRendererAstcDecodeMethod,
++                            "renderer_astc_recompression", normalizedRendererAstcRecompression,
++                            "renderer_screen_layout", normalizedRendererScreenLayout,
++                            "renderer_vram_usage_mode", normalizedRendererVramUsageMode,
++                            "renderer_vertex_input_dynamic_state", normalizedRendererVertexInputDynamicState,
++                            "gpu_logging_enabled", normalizedGpuLoggingEnabled,
++                            "gpu_log_driver_debug", normalizedGpuLogDriverDebug,
++                            "gpu_log_level", normalizedGpuLogLevel,
++                            "gpu_log_memory_tracking", normalizedGpuLogMemoryTracking,
++                            "gpu_log_ring_buffer_size", normalizedGpuLogRingBufferSize,
++                            "gpu_unswizzle_enabled", normalizedGpuUnswizzleEnabled,
++                            "gpu_unswizzle_chunk_size", normalizedGpuUnswizzleChunkSize,
++                            "gpu_unswizzle_stream_size", normalizedGpuUnswizzleStreamSize,
++                            "gpu_unswizzle_texture_size", normalizedGpuUnswizzleTextureSize,
++                            "gpu_model", normalizedGpuModel,
++                            "gpu_time", normalizedGpuTime,
++                            "mesa_debug", normalizedMesaDebug,
+                             "config_source", shortcut != null ? "shortcut+container" : "container"));
+         }
+     }
+@@ -2557,6 +2697,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         return fallback;
+     }
+ 
++    private static String normalizeUpscaleEnvToken(String value, String fallback) {
++        String normalized = value != null ? value.trim().toLowerCase(Locale.US) : "";
++        normalized = normalized.replaceAll("\\s+", "_");
++        if (normalized.isEmpty()) return fallback;
++        return normalized;
++    }
++
+     private static String normalizeUpscaleRendererBackendToken(String value, String fallback) {
+         String normalized = value != null ? value.trim().toLowerCase(Locale.US) : "";
+         if (normalized.equals("auto") || normalized.equals("vulkan") || normalized.equals("opengl")) {
+diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
+index 7ac0c46..358897d 100644
+--- a/app/src/main/java/com/winlator/cmod/container/Container.java
++++ b/app/src/main/java/com/winlator/cmod/container/Container.java
+@@ -81,6 +81,26 @@ public class Container {
+     public static final String EXTRA_UPSCALE_PATCH_OLD_QCOM_DRIVERS = "upscalePatchOldQcomDrivers"; // auto|on|off
+     public static final String EXTRA_UPSCALE_NVDEC_EMULATION = "upscaleNvdecEmulation"; // auto|on|off
+     public static final String EXTRA_UPSCALE_SLOW_SPEED_LIMIT = "upscaleSlowSpeedLimit"; // 0..600
++    public static final String EXTRA_UPSCALE_RENDERER_ACCURACY = "upscaleRendererAccuracy"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_ANTI_ALIASING = "upscaleRendererAntiAliasing"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_ASPECT_RATIO = "upscaleRendererAspectRatio"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD = "upscaleRendererAstcDecodeMethod"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION = "upscaleRendererAstcRecompression"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT = "upscaleRendererScreenLayout"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE = "upscaleRendererVramUsageMode"; // auto|token
++    public static final String EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE = "upscaleRendererVertexInputDynamicState"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_LOGGING_ENABLED = "upscaleGpuLoggingEnabled"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG = "upscaleGpuLogDriverDebug"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_LOG_LEVEL = "upscaleGpuLogLevel"; // 0..9
++    public static final String EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING = "upscaleGpuLogMemoryTracking"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE = "upscaleGpuLogRingBufferSize"; // 0..1048576
++    public static final String EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED = "upscaleGpuUnswizzleEnabled"; // auto|on|off
++    public static final String EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE = "upscaleGpuUnswizzleChunkSize"; // 0..16777216
++    public static final String EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE = "upscaleGpuUnswizzleStreamSize"; // 0..16777216
++    public static final String EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE = "upscaleGpuUnswizzleTextureSize"; // 0..16777216
++    public static final String EXTRA_UPSCALE_GPU_MODEL = "upscaleGpuModel"; // token
++    public static final String EXTRA_UPSCALE_GPU_TIME = "upscaleGpuTime"; // auto|token
++    public static final String EXTRA_UPSCALE_MESA_DEBUG = "upscaleMesaDebug"; // token
+     public final int id;
+     private String name;
+     private String screenSize = DEFAULT_SCREEN_SIZE;
+@@ -829,6 +849,86 @@ public class Container {
+             if (data.has(EXTRA_UPSCALE_SLOW_SPEED_LIMIT)) {
+                 data.put(EXTRA_UPSCALE_SLOW_SPEED_LIMIT, clampInt(data.optString(EXTRA_UPSCALE_SLOW_SPEED_LIMIT, "0"), 0, 600, 0));
+             }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_ACCURACY)) {
++                data.put(EXTRA_UPSCALE_RENDERER_ACCURACY, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_ACCURACY, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_ANTI_ALIASING)) {
++                data.put(EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_ANTI_ALIASING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_ASPECT_RATIO)) {
++                data.put(EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_ASPECT_RATIO, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD)) {
++                data.put(EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_ASTC_DECODE_METHOD, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION)) {
++                data.put(EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_ASTC_RECOMPRESSION, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT)) {
++                data.put(EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_SCREEN_LAYOUT, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE)) {
++                data.put(EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, normalizeEnvToken(data.optString(EXTRA_UPSCALE_RENDERER_VRAM_USAGE_MODE, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE)) {
++                data.put(EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOGGING_ENABLED)) {
++                data.put(EXTRA_UPSCALE_GPU_LOGGING_ENABLED, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_GPU_LOGGING_ENABLED, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG)) {
++                data.put(EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_GPU_LOG_DRIVER_DEBUG, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOG_LEVEL)) {
++                data.put(EXTRA_UPSCALE_GPU_LOG_LEVEL, clampInt(data.optString(EXTRA_UPSCALE_GPU_LOG_LEVEL, "0"), 0, 9, 0));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING)) {
++                data.put(EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_GPU_LOG_MEMORY_TRACKING, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE)) {
++                data.put(EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, clampInt(data.optString(EXTRA_UPSCALE_GPU_LOG_RING_BUFFER_SIZE, "0"), 0, 1048576, 0));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED)) {
++                data.put(EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, normalizeOnOffAuto(data.optString(EXTRA_UPSCALE_GPU_UNSWIZZLE_ENABLED, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE)) {
++                data.put(EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, clampInt(data.optString(EXTRA_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE, "0"), 0, 16777216, 0));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE)) {
++                data.put(EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, clampInt(data.optString(EXTRA_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE, "0"), 0, 16777216, 0));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE)) {
++                data.put(EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, clampInt(data.optString(EXTRA_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE, "0"), 0, 16777216, 0));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_MODEL)) {
++                data.put(EXTRA_UPSCALE_GPU_MODEL, normalizeEnvToken(data.optString(EXTRA_UPSCALE_GPU_MODEL, ""), ""));
++            }
++
++            if (data.has(EXTRA_UPSCALE_GPU_TIME)) {
++                data.put(EXTRA_UPSCALE_GPU_TIME, normalizeEnvToken(data.optString(EXTRA_UPSCALE_GPU_TIME, "auto"), "auto"));
++            }
++
++            if (data.has(EXTRA_UPSCALE_MESA_DEBUG)) {
++                data.put(EXTRA_UPSCALE_MESA_DEBUG, normalizeEnvToken(data.optString(EXTRA_UPSCALE_MESA_DEBUG, ""), ""));
++            }
+         }
+         catch (JSONException ignored) {}
+     }
+@@ -845,6 +945,12 @@ public class Container {
+         return fallback;
+     }
+ 
++    private static String normalizeEnvToken(String value, String fallback) {
++        String normalized = normalizeLower(value).replaceAll("\\s+", "_");
++        if (normalized.isEmpty()) return fallback;
++        return normalized;
++    }
++
+     private static int clampInt(String value, int min, int max, int fallback) {
+         int parsed = fallback;
+         try {
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index fbeea1b..9e97662 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -690,6 +690,26 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "upscale_optimize_spirv_output", envVars.get("WINLATOR_UPSCALE_OPTIMIZE_SPIRV_OUTPUT"),
+                             "upscale_patch_old_qcom_drivers", envVars.get("WINLATOR_UPSCALE_PATCH_OLD_QCOM_DRIVERS"),
+                             "upscale_nvdec_emulation", envVars.get("WINLATOR_UPSCALE_NVDEC_EMULATION"),
++                            "upscale_renderer_accuracy", envVars.get("WINLATOR_UPSCALE_RENDERER_ACCURACY"),
++                            "upscale_renderer_anti_aliasing", envVars.get("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING"),
++                            "upscale_renderer_aspect_ratio", envVars.get("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO"),
++                            "upscale_renderer_astc_decode_method", envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD"),
++                            "upscale_renderer_astc_recompression", envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION"),
++                            "upscale_renderer_screen_layout", envVars.get("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT"),
++                            "upscale_renderer_vram_usage_mode", envVars.get("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE"),
++                            "upscale_renderer_vertex_input_dynamic_state", envVars.get("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE"),
++                            "upscale_gpu_logging_enabled", envVars.get("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED"),
++                            "upscale_gpu_log_driver_debug", envVars.get("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG"),
++                            "upscale_gpu_log_level", envVars.get("WINLATOR_UPSCALE_GPU_LOG_LEVEL"),
++                            "upscale_gpu_log_memory_tracking", envVars.get("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING"),
++                            "upscale_gpu_log_ring_buffer_size", envVars.get("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE"),
++                            "upscale_gpu_unswizzle_enabled", envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED"),
++                            "upscale_gpu_unswizzle_chunk_size", envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE"),
++                            "upscale_gpu_unswizzle_stream_size", envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE"),
++                            "upscale_gpu_unswizzle_texture_size", envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE"),
++                            "upscale_gpu_model", envVars.get("WINLATOR_UPSCALE_GPU_MODEL"),
++                            "upscale_gpu_time", envVars.get("WINLATOR_UPSCALE_GPU_TIME"),
++                            "upscale_mesa_debug", envVars.get("WINLATOR_UPSCALE_MESA_DEBUG"),
+                             "command", command,
+                             "env_hash", ForensicLogger.hashEnvVars(envVars)));
+         }
+@@ -1118,6 +1138,211 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             changed = true;
+         }
+ 
++        String rendererAccuracy = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_ACCURACY"), envVars.get("RENDERER_ACCURACY")), "auto");
++        if (!rendererAccuracy.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_ACCURACY"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_ACCURACY", rendererAccuracy);
++            changed = true;
++        }
++        if (!rendererAccuracy.equals(envVars.get("RENDERER_ACCURACY"))) {
++            envVars.put("RENDERER_ACCURACY", rendererAccuracy);
++            changed = true;
++        }
++
++        String rendererAntiAliasing = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING"), envVars.get("RENDERER_ANTI_ALIASING")), "auto");
++        if (!rendererAntiAliasing.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_ANTI_ALIASING", rendererAntiAliasing);
++            changed = true;
++        }
++        if (!rendererAntiAliasing.equals(envVars.get("RENDERER_ANTI_ALIASING"))) {
++            envVars.put("RENDERER_ANTI_ALIASING", rendererAntiAliasing);
++            changed = true;
++        }
++
++        String rendererAspectRatio = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO"), envVars.get("RENDERER_ASPECT_RATIO")), "auto");
++        if (!rendererAspectRatio.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_ASPECT_RATIO", rendererAspectRatio);
++            changed = true;
++        }
++        if (!rendererAspectRatio.equals(envVars.get("RENDERER_ASPECT_RATIO"))) {
++            envVars.put("RENDERER_ASPECT_RATIO", rendererAspectRatio);
++            changed = true;
++        }
++
++        String rendererAstcDecodeMethod = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD"), envVars.get("RENDERER_ASTC_DECODE_METHOD")), "auto");
++        if (!rendererAstcDecodeMethod.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_ASTC_DECODE_METHOD", rendererAstcDecodeMethod);
++            changed = true;
++        }
++        if (!rendererAstcDecodeMethod.equals(envVars.get("RENDERER_ASTC_DECODE_METHOD"))) {
++            envVars.put("RENDERER_ASTC_DECODE_METHOD", rendererAstcDecodeMethod);
++            changed = true;
++        }
++
++        String rendererAstcRecompression = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION"), envVars.get("RENDERER_ASTC_RECOMPRESSION")), "auto");
++        if (!rendererAstcRecompression.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_ASTC_RECOMPRESSION", rendererAstcRecompression);
++            changed = true;
++        }
++        if (!rendererAstcRecompression.equals(envVars.get("RENDERER_ASTC_RECOMPRESSION"))) {
++            envVars.put("RENDERER_ASTC_RECOMPRESSION", rendererAstcRecompression);
++            changed = true;
++        }
++
++        String rendererScreenLayout = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT"), envVars.get("RENDERER_SCREEN_LAYOUT")), "auto");
++        if (!rendererScreenLayout.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_SCREEN_LAYOUT", rendererScreenLayout);
++            changed = true;
++        }
++        if (!rendererScreenLayout.equals(envVars.get("RENDERER_SCREEN_LAYOUT"))) {
++            envVars.put("RENDERER_SCREEN_LAYOUT", rendererScreenLayout);
++            changed = true;
++        }
++
++        String rendererVramUsageMode = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE"), envVars.get("RENDERER_VRAM_USAGE_MODE")), "auto");
++        if (!rendererVramUsageMode.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_VRAM_USAGE_MODE", rendererVramUsageMode);
++            changed = true;
++        }
++        if (!rendererVramUsageMode.equals(envVars.get("RENDERER_VRAM_USAGE_MODE"))) {
++            envVars.put("RENDERER_VRAM_USAGE_MODE", rendererVramUsageMode);
++            changed = true;
++        }
++
++        String rendererVertexInputDynamicState = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE"), envVars.get("RENDERER_VERTEX_INPUT_DYNAMIC_STATE")), "auto");
++        if (!rendererVertexInputDynamicState.equals(envVars.get("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE"))) {
++            envVars.put("WINLATOR_UPSCALE_RENDERER_VERTEX_INPUT_DYNAMIC_STATE", rendererVertexInputDynamicState);
++            changed = true;
++        }
++        String rendererVertexInputDynamicStateNumeric = onOffAutoToNumeric(rendererVertexInputDynamicState);
++        if (!rendererVertexInputDynamicStateNumeric.equals(envVars.get("RENDERER_VERTEX_INPUT_DYNAMIC_STATE"))) {
++            envVars.put("RENDERER_VERTEX_INPUT_DYNAMIC_STATE", rendererVertexInputDynamicStateNumeric);
++            changed = true;
++        }
++
++        String gpuLoggingEnabled = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED"), envVars.get("GPU_LOGGING_ENABLED")), "auto");
++        if (!gpuLoggingEnabled.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOGGING_ENABLED", gpuLoggingEnabled);
++            changed = true;
++        }
++        String gpuLoggingEnabledNumeric = onOffAutoToNumeric(gpuLoggingEnabled);
++        if (!gpuLoggingEnabledNumeric.equals(envVars.get("GPU_LOGGING_ENABLED"))) {
++            envVars.put("GPU_LOGGING_ENABLED", gpuLoggingEnabledNumeric);
++            changed = true;
++        }
++
++        String gpuLogDriverDebug = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG"), envVars.get("GPU_LOG_DRIVER_DEBUG")), "auto");
++        if (!gpuLogDriverDebug.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOG_DRIVER_DEBUG", gpuLogDriverDebug);
++            changed = true;
++        }
++        String gpuLogDriverDebugNumeric = onOffAutoToNumeric(gpuLogDriverDebug);
++        if (!gpuLogDriverDebugNumeric.equals(envVars.get("GPU_LOG_DRIVER_DEBUG"))) {
++            envVars.put("GPU_LOG_DRIVER_DEBUG", gpuLogDriverDebugNumeric);
++            changed = true;
++        }
++
++        String gpuLogLevel = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOG_LEVEL"), envVars.get("GPU_LOG_LEVEL")), 0, 9, 0));
++        if (!gpuLogLevel.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOG_LEVEL"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOG_LEVEL", gpuLogLevel);
++            changed = true;
++        }
++        if (!gpuLogLevel.equals(envVars.get("GPU_LOG_LEVEL"))) {
++            envVars.put("GPU_LOG_LEVEL", gpuLogLevel);
++            changed = true;
++        }
++
++        String gpuLogMemoryTracking = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING"), envVars.get("GPU_LOG_MEMORY_TRACKING")), "auto");
++        if (!gpuLogMemoryTracking.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOG_MEMORY_TRACKING", gpuLogMemoryTracking);
++            changed = true;
++        }
++        String gpuLogMemoryTrackingNumeric = onOffAutoToNumeric(gpuLogMemoryTracking);
++        if (!gpuLogMemoryTrackingNumeric.equals(envVars.get("GPU_LOG_MEMORY_TRACKING"))) {
++            envVars.put("GPU_LOG_MEMORY_TRACKING", gpuLogMemoryTrackingNumeric);
++            changed = true;
++        }
++
++        String gpuLogRingBufferSize = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE"), envVars.get("GPU_LOG_RING_BUFFER_SIZE")), 0, 1048576, 0));
++        if (!gpuLogRingBufferSize.equals(envVars.get("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_LOG_RING_BUFFER_SIZE", gpuLogRingBufferSize);
++            changed = true;
++        }
++        if (!gpuLogRingBufferSize.equals(envVars.get("GPU_LOG_RING_BUFFER_SIZE"))) {
++            envVars.put("GPU_LOG_RING_BUFFER_SIZE", gpuLogRingBufferSize);
++            changed = true;
++        }
++
++        String gpuUnswizzleEnabled = normalizeOnOffAutoToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED"), envVars.get("GPU_UNSWIZZLE_ENABLED")), "auto");
++        if (!gpuUnswizzleEnabled.equals(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_ENABLED", gpuUnswizzleEnabled);
++            changed = true;
++        }
++        String gpuUnswizzleEnabledNumeric = onOffAutoToNumeric(gpuUnswizzleEnabled);
++        if (!gpuUnswizzleEnabledNumeric.equals(envVars.get("GPU_UNSWIZZLE_ENABLED"))) {
++            envVars.put("GPU_UNSWIZZLE_ENABLED", gpuUnswizzleEnabledNumeric);
++            changed = true;
++        }
++
++        String gpuUnswizzleChunkSize = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE"), envVars.get("GPU_UNSWIZZLE_CHUNK_SIZE")), 0, 16777216, 0));
++        if (!gpuUnswizzleChunkSize.equals(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_CHUNK_SIZE", gpuUnswizzleChunkSize);
++            changed = true;
++        }
++        if (!gpuUnswizzleChunkSize.equals(envVars.get("GPU_UNSWIZZLE_CHUNK_SIZE"))) {
++            envVars.put("GPU_UNSWIZZLE_CHUNK_SIZE", gpuUnswizzleChunkSize);
++            changed = true;
++        }
++
++        String gpuUnswizzleStreamSize = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE"), envVars.get("GPU_UNSWIZZLE_STREAM_SIZE")), 0, 16777216, 0));
++        if (!gpuUnswizzleStreamSize.equals(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_STREAM_SIZE", gpuUnswizzleStreamSize);
++            changed = true;
++        }
++        if (!gpuUnswizzleStreamSize.equals(envVars.get("GPU_UNSWIZZLE_STREAM_SIZE"))) {
++            envVars.put("GPU_UNSWIZZLE_STREAM_SIZE", gpuUnswizzleStreamSize);
++            changed = true;
++        }
++
++        String gpuUnswizzleTextureSize = String.valueOf(clampInt(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE"), envVars.get("GPU_UNSWIZZLE_TEXTURE_SIZE")), 0, 16777216, 0));
++        if (!gpuUnswizzleTextureSize.equals(envVars.get("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_UNSWIZZLE_TEXTURE_SIZE", gpuUnswizzleTextureSize);
++            changed = true;
++        }
++        if (!gpuUnswizzleTextureSize.equals(envVars.get("GPU_UNSWIZZLE_TEXTURE_SIZE"))) {
++            envVars.put("GPU_UNSWIZZLE_TEXTURE_SIZE", gpuUnswizzleTextureSize);
++            changed = true;
++        }
++
++        String gpuModel = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_MODEL"), envVars.get("GPU_MODEL")), "");
++        if (!gpuModel.equals(envVars.get("WINLATOR_UPSCALE_GPU_MODEL"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_MODEL", gpuModel);
++            changed = true;
++        }
++        if (!gpuModel.equals(envVars.get("GPU_MODEL"))) {
++            envVars.put("GPU_MODEL", gpuModel);
++            changed = true;
++        }
++
++        String gpuTime = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_GPU_TIME"), envVars.get("GPU_TIME")), "auto");
++        if (!gpuTime.equals(envVars.get("WINLATOR_UPSCALE_GPU_TIME"))) {
++            envVars.put("WINLATOR_UPSCALE_GPU_TIME", gpuTime);
++            changed = true;
++        }
++        if (!gpuTime.equals(envVars.get("GPU_TIME"))) {
++            envVars.put("GPU_TIME", gpuTime);
++            changed = true;
++        }
++
++        String mesaDebug = normalizeEnvToken(firstNonEmpty(envVars.get("WINLATOR_UPSCALE_MESA_DEBUG"), envVars.get("MESA_DEBUG")), "");
++        if (!mesaDebug.equals(envVars.get("WINLATOR_UPSCALE_MESA_DEBUG"))) {
++            envVars.put("WINLATOR_UPSCALE_MESA_DEBUG", mesaDebug);
++            changed = true;
++        }
++        if (!mesaDebug.equals(envVars.get("MESA_DEBUG"))) {
++            envVars.put("MESA_DEBUG", mesaDebug);
++            changed = true;
++        }
++
+         return changed;
+     }
+ 
+@@ -1178,6 +1403,13 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return defaultValue;
+     }
+ 
++    private String normalizeEnvToken(String value, String defaultValue) {
++        String normalized = value != null ? value.trim().toLowerCase() : "";
++        normalized = normalized.replaceAll("\\s+", "_");
++        if (normalized.isEmpty()) return defaultValue;
++        return normalized;
++    }
++
+     private String normalizeRendererBackendToken(String primary, String fallback, String defaultValue) {
+         String source = !isEmpty(primary) ? primary : fallback;
+         String lowered = source != null ? source.trim().toLowerCase() : "";
+diff --git a/app/src/main/res/layout/container_detail_fragment.xml b/app/src/main/res/layout/container_detail_fragment.xml
+index 6778c28..117aefc 100644
+--- a/app/src/main/res/layout/container_detail_fragment.xml
++++ b/app/src/main/res/layout/container_detail_fragment.xml
+@@ -1083,6 +1083,246 @@
+                             android:id="@+id/SUpscaleNvdecEmulation"
+                             android:layout_width="match_parent"
+                             android:entries="@array/upscale_on_off_auto_entries" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_accuracy" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererAccuracy"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_anti_aliasing" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererAntiAliasing"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_aspect_ratio" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererAspectRatio"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_astc_decode_method" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererAstcDecodeMethod"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_astc_recompression" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererAstcRecompression"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_screen_layout" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererScreenLayout"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_vram_usage_mode" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererVramUsageMode"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_renderer_vertex_input_dynamic_state" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleRendererVertexInputDynamicState"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_logging_enabled" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuLoggingEnabled"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_log_driver_debug" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuLogDriverDebug"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_log_level" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuLogLevel"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_log_memory_tracking" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuLogMemoryTracking"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_log_ring_buffer_size" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuLogRingBufferSize"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_unswizzle_enabled" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuUnswizzleEnabled"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_unswizzle_chunk_size" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuUnswizzleChunkSize"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_unswizzle_stream_size" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuUnswizzleStreamSize"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_unswizzle_texture_size" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuUnswizzleTextureSize"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="number" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_model" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuModel"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_gpu_time" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleGpuTime"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="@string/upscale_mesa_debug" />
++
++                        <EditText
++                            style="@style/AppTheme"
++                            android:id="@+id/ETUpscaleMesaDebug"
++                            android:layout_width="match_parent"
++                            android:layout_height="wrap_content"
++                            android:inputType="textNoSuggestions" />
+                     </LinearLayout>
+ 
+                     <TextView
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index c99b459..d02cece 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -174,6 +174,26 @@
+     <string name="upscale_optimize_spirv_output">Optimize SPIR-V output</string>
+     <string name="upscale_patch_old_qcom_drivers">Patch old QCOM drivers</string>
+     <string name="upscale_nvdec_emulation">NVDEC emulation</string>
++    <string name="upscale_renderer_accuracy">Renderer accuracy</string>
++    <string name="upscale_renderer_anti_aliasing">Renderer anti-aliasing</string>
++    <string name="upscale_renderer_aspect_ratio">Renderer aspect ratio</string>
++    <string name="upscale_renderer_astc_decode_method">Renderer ASTC decode method</string>
++    <string name="upscale_renderer_astc_recompression">Renderer ASTC recompression</string>
++    <string name="upscale_renderer_screen_layout">Renderer screen layout</string>
++    <string name="upscale_renderer_vram_usage_mode">Renderer VRAM usage mode</string>
++    <string name="upscale_renderer_vertex_input_dynamic_state">Renderer vertex-input dynamic state</string>
++    <string name="upscale_gpu_logging_enabled">GPU logging enabled</string>
++    <string name="upscale_gpu_log_driver_debug">GPU log driver debug</string>
++    <string name="upscale_gpu_log_level">GPU log level</string>
++    <string name="upscale_gpu_log_memory_tracking">GPU log memory tracking</string>
++    <string name="upscale_gpu_log_ring_buffer_size">GPU log ring buffer size</string>
++    <string name="upscale_gpu_unswizzle_enabled">GPU unswizzle enabled</string>
++    <string name="upscale_gpu_unswizzle_chunk_size">GPU unswizzle chunk size</string>
++    <string name="upscale_gpu_unswizzle_stream_size">GPU unswizzle stream size</string>
++    <string name="upscale_gpu_unswizzle_texture_size">GPU unswizzle texture size</string>
++    <string name="upscale_gpu_model">GPU model token</string>
++    <string name="upscale_gpu_time">GPU timing mode</string>
++    <string name="upscale_mesa_debug">Mesa debug flags</string>
+     <string name="box64">Box64</string>
+     <string name="system">System</string>
+     <string name="box64_preset">Box64 Preset</string>
+-- 
+2.43.0
+
