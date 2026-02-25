@@ -359,7 +359,12 @@ index 0000000..2499062
 +                envVars.put("DXVK_ASYNC", "1");
 +                envVars.put("WINE_LARGE_ADDRESS_AWARE", "1");
 +            }
-+            case RuntimeProfile.AUTO:
++            case RuntimeProfile.AUTO -> {
++                envVars.put("mesa_glthread", "true");
++                envVars.put("MESA_NO_ERROR", "0");
++                envVars.put("MESA_SHADER_CACHE_MAX_SIZE", "768M");
++                envVars.put("DXVK_ASYNC", "0");
++            }
 +            default -> {
 +                envVars.put("mesa_glthread", "true");
 +                envVars.put("MESA_NO_ERROR", "0");
