@@ -10,6 +10,7 @@ This contract defines the common behavior boundary for GameNative- and GameHub-d
 2. Mainline runtime payload is `external-only` for FEX/Box/WoWBox/Vulkan driver assets.
 3. No bundled fallback payload may be introduced by migration patches.
 4. Every fallback path must emit explicit telemetry reason codes.
+5. Bionic donor sources (launcher + unix modules) must be pinned by SHA256 and validated in preflight before long builds.
 
 ## Required Runtime Fields
 
@@ -23,6 +24,10 @@ The package/runtime metadata must expose:
 - `wineserverLauncherAbi`
 - `runtimeMismatchReason`
 - `fexExpectationMode`
+- `bionicLauncherSourceSha256`
+- `bionicUnixSourceSha256`
+- `bionicLauncherSourceResolvedSha256`
+- `bionicUnixSourceResolvedSha256`
 
 ## Deterministic Fallback Chain
 
@@ -35,9 +40,15 @@ The package/runtime metadata must expose:
 ### Wrapper path
 
 1. Resolve runtime profile and translator overlays (Box64/FEX).
-2. Validate launch plan preflight.
+2. Validate bionic donor contract preflight (archive integrity + ABI class).
 3. Apply runtime env atomically.
 4. Abort only on fatal preflight violations; warn on non-fatal mismatch.
+
+### Unix ABI forensic contract
+
+1. Every WCP must include `share/wcp-forensics/unix-module-abi.tsv`.
+2. In strict bionic mode, `lib/wine/aarch64-unix/ntdll.so` must be `bionic-unix`.
+3. In strict bionic mode, any `glibc-unix` entry in `unix-module-abi.tsv` is a hard failure.
 
 ## Translator Overlay Migration Rules
 
