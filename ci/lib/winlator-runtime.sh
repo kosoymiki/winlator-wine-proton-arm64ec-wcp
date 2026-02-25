@@ -47,6 +47,22 @@ winlator_bionic_mainline_strict() {
   [[ "${WCP_MAINLINE_BIONIC_ONLY:-0}" == "1" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]
 }
 
+winlator_verify_sha256() {
+  local file_path="$1"
+  local expected_sha="$2"
+  local label="${3:-artifact}"
+  local actual_sha
+
+  [[ -n "${expected_sha}" ]] || return 0
+  [[ -f "${file_path}" ]] || fail "Cannot verify ${label} SHA256: missing file ${file_path}"
+  command -v sha256sum >/dev/null 2>&1 || fail "sha256sum is required to verify ${label} SHA256"
+  actual_sha="$(sha256sum "${file_path}" | awk '{print tolower($1)}')"
+  if [[ "${actual_sha}" != "${expected_sha,,}" ]]; then
+    fail "${label} SHA256 mismatch: expected=${expected_sha,,} actual=${actual_sha} file=${file_path}"
+  fi
+  log "Verified ${label} SHA256 (${expected_sha,,})"
+}
+
 winlator_detect_launcher_abi() {
   local bin_path="$1"
   [[ -e "${bin_path}" ]] || { printf '%s' "missing"; return 0; }
@@ -259,6 +275,8 @@ def emit(var: str, key: str):
 
 emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL", "launcherSourceWcpUrl")
 emit("WCP_BIONIC_UNIX_SOURCE_WCP_URL", "unixSourceWcpUrl")
+emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256", "launcherSourceSha256")
+emit("WCP_BIONIC_UNIX_SOURCE_WCP_SHA256", "unixSourceSha256")
 emit("WCP_BIONIC_UNIX_CORE_ADOPT", "unixCoreAdopt")
 emit("WCP_BIONIC_UNIX_CORE_MODULES", "unixCoreModules")
 if force:
@@ -276,7 +294,7 @@ PY
       fail "Bionic source-map entry for ${pkg_name} is required but missing in ${map_file}"
     fi
     case "${key}" in
-      WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_UNIX_CORE_ADOPT|WCP_BIONIC_UNIX_CORE_MODULES|WCP_BIONIC_SOURCE_MAP_APPLIED)
+      WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256|WCP_BIONIC_UNIX_SOURCE_WCP_SHA256|WCP_BIONIC_UNIX_CORE_ADOPT|WCP_BIONIC_UNIX_CORE_MODULES|WCP_BIONIC_SOURCE_MAP_APPLIED)
         if [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" || -z "${!key:-}" ]]; then
           printf -v "${key}" '%s' "${value}"
           export "${key}"
@@ -337,6 +355,7 @@ winlator_adopt_bionic_unix_core_modules() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic unix source WCP not found: ${source_wcp}"
+  winlator_verify_sha256 "${source_wcp}" "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" "bionic unix source WCP"
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
@@ -450,6 +469,7 @@ winlator_adopt_bionic_launchers() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic launcher source WCP not found: ${source_wcp}"
+  winlator_verify_sha256 "${source_wcp}" "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" "bionic launcher source WCP"
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
