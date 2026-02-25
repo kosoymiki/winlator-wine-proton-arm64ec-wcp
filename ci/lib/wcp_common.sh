@@ -621,6 +621,13 @@ compose_wcp_tree_from_stage() {
     "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION}")",
     "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE}")",
     "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE}")",
+    "bionicSourceMapApplied": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
+    "bionicLauncherSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "bionicLauncherSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
+    "bionicUnixSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
+    "bionicUnixSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
+    "bionicUnixCoreAdopt": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
+    "bionicUnixCoreModules": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")",
     "boxedRuntimeInWcpDetected": false,
     "policyViolationReason": "none",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
@@ -748,11 +755,14 @@ wcp_write_forensic_manifest() {
     echo "WCP_MAINLINE_FEX_EXTERNAL_ONLY=${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+    echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}"
     echo "WCP_BIONIC_SOURCE_MAP_FILE=${WCP_BIONIC_SOURCE_MAP_FILE:-}"
     echo "WCP_BIONIC_SOURCE_MAP_FORCE=${WCP_BIONIC_SOURCE_MAP_FORCE:-1}"
     echo "WCP_BIONIC_SOURCE_MAP_REQUIRED=${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}"
+    echo "WCP_BIONIC_SOURCE_MAP_APPLIED=${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_PATH=${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_URL=${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}"
+    echo "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256=${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}"
     echo "WCP_BIONIC_UNIX_CORE_ADOPT=${WCP_BIONIC_UNIX_CORE_ADOPT:-0}"
     echo "WCP_BIONIC_UNIX_CORE_MODULES=${WCP_BIONIC_UNIX_CORE_MODULES:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
@@ -821,11 +831,14 @@ wcp_write_forensic_manifest() {
     "WCP_MAINLINE_FEX_EXTERNAL_ONLY": "$(wcp_json_escape "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
     "WCP_BIONIC_SOURCE_MAP_FILE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FILE:-}")",
     "WCP_BIONIC_SOURCE_MAP_FORCE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FORCE:-1}")",
     "WCP_BIONIC_SOURCE_MAP_REQUIRED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}")",
+    "WCP_BIONIC_SOURCE_MAP_APPLIED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
+    "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
     "WCP_BIONIC_UNIX_CORE_ADOPT": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
     "WCP_BIONIC_UNIX_CORE_MODULES": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")"
   }
@@ -916,6 +929,13 @@ EOF_SOURCE_REFS
     "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-urc-v1}")",
     "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aeroso-mainline}")",
     "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
+    "bionicSourceMapApplied": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",
+    "bionicLauncherSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "bionicLauncherSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}")",
+    "bionicUnixSourceWcpUrl": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
+    "bionicUnixSourceSha256": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}")",
+    "bionicUnixCoreAdopt": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
+    "bionicUnixCoreModules": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")",
     "boxedRuntimeInWcpDetected": ${boxed_runtime_detected},
     "policyViolationReason": "$(wcp_json_escape "${policy_violation_reason}")",
     "pruneExternalComponents": "$(wcp_json_escape "${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}")",
