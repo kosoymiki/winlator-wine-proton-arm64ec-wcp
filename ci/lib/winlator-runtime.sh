@@ -105,6 +105,92 @@ winlator_extract_wcp_archive() {
   tar -xf "${archive}" -C "${out_dir}" >/dev/null 2>&1
 }
 
+winlator_apply_bionic_source_map_overrides() {
+  local map_file pkg_name out line key value
+  local root_dir="${ROOT_DIR:-}"
+
+  : "${WCP_BIONIC_SOURCE_MAP_FILE:=}"
+  : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
+  : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=0}"
+  pkg_name="${WCP_NAME:-}"
+  [[ -n "${pkg_name}" ]] || return 0
+
+  map_file="${WCP_BIONIC_SOURCE_MAP_FILE}"
+  if [[ -z "${map_file}" && -n "${root_dir}" ]]; then
+    map_file="${root_dir}/ci/runtime-sources/bionic-source-map.json"
+  fi
+
+  if [[ -z "${map_file}" || ! -f "${map_file}" ]]; then
+    if [[ "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" == "1" ]]; then
+      fail "Bionic source-map is required but missing: ${map_file:-<unset>}"
+    fi
+    return 0
+  fi
+
+  command -v python3 >/dev/null 2>&1 || fail "python3 is required to read bionic source-map"
+  out="$(python3 - "${map_file}" "${pkg_name}" "${WCP_BIONIC_SOURCE_MAP_FORCE}" "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+map_file = Path(sys.argv[1])
+pkg_name = sys.argv[2]
+force = sys.argv[3] == "1"
+required = sys.argv[4] == "1"
+
+with map_file.open("r", encoding="utf-8") as f:
+    data = json.load(f)
+
+packages = data.get("packages") or {}
+entry = packages.get(pkg_name)
+if entry is None:
+    if required:
+        print("ERROR=missing-package-entry")
+    sys.exit(0)
+
+def emit(var: str, key: str):
+    value = entry.get(key)
+    if value is None:
+        return
+    if isinstance(value, list):
+        out = " ".join(str(v) for v in value)
+    else:
+        out = str(value)
+    print(f"{var}={out}")
+
+emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL", "launcherSourceWcpUrl")
+emit("WCP_BIONIC_UNIX_SOURCE_WCP_URL", "unixSourceWcpUrl")
+emit("WCP_BIONIC_UNIX_CORE_ADOPT", "unixCoreAdopt")
+emit("WCP_BIONIC_UNIX_CORE_MODULES", "unixCoreModules")
+if force:
+    print("WCP_BIONIC_SOURCE_MAP_APPLIED=1")
+else:
+    print("WCP_BIONIC_SOURCE_MAP_APPLIED=0")
+PY
+)"
+
+  while IFS= read -r line; do
+    [[ -n "${line}" ]] || continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    if [[ "${key}" == "ERROR" ]]; then
+      fail "Bionic source-map entry for ${pkg_name} is required but missing in ${map_file}"
+    fi
+    case "${key}" in
+      WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_UNIX_CORE_ADOPT|WCP_BIONIC_UNIX_CORE_MODULES|WCP_BIONIC_SOURCE_MAP_APPLIED)
+        if [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" || -z "${!key:-}" ]]; then
+          printf -v "${key}" '%s' "${value}"
+          export "${key}"
+        fi
+        ;;
+    esac
+  done <<< "${out}"
+
+  if [[ "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}" == "1" ]]; then
+    log "Applied bionic source-map overrides for ${pkg_name}"
+  fi
+}
+
 winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
@@ -115,6 +201,7 @@ winlator_adopt_bionic_unix_core_modules() {
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
   [[ -n "${wcp_root}" ]] || return 0
+  winlator_apply_bionic_source_map_overrides
   # Cross-version unix core replacement can create hard ABI drift with the package's
   # own aarch64-windows DLL set (observed as early wineboot crashes). Keep disabled
   # by default; enable only for controlled experiments with matching source payloads.
@@ -199,6 +286,7 @@ winlator_adopt_bionic_launchers() {
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
   [[ -n "${wcp_root}" ]] || return 0
+  winlator_apply_bionic_source_map_overrides
 
   wine_bin="${wcp_root}/bin/wine"
   wineserver_bin="${wcp_root}/bin/wineserver"
@@ -598,7 +686,7 @@ EOF_WRAPPER
 winlator_wrap_glibc_launchers() {
   local wine_bin wineserver_bin runtime_dir
   local wine_real wineserver_real
-  local target_class unix_abi
+  local target_class
   local detected_before
 
   [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return
@@ -610,29 +698,22 @@ winlator_wrap_glibc_launchers() {
 
   detected_before="$(winlator_detect_runtime_class "${WCP_ROOT}")"
   target_class="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
 
-  if ! winlator_is_glibc_launcher "${wine_bin}"; then
-    if [[ "${target_class}" == "glibc-wrapped" && "${detected_before}" != "glibc-wrapped" ]]; then
-      winlator_report_runtime_class_mismatch "${detected_before}"
+  if [[ "${target_class}" != "glibc-wrapped" ]]; then
+    if winlator_is_glibc_launcher "${wine_bin}"; then
+      winlator_report_runtime_class_mismatch "glibc-raw"
     fi
     return
   fi
 
-  # When unix modules are glibc-linked, bionic launchers are invalid for this payload.
-  # Promote runtime class to glibc-wrapped so produced WCP stays executable.
-  unix_abi="$(winlator_detect_unix_module_abi "${WCP_ROOT}")"
-  if [[ "${target_class}" != "glibc-wrapped" ]]; then
-    if [[ "${unix_abi}" == "glibc-unix" ]]; then
-      log "Auto-promoting runtime class target to glibc-wrapped (detected unix ABI=${unix_abi})"
-      target_class="glibc-wrapped"
-      export WCP_RUNTIME_CLASS_TARGET="glibc-wrapped"
-      export WCP_RUNTIME_CLASS_AUTO_PROMOTED="1"
-    else
-      winlator_report_runtime_class_mismatch "glibc-raw"
-    fi
+  if [[ "${WCP_ALLOW_GLIBC_EXPERIMENTAL}" != "1" ]]; then
+    fail "glibc-wrapped runtime is disabled in mainline (set WCP_ALLOW_GLIBC_EXPERIMENTAL=1 only in experimental builds)"
   fi
-
-  if [[ "${target_class}" != "glibc-wrapped" ]]; then
+  if ! winlator_is_glibc_launcher "${wine_bin}"; then
+    if [[ "${detected_before}" != "glibc-wrapped" ]]; then
+      winlator_report_runtime_class_mismatch "${detected_before}"
+    fi
     return
   fi
 
@@ -653,6 +734,7 @@ winlator_validate_runtime_class_target() {
   local detected target
   [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return 0
   target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
   detected="$(winlator_detect_runtime_class "${WCP_ROOT}")"
   case "${target}" in
     bionic-native)
@@ -661,6 +743,9 @@ winlator_validate_runtime_class_target() {
       fi
       ;;
     glibc-wrapped)
+      if [[ "${WCP_ALLOW_GLIBC_EXPERIMENTAL}" != "1" ]]; then
+        fail "WCP_RUNTIME_CLASS_TARGET=glibc-wrapped is disabled in mainline (set WCP_ALLOW_GLIBC_EXPERIMENTAL=1 only in experimental builds)"
+      fi
       if [[ "${detected}" != "glibc-wrapped" ]]; then
         winlator_report_runtime_class_mismatch "${detected}"
       fi

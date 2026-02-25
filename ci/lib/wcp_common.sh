@@ -67,6 +67,21 @@ wcp_require_enum() {
   wcp_fail "${flag_name} must be one of: $* (got: ${flag_value})"
 }
 
+wcp_enforce_mainline_bionic_policy() {
+  : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
+  : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
+  wcp_require_bool WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
+  wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
+
+  [[ "${WCP_MAINLINE_BIONIC_ONLY}" == "1" ]] || return 0
+  [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" ]] || \
+    wcp_fail "Mainline bionic-only policy requires WCP_RUNTIME_CLASS_TARGET=bionic-native"
+  [[ "${WCP_RUNTIME_CLASS_ENFORCE:-1}" == "1" ]] || \
+    wcp_fail "Mainline bionic-only policy requires WCP_RUNTIME_CLASS_ENFORCE=1"
+  [[ "${WCP_ALLOW_GLIBC_EXPERIMENTAL}" == "0" ]] || \
+    wcp_fail "Mainline bionic-only policy forbids WCP_ALLOW_GLIBC_EXPERIMENTAL=1"
+}
+
 wcp_json_escape() {
   local s="${1-}"
   s="${s//\\/\\\\}"
@@ -377,6 +392,7 @@ compose_wcp_tree_from_stage() {
   wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  wcp_enforce_mainline_bionic_policy
 
   prefix_pack_path="${PREFIX_PACK_PATH:-${ROOT_DIR}/prefixPack.txz}"
   ensure_prefix_pack "${prefix_pack_path}"
@@ -509,6 +525,8 @@ wcp_write_forensic_manifest() {
     echo "WCP_RUNTIME_CLASS_TARGET=${WCP_RUNTIME_CLASS_TARGET:-}"
     echo "WCP_RUNTIME_CLASS_ENFORCE=${WCP_RUNTIME_CLASS_ENFORCE:-}"
     echo "WCP_RUNTIME_CLASS_AUTO_PROMOTED=${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}"
+    echo "WCP_ALLOW_GLIBC_EXPERIMENTAL=${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}"
+    echo "WCP_MAINLINE_BIONIC_ONLY=${WCP_MAINLINE_BIONIC_ONLY:-1}"
     echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
     echo "WCP_GLIBC_VERSION=${WCP_GLIBC_VERSION:-}"
     echo "WCP_GLIBC_TARGET_VERSION=${WCP_GLIBC_TARGET_VERSION:-}"
@@ -526,6 +544,9 @@ wcp_write_forensic_manifest() {
     echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+    echo "WCP_BIONIC_SOURCE_MAP_FILE=${WCP_BIONIC_SOURCE_MAP_FILE:-}"
+    echo "WCP_BIONIC_SOURCE_MAP_FORCE=${WCP_BIONIC_SOURCE_MAP_FORCE:-1}"
+    echo "WCP_BIONIC_SOURCE_MAP_REQUIRED=${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_PATH=${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_UNIX_SOURCE_WCP_URL=${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}"
     echo "WCP_BIONIC_UNIX_CORE_ADOPT=${WCP_BIONIC_UNIX_CORE_ADOPT:-0}"
@@ -568,6 +589,8 @@ wcp_write_forensic_manifest() {
     "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "WCP_RUNTIME_CLASS_ENFORCE": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_ENFORCE:-}")",
     "WCP_RUNTIME_CLASS_AUTO_PROMOTED": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
+    "WCP_ALLOW_GLIBC_EXPERIMENTAL": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
+    "WCP_MAINLINE_BIONIC_ONLY": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
     "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
@@ -576,6 +599,9 @@ wcp_write_forensic_manifest() {
     "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "WCP_BIONIC_SOURCE_MAP_FILE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FILE:-}")",
+    "WCP_BIONIC_SOURCE_MAP_FORCE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FORCE:-1}")",
+    "WCP_BIONIC_SOURCE_MAP_REQUIRED": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_REQUIRED:-0}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_UNIX_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
     "WCP_BIONIC_UNIX_CORE_ADOPT": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_ADOPT:-0}")",
@@ -629,6 +655,8 @@ EOF_SOURCE_REFS
     "runtimeTarget": "$(wcp_json_escape "${WCP_TARGET_RUNTIME:-}")",
     "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
+    "allowGlibcExperimental": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
+    "mainlineBionicOnly": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "fexBundledInWcp": ${fex_bundled_present},
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   },

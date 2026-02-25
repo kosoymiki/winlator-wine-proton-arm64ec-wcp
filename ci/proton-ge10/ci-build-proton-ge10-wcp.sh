@@ -59,6 +59,11 @@ fi
 : "${WCP_RUNTIME_BUNDLE_LOCK_MODE:=relaxed-enforce}"
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
+: "${WCP_MAINLINE_BIONIC_ONLY:=1}"
+: "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
+: "${WCP_BIONIC_SOURCE_MAP_FILE:=${ROOT_DIR}/ci/runtime-sources/bionic-source-map.json}"
+: "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
+: "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=1}"
 : "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:=https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz}"
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL}}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
@@ -80,6 +85,10 @@ preflight_runtime_profile() {
   wcp_require_bool WCP_ENABLE_SDL2_RUNTIME "${WCP_ENABLE_SDL2_RUNTIME}"
   wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_bool WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
+  wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
+  wcp_require_bool WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
+  wcp_require_bool WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
@@ -87,6 +96,7 @@ preflight_runtime_profile() {
     fail "WCP_FEX_EXPECTATION_MODE=bundled conflicts with WCP_PRUNE_EXTERNAL_COMPONENTS=1"
   fi
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
+  wcp_enforce_mainline_bionic_policy
 }
 
 ensure_symlink() {
