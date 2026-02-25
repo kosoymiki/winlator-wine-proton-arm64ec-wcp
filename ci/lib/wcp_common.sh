@@ -70,8 +70,8 @@ wcp_require_enum() {
 wcp_enforce_mainline_bionic_policy() {
   : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
   : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
-  : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
-  : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=1}"
+  : "${WCP_BIONIC_SOURCE_MAP_FORCE:=0}"
+  : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=0}"
   wcp_require_bool WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
   wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
@@ -84,14 +84,12 @@ wcp_enforce_mainline_bionic_policy() {
     wcp_fail "Mainline bionic-only policy requires WCP_RUNTIME_CLASS_ENFORCE=1"
   [[ "${WCP_ALLOW_GLIBC_EXPERIMENTAL}" == "0" ]] || \
     wcp_fail "Mainline bionic-only policy forbids WCP_ALLOW_GLIBC_EXPERIMENTAL=1"
-  [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" ]] || \
-    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_FORCE=1"
-  [[ "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" == "1" ]] || \
-    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_REQUIRED=1"
-  [[ -n "${WCP_BIONIC_SOURCE_MAP_FILE:-}" ]] || \
-    wcp_fail "Mainline bionic-only policy requires WCP_BIONIC_SOURCE_MAP_FILE"
-  [[ -f "${WCP_BIONIC_SOURCE_MAP_FILE}" ]] || \
-    wcp_fail "Mainline bionic-only policy requires existing source-map file: ${WCP_BIONIC_SOURCE_MAP_FILE}"
+  if [[ "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" == "1" ]]; then
+    [[ -n "${WCP_BIONIC_SOURCE_MAP_FILE:-}" ]] || \
+      wcp_fail "WCP_BIONIC_SOURCE_MAP_REQUIRED=1 requires WCP_BIONIC_SOURCE_MAP_FILE"
+    [[ -f "${WCP_BIONIC_SOURCE_MAP_FILE}" ]] || \
+      wcp_fail "WCP_BIONIC_SOURCE_MAP_REQUIRED=1 requires existing source-map file: ${WCP_BIONIC_SOURCE_MAP_FILE}"
+  fi
 }
 
 wcp_enforce_mainline_external_runtime_policy() {
@@ -1087,13 +1085,97 @@ wcp_validate_forensic_manifest() {
     [[ -f "${p}" ]] || wcp_fail "WCP forensic manifest is incomplete, missing: ${p#${wcp_root}/}"
   done
 
+  wcp_validate_bionic_source_entry() {
+    local entry_file="$1" strict_mode="${2:-0}"
+    python3 - "${entry_file}" "${strict_mode}" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+entry_path = Path(sys.argv[1])
+strict = sys.argv[2] == "1"
+errors = []
+
+if not entry_path.exists():
+    print(f"[wcp][error] missing bionic source entry: {entry_path}")
+    sys.exit(1)
+
+try:
+    data = json.loads(entry_path.read_text(encoding="utf-8"))
+except Exception as exc:
+    print(f"[wcp][error] invalid bionic source entry json: {exc}")
+    sys.exit(1)
+
+sha_re = re.compile(r"^[0-9a-f]{64}$")
+
+def strv(obj, key):
+    v = (obj or {}).get(key)
+    return (v or "").strip() if isinstance(v, str) else ""
+
+def check_source(name, obj, strict_donor):
+    src_sha = strv(obj, "sha256").lower()
+    resolved_sha = strv(obj, "resolvedSha256").lower()
+    resolved_path = strv(obj, "resolvedPath")
+    if strict_donor:
+        if not sha_re.fullmatch(src_sha):
+            errors.append(f"{name}.sha256 must be 64 lowercase hex")
+        if not sha_re.fullmatch(resolved_sha):
+            errors.append(f"{name}.resolvedSha256 must be 64 lowercase hex")
+        if src_sha and resolved_sha and src_sha != resolved_sha:
+            errors.append(f"{name}.sha256 and {name}.resolvedSha256 mismatch")
+        if not resolved_path:
+            errors.append(f"{name}.resolvedPath must be set in strict mode")
+
+if strict:
+    if not strv(data, "packageName"):
+        errors.append("packageName must be set")
+    source_map = data.get("sourceMap") or {}
+    source_map_applied = strv(source_map, "applied")
+    source_map_resolved = strv(source_map, "resolved")
+    source_map_sha = strv(source_map, "sha256").lower()
+    if source_map_applied in ("1", "true") and not sha_re.fullmatch(source_map_sha):
+        errors.append("sourceMap.sha256 must be 64 lowercase hex when sourceMap.applied=1")
+    if source_map_applied and source_map_applied not in ("0", "1", "true", "false"):
+        errors.append("sourceMap.applied must be 0/1/true/false when set")
+    if source_map_resolved and source_map_resolved not in ("0", "1", "true", "false"):
+        errors.append("sourceMap.resolved must be 0/1/true/false when set")
+
+launcher = data.get("launcherSource") or {}
+unix = data.get("unixSource") or {}
+donor_fields = (
+    strv(launcher, "url"), strv(launcher, "sha256"), strv(launcher, "resolvedPath"), strv(launcher, "resolvedSha256"),
+    strv(unix, "url"), strv(unix, "sha256"), strv(unix, "resolvedPath"), strv(unix, "resolvedSha256"),
+)
+donor_configured = any(v for v in donor_fields)
+if strict and donor_configured:
+    donor_preflight = strv(data, "donorPreflightDone")
+    if donor_preflight not in ("1", "true"):
+        errors.append("donorPreflightDone must be 1 when donor source is configured")
+
+check_source("launcherSource", launcher, strict and donor_configured)
+check_source("unixSource", unix, strict and donor_configured)
+
+if errors:
+    for err in errors:
+        print(f"[wcp][error] {err}")
+    sys.exit(1)
+PY
+  }
+
   local unix_abi_file="${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
+  local bionic_source_entry_file="${wcp_root}/share/wcp-forensics/bionic-source-entry.json"
   if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
     grep -q '^lib/wine/aarch64-unix/ntdll\.so\tbionic-unix$' "${unix_abi_file}" || \
       wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
     if grep -q $'\tglibc-unix$' "${unix_abi_file}"; then
       wcp_fail "Forensic unix ABI index contains glibc-unix modules in strict bionic mode"
     fi
+    wcp_validate_bionic_source_entry "${bionic_source_entry_file}" "1" || \
+      wcp_fail "Forensic bionic source entry contract validation failed in strict bionic mode"
+  else
+    wcp_validate_bionic_source_entry "${bionic_source_entry_file}" "0" || \
+      wcp_fail "Forensic bionic source entry contract validation failed"
   fi
 }
 

@@ -66,12 +66,9 @@ env:
   WCP_POLICY_SOURCE: aeroso-mainline
   WCP_FALLBACK_SCOPE: bionic-internal-only
   WCP_BIONIC_SOURCE_MAP_FILE: ${{ github.workspace }}/ci/runtime-sources/bionic-source-map.json
-  WCP_BIONIC_SOURCE_MAP_FORCE: "1"
-  WCP_BIONIC_SOURCE_MAP_REQUIRED: "1"
-  WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL: https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz
-  WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256: b1a7e056d91ba6ee72215b2114c26eff07cb75c4537b010d11f728dafcd3a682
-  WCP_BIONIC_UNIX_SOURCE_WCP_URL: https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz
-  WCP_BIONIC_UNIX_SOURCE_WCP_SHA256: b1a7e056d91ba6ee72215b2114c26eff07cb75c4537b010d11f728dafcd3a682
+  WCP_BIONIC_SOURCE_MAP_FORCE: "0"
+  WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"
+  WCP_BIONIC_DONOR_PREFLIGHT: "0"
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
 
 jobs:
@@ -111,14 +108,6 @@ jobs:
         with:
           path: ${{ env.TOOLCHAIN_DIR }}
           key: llvm-mingw-${{ env.LLVM_MINGW_VER }}
-
-      - name: Cache bionic donor archives
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.CACHE_DIR }}/wcp-bionic-launcher-cache
-            ${{ env.CACHE_DIR }}/wcp-bionic-unix-cache
-          key: bionic-donor-${{ env.WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256 }}-${{ env.WCP_BIONIC_UNIX_SOURCE_WCP_SHA256 }}
 
       - name: Build Proton GE10 ARM64EC WCP
         run: |

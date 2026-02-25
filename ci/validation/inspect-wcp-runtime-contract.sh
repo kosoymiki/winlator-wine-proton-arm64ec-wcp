@@ -67,12 +67,7 @@ main() {
 
   if [[ -f "${wcp_root}/profile.json" ]]; then
     log "profileRuntimeFields:"
-    grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"|"bionic(SourceMap|LauncherSource|UnixSource)"' "${wcp_root}/profile.json" || true
-    if [[ "${strict_bionic}" == "1" ]]; then
-      if ! grep -qE '"bionicDonorPreflightDone": ("1"|1)' "${wcp_root}/profile.json"; then
-        fail "Strict bionic check failed: profile.json is missing bionicDonorPreflightDone=1"
-      fi
-    fi
+    grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"|"bionic(SourceMap|LauncherSource|UnixSource|DonorPreflightDone)"' "${wcp_root}/profile.json" || true
   fi
   if [[ -f "${wcp_root}/share/wcp-forensics/source-refs.json" ]]; then
     log "forensicSourceRefs:"
@@ -83,6 +78,68 @@ main() {
     log "forensicBionicSourceEntry:"
     grep -E '"packageName"|"path"|"sha256"|"resolved(Sha256|Path)"|"donorPreflightDone"' \
       "${wcp_root}/share/wcp-forensics/bionic-source-entry.json" || true
+    if [[ "${strict_bionic}" == "1" ]]; then
+      python3 - "${wcp_root}/share/wcp-forensics/bionic-source-entry.json" <<'PY' || \
+        fail "Strict bionic check failed: bionic-source-entry.json contract violation"
+import json
+import re
+import sys
+from pathlib import Path
+
+entry = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+sha_re = re.compile(r"^[0-9a-f]{64}$")
+errors = []
+
+def sval(obj, key):
+    v = (obj or {}).get(key)
+    return (v or "").strip() if isinstance(v, str) else ""
+
+def validate_source(block_name, block, strict_donor):
+    source_sha = sval(block, "sha256").lower()
+    resolved_sha = sval(block, "resolvedSha256").lower()
+    resolved_path = sval(block, "resolvedPath")
+    if strict_donor:
+        if not sha_re.fullmatch(source_sha):
+            errors.append(f"{block_name}.sha256 must be 64 lowercase hex")
+        if not sha_re.fullmatch(resolved_sha):
+            errors.append(f"{block_name}.resolvedSha256 must be 64 lowercase hex")
+        if source_sha and resolved_sha and source_sha != resolved_sha:
+            errors.append(f"{block_name}.sha256 and resolvedSha256 mismatch")
+        if not resolved_path:
+            errors.append(f"{block_name}.resolvedPath must be set")
+
+source_map = entry.get("sourceMap") or {}
+source_map_applied = sval(source_map, "applied")
+source_map_resolved = sval(source_map, "resolved")
+source_map_sha = sval(source_map, "sha256").lower()
+if source_map_applied in ("1", "true") and not sha_re.fullmatch(source_map_sha):
+    errors.append("sourceMap.sha256 must be 64 lowercase hex when sourceMap.applied=1")
+if source_map_applied and source_map_applied not in ("0", "1", "true", "false"):
+    errors.append("sourceMap.applied must be 0/1/true/false when set")
+if source_map_resolved and source_map_resolved not in ("0", "1", "true", "false"):
+    errors.append("sourceMap.resolved must be 0/1/true/false when set")
+
+launcher = entry.get("launcherSource") or {}
+unix = entry.get("unixSource") or {}
+donor_fields = (
+    sval(launcher, "url"), sval(launcher, "sha256"), sval(launcher, "resolvedPath"), sval(launcher, "resolvedSha256"),
+    sval(unix, "url"), sval(unix, "sha256"), sval(unix, "resolvedPath"), sval(unix, "resolvedSha256"),
+)
+donor_configured = any(v for v in donor_fields)
+if donor_configured and sval(entry, "donorPreflightDone") not in ("1", "true"):
+    errors.append("donorPreflightDone must be 1 when donor source is configured")
+
+validate_source("launcherSource", launcher, donor_configured)
+validate_source("unixSource", unix, donor_configured)
+
+if errors:
+    for e in errors:
+        print(f"[inspect-wcp][error] {e}")
+    sys.exit(1)
+PY
+    fi
+  elif [[ "${strict_bionic}" == "1" ]]; then
+    fail "Strict bionic check failed: bionic-source-entry.json is missing"
   fi
 }
 

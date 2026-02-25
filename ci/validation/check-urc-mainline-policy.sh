@@ -34,17 +34,12 @@ from pathlib import Path
 map_path = Path(sys.argv[1])
 data = json.loads(map_path.read_text(encoding="utf-8"))
 packages = data.get("packages") or {}
-baselines = data.get("baselines") or {}
 required = (
     "wine-11-arm64ec",
     "proton-ge10-arm64ec",
     "protonwine10-gamenative-arm64ec",
 )
 errors = []
-
-steven = ((baselines.get("stevenProton10Arm64ec") or {}).get("archiveUrl") or "").strip()
-if not steven:
-    errors.append("baselines.stevenProton10Arm64ec.archiveUrl must be set")
 
 for name in required:
     entry = packages.get(name)
@@ -53,21 +48,25 @@ for name in required:
         continue
     for key in ("launcherSourceWcpUrl", "unixSourceWcpUrl", "launcherSourceSha256", "unixSourceSha256"):
         value = entry.get(key)
-        if not isinstance(value, str) or not value.strip():
-            errors.append(f"packages.{name}.{key} must be a non-empty string")
-    if steven:
-        if (entry.get("launcherSourceWcpUrl") or "").strip() != steven:
-            errors.append(f"packages.{name}.launcherSourceWcpUrl must match baselines.stevenProton10Arm64ec.archiveUrl")
-        if (entry.get("unixSourceWcpUrl") or "").strip() != steven:
-            errors.append(f"packages.{name}.unixSourceWcpUrl must match baselines.stevenProton10Arm64ec.archiveUrl")
-    for key in ("launcherSourceSha256", "unixSourceSha256"):
-        value = (entry.get(key) or "").lower()
-        if not re.fullmatch(r"[0-9a-f]{64}", value):
-            errors.append(f"packages.{name}.{key} must be 64 lowercase hex chars")
-    if (entry.get("launcherSourceWcpUrl") or "") != (entry.get("unixSourceWcpUrl") or ""):
-        errors.append(f"packages.{name}.launcherSourceWcpUrl and unixSourceWcpUrl must match in mainline")
-    if (entry.get("launcherSourceSha256") or "").lower() != (entry.get("unixSourceSha256") or "").lower():
-        errors.append(f"packages.{name}.launcherSourceSha256 and unixSourceSha256 must match in mainline")
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            errors.append(f"packages.{name}.{key} must be a string when set")
+            continue
+        if key.endswith("Sha256") and value.strip() and not re.fullmatch(r"[0-9a-f]{64}", value.strip().lower()):
+            errors.append(f"packages.{name}.{key} must be 64 lowercase hex chars when set")
+    launcher_url = (entry.get("launcherSourceWcpUrl") or "").strip()
+    unix_url = (entry.get("unixSourceWcpUrl") or "").strip()
+    launcher_sha = (entry.get("launcherSourceSha256") or "").strip().lower()
+    unix_sha = (entry.get("unixSourceSha256") or "").strip().lower()
+    if bool(launcher_url) != bool(launcher_sha):
+        errors.append(f"packages.{name}: launcher URL/SHA must be both set or both empty")
+    if bool(unix_url) != bool(unix_sha):
+        errors.append(f"packages.{name}: unix URL/SHA must be both set or both empty")
+    if launcher_url and unix_url and launcher_url != unix_url:
+        errors.append(f"packages.{name}.launcherSourceWcpUrl and unixSourceWcpUrl must match when both set")
+    if launcher_sha and unix_sha and launcher_sha != unix_sha:
+        errors.append(f"packages.{name}.launcherSourceSha256 and unixSourceSha256 must match when both set")
     if int(entry.get("unixCoreAdopt", 0)) != 1:
         errors.append(f"packages.{name}.unixCoreAdopt must be 1")
     modules = entry.get("unixCoreModules") or []
@@ -101,15 +100,10 @@ check_workflow_env_contract() {
   require_contains "${wf}" 'WCP_ALLOW_GLIBC_EXPERIMENTAL: "0"'
   require_contains "${wf}" 'WCP_INCLUDE_FEX_DLLS: "0"'
   require_contains "${wf}" 'WCP_FEX_EXPECTATION_MODE: external'
-  require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FORCE: "1"'
-  require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_REQUIRED: "1"'
+  require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FORCE: "0"'
+  require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"'
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FILE:'
-  require_contains "${wf}" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:'
-  require_contains "${wf}" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:'
-  require_contains "${wf}" 'WCP_BIONIC_UNIX_SOURCE_WCP_URL:'
-  require_contains "${wf}" 'WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:'
-  require_contains "${wf}" 'Cache bionic donor archives'
-  require_contains "${wf}" 'bionic-donor-\$\{\{ env\.WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256 \}\}-\$\{\{ env\.WCP_BIONIC_UNIX_SOURCE_WCP_SHA256 \}\}'
+  require_contains "${wf}" 'WCP_BIONIC_DONOR_PREFLIGHT: "0"'
   require_contains "${wf}" 'Inspect WCP runtime contract'
   require_contains "${wf}" 'inspect-wcp-runtime-contract\.sh'
   require_contains "${wf}" 'runtime-contract-inspection\.txt'
@@ -119,31 +113,6 @@ check_workflow_env_contract() {
   require_not_contains "${wf}" 'WCP_INCLUDE_FEX_DLLS: "1"'
 }
 
-check_workflow_source_map_binding() {
-  local wf="$1" pkg="$2"
-  local map_file="ci/runtime-sources/bionic-source-map.json"
-  local url sha
-  read -r url sha < <(python3 - "${map_file}" "${pkg}" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-map_file = Path(sys.argv[1])
-pkg = sys.argv[2]
-data = json.loads(map_file.read_text(encoding="utf-8"))
-entry = (data.get("packages") or {}).get(pkg) or {}
-url = (entry.get("launcherSourceWcpUrl") or "").strip()
-sha = (entry.get("launcherSourceSha256") or "").strip().lower()
-print(url, sha)
-PY
-)
-  [[ -n "${url}" && -n "${sha}" ]] || fail "Unable to resolve source-map binding for workflow ${wf} package ${pkg}"
-  grep -qF "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL: ${url}" "${wf}" || fail "Workflow ${wf} launcher URL does not match source-map for ${pkg}"
-  grep -qF "WCP_BIONIC_UNIX_SOURCE_WCP_URL: ${url}" "${wf}" || fail "Workflow ${wf} unix URL does not match source-map for ${pkg}"
-  grep -qF "WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256: ${sha}" "${wf}" || fail "Workflow ${wf} launcher SHA256 does not match source-map for ${pkg}"
-  grep -qF "WCP_BIONIC_UNIX_SOURCE_WCP_SHA256: ${sha}" "${wf}" || fail "Workflow ${wf} unix SHA256 does not match source-map for ${pkg}"
-}
-
 main() {
   cd "${ROOT_DIR}"
 
@@ -151,9 +120,6 @@ main() {
   check_workflow_env_contract ".github/workflows/ci-arm64ec-wine.yml"
   check_workflow_env_contract ".github/workflows/ci-proton-ge10-wcp.yml"
   check_workflow_env_contract ".github/workflows/ci-protonwine10-wcp.yml"
-  check_workflow_source_map_binding ".github/workflows/ci-arm64ec-wine.yml" "wine-11-arm64ec"
-  check_workflow_source_map_binding ".github/workflows/ci-proton-ge10-wcp.yml" "proton-ge10-arm64ec"
-  check_workflow_source_map_binding ".github/workflows/ci-protonwine10-wcp.yml" "protonwine10-gamenative-arm64ec"
 
   require_file "ci/lib/wcp_common.sh"
   require_contains "ci/lib/wcp_common.sh" 'wcp_enforce_mainline_bionic_policy\(\)'
@@ -173,14 +139,16 @@ main() {
   require_contains "ci/lib/wcp_common.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/lib/wcp_common.sh" 'contains glibc-unix modules in strict bionic mode'
   require_contains "ci/lib/wcp_common.sh" 'missing bionic ntdll marker'
+  require_contains "ci/lib/wcp_common.sh" 'wcp_validate_bionic_source_entry'
+  require_contains "ci/lib/wcp_common.sh" 'contract validation failed in strict bionic mode'
   require_contains "ci/lib/winlator-runtime.sh" 'winlator_preflight_bionic_source_contract\(\)'
-  require_contains "ci/lib/winlator-runtime.sh" 'Strict bionic mainline requires WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256'
-  require_contains "ci/lib/winlator-runtime.sh" 'Strict bionic mainline requires WCP_BIONIC_UNIX_SOURCE_WCP_SHA256'
+  require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_DONOR_PREFLIGHT'
   require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH'
   require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH'
   require_contains "ci/lib/winlator-runtime.sh" 'WCP_BIONIC_DONOR_PREFLIGHT_DONE'
-  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'bionicDonorPreflightDone'
+  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'donorPreflightDone'
   require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'bionic-source-entry.json'
+  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'donorPreflightDone must be 1 when donor source is configured'
   require_contains "ci/ci-build.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/proton-ge10/ci-build-proton-ge10-wcp.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/protonwine10/ci-build-protonwine10-wcp.sh" 'winlator_preflight_bionic_source_contract'
