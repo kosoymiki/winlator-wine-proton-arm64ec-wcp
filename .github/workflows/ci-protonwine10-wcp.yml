@@ -131,7 +131,9 @@ jobs:
       - name: Inspect WCP runtime contract
         run: |
           set -euxo pipefail
-          bash ci/validation/inspect-wcp-runtime-contract.sh "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" --strict-bionic
+          mkdir -p "${WCP_OUTPUT_DIR}/logs"
+          bash ci/validation/inspect-wcp-runtime-contract.sh "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" --strict-bionic \
+            | tee "${WCP_OUTPUT_DIR}/logs/runtime-contract-inspection.txt"
 
       - name: Upload WCP artifact
         if: success()
