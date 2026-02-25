@@ -243,8 +243,12 @@ winlator_detect_unix_module_abi_from_path() {
 winlator_list_glibc_unix_modules() {
   local unix_dir="$1"
   local mod mod_name mod_abi
+  local nullglob_was_set=0
   [[ -d "${unix_dir}" ]] || return 0
 
+  if shopt -q nullglob; then
+    nullglob_was_set=1
+  fi
   shopt -s nullglob
   for mod in "${unix_dir}"/*.so; do
     [[ -f "${mod}" ]] || continue
@@ -253,7 +257,9 @@ winlator_list_glibc_unix_modules() {
     [[ "${mod_abi}" == "glibc-unix" ]] || continue
     printf '%s\n' "${mod_name}"
   done
-  shopt -u nullglob
+  if [[ "${nullglob_was_set}" == "0" ]]; then
+    shopt -u nullglob
+  fi
 }
 
 winlator_extract_wcp_archive() {
