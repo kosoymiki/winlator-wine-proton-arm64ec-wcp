@@ -276,12 +276,17 @@ winlator_adopt_bionic_unix_core_modules() {
   # own aarch64-windows DLL set (observed as early wineboot crashes). Keep disabled
   # by default; enable only for controlled experiments with matching source payloads.
   : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
-  if [[ "${WCP_BIONIC_UNIX_CORE_ADOPT}" != "1" ]]; then
-    return 0
-  fi
-
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   [[ "${unix_abi}" == "glibc-unix" ]] || return 0
+  if [[ "${WCP_BIONIC_UNIX_CORE_ADOPT}" != "1" ]]; then
+    if [[ "${WCP_MAINLINE_BIONIC_ONLY:-0}" == "1" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
+      log "Auto-enabling bionic unix core adoption: enforced bionic-native target cannot ship glibc-unix ntdll"
+      WCP_BIONIC_UNIX_CORE_ADOPT="1"
+      export WCP_BIONIC_UNIX_CORE_ADOPT
+    else
+      return 0
+    fi
+  fi
 
   source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
   source_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}}"
