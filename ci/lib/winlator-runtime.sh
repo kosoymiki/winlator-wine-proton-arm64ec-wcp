@@ -43,6 +43,10 @@ winlator_runtime_target_enforced() {
   [[ "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]
 }
 
+winlator_bionic_mainline_strict() {
+  [[ "${WCP_MAINLINE_BIONIC_ONLY:-0}" == "1" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]
+}
+
 winlator_detect_launcher_abi() {
   local bin_path="$1"
   [[ -e "${bin_path}" ]] || { printf '%s' "missing"; return 0; }
@@ -279,7 +283,7 @@ winlator_adopt_bionic_unix_core_modules() {
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   [[ "${unix_abi}" == "glibc-unix" ]] || return 0
   if [[ "${WCP_BIONIC_UNIX_CORE_ADOPT}" != "1" ]]; then
-    if [[ "${WCP_MAINLINE_BIONIC_ONLY:-0}" == "1" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
+    if winlator_bionic_mainline_strict; then
       log "Auto-enabling bionic unix core adoption: enforced bionic-native target cannot ship glibc-unix ntdll"
       WCP_BIONIC_UNIX_CORE_ADOPT="1"
       export WCP_BIONIC_UNIX_CORE_ADOPT
@@ -344,6 +348,9 @@ winlator_adopt_bionic_unix_core_modules() {
 
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   if [[ "${unix_abi}" != "bionic-unix" ]]; then
+    if winlator_bionic_mainline_strict; then
+      fail "Bionic unix core adoption failed in strict mainline mode (detected=${unix_abi}, source=${source_wcp}, modules=${WCP_BIONIC_UNIX_CORE_MODULES:-default})"
+    fi
     log "Bionic unix core adoption did not fully switch ABI (detected=${unix_abi})"
     return 0
   fi
@@ -371,6 +378,9 @@ winlator_adopt_bionic_launchers() {
 
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   if [[ "${unix_abi}" == "glibc-unix" ]]; then
+    if winlator_bionic_mainline_strict; then
+      fail "Cannot adopt bionic launchers while unix ABI is glibc-unix in strict mainline mode (source map / donor WCP mismatch)"
+    fi
     log "Skipping bionic launcher adoption: unix runtime is glibc-linked (ntdll needs libc.so.6)"
     return 0
   fi
