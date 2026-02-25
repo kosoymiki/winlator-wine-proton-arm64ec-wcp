@@ -208,12 +208,12 @@ main() {
       WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
       WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
       WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
+      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   else
     log "GameNative patchset integration disabled for protonwine10 (WCP_GN_PATCHSET_ENABLE=0)"
   fi
   WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
-    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
+    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   build_wine
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"
