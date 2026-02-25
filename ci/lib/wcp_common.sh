@@ -120,6 +120,74 @@ wcp_make_with_serial_retry() {
   return 1
 }
 
+wcp_configure_profile_args() {
+  local profile="$1"
+  case "${profile}" in
+    proton-android-minimal|gamenative-proton10)
+      cat <<'EOF'
+--enable-win64
+--disable-win16
+--enable-nls
+--disable-amd_ags_x64
+--enable-wineandroid_drv=no
+--with-alsa
+--without-capi
+--without-coreaudio
+--without-cups
+--without-dbus
+--without-ffmpeg
+--with-fontconfig
+--with-freetype
+--without-gcrypt
+--without-gettext
+--with-gettextpo=no
+--without-gphoto
+--with-gnutls
+--without-gssapi
+--with-gstreamer
+--without-inotify
+--without-krb5
+--without-netapi
+--without-opencl
+--with-opengl
+--without-osmesa
+--without-oss
+--without-pcap
+--without-pcsclite
+--without-piper
+--with-pthread
+--with-pulse
+--without-sane
+--with-sdl
+--without-udev
+--without-unwind
+--without-usb
+--without-v4l2
+--without-vosk
+--with-vulkan
+--without-wayland
+--without-xcomposite
+--without-xcursor
+--without-xfixes
+--without-xinerama
+--without-xinput
+--without-xinput2
+--without-xrandr
+--without-xrender
+--without-xshape
+--with-xshm
+--without-xxf86vm
+EOF
+      ;;
+    "")
+      return 0
+      ;;
+    *)
+      wcp_fail "Unknown WINE_CONFIGURE_PROFILE: ${profile}"
+      ;;
+  esac
+}
+
 source "${WCP_COMMON_DIR}/runtime-bundle-lock.sh"
 
 wcp_require_cmd() {
@@ -484,6 +552,11 @@ build_wine_tools_host() {
       --with-mingw=clang
       --enable-archs=arm64ec,aarch64,i386
     )
+    if [[ -n "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:-}" ]]; then
+      # shellcheck disable=SC2206
+      local tools_extra_args=( ${WINE_TOOLS_CONFIGURE_EXTRA_ARGS} )
+      configure_args+=("${tools_extra_args[@]}")
+    fi
     "${configure_args[@]}"
   fi
 
@@ -512,6 +585,15 @@ build_wine_multiarc_arm64ec() {
     --with-mingw=clang
     --enable-archs=arm64ec,aarch64,i386
   )
+
+  if [[ -n "${WINE_CONFIGURE_PROFILE:-}" ]]; then
+    local profile_arg
+    while IFS= read -r profile_arg; do
+      [[ -n "${profile_arg}" ]] || continue
+      configure_args+=("${profile_arg}")
+    done < <(wcp_configure_profile_args "${WINE_CONFIGURE_PROFILE}")
+    wcp_log "Applied configure profile: ${WINE_CONFIGURE_PROFILE}"
+  fi
 
   # Space-delimited optional extras from caller.
   if [[ -n "${WINE_CONFIGURE_EXTRA_ARGS:-}" ]]; then

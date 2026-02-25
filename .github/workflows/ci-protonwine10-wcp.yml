@@ -15,7 +15,7 @@ on:
       protonwine_ref:
         description: "Pinned GameNative/proton-wine ref"
         required: false
-        default: "e7dbb4a10b85c1e8d505068d36249127d8b7fe79"
+        default: "proton_10.0"
       android_support_ref:
         description: "Pinned sidaodomorro/proton-wine ref"
         required: false
@@ -40,7 +40,7 @@ env:
   CACHE_DIR: ${{ github.workspace }}/.cache
   TOOLCHAIN_DIR: ${{ github.workspace }}/.cache/llvm-mingw
   WCP_OUTPUT_DIR: ${{ github.workspace }}/out/protonwine10
-  PROTONWINE_REF: ${{ github.event.inputs.protonwine_ref || 'e7dbb4a10b85c1e8d505068d36249127d8b7fe79' }}
+  PROTONWINE_REF: ${{ github.event.inputs.protonwine_ref || 'proton_10.0' }}
   ANDROID_SUPPORT_REF: ${{ github.event.inputs.android_support_ref || '47e79a66652afae9fd0e521b03736d1e6536ac5a' }}
   LLVM_MINGW_VER: ${{ github.event.inputs.llvm_mingw_ver || '20260210' }}
   WCP_COMPRESS: ${{ github.event.inputs.compress || 'xz' }}

@@ -12,7 +12,7 @@ BUILD_WINE_DIR="${WORK_DIR}/build-wine"
 WINE_SRC_DIR="${WORK_DIR}/wine-src"
 
 : "${PROTONWINE_REPO:=https://github.com/GameNative/proton-wine.git}"
-: "${PROTONWINE_REF:=e7dbb4a10b85c1e8d505068d36249127d8b7fe79}"
+: "${PROTONWINE_REF:=proton_10.0}"
 : "${ANDROID_SUPPORT_REPO:=https://github.com/sidaodomorro/proton-wine.git}"
 : "${ANDROID_SUPPORT_REF:=47e79a66652afae9fd0e521b03736d1e6536ac5a}"
 : "${PROTONWINE_ANDROID_SUPPORT_ROOT:=}"
@@ -61,6 +61,8 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=0}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
+: "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
+: "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
 
 TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 export TOOLCHAIN_DIR CACHE_DIR LLVM_MINGW_TAG
