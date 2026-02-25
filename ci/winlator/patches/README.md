@@ -63,6 +63,8 @@ consolidated into:
   - adds deterministic graphics driver probe fallback chain (`requested -> fallback candidate -> system`), exports probe-chain env telemetry for runtime triage, and refines graphics suitability fallback severity when a usable non-system fallback driver is selected
 - `0046-runtime-appcompat-guarded-rules-and-forensics.patch`
   - introduces guarded runtime app-compat rules (env defaults only, executable-token matched), applies them in launcher pre-exec path, and emits rule-level forensic telemetry (`RUNTIME_APPCOMPAT_APPLIED` + submit-stage fields)
+- `0047-driver-fallback-chain-ranking-and-telemetry.patch`
+  - upgrades graphics-driver fallback from single-candidate to ranked fallback chain, adds scored candidate ranking in `AdrenotoolsManager`, and exports attempt/ranking telemetry into forensic events and runtime env markers
 
 ## Known high-overlap files (intentional)
 

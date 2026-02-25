@@ -1,0 +1,169 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index eff114b..364019a 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1725,19 +1725,31 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String probeChain = "requested";
+         String probeReason = "requested_ok";
+         String fallbackCandidateId = "";
++        ArrayList<String> fallbackCandidateIds = new ArrayList<>();
++        ArrayList<String> fallbackAttemptedIds = new ArrayList<>();
++        String fallbackCandidateScores = "";
+         boolean requestedSystem = requestedDriverProbe.isUsingSystemVulkan();
+ 
+         if (!requestedSystem && !requestedDriverProbe.isUsable()) {
+-            fallbackCandidateId = adrenotoolsManager.findBestFallbackDriverId(adrenoToolsDriverId);
+-            if (!fallbackCandidateId.isEmpty()) {
+-                DriverProbeResult fallbackProbe = adrenotoolsManager.probeDriver(fallbackCandidateId);
+-                if (fallbackProbe.isUsable()) {
++            fallbackCandidateIds = adrenotoolsManager.rankFallbackDriverIds(adrenoToolsDriverId);
++            fallbackCandidateScores = adrenotoolsManager.summarizeFallbackCandidates(adrenoToolsDriverId, 6);
++            if (!fallbackCandidateIds.isEmpty()) {
++                for (String candidateId : fallbackCandidateIds) {
++                    fallbackAttemptedIds.add(candidateId);
++                    DriverProbeResult fallbackProbe = adrenotoolsManager.probeDriver(candidateId);
++                    if (!fallbackProbe.isUsable()) {
++                        continue;
++                    }
+                     effectiveDriverProbe = fallbackProbe;
+-                    probeChain = "requested->fallback_driver";
++                    fallbackCandidateId = candidateId;
++                    break;
++                }
++                if (!fallbackCandidateId.isEmpty()) {
++                    probeChain = "requested->fallback_chain";
+                     probeReason = "requested_unusable";
+                 } else {
+-                    probeChain = "requested->fallback_driver_failed";
+-                    probeReason = "fallback_candidate_unusable";
++                    probeChain = "requested->fallback_chain_failed";
++                    probeReason = "all_fallback_candidates_unusable";
+                 }
+             } else {
+                 probeChain = "requested->no_fallback_candidate";
+@@ -1773,6 +1785,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "driver_probe_chain", probeChain,
+                         "driver_probe_reason", probeReason,
+                         "fallback_candidate_id", fallbackCandidateId,
++                        "fallback_candidate_ids", android.text.TextUtils.join(",", fallbackCandidateIds),
++                        "fallback_attempts", android.text.TextUtils.join(",", fallbackAttemptedIds),
++                        "fallback_candidate_scores", fallbackCandidateScores,
+                         "requested_probe_summary", requestedDriverProbe.summarize(),
+                         "effective_probe_summary", driverProbe.summarize()));
+ 
+@@ -1793,6 +1808,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         if (!fallbackCandidateId.isEmpty()) {
+             envVars.put("WINLATOR_DRIVER_FALLBACK_CANDIDATE", fallbackCandidateId);
+         }
++        if (!fallbackCandidateIds.isEmpty()) {
++            envVars.put("WINLATOR_DRIVER_FALLBACK_CANDIDATES", android.text.TextUtils.join(",", fallbackCandidateIds));
++        }
++        if (!fallbackAttemptedIds.isEmpty()) {
++            envVars.put("WINLATOR_DRIVER_FALLBACK_ATTEMPTS", android.text.TextUtils.join(",", fallbackAttemptedIds));
++        }
++        if (!fallbackCandidateScores.isEmpty()) {
++            envVars.put("WINLATOR_DRIVER_FALLBACK_SCORES", fallbackCandidateScores);
++        }
+         if (preferences.getBoolean("enable_turnip_logs", true)) {
+             File mesaLogFile = WinlatorLogUtils.createTimestampedLogFile(this, "turnip_mesa");
+             envVars.put("MESA_LOG_FILE", mesaLogFile.getAbsolutePath());
+diff --git a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+index 1e8214b..800afce 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+@@ -24,6 +24,7 @@ import java.io.InputStream;
+ import java.nio.file.Files;
+ import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.Locale;
+ import java.util.zip.ZipEntry;
+@@ -32,6 +33,17 @@ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+ public class AdrenotoolsManager {
++    private static final class ScoredFallbackCandidate {
++        final String driverId;
++        final int score;
++        final int[] version;
++
++        ScoredFallbackCandidate(String driverId, int score, int[] version) {
++            this.driverId = driverId;
++            this.score = score;
++            this.version = version;
++        }
++    }
+     
+     private File adrenotoolsContentDir;
+     private Context mContext;
+@@ -303,13 +315,38 @@ public class AdrenotoolsManager {
+     }
+ 
+     public String findBestFallbackDriverId(String requestedDriverId) {
++        ArrayList<String> ranked = rankFallbackDriverIds(requestedDriverId);
++        return ranked.isEmpty() ? "" : ranked.get(0);
++    }
++
++    public ArrayList<String> rankFallbackDriverIds(String requestedDriverId) {
++        ArrayList<ScoredFallbackCandidate> candidates = collectFallbackCandidates(requestedDriverId);
++        ArrayList<String> ranked = new ArrayList<>();
++        for (ScoredFallbackCandidate candidate : candidates) {
++            ranked.add(candidate.driverId);
++        }
++        return ranked;
++    }
++
++    public String summarizeFallbackCandidates(String requestedDriverId, int limit) {
++        ArrayList<ScoredFallbackCandidate> candidates = collectFallbackCandidates(requestedDriverId);
++        if (candidates.isEmpty()) return "";
++
++        StringBuilder sb = new StringBuilder();
++        int max = limit > 0 ? Math.min(limit, candidates.size()) : candidates.size();
++        for (int i = 0; i < max; i++) {
++            ScoredFallbackCandidate candidate = candidates.get(i);
++            if (i > 0) sb.append(",");
++            sb.append(candidate.driverId).append(":").append(candidate.score);
++        }
++        return sb.toString();
++    }
++
++    private ArrayList<ScoredFallbackCandidate> collectFallbackCandidates(String requestedDriverId) {
+         String requested = normalizeDriverId(requestedDriverId);
+         ArrayList<String> installedDrivers = enumarateInstalledDrivers();
+-        if (installedDrivers.isEmpty()) return "";
+-
+-        String bestDriverId = "";
+-        int bestScore = Integer.MIN_VALUE;
+-        int[] bestVersion = new int[]{0, 0, 0};
++        ArrayList<ScoredFallbackCandidate> scored = new ArrayList<>();
++        if (installedDrivers.isEmpty()) return scored;
+ 
+         for (String driverId : installedDrivers) {
+             if (driverId == null || driverId.trim().isEmpty()) continue;
+@@ -320,15 +357,18 @@ public class AdrenotoolsManager {
+             int score = scoreFallbackCandidate(driverId, driverName, driverVersion);
+             int[] version = parseSemverLoose(driverVersion + " " + driverId + " " + driverName);
+ 
+-            if (score > bestScore || (score == bestScore && compareVersion(version, bestVersion) > 0)) {
+-                bestScore = score;
+-                bestVersion = version;
+-                bestDriverId = driverId;
+-            }
++            if (score < 0) continue;
++            scored.add(new ScoredFallbackCandidate(driverId, score, version));
+         }
+ 
+-        if (bestScore < 0) return "";
+-        return bestDriverId;
++        Collections.sort(scored, (a, b) -> {
++            if (a.score != b.score) return b.score - a.score;
++            int cmp = compareVersion(b.version, a.version);
++            if (cmp != 0) return cmp;
++            return a.driverId.compareToIgnoreCase(b.driverId);
++        });
++
++        return scored;
+     }
+ 
+     private boolean isSystemDriverId(String adrenotoolsDriverId) {
