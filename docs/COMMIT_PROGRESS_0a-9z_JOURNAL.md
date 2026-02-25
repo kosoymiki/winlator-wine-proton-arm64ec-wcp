@@ -120,7 +120,7 @@
 - Исторические журналы (`docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md` и др.) сохраняют исходные метки `0.2b`; они не переписывались как архивные артефакты.
 - Эта карта отражает инженерную последовательность commit-ов в `main`, а не маркетинговые релизные версии.
 
-## Карта patch-stack (`0001..0038`) по этапам
+## Карта patch-stack (`0001..0040`) по этапам
 
 ### `0001-0004` — Базовый форк, runtime/FEX и тема
 - `0001`: базовый ARM64EC runtime/FEX patch-stack поверх `winlator_bionic`
@@ -156,7 +156,7 @@
 - `0026`: container bridge + launch normalization + upscale UI layer
 - `0027`: container settings как owner upscale config + legacy env migration
 
-### `0028-0038` — Adrenotools UX, forensic telemetry, FEX/Box/FEXCore UI, upscale binding refinements, Contents row polish
+### `0028-0040` — Adrenotools UX, forensic telemetry, FEX/Box/FEXCore UI, upscale binding refinements, Contents row polish, runtime-common profiles
 - `0028`: native GameNative browser + version sorting + `Recommended`
 - `0029`: launcher pre-exec forensic telemetry
 - `0030`: FEXCore upstream config vars + inline help
@@ -166,6 +166,8 @@
 - `0036`: defer upscale binding на shell launch до child graphics
 - `0037`: FEX/Box preset toggle semantics + Box inline descriptions
 - `0038`: `Contents` row layout polish для длинных названий пакетов
+- `0039`: полный импорт Box64/WoWBox64 env-vars + пресеты по классам устройств 2026
+- `0040`: унифицированный runtime-common профиль (container/settings UI + launcher overlay + forensic)
 
 ## Что можно безопасно объединять (кандидаты)
 
@@ -175,6 +177,7 @@
 - `0014 + 0015 + 0016` — одна линия каталога драйверов/ссылок (эволюция одного UX/data слоя).
 - `0023 + 0024` — ранний `Adrenotools` browser + cleanup мёртвого legacy-кода.
 - `0033 + 0034 + 0035` — чистая UI/UX-ветка `Adrenotools` browser rows/dialog fixes.
+- `0039 + 0040` — связанная линия профилей (Box/FEX device tiers + runtime-common profile). Рекомендуется объединять только вместе, т.к. `0040` использует предпосылки `0039`.
 
 ### Условно безопасно (если нужен более короткий стек)
 - `0019 + 0020` — glibc-wrapper mitigations (один причинный слой, но сейчас полезно держать раздельно для forensic-истории).
