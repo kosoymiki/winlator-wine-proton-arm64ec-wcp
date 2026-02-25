@@ -1,0 +1,134 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index e23be18..aea1b6e 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -129,11 +129,15 @@ import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+-import java.io.BufferedReader;
+-import java.io.File;
++import java.io.BufferedReader;
++import java.io.BufferedInputStream;
++import java.io.File;
++import java.io.FileInputStream;
+ import java.io.FileReader;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.nio.ByteBuffer;
++import java.nio.ByteOrder;
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.Iterator;
+@@ -1719,6 +1723,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             if (wineInfo.isArm64EC() && !GPUInformation.getRenderer(null,null).contains("Mali"))
+                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/zink_dlls" + ".tzst", new File(rootDir, imageFs.WINEPREFIX + "/drive_c/windows"));
+         }
++        verifyAndRepairCriticalGraphicsLib(rootDir);
+ 
+         AdrenotoolsManager adrenotoolsManager = new AdrenotoolsManager(this);
+         DriverProbeResult requestedDriverProbe = adrenotoolsManager.probeDriver(adrenoToolsDriverId);
+@@ -2154,6 +2159,103 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         }
+     }
+ 
++    private void verifyAndRepairCriticalGraphicsLib(File rootDir) {
++        File criticalLib = new File(rootDir, "usr/lib/libGL.so.1.5.0");
++        String verifyFailureReason = validateElfSharedObject(criticalLib);
++        if (verifyFailureReason == null) return;
++
++        long beforeSize = criticalLib.exists() ? criticalLib.length() : -1L;
++        ForensicLogger.logEvent(this, "warn", "RUNTIME_GRAPHICS_LIB_VERIFY_FAILED",
++                forensicTraceId, "graphics_driver",
++                "critical graphics library failed validation",
++                ForensicLogger.fields(
++                        "lib_path", criticalLib.getAbsolutePath(),
++                        "lib_size_before", beforeSize,
++                        "verify_reason", verifyFailureReason,
++                        "first_time_boot", firstTimeBoot));
++
++        boolean quarantined = false;
++        String quarantinePath = "";
++        if (criticalLib.exists()) {
++            File quarantineFile = new File(criticalLib.getParentFile(),
++                    criticalLib.getName() + ".bad." + System.currentTimeMillis());
++            quarantined = criticalLib.renameTo(quarantineFile);
++            if (quarantined) quarantinePath = quarantineFile.getAbsolutePath();
++        }
++
++        TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "graphics_driver/extra_libs.tzst", rootDir);
++
++        String postRepairReason = validateElfSharedObject(criticalLib);
++        if (postRepairReason == null) {
++            ForensicLogger.logEvent(this, "info", "RUNTIME_GRAPHICS_LIB_REPAIR_APPLIED",
++                    forensicTraceId, "graphics_driver",
++                    "critical graphics library repaired from bundled assets",
++                    ForensicLogger.fields(
++                            "lib_path", criticalLib.getAbsolutePath(),
++                            "lib_size_after", criticalLib.length(),
++                            "quarantined_corrupt", quarantined,
++                            "quarantine_path", quarantinePath));
++            return;
++        }
++
++        ForensicLogger.logEvent(this, "error", "RUNTIME_GRAPHICS_LIB_REPAIR_FAILED",
++                forensicTraceId, "graphics_driver",
++                "critical graphics library repair failed",
++                ForensicLogger.fields(
++                        "lib_path", criticalLib.getAbsolutePath(),
++                        "lib_size_after", criticalLib.exists() ? criticalLib.length() : -1L,
++                        "verify_reason_after", postRepairReason,
++                        "quarantined_corrupt", quarantined,
++                        "quarantine_path", quarantinePath));
++    }
++
++    private static String validateElfSharedObject(File file) {
++        if (file == null) return "null_file";
++        if (!file.exists()) return "missing";
++
++        long fileLength = file.length();
++        if (fileLength < 64L) return "too_small";
++
++        byte[] header = new byte[64];
++        try (InputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
++            int offset = 0;
++            while (offset < header.length) {
++                int read = inputStream.read(header, offset, header.length - offset);
++                if (read < 0) break;
++                offset += read;
++            }
++            if (offset < header.length) return "short_header";
++        }
++        catch (IOException e) {
++            return "read_error_" + e.getClass().getSimpleName();
++        }
++
++        if ((header[0] & 0xff) != 0x7f || header[1] != 'E' || header[2] != 'L' || header[3] != 'F') {
++            return "bad_magic";
++        }
++
++        int elfClass = header[4] & 0xff;
++        if (elfClass != 2) return "not_elf64";
++
++        int dataEncoding = header[5] & 0xff;
++        if (dataEncoding != 1 && dataEncoding != 2) return "bad_endianness";
++        ByteOrder byteOrder = (dataEncoding == 2) ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
++        ByteBuffer byteBuffer = ByteBuffer.wrap(header).order(byteOrder);
++
++        long sectionHeaderOffset = byteBuffer.getLong(40);
++        int sectionHeaderEntrySize = byteBuffer.getShort(58) & 0xffff;
++        int sectionHeaderCount = byteBuffer.getShort(60) & 0xffff;
++
++        if (sectionHeaderOffset <= 0L) return "invalid_shoff";
++        if (sectionHeaderEntrySize <= 0 || sectionHeaderCount <= 0) return "invalid_shdr_count";
++        if (sectionHeaderOffset >= fileLength) return "shoff_out_of_bounds";
++
++        long sectionHeaderTableSize = (long) sectionHeaderEntrySize * (long) sectionHeaderCount;
++        if (sectionHeaderTableSize <= 0L) return "invalid_shdr_table_size";
++        if (sectionHeaderOffset > fileLength - sectionHeaderTableSize) return "shdr_out_of_bounds";
++        return null;
++    }
++
+     private void applyContainerUpscaleOverridesToEnv() {
+         if (container == null) return;
+ 
