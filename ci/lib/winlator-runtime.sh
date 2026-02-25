@@ -468,7 +468,9 @@ PY
     fi
     case "${key}" in
       WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256|WCP_BIONIC_UNIX_SOURCE_WCP_SHA256)
-        if [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" ]]; then
+        # In mainline, source-map should provide donor URLs/SHA by default while still
+        # allowing explicit workflow/env overrides when FORCE=0.
+        if [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" || -z "${!key:-}" ]]; then
           printf -v "${key}" '%s' "${value}"
           export "${key}"
         fi
