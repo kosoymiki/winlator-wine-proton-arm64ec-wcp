@@ -5,6 +5,7 @@ WCP_PATH="${1:-${WCP_PATH:-}}"
 WCP_COMPRESS="${2:-${WCP_COMPRESS:-xz}}"
 WCP_PRUNE_EXTERNAL_COMPONENTS="${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}"
 WCP_ENABLE_SDL2_RUNTIME="${WCP_ENABLE_SDL2_RUNTIME:-1}"
+WCP_MAINLINE_FEX_EXTERNAL_ONLY="${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}"
 
 log() { printf '[proton10][smoke] %s\n' "$*"; }
 fail() { printf '[proton10][smoke][error] %s\n' "$*" >&2; exit 1; }
@@ -62,6 +63,12 @@ if [[ "${WCP_PRUNE_EXTERNAL_COMPONENTS}" == "1" ]]; then
   fi
   if grep -Eq '^lib/wine/(dxvk|vkd3d|vk3d)(/|$)' "${normalized_file}"; then
     fail "DXVK/VKD3D payload is present while WCP_PRUNE_EXTERNAL_COMPONENTS=1"
+  fi
+fi
+
+if [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]]; then
+  if grep -Eiq '(^|/)(libarm64ecfex\.dll|libwow64fex\.dll|fexcore|box64|wowbox64)($|/)' "${normalized_file}"; then
+    fail "Mainline external-runtime policy violation: embedded FEX/Box/WoWBox artifacts detected"
   fi
 fi
 

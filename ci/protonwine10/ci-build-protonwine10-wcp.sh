@@ -52,6 +52,7 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
 : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
+: "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
 : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
 : "${WCP_BIONIC_SOURCE_MAP_FILE:=${ROOT_DIR}/ci/runtime-sources/bionic-source-map.json}"
 : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
@@ -76,6 +77,7 @@ preflight_runtime_profile() {
   wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_bool WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
   wcp_require_bool WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
@@ -87,6 +89,7 @@ preflight_runtime_profile() {
   fi
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_enforce_mainline_bionic_policy
+  wcp_enforce_mainline_external_runtime_policy
 }
 
 prepare_layout() {

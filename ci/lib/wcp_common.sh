@@ -82,6 +82,68 @@ wcp_enforce_mainline_bionic_policy() {
     wcp_fail "Mainline bionic-only policy forbids WCP_ALLOW_GLIBC_EXPERIMENTAL=1"
 }
 
+wcp_enforce_mainline_external_runtime_policy() {
+  : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]] || return 0
+
+  [[ "${WCP_FEX_EXPECTATION_MODE:-external}" == "external" ]] || \
+    wcp_fail "Mainline external-runtime policy requires WCP_FEX_EXPECTATION_MODE=external"
+  [[ "${WCP_INCLUDE_FEX_DLLS:-0}" == "0" ]] || \
+    wcp_fail "Mainline external-runtime policy requires WCP_INCLUDE_FEX_DLLS=0"
+}
+
+wcp_list_external_runtime_policy_hits() {
+  local wcp_root="$1"
+  local rel
+  local -a exact_forbidden
+
+  [[ -d "${wcp_root}" ]] || return 0
+
+  exact_forbidden=(
+    "lib/wine/aarch64-windows/libarm64ecfex.dll"
+    "lib/wine/aarch64-windows/libwow64fex.dll"
+    "lib/wine/i386-windows/libwow64fex.dll"
+    "lib/wine/fexcore"
+    "lib/fexcore"
+    "share/fexcore"
+    "bin/FEXInterpreter"
+    "bin/FEXBash"
+    "lib/fex-emu"
+    "share/fex-emu"
+    "bin/box64"
+    "bin/wowbox64"
+    "lib/box64"
+    "lib/wowbox64"
+    "share/box64"
+    "share/wowbox64"
+    "lib/wine/box64"
+    "lib/wine/wowbox64"
+  )
+
+  for rel in "${exact_forbidden[@]}"; do
+    [[ -e "${wcp_root}/${rel}" ]] && printf '%s\n' "${rel}"
+  done
+
+  find "${wcp_root}" -mindepth 1 \
+    \( -iname '*box64*' -o -iname '*wowbox64*' -o -iname '*fexcore*' \) \
+    -printf '%P\n' 2>/dev/null | LC_ALL=C sort -u
+}
+
+wcp_assert_mainline_external_runtime_clean_tree() {
+  local wcp_root="$1"
+  local violations
+
+  : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]] || return 0
+
+  violations="$(wcp_list_external_runtime_policy_hits "${wcp_root}" | LC_ALL=C sort -u || true)"
+  [[ -z "${violations}" ]] && return 0
+
+  wcp_fail "Mainline external-runtime policy forbids bundled FEX/Box/WoWBox artifacts in WCP:\n${violations}"
+}
+
 wcp_json_escape() {
   local s="${1-}"
   s="${s//\\/\\\\}"
@@ -349,7 +411,7 @@ WINETOOLS
 compose_wcp_tree_from_stage() {
   local stage_dir="$1" wcp_root="$2"
   local prefix_pack_path profile_name profile_type utc_now runtime_class_detected unix_abi_detected
-  local wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason
+  local wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason emulation_policy
 
   : "${ROOT_DIR:=$(cd -- "${WCP_COMMON_DIR}/../.." && pwd)}"
   : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
@@ -392,13 +454,16 @@ compose_wcp_tree_from_stage() {
   : "${WCP_RUNTIME_BUNDLE_LOCK_MODE:=relaxed-enforce}"
   : "${WCP_INCLUDE_FEX_DLLS:=0}"
   : "${WCP_FEX_EXPECTATION_MODE:=external}"
+  : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
 
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_bool WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_enforce_mainline_bionic_policy
+  wcp_enforce_mainline_external_runtime_policy
 
   prefix_pack_path="${PREFIX_PACK_PATH:-${ROOT_DIR}/prefixPack.txz}"
   ensure_prefix_pack "${prefix_pack_path}"
@@ -424,6 +489,8 @@ compose_wcp_tree_from_stage() {
   wine_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
   wineserver_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
   runtime_mismatch_reason="$(winlator_detect_runtime_mismatch_reason "${wcp_root}" "${WCP_RUNTIME_CLASS_TARGET}")"
+  emulation_policy="runtime-mixed"
+  [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]] && emulation_policy="fex-external-only"
 
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   cat > "${wcp_root}/profile.json" <<EOF_PROFILE
@@ -457,6 +524,9 @@ compose_wcp_tree_from_stage() {
     "wineserverLauncherAbi": "$(wcp_json_escape "${wineserver_launcher_abi}")",
     "runtimeMismatchReason": "$(wcp_json_escape "${runtime_mismatch_reason}")",
     "runtimeClassAutoPromoted": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
+    "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
+    "boxedRuntimeInWcpDetected": false,
+    "policyViolationReason": "none",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   },
@@ -470,9 +540,10 @@ wcp_write_forensic_manifest() {
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
   local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
   local glibc_stage_reports_index glibc_stage_reports_dir
-  local fex_bundled_present=0
+  local fex_bundled_present=0 boxed_runtime_detected=0
   local -a critical_paths
   local rel hash runtime_class_detected unix_abi_detected wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason
+  local emulation_policy policy_violation_reason policy_violations_file policy_hits
 
   : "${WCP_FORENSICS_ALWAYS_ON:=1}"
   [[ "${WCP_FORENSICS_ALWAYS_ON}" == "1" ]] || return 0
@@ -485,6 +556,7 @@ wcp_write_forensic_manifest() {
   env_file="${forensic_root}/build-env.txt"
   index_file="${forensic_root}/file-index.txt"
   hashes_file="${forensic_root}/critical-sha256.tsv"
+  policy_violations_file="${forensic_root}/policy-violations.txt"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
   glibc_stage_reports_index="${forensic_root}/glibc-stage-reports-index.tsv"
@@ -571,6 +643,7 @@ wcp_write_forensic_manifest() {
     echo "WCP_RUNTIME_BUNDLE_LOCK_MODE=${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}"
     echo "WCP_INCLUDE_FEX_DLLS=${WCP_INCLUDE_FEX_DLLS:-}"
     echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
+    echo "WCP_MAINLINE_FEX_EXTERNAL_ONLY=${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
     echo "WCP_BIONIC_SOURCE_MAP_FILE=${WCP_BIONIC_SOURCE_MAP_FILE:-}"
@@ -639,6 +712,7 @@ wcp_write_forensic_manifest() {
     "WCP_RUNTIME_BUNDLE_LOCK_MODE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_MODE:-}")",
     "WCP_INCLUDE_FEX_DLLS": "$(wcp_json_escape "${WCP_INCLUDE_FEX_DLLS:-}")",
     "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")",
+    "WCP_MAINLINE_FEX_EXTERNAL_ONLY": "$(wcp_json_escape "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
     "WCP_BIONIC_SOURCE_MAP_FILE": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_FILE:-}")",
@@ -682,6 +756,21 @@ EOF_SOURCE_REFS
   if [[ -f "${wcp_root}/lib/wine/aarch64-windows/libarm64ecfex.dll" || -f "${wcp_root}/lib/wine/aarch64-windows/libwow64fex.dll" ]]; then
     fex_bundled_present=1
   fi
+  emulation_policy="runtime-mixed"
+  policy_violation_reason="none"
+  if [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:-1}" == "1" ]]; then
+    emulation_policy="fex-external-only"
+    policy_hits="$(wcp_list_external_runtime_policy_hits "${wcp_root}" | LC_ALL=C sort -u || true)"
+    if [[ -n "${policy_hits}" ]]; then
+      boxed_runtime_detected=1
+      policy_violation_reason="embedded-runtime-artifacts-detected"
+      printf '%s\n' "${policy_hits}" > "${policy_violations_file}"
+    else
+      echo "none" > "${policy_violations_file}"
+    fi
+  else
+    echo "policy-disabled" > "${policy_violations_file}"
+  fi
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
   unix_abi_detected="$(winlator_detect_unix_module_abi "${wcp_root}")"
   wine_launcher_abi="$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
@@ -716,6 +805,9 @@ EOF_SOURCE_REFS
     "runtimeMismatchReason": "$(wcp_json_escape "${runtime_mismatch_reason}")",
     "allowGlibcExperimental": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
     "mainlineBionicOnly": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
+    "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
+    "boxedRuntimeInWcpDetected": ${boxed_runtime_detected},
+    "policyViolationReason": "$(wcp_json_escape "${policy_violation_reason}")",
     "fexBundledInWcp": ${fex_bundled_present},
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")"
   },
@@ -743,6 +835,7 @@ EOF_SOURCE_REFS
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
     "glibcStageReportsIndex": "share/wcp-forensics/glibc-stage-reports-index.tsv",
+    "policyViolations": "share/wcp-forensics/policy-violations.txt",
     "buildEnv": "share/wcp-forensics/build-env.txt",
     "sourceRefs": "share/wcp-forensics/source-refs.json"
   }
@@ -763,6 +856,7 @@ wcp_validate_forensic_manifest() {
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-stage-reports-index.tsv"
+    "${wcp_root}/share/wcp-forensics/policy-violations.txt"
     "${wcp_root}/share/wcp-forensics/file-index.txt"
     "${wcp_root}/share/wcp-forensics/build-env.txt"
     "${wcp_root}/share/wcp-forensics/source-refs.json"
@@ -777,6 +871,10 @@ validate_wcp_tree_arm64ec() {
   local wcp_root="$1"
   local -a required_paths required_modules
   local p mod unix_abi
+
+  : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  wcp_enforce_mainline_external_runtime_policy
 
   required_paths=(
     "${wcp_root}/bin"
@@ -800,6 +898,8 @@ validate_wcp_tree_arm64ec() {
     [[ -f "${wcp_root}/lib/wine/aarch64-windows/libarm64ecfex.dll" ]] || wcp_fail "Bundled FEX mode requires lib/wine/aarch64-windows/libarm64ecfex.dll"
     [[ -f "${wcp_root}/lib/wine/aarch64-windows/libwow64fex.dll" ]] || wcp_fail "Bundled FEX mode requires lib/wine/aarch64-windows/libwow64fex.dll"
   fi
+
+  wcp_assert_mainline_external_runtime_clean_tree "${wcp_root}"
 
   if [[ -d "${wcp_root}/lib/wine/arm64ec-windows" ]]; then
     wcp_log "Detected explicit arm64ec-windows layer"
@@ -863,6 +963,7 @@ smoke_check_wcp() {
   local wcp_path="$1"
   local wcp_compress="${2:-${WCP_COMPRESS:-xz}}"
   local list_file normalized_file shebang
+  local forbidden
 
   [[ -f "${wcp_path}" ]] || wcp_fail "WCP artifact not found: ${wcp_path}"
 
@@ -896,6 +997,13 @@ smoke_check_wcp() {
   grep -q '^lib/wine/aarch64-unix/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-unix"
   grep -q '^lib/wine/aarch64-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-windows"
   grep -q '^lib/wine/i386-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/i386-windows"
+
+  : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
+  wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
+  if [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]]; then
+    forbidden="$(grep -Ei '(^|/)(libarm64ecfex\.dll|libwow64fex\.dll|fexcore|box64|wowbox64)($|/)' "${normalized_file}" || true)"
+    [[ -z "${forbidden}" ]] || wcp_fail "Mainline external-runtime policy violation inside archive:\n${forbidden}"
+  fi
 
   if grep -qx 'bin/wine.glibc-real' "${normalized_file}"; then
     grep -qx 'lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1' "${normalized_file}" || wcp_fail "Missing bundled glibc runtime loader"

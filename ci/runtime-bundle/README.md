@@ -53,3 +53,4 @@ Default builder runtime policy:
 - `WCP_RUNTIME_CLASS_TARGET=bionic-native`
 - `WCP_INCLUDE_FEX_DLLS=0`
 - `WCP_FEX_EXPECTATION_MODE=external`
+- `WCP_MAINLINE_FEX_EXTERNAL_ONLY=1` (forbid bundled FEX/Box/WoWBox runtime payload in WCP)

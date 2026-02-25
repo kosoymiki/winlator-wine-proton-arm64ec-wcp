@@ -58,6 +58,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
 : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
+: "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
 : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
 : "${WCP_BIONIC_SOURCE_MAP_FILE:=${ROOT_DIR}/ci/runtime-sources/bionic-source-map.json}"
 : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
@@ -333,6 +334,8 @@ strip_stage_payload() {
 }
 
 compose_wcp_tree() {
+  local emulation_policy
+
   rm -rf "${WCP_ROOT}"
   mkdir -p "${WCP_ROOT}"
   rsync -a "${STAGE_DIR}/usr/" "${WCP_ROOT}/"
@@ -417,6 +420,8 @@ WINETOOLS
 
   local utc_now
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  emulation_policy="runtime-mixed"
+  [[ "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}" == "1" ]] && emulation_policy="fex-external-only"
 
   mkdir -p "${WCP_ROOT}/info"
   cat > "${WCP_ROOT}/profile.json" <<EOF_PROFILE
@@ -451,6 +456,9 @@ WINETOOLS
     "wineLauncherAbi": "$(printf '%s' "$(winlator_detect_launcher_abi "${WCP_ROOT}/bin/wine")" | sed 's/"/\\"/g')",
     "wineserverLauncherAbi": "$(printf '%s' "$(winlator_detect_launcher_abi "${WCP_ROOT}/bin/wineserver")" | sed 's/"/\\"/g')",
     "runtimeMismatchReason": "$(printf '%s' "$(winlator_detect_runtime_mismatch_reason "${WCP_ROOT}" "${WCP_RUNTIME_CLASS_TARGET}")" | sed 's/"/\\"/g')",
+    "emulationPolicy": "$(printf '%s' "${emulation_policy}" | sed 's/"/\\"/g')",
+    "boxedRuntimeInWcpDetected": false,
+    "policyViolationReason": "none",
     "fexExpectationMode": "$(printf '%s' "${WCP_FEX_EXPECTATION_MODE}" | sed 's/"/\\"/g')",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   }
@@ -494,6 +502,8 @@ validate_wcp_tree() {
   for p in "${required_paths[@]}"; do
     [[ -e "${p}" ]] || fail "WCP layout is incomplete, missing: ${p#${WCP_ROOT}/}"
   done
+
+  wcp_assert_mainline_external_runtime_clean_tree "${WCP_ROOT}"
 
   local required_unix_modules=(
     "ntdll.so"
@@ -590,6 +600,7 @@ main() {
   require_bool_flag WCP_RUNTIME_CLASS_ENFORCE "${WCP_RUNTIME_CLASS_ENFORCE}"
   require_bool_flag WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   require_bool_flag WCP_MAINLINE_BIONIC_ONLY "${WCP_MAINLINE_BIONIC_ONLY}"
+  require_bool_flag WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
   require_bool_flag WCP_ALLOW_GLIBC_EXPERIMENTAL "${WCP_ALLOW_GLIBC_EXPERIMENTAL}"
   require_bool_flag WCP_BIONIC_SOURCE_MAP_FORCE "${WCP_BIONIC_SOURCE_MAP_FORCE}"
   require_bool_flag WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
@@ -602,6 +613,7 @@ main() {
   esac
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_enforce_mainline_bionic_policy
+  wcp_enforce_mainline_external_runtime_policy
 
   check_host_arch
   ensure_llvm_mingw
