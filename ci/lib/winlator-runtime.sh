@@ -166,6 +166,31 @@ winlator_detect_unix_module_abi() {
   printf '%s' "unknown"
 }
 
+winlator_detect_unix_module_abi_from_path() {
+  local module_path="$1"
+  local soname
+  local has_libc=0 has_libc6=0
+
+  [[ -f "${module_path}" ]] || { printf '%s' "missing"; return 0; }
+
+  while IFS= read -r soname; do
+    case "${soname}" in
+      libc.so) has_libc=1 ;;
+      libc.so.6) has_libc6=1 ;;
+    esac
+  done < <(winlator_collect_needed_sonames "${module_path}" || true)
+
+  if [[ "${has_libc6}" == "1" ]]; then
+    printf '%s' "glibc-unix"
+    return 0
+  fi
+  if [[ "${has_libc}" == "1" ]]; then
+    printf '%s' "bionic-unix"
+    return 0
+  fi
+  printf '%s' "unknown"
+}
+
 winlator_extract_wcp_archive() {
   local archive="$1" out_dir="$2"
   [[ -f "${archive}" ]] || return 1
@@ -269,7 +294,8 @@ winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
   local unix_abi source_wcp source_url cache_dir archive_path
-  local tmp_extract src_unix dst_unix mod
+  local tmp_extract src_unix dst_unix mod source_unix_abi
+  local copied_count=0
   local -a core_modules
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
@@ -322,6 +348,15 @@ winlator_adopt_bionic_unix_core_modules() {
   [[ -n "${src_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Bionic unix source WCP is missing lib/wine/aarch64-unix"; }
   dst_unix="${wcp_root}/lib/wine/aarch64-unix"
   [[ -d "${dst_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Target WCP is missing lib/wine/aarch64-unix"; }
+  source_unix_abi="$(winlator_detect_unix_module_abi_from_path "${src_unix}/ntdll.so")"
+  if [[ "${source_unix_abi}" != "bionic-unix" ]]; then
+    rm -rf "${tmp_extract}"
+    if winlator_bionic_mainline_strict; then
+      fail "Bionic unix source WCP has non-bionic unix ABI (detected=${source_unix_abi}, source=${source_wcp})"
+    fi
+    log "Skipping unix core adoption due to non-bionic donor unix ABI (detected=${source_unix_abi})"
+    return 0
+  fi
 
   # Keep module surface minimal to reduce cross-version drift while fixing ABI.
   # Caller can override with a space-separated list via WCP_BIONIC_UNIX_CORE_MODULES.
@@ -342,7 +377,17 @@ winlator_adopt_bionic_unix_core_modules() {
     [[ -f "${src_unix}/${mod}" ]] || continue
     cp -f "${src_unix}/${mod}" "${dst_unix}/${mod}"
     chmod +x "${dst_unix}/${mod}" || true
+    copied_count=$((copied_count + 1))
   done
+
+  if [[ "${copied_count}" -eq 0 ]]; then
+    rm -rf "${tmp_extract}"
+    if winlator_bionic_mainline_strict; then
+      fail "Bionic unix core adoption copied zero modules (source=${source_wcp}, modules=${WCP_BIONIC_UNIX_CORE_MODULES:-default})"
+    fi
+    log "Skipping unix core adoption: no requested modules found in donor WCP"
+    return 0
+  fi
 
   rm -rf "${tmp_extract}"
 
