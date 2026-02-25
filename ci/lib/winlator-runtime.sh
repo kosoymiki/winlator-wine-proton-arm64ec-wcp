@@ -227,6 +227,10 @@ winlator_apply_bionic_source_map_overrides() {
   : "${WCP_BIONIC_SOURCE_MAP_FILE:=}"
   : "${WCP_BIONIC_SOURCE_MAP_FORCE:=1}"
   : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=0}"
+  if winlator_bionic_mainline_strict; then
+    WCP_BIONIC_SOURCE_MAP_FORCE="1"
+    WCP_BIONIC_SOURCE_MAP_REQUIRED="1"
+  fi
   pkg_name="${WCP_NAME:-}"
   [[ -n "${pkg_name}" ]] || return 0
 
@@ -339,6 +343,9 @@ winlator_adopt_bionic_unix_core_modules() {
   source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
   source_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}}"
   cache_dir="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}"
+  if winlator_bionic_mainline_strict && [[ -n "${source_url}" && -z "${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}" ]]; then
+    fail "Strict bionic mainline requires WCP_BIONIC_UNIX_SOURCE_WCP_SHA256 for source URL: ${source_url}"
+  fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic unix source WCP"
@@ -452,6 +459,9 @@ winlator_adopt_bionic_launchers() {
   source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
   source_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
   cache_dir="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}"
+  if winlator_bionic_mainline_strict && [[ -n "${source_url}" && -z "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}" ]]; then
+    fail "Strict bionic mainline requires WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256 for source URL: ${source_url}"
+  fi
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic launcher source WCP"
