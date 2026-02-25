@@ -1038,6 +1038,15 @@ wcp_validate_forensic_manifest() {
   for p in "${required[@]}"; do
     [[ -f "${p}" ]] || wcp_fail "WCP forensic manifest is incomplete, missing: ${p#${wcp_root}/}"
   done
+
+  local unix_abi_file="${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
+  if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
+    grep -q '^lib/wine/aarch64-unix/ntdll\.so\tbionic-unix$' "${unix_abi_file}" || \
+      wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
+    if grep -q $'\tglibc-unix$' "${unix_abi_file}"; then
+      wcp_fail "Forensic unix ABI index contains glibc-unix modules in strict bionic mode"
+    fi
+  fi
 }
 
 validate_wcp_tree_arm64ec() {
