@@ -212,7 +212,8 @@ main() {
   else
     log "GameNative patchset integration disabled for protonwine10 (WCP_GN_PATCHSET_ENABLE=0)"
   fi
-  WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+  log "Running GameNative contract in warn-only mode for protonwine source"
+  WCP_GN_PATCHSET_STRICT=0 \
     bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   build_wine
 

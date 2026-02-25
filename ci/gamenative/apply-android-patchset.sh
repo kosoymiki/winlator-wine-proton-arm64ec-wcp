@@ -158,7 +158,9 @@ verify_patch_contract_markers() {
         && file_has_regex "${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c" 'fprintf\(file, "wine '
       ;;
     test-bylaws/include_winternl_h.patch)
-      file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE'
+      file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE' \
+        && file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'ProcessFexHardwareTso' \
+        && file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'MemoryFexStatsShm'
       ;;
     test-bylaws/server_thread_c.patch)
       file_has_fixed "${SOURCE_DIR}/server/thread.c" 'bypass_proc_suspend'
