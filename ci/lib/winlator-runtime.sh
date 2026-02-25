@@ -397,6 +397,10 @@ winlator_apply_bionic_source_map_overrides() {
     fi
     return 0
   fi
+  WCP_BIONIC_SOURCE_MAP_FILE="${map_file}"
+  WCP_BIONIC_SOURCE_MAP_PATH_EFFECTIVE="${map_file}"
+  WCP_BIONIC_SOURCE_MAP_SHA256="$(winlator_sha256_file "${map_file}")"
+  export WCP_BIONIC_SOURCE_MAP_FILE WCP_BIONIC_SOURCE_MAP_PATH_EFFECTIVE WCP_BIONIC_SOURCE_MAP_SHA256
 
   command -v python3 >/dev/null 2>&1 || fail "python3 is required to read bionic source-map"
   out="$(python3 - "${map_file}" "${pkg_name}" "${WCP_BIONIC_SOURCE_MAP_FORCE}" "${WCP_BIONIC_SOURCE_MAP_REQUIRED}" <<'PY'

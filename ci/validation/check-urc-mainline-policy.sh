@@ -121,6 +121,8 @@ main() {
   require_contains "ci/lib/wcp_common.sh" '"unixModuleAbiIndex"'
   require_contains "ci/lib/wcp_common.sh" 'WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256'
   require_contains "ci/lib/wcp_common.sh" 'WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256'
+  require_contains "ci/lib/wcp_common.sh" 'WCP_BIONIC_SOURCE_MAP_SHA256'
+  require_contains "ci/lib/wcp_common.sh" 'bionicSourceMapSha256'
   require_contains "ci/lib/wcp_common.sh" 'contains glibc-unix modules in strict bionic mode'
   require_contains "ci/lib/wcp_common.sh" 'missing bionic ntdll marker'
   require_contains "ci/lib/winlator-runtime.sh" 'winlator_preflight_bionic_source_contract\(\)'
