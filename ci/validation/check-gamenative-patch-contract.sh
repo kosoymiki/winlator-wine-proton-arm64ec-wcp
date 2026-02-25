@@ -79,12 +79,13 @@ check_regex() {
 }
 
 f_loader="${SOURCE_DIR}/dlls/ntdll/loader.c"
+f_ntdll_spec="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
 f_wow64_syscall="${SOURCE_DIR}/dlls/wow64/syscall.c"
 f_wow64_spec="${SOURCE_DIR}/dlls/wow64/wow64.spec"
 f_winternl="${SOURCE_DIR}/include/winternl.h"
 f_menubuilder="${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c"
 
-for f in "${f_loader}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_menubuilder}"; do
+for f in "${f_loader}" "${f_ntdll_spec}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_menubuilder}"; do
   [[ -f "${f}" ]] || fail "required source file missing: ${f}"
 done
 
@@ -92,6 +93,7 @@ done
 check_fixed "${f_loader}" 'libarm64ecfex.dll' 'ntdll loader uses libarm64ecfex.dll'
 check_fixed "${f_loader}" 'pWow64SuspendLocalThread' 'ntdll loader has pWow64SuspendLocalThread pointer'
 check_fixed "${f_loader}" 'GET_PTR( Wow64SuspendLocalThread );' 'ntdll loader imports Wow64SuspendLocalThread'
+check_fixed "${f_ntdll_spec}" 'RtlWow64SuspendThread' 'ntdll.spec exports RtlWow64SuspendThread'
 check_fixed "${f_wow64_syscall}" 'Wow64SuspendLocalThread' 'wow64 syscall exports local suspend helper'
 check_fixed "${f_wow64_spec}" 'Wow64SuspendLocalThread' 'wow64.spec exports Wow64SuspendLocalThread'
 
@@ -127,6 +129,7 @@ if [[ "${TARGET}" == "protonge" ]]; then
   check_fixed "${f_wow64_syscall}" 'L"HODLL"' 'wow64 syscall supports HODLL override'
   check_fixed "${f_wow64_syscall}" 'Wow64SuspendLocalThread' 'wow64 syscall exposes Wow64SuspendLocalThread'
   check_fixed "${f_wow64_process}" 'RtlWow64SuspendThread' 'wow64 process path uses RtlWow64SuspendThread'
+  check_fixed "${f_wow64_process}" 'Wow64SuspendLocalThread' 'wow64 process exports Wow64SuspendLocalThread helper'
   check_fixed "${f_signal_arm64ec}" 'ARM64EC_NT_XCONTEXT' 'arm64ec signal path has extended context union'
   check_fixed "${f_virtual}" 'fex_stats_shm' 'ntdll unix virtual path exposes fex stats shared mapping'
   check_fixed "${f_winternl}" 'ProcessFexHardwareTso' 'winternl includes ProcessFexHardwareTso enum'

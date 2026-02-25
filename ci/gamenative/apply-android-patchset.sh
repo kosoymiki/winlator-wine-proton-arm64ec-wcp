@@ -6,6 +6,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WCP_GN_PATCHSET_ENABLE:=1}"
 : "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
 : "${WCP_GN_PATCHSET_STRICT:=1}"
+: "${WCP_GN_PATCHSET_VERIFY_AUTOFIX:=1}"
 : "${WCP_GN_PATCHSET_MANIFEST:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/manifest.tsv}"
 : "${WCP_GN_PATCHSET_PATCH_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/patches}"
 : "${WCP_GN_PATCHSET_REPORT:=}"
@@ -21,6 +22,7 @@ Env:
   WCP_GN_PATCHSET_ENABLE        default: 1
   WCP_GN_PATCHSET_REF           default: 28c3a06ba773f6d29b9f3ed23b9297f94af4771c
   WCP_GN_PATCHSET_STRICT        default: 1
+  WCP_GN_PATCHSET_VERIFY_AUTOFIX default: 1 (apply clean verify-missing patches)
   WCP_GN_PATCHSET_MANIFEST      default: ci/gamenative/patchsets/28c3a06/manifest.tsv
   WCP_GN_PATCHSET_PATCH_ROOT    default: ci/gamenative/patchsets/28c3a06/android/patches
   WCP_GN_PATCHSET_REPORT        optional TSV report path
@@ -72,6 +74,7 @@ esac
 
 require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
 require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
+require_bool WCP_GN_PATCHSET_VERIFY_AUTOFIX "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}"
 
 if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
   log "Patchset integration disabled (WCP_GN_PATCHSET_ENABLE=0)"
@@ -106,7 +109,11 @@ verify_patch_contract_markers() {
   local patch="$1"
   case "${patch}" in
     dlls_ntdll_loader_c.patch)
-      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/loader.c" 'libarm64ecfex.dll'
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/loader.c" 'libarm64ecfex.dll' \
+        && file_has_fixed "${SOURCE_DIR}/dlls/ntdll/loader.c" 'pWow64SuspendLocalThread'
+      ;;
+    dlls_ntdll_ntdll_spec.patch|test-bylaws/dlls_ntdll_ntdll_spec.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/ntdll.spec" 'RtlWow64SuspendThread'
       ;;
     dlls_winex11_drv_window_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/window.c" 'class_hints->res_name = process_name;'
@@ -136,10 +143,16 @@ verify_patch_contract_markers() {
       file_has_fixed "${SOURCE_DIR}/dlls/ntdll/unix/virtual.c" 'MemoryFexStatsShm'
       ;;
     test-bylaws/dlls_wow64_process_c.patch)
-      file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'RtlWow64SuspendThread'
+      file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'RtlWow64SuspendThread' \
+        && file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'Wow64SuspendLocalThread'
       ;;
     test-bylaws/dlls_wow64_syscall_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'Wow64SuspendLocalThread'
+      ;;
+    programs_winemenubuilder_winemenubuilder_c.patch)
+      file_has_fixed "${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c" 'WINECONFIGDIR' \
+        && file_has_regex "${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c" 'icons\\\\hicolor' \
+        && file_has_regex "${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c" 'fprintf\(file, "wine '
       ;;
     test-bylaws/include_winternl_h.patch)
       file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE'
@@ -169,8 +182,32 @@ git_reverse_check() {
   git -C "${SOURCE_DIR}" apply --check --reverse "${patch_file}" >/dev/null 2>&1
 }
 
+git_apply_3way() {
+  local patch_file="$1"
+  git -C "${SOURCE_DIR}" apply --3way "${patch_file}" >/dev/null 2>&1
+}
+
+target_is_required() {
+  local required_raw="$1"
+  local token norm
+  local -a _required_tokens
+  required_raw="${required_raw// /}"
+  [[ -n "${required_raw}" ]] || return 1
+  IFS=',' read -r -a _required_tokens <<<"${required_raw}"
+  for token in "${_required_tokens[@]}"; do
+    norm="${token,,}"
+    case "${norm}" in
+      both|all) return 0 ;;
+      wine|protonge)
+        [[ "${norm}" == "${TARGET}" ]] && return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
 run_apply_action() {
-  local patch="$1" patch_file="$2"
+  local patch="$1" patch_file="$2" required_for_target="$3"
 
   if git_reverse_check "${patch_file}"; then
     report "${patch}" "apply" "already" "reverse-check-ok"
@@ -183,15 +220,25 @@ run_apply_action() {
     return 0
   fi
 
+  if git_apply_3way "${patch_file}"; then
+    report "${patch}" "apply" "applied" "applied-3way"
+    return 0
+  fi
+
+  if verify_patch_contract_markers "${patch}"; then
+    report "${patch}" "apply" "already" "contract-markers"
+    return 0
+  fi
+
   report "${patch}" "apply" "conflict" "cannot-apply"
-  if [[ "${WCP_GN_PATCHSET_STRICT}" == "1" ]]; then
-    fail "patch ${patch} is marked apply but cannot be applied"
+  if [[ "${WCP_GN_PATCHSET_STRICT}" == "1" || "${required_for_target}" == "1" ]]; then
+    fail "patch ${patch} is marked apply but cannot be applied for target=${TARGET}"
   fi
   return 0
 }
 
 run_verify_action() {
-  local patch="$1" patch_file="$2"
+  local patch="$1" patch_file="$2" required_for_target="$3"
 
   if git_reverse_check "${patch_file}"; then
     report "${patch}" "verify" "verified" "reverse-check-ok"
@@ -199,7 +246,22 @@ run_verify_action() {
   fi
 
   if git_apply_check "${patch_file}"; then
-    report "${patch}" "verify" "missing" "would-apply-clean"
+    if [[ "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" == "1" ]]; then
+      if git -C "${SOURCE_DIR}" apply "${patch_file}" >/dev/null 2>&1; then
+        report "${patch}" "verify" "autofixed" "applied-clean"
+        return 0
+      fi
+      if git_apply_3way "${patch_file}"; then
+        report "${patch}" "verify" "autofixed" "applied-3way"
+        return 0
+      fi
+      report "${patch}" "verify" "missing" "apply-check-ok-but-apply-failed"
+    else
+      report "${patch}" "verify" "missing" "would-apply-clean"
+    fi
+    if [[ "${required_for_target}" == "1" && "${WCP_GN_PATCHSET_STRICT}" == "1" ]]; then
+      fail "required verify patch ${patch} is missing for target=${TARGET}"
+    fi
     return 0
   fi
 
@@ -209,6 +271,9 @@ run_verify_action() {
   fi
 
   report "${patch}" "verify" "diverged" "apply-reverse-failed-no-contract-marker"
+  if [[ "${required_for_target}" == "1" && "${WCP_GN_PATCHSET_STRICT}" == "1" ]]; then
+    fail "required verify patch ${patch} diverged for target=${TARGET}"
+  fi
   return 0
 }
 
@@ -452,6 +517,7 @@ log "source=${SOURCE_DIR}"
 
 line_no=0
 while IFS=$'\t' read -r patch wine_action protonge_action required note; do
+  required_for_target=0
   line_no=$((line_no + 1))
   if [[ ${line_no} -eq 1 ]]; then
     continue
@@ -466,16 +532,23 @@ while IFS=$'\t' read -r patch wine_action protonge_action required note; do
 
   patch_file="${WCP_GN_PATCHSET_PATCH_ROOT}/${patch}"
   [[ -f "${patch_file}" ]] || fail "patch file missing: ${patch_file}"
+  if target_is_required "${required}"; then
+    required_for_target=1
+  fi
 
   case "${action}" in
     skip)
+      if [[ "${required_for_target}" == "1" ]]; then
+        report "${patch}" "skip" "invalid" "required-for-${TARGET}-but-skipped"
+        fail "manifest mismatch: ${patch} required for ${TARGET} but action is skip"
+      fi
       report "${patch}" "skip" "skipped" "not-applicable-for-${TARGET}"
       ;;
     apply)
-      run_apply_action "${patch}" "${patch_file}"
+      run_apply_action "${patch}" "${patch_file}" "${required_for_target}"
       ;;
     verify)
-      run_verify_action "${patch}" "${patch_file}"
+      run_verify_action "${patch}" "${patch_file}" "${required_for_target}"
       ;;
     backport_*)
       run_backport_action "${patch}" "${action}"

@@ -72,6 +72,7 @@ fi
 : "${WCP_GN_PATCHSET_ENABLE:=1}"
 : "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
 : "${WCP_GN_PATCHSET_STRICT:=1}"
+: "${WCP_GN_PATCHSET_VERIFY_AUTOFIX:=1}"
 : "${WCP_GN_PATCHSET_REPORT:=${LOG_DIR}/gamenative-patchset-protonge.tsv}"
 : "${WINE_TOOLS_CONFIGURE_EXTRA_ARGS:=--without-x --without-gstreamer --without-vulkan --without-wayland}"
 : "${WINE_CONFIGURE_PROFILE:=proton-android-minimal}"
@@ -100,6 +101,7 @@ preflight_runtime_profile() {
   wcp_require_bool WCP_BIONIC_SOURCE_MAP_REQUIRED "${WCP_BIONIC_SOURCE_MAP_REQUIRED}"
   wcp_require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
   wcp_require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
+  wcp_require_bool WCP_GN_PATCHSET_VERIFY_AUTOFIX "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}"
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
@@ -270,6 +272,7 @@ main() {
   run_arm64ec_flow
   if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
     WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+      WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
       WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
       WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
       bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
