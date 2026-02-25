@@ -10,7 +10,7 @@ without implying that our Wine/Proton packages are embedded inside the APK.
 ## Source of truth
 - Repository file: `contents/contents.json`
 - Runtime URL in app: `raw.githubusercontent.com/<repo>/main/contents/contents.json`
-- Package assets: GitHub Releases of this repository (`wcp-v0.9a` + per-package rolling `*-latest` tags)
+- Package assets: GitHub Releases of this repository (`wcp-stable` + per-package rolling `*-latest` tags)
 
 ## Entry model (extended, backward-compatible)
 Required legacy fields still supported:
@@ -21,7 +21,7 @@ New/extended fields used by this fork:
 - `delivery`: `remote | embedded` (UI honesty; current WCP entries use `remote`)
 - `displayCategory`: UI label override (we use `Wine/Proton`)
 - `sourceRepo`: provenance (`owner/repo`)
-- `releaseTag`: release source (`wcp-v0.9a` or per-package rolling tag like `wine-11-arm64ec-latest`)
+- `releaseTag`: release source (`wcp-stable` or per-package rolling tag like `wine-11-arm64ec-latest`)
 
 ## Filtering policy
 1. Stable entries are always visible.

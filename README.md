@@ -34,10 +34,10 @@
 - **Proton GE10 ARM64EC:** `proton-ge10-arm64ec-latest`
 - **ProtonWine10 GameNative ARM64EC:** `protonwine10-gamenative-arm64ec-latest`
 
-### **Stable line (0.9a)**
+### **Stable releases**
 
-- **Winlator app:** `v0.9a`
-- **WCP bundle:** `wcp-v0.9a`
+- **Winlator app:** `v0.9b`
+- **WCP bundle:** `wcp-stable`
 
 **Принцип:** *новый артефакт заменяет предыдущий внутри своего релиза*; дубли и лишние служебные файлы удаляются.
 

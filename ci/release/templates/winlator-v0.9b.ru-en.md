@@ -1,4 +1,4 @@
-# Winlator CMOD Aero.so 0.9a
+# Winlator by Aero.so 0.9b
 
 ## RU
 - Пакет приложения: `by.aero.so.benchmark` (суффикс `.benchmark` сохранён намеренно).
@@ -13,5 +13,5 @@
 - Turnip/Adrenotools now supports version picker (latest + recent/history) and improved downloader.
 
 ## Included assets
-- Winlator CMOD Aero.so APK (`by.aero.so.benchmark`)
+- Winlator by Aero.so APK (`by.aero.so.benchmark`)
 - `SHA256SUMS`

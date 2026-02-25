@@ -1,9 +1,9 @@
-# Contents QA Checklist (0.9a)
+# Contents QA Checklist
 
 ## Contents source and schema
 - [ ] `ContentsManager.REMOTE_PROFILES` points to this repo `contents/contents.json`
 - [ ] `ci/contents/validate-contents-json.py contents/contents.json` passes
-- [ ] Each `Wine/Proton` stable entry points to `wcp-v0.9a`
+- [ ] Each `Wine/Proton` stable entry points to `wcp-stable`
 - [ ] Each `Wine/Proton` entry points to its per-package rolling tag (`*-latest`)
 - [ ] `channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag` are present
 
@@ -32,4 +32,4 @@
 - [ ] `wine-11` nightly build emits `channel=nightly`, `releaseTag=wine-11-arm64ec-latest`, `versionCode=1`
 - [ ] `proton-ge10` nightly build emits same metadata policy
 - [ ] `protonwine10` nightly build emits same metadata policy
-- [ ] Stable release builds emit `channel=stable` and `releaseTag=wcp-v0.9a`
+- [ ] Stable release builds emit `channel=stable` and `releaseTag=wcp-stable`

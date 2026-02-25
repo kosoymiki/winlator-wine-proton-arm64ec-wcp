@@ -31,8 +31,8 @@
 ### `2i-2p` — Стабилизация CI pinned glibc lane и аналитика источников
 - Зачем добавлялись: Build deps/parallelism для WCP, ScaleForce binding gate, forensic sink fallback, Hangover/source audits, UI fixes Adrenotools.
 
-### `2q-2x` — Стабилизация Winlator патчей, FEX separation, bionic-native mainline и релиз 0.9a
-- Зачем добавлялись: Compile-fix патчей Adrenotools, разделение FEX/WCP, Steven reverse analysis, bionic-native mainline policy и обновление stable line до 0.9a.
+### `2q-2x` — Стабилизация Winlator патчей, FEX separation, bionic-native mainline и релизная линия (Winlator 0.9b / WCP stable)
+- Зачем добавлялись: Compile-fix патчей Adrenotools, разделение FEX/WCP, Steven reverse analysis, bionic-native mainline policy и обновление stable line (Winlator 0.9b, WCP stable без номера).
 
 ## Полная карта commit -> версия
 
@@ -113,7 +113,7 @@
 | `2u` | `4136943` | winlator: defer upscale binding at shell launches for child graphics |
 | `2v` | `ef4933d` | winlator: fix deferred upscale binding patch for EnvVars API |
 | `2w` | `3dc2d5a` | ci/winlator: default WCP runtime class to bionic-native and fix 0035 compile patch |
-| `2x` | `3b91bcf` | ci/release: switch mainline WCP to bionic-native and bump stable line to 0.9a |
+| `2x` | `3b91bcf` | ci/release: switch mainline WCP to bionic-native and switch mainline WCP to bionic-native and stabilize release naming |
 
 ## Примечания
 
@@ -131,7 +131,7 @@
 ### `0005-0009` — Aero.so линия, contents/turnip, контейнеры и релизный baseline
 - `0005`: branding + turnip/nightly + cleanup (большой интеграционный слой)
 - `0006`: forensic/diagnostics/contents/turnip/repo-contents (ранняя интеграция)
-- `0007`: версия Aero.so (`0.9a`)
+- `0007`: версия Aero.so (`0.9b`)
 - `0008`: WCPHub overlay для `Wine/Proton`, single-track policy
 - `0009`: container create hardening + content download fixes
 
