@@ -128,6 +128,11 @@ jobs:
           set -euxo pipefail
           bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 
+      - name: Inspect WCP runtime contract
+        run: |
+          set -euxo pipefail
+          bash ci/validation/inspect-wcp-runtime-contract.sh "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" --strict-bionic
+
       - name: Upload WCP artifact
         if: success()
         uses: actions/upload-artifact@v4
