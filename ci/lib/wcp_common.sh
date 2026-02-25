@@ -333,7 +333,7 @@ WINETOOLS
 
 compose_wcp_tree_from_stage() {
   local stage_dir="$1" wcp_root="$2"
-  local prefix_pack_path profile_name profile_type utc_now runtime_class_detected
+  local prefix_pack_path profile_name profile_type utc_now runtime_class_detected unix_abi_detected
 
   : "${ROOT_DIR:=$(cd -- "${WCP_COMMON_DIR}/../.." && pwd)}"
   : "${WCP_TARGET_RUNTIME:=winlator-bionic}"
@@ -392,11 +392,13 @@ compose_wcp_tree_from_stage() {
   mkdir -p "${wcp_root}/share"
   cp -f "${prefix_pack_path}" "${wcp_root}/prefixPack.txz"
 
+  winlator_adopt_bionic_unix_core_modules "${wcp_root}"
   winlator_adopt_bionic_launchers "${wcp_root}"
   winlator_wrap_glibc_launchers
   winlator_ensure_arm64ec_unix_loader_compat_links "${wcp_root}"
   generate_winetools_layer "${wcp_root}"
   runtime_class_detected="$(winlator_detect_runtime_class "${wcp_root}")"
+  unix_abi_detected="$(winlator_detect_unix_module_abi "${wcp_root}")"
 
   utc_now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   cat > "${wcp_root}/profile.json" <<EOF_PROFILE
@@ -421,6 +423,8 @@ compose_wcp_tree_from_stage() {
     "target": "${WCP_TARGET_RUNTIME}",
     "runtimeClassTarget": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET}")",
     "runtimeClassDetected": "$(wcp_json_escape "${runtime_class_detected}")",
+    "unixAbiDetected": "$(wcp_json_escape "${unix_abi_detected}")",
+    "runtimeClassAutoPromoted": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
     "fexBundledInWcp": ${WCP_INCLUDE_FEX_DLLS}
   },
@@ -504,6 +508,7 @@ wcp_write_forensic_manifest() {
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
     echo "WCP_RUNTIME_CLASS_TARGET=${WCP_RUNTIME_CLASS_TARGET:-}"
     echo "WCP_RUNTIME_CLASS_ENFORCE=${WCP_RUNTIME_CLASS_ENFORCE:-}"
+    echo "WCP_RUNTIME_CLASS_AUTO_PROMOTED=${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}"
     echo "WCP_GLIBC_SOURCE_MODE=${WCP_GLIBC_SOURCE_MODE:-}"
     echo "WCP_GLIBC_VERSION=${WCP_GLIBC_VERSION:-}"
     echo "WCP_GLIBC_TARGET_VERSION=${WCP_GLIBC_TARGET_VERSION:-}"
@@ -521,6 +526,9 @@ wcp_write_forensic_manifest() {
     echo "WCP_FEX_EXPECTATION_MODE=${WCP_FEX_EXPECTATION_MODE:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
     echo "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+    echo "WCP_BIONIC_UNIX_SOURCE_WCP_PATH=${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
+    echo "WCP_BIONIC_UNIX_SOURCE_WCP_URL=${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}"
+    echo "WCP_BIONIC_UNIX_CORE_MODULES=${WCP_BIONIC_UNIX_CORE_MODULES:-}"
     echo "WCP_COMPRESS=${WCP_COMPRESS:-}"
     echo "TARGET_HOST=${TARGET_HOST:-}"
     echo "LLVM_MINGW_TAG=${LLVM_MINGW_TAG:-}"
@@ -558,6 +566,7 @@ wcp_write_forensic_manifest() {
     "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
     "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "WCP_RUNTIME_CLASS_ENFORCE": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_ENFORCE:-}")",
+    "WCP_RUNTIME_CLASS_AUTO_PROMOTED": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
     "WCP_RUNTIME_BUNDLE_LOCK_ID": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "WCP_RUNTIME_BUNDLE_LOCK_FILE": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
     "WCP_RUNTIME_BUNDLE_ENFORCE_LOCK": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_ENFORCE_LOCK:-}")",
@@ -565,7 +574,10 @@ wcp_write_forensic_manifest() {
     "WCP_INCLUDE_FEX_DLLS": "$(wcp_json_escape "${WCP_INCLUDE_FEX_DLLS:-}")",
     "WCP_FEX_EXPECTATION_MODE": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE:-}")",
     "WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}")",
-    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")"
+    "WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}")",
+    "WCP_BIONIC_UNIX_SOURCE_WCP_PATH": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}")",
+    "WCP_BIONIC_UNIX_SOURCE_WCP_URL": "$(wcp_json_escape "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-}")",
+    "WCP_BIONIC_UNIX_CORE_MODULES": "$(wcp_json_escape "${WCP_BIONIC_UNIX_CORE_MODULES:-}")"
   }
 }
 EOF_SOURCE_REFS

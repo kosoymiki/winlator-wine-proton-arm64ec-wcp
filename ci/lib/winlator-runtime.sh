@@ -105,6 +105,82 @@ winlator_extract_wcp_archive() {
   tar -xf "${archive}" -C "${out_dir}" >/dev/null 2>&1
 }
 
+winlator_adopt_bionic_unix_core_modules() {
+  local wcp_root="${1:-${WCP_ROOT:-}}"
+  local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
+  local unix_abi source_wcp source_url cache_dir archive_path
+  local tmp_extract src_unix dst_unix mod
+  local -a core_modules
+
+  [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
+  [[ "${target}" == "bionic-native" ]] || return 0
+  [[ -n "${wcp_root}" ]] || return 0
+
+  unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  [[ "${unix_abi}" == "glibc-unix" ]] || return 0
+
+  source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
+  source_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}}"
+  cache_dir="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}"
+
+  if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
+    command -v curl >/dev/null 2>&1 || fail "curl is required to download bionic unix source WCP"
+    mkdir -p "${cache_dir}"
+    archive_path="${cache_dir}/unix-source.wcp"
+    log "Downloading bionic unix source WCP: ${source_url}"
+    curl -fL --retry 5 --retry-delay 2 -o "${archive_path}.tmp" "${source_url}" || fail "Failed to download bionic unix source WCP from ${source_url}"
+    mv -f "${archive_path}.tmp" "${archive_path}"
+    source_wcp="${archive_path}"
+  fi
+
+  if [[ -z "${source_wcp}" ]]; then
+    log "Bionic unix source WCP is not configured (WCP_BIONIC_UNIX_SOURCE_WCP_URL/PATH)"
+    return 0
+  fi
+  [[ -f "${source_wcp}" ]] || fail "Bionic unix source WCP not found: ${source_wcp}"
+
+  tmp_extract="$(mktemp -d)"
+  if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
+    rm -rf "${tmp_extract}"
+    fail "Unable to extract bionic unix source WCP: ${source_wcp}"
+  fi
+
+  src_unix="$(find "${tmp_extract}" -type d -path '*/lib/wine/aarch64-unix' | head -n1 || true)"
+  [[ -n "${src_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Bionic unix source WCP is missing lib/wine/aarch64-unix"; }
+  dst_unix="${wcp_root}/lib/wine/aarch64-unix"
+  [[ -d "${dst_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Target WCP is missing lib/wine/aarch64-unix"; }
+
+  # Keep module surface minimal to reduce cross-version drift while fixing ABI.
+  # Caller can override with a space-separated list via WCP_BIONIC_UNIX_CORE_MODULES.
+  core_modules=(
+    "ntdll.so"
+    "win32u.so"
+    "ws2_32.so"
+    "winevulkan.so"
+    "winebus.so"
+    "winebus.sys.so"
+  )
+  if [[ -n "${WCP_BIONIC_UNIX_CORE_MODULES:-}" ]]; then
+    # shellcheck disable=SC2206
+    core_modules=( ${WCP_BIONIC_UNIX_CORE_MODULES} )
+  fi
+
+  for mod in "${core_modules[@]}"; do
+    [[ -f "${src_unix}/${mod}" ]] || continue
+    cp -f "${src_unix}/${mod}" "${dst_unix}/${mod}"
+    chmod +x "${dst_unix}/${mod}" || true
+  done
+
+  rm -rf "${tmp_extract}"
+
+  unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+  if [[ "${unix_abi}" != "bionic-unix" ]]; then
+    log "Bionic unix core adoption did not fully switch ABI (detected=${unix_abi})"
+    return 0
+  fi
+  log "Adopted bionic unix core modules from source WCP"
+}
+
 winlator_adopt_bionic_launchers() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
@@ -515,7 +591,7 @@ EOF_WRAPPER
 winlator_wrap_glibc_launchers() {
   local wine_bin wineserver_bin runtime_dir
   local wine_real wineserver_real
-  local target_class
+  local target_class unix_abi
   local detected_before
 
   [[ "${WCP_TARGET_RUNTIME}" == "winlator-bionic" ]] || return
@@ -535,8 +611,22 @@ winlator_wrap_glibc_launchers() {
     return
   fi
 
+  # When unix modules are glibc-linked, bionic launchers are invalid for this payload.
+  # Promote runtime class to glibc-wrapped so produced WCP stays executable.
+  unix_abi="$(winlator_detect_unix_module_abi "${WCP_ROOT}")"
   if [[ "${target_class}" != "glibc-wrapped" ]]; then
-    winlator_report_runtime_class_mismatch "glibc-raw"
+    if [[ "${unix_abi}" == "glibc-unix" ]]; then
+      log "Auto-promoting runtime class target to glibc-wrapped (detected unix ABI=${unix_abi})"
+      target_class="glibc-wrapped"
+      export WCP_RUNTIME_CLASS_TARGET="glibc-wrapped"
+      export WCP_RUNTIME_CLASS_AUTO_PROMOTED="1"
+    else
+      winlator_report_runtime_class_mismatch "glibc-raw"
+    fi
+  fi
+
+  if [[ "${target_class}" != "glibc-wrapped" ]]; then
+    return
   fi
 
   runtime_dir="${WCP_ROOT}/lib/wine/wcp-glibc-runtime"

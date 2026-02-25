@@ -53,6 +53,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
 : "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:=https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz}"
+: "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL}}"
 
 log() { printf '[ci] %s\n' "$*"; }
 fail() { printf '[ci][error] %s\n' "$*" >&2; exit 1; }
@@ -324,6 +325,7 @@ compose_wcp_tree() {
   rm -rf "${WCP_ROOT}"
   mkdir -p "${WCP_ROOT}"
   rsync -a "${STAGE_DIR}/usr/" "${WCP_ROOT}/"
+  winlator_adopt_bionic_unix_core_modules "${WCP_ROOT}"
   winlator_adopt_bionic_launchers "${WCP_ROOT}"
   winlator_wrap_glibc_launchers
   winlator_ensure_arm64ec_unix_loader_compat_links "${WCP_ROOT}"

@@ -52,6 +52,7 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
 : "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:=https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz}"
+: "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL}}"
 
 TOOLCHAIN_DIR="${TOOLCHAIN_DIR:-${CACHE_DIR}/llvm-mingw}"
 export TOOLCHAIN_DIR CACHE_DIR LLVM_MINGW_TAG

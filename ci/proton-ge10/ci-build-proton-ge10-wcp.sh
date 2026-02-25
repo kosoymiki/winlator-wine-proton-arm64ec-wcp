@@ -60,6 +60,7 @@ fi
 : "${WCP_INCLUDE_FEX_DLLS:=0}"
 : "${WCP_FEX_EXPECTATION_MODE:=external}"
 : "${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:=https://github.com/StevenMXZ/Winlator-Contents/releases/download/1.0/proton-10-4-arm64ec.wcp.xz}"
+: "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL}}"
 : "${PATCHLOG_FATAL_REGEX:=\bfatal:|^error:|\[[^]]*\]\[error\]|Traceback \(most recent call last\)}"
 : "${PATCHLOG_FALSE_POSITIVE_REGEX:=Hunk #[0-9]+ FAILED|[0-9]+ out of [0-9]+ hunks FAILED|saving rejects to file|0 errors|0 failures|without errors}"
 
