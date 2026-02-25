@@ -1,0 +1,47 @@
+diff --git a/app/src/main/res/layout/content_list_item.xml b/app/src/main/res/layout/content_list_item.xml
+index 8b29257..b40cfe8 100644
+--- a/app/src/main/res/layout/content_list_item.xml
++++ b/app/src/main/res/layout/content_list_item.xml
+@@ -30,7 +30,9 @@
+             android:layout_height="wrap_content"
+             android:layout_gravity="center"
+             android:gravity="start|center"
+-            android:maxLines="1" />
++            android:ellipsize="end"
++            android:maxLines="2"
++            android:textStyle="bold" />
+ 
+         <TextView
+             android:id="@+id/TVVersionCode"
+@@ -38,6 +40,7 @@
+             android:layout_height="wrap_content"
+             android:layout_gravity="center"
+             android:gravity="start|center"
++            android:ellipsize="end"
+             android:maxLines="1" />
+ 
+         <TextView
+@@ -45,6 +48,7 @@
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:alpha="0.85"
++            android:ellipsize="end"
+             android:maxLines="1"
+             android:textSize="12sp"
+             android:visibility="gone" />
+@@ -53,13 +57,13 @@
+     <ImageButton
+         android:id="@+id/BTMenu"
+         style="@style/ListMenuButton"
+-        android:layout_marginStart="8dp"
++        android:layout_marginStart="4dp"
+         android:src="@drawable/icon_list_item_menu" />
+ 
+     <FrameLayout
+         android:layout_width="40dp"
+         android:layout_height="40dp"
+-        android:layout_marginStart="8dp"
++        android:layout_marginStart="4dp"
+         android:foregroundGravity="center">
+ 
+         <ImageButton
