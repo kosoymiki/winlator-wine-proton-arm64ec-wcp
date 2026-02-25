@@ -173,6 +173,8 @@ main() {
 
   grep -qF "${winlator_line}" ".github/workflows/ci-winlator.yml" || fail "Missing ${winlator_line} in .github/workflows/ci-winlator.yml"
   grep -qF "v${winlator_line}" "README.md" || fail "Missing v${winlator_line} in README.md"
+  require_contains "README.md" 'unix-module-abi.tsv'
+  require_contains "README.md" 'inspect-wcp-runtime-contract.sh'
 
   log "URC mainline policy checks passed"
 }

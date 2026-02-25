@@ -100,6 +100,8 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 
 - structured runtime/launch events (`ROUTE_*`, `RUNTIME_*`, `LAUNCH_*`, `SESSION_EXIT_*`)
 - логирование `FEX / Vulkan / Turnip / Box64`
+- строгий bionic donor preflight (URL + SHA256 + ABI verification до долгой сборки)
+- forensic индекс `share/wcp-forensics/unix-module-abi.tsv` для контроля glibc/bionic unix-модулей
 - вкладка **Diagnostics** для прямого forensic-запуска `XServerDisplayActivity`
 - ADB сценарии для сравнения контейнеров и поиска root cause
 
@@ -108,6 +110,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - `ci/winlator/forensic-adb-matrix.sh`
 - `ci/winlator/forensic-regression-local.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
+- `ci/validation/inspect-wcp-runtime-contract.sh`
 
 ---
 
