@@ -53,6 +53,8 @@ consolidated into:
   - imports a fuller Box64/WoWBox64 env-var surface with typed toggle metadata and extends FEX/Box preset managers with 2026 device-tier profiles (including S8+G1 performance-focused presets)
 - `0040-runtime-common-profile-ui-and-launcher-integration.patch`
   - adds a runtime-common profile layer (independent from FEX/Box presets), persists it in container/settings UI, bridges it into launcher env overlays, and emits forensic telemetry for applied common profile selection
+- `0042-external-runtime-placeholders-and-fex-resolution.patch`
+  - switches Box/WoWBox/FEX version pickers to installed-only lists with neutral `—` placeholder when external runtime packages are absent, sanitizes placeholder tokens from persisted container/shortcut data, resolves FEX/WoWBox runtime payload from installed Contents profiles (no embedded tar fallback for ARM64EC path), and applies non-crashing HODLL fallback selection during launch
 
 ## Known high-overlap files (intentional)
 
