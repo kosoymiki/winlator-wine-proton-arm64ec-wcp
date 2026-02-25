@@ -1,0 +1,117 @@
+{
+  "generated_at_utc": "2026-02-25 13:04:53",
+  "repos": [
+    "gamehublite/gamehub-oss",
+    "Producdevity/gamehub-lite",
+    "tkashkin/GameHub"
+  ],
+  "audits": [
+    {
+      "repo": "gamehublite/gamehub-oss",
+      "default_branch": "main",
+      "classification": "apk-patchset-overlay",
+      "confidence": "high",
+      "rationale": "Repository appears to distribute patch layers over upstream APKs rather than full source ownership.",
+      "readme_signals": [
+        "patches official app",
+        "mentions reverse engineering",
+        "claims source build"
+      ],
+      "patch_signals": [
+        "patch-path markers: 198",
+        "apk-patching/decompile tool markers: 148"
+      ],
+      "source_signals": [],
+      "evidence_paths": [
+        "autopatcher.sh",
+        "lite_resources/smali_classes10",
+        "lite_resources/smali_classes10/bin",
+        "lite_resources/smali_classes10/bin/mt",
+        "lite_resources/smali_classes10/bin/mt/file",
+        "lite_resources/smali_classes10/bin/mt/file/content",
+        "lite_resources/smali_classes10/bin/mt/file/content/MTDataFilesProvider.smali",
+        "lite_resources/smali_classes10/bin/mt/file/content/MTDataFilesWakeUpActivity.smali",
+        "lite_resources/smali_classes4",
+        "lite_resources/smali_classes4/com"
+      ],
+      "stars": 1095,
+      "forks": 58,
+      "open_issues": 51,
+      "updated_at": "2026-02-24T14:28:28Z",
+      "api_errors": []
+    },
+    {
+      "repo": "Producdevity/gamehub-lite",
+      "default_branch": "master",
+      "classification": "apk-patchset-overlay",
+      "confidence": "high",
+      "rationale": "Repository appears to distribute patch layers over upstream APKs rather than full source ownership.",
+      "readme_signals": [
+        "mentions reverse engineering",
+        "mentions upstream mirroring"
+      ],
+      "patch_signals": [
+        "patch-path markers: 3372",
+        "apk-patching/decompile tool markers: 386"
+      ],
+      "source_signals": [
+        "kotlin/java file markers: 7"
+      ],
+      "evidence_paths": [
+        "patches",
+        "patches/.gitkeep",
+        "patches/binary_replacements",
+        "patches/binary_replacements/original",
+        "patches/binary_replacements/original/AndroidManifest.xml",
+        "patches/binary_replacements/res",
+        "patches/binary_replacements/res/drawable-xxhdpi",
+        "patches/binary_replacements/res/drawable-xxhdpi/wine_game_loading.jpg",
+        "patches/binary_replacements/res/raw",
+        "patches/binary_replacements/res/raw/click.mp3",
+        "revanced/patches/build.gradle.kts",
+        "revanced/patches/src/main/kotlin/app/revanced/patches/gamehub/misc/GameHubLitePatch.kt",
+        "revanced/patches/src/main/kotlin/app/revanced/patches/gamehub/misc/RemoveTrackingResourcesPatch.kt",
+        "revanced/patches/src/main/kotlin/app/revanced/patches/gamehub/shared/Fingerprints.kt",
+        "revanced/patches/src/main/kotlin/app/revanced/patches/gamehub/telemetry/DisableAllTelemetryPatch.kt",
+        "revanced/patches/src/main/kotlin/app/revanced/patches/gamehub/telemetry/DisableTelemetryPatch.kt"
+      ],
+      "stars": 1156,
+      "forks": 26,
+      "open_issues": 81,
+      "updated_at": "2026-02-25T12:26:47Z",
+      "api_errors": []
+    },
+    {
+      "repo": "tkashkin/GameHub",
+      "default_branch": "master",
+      "classification": "hybrid-source-and-patch",
+      "confidence": "medium",
+      "rationale": "Repository combines source files with patch/decompile artifacts; selective reuse is required.",
+      "readme_signals": [],
+      "patch_signals": [
+        "patch-path markers: 1"
+      ],
+      "source_signals": [
+        "vala source markers: 127"
+      ],
+      "evidence_paths": [
+        "flatpak/libs/polkit/polkit-build-Add-option-to-build-without-polkitd.patch",
+        "src/app.vala",
+        "src/data/CompatTool.vala",
+        "src/data/Emulator.vala",
+        "src/data/Game.vala",
+        "src/data/GameSource.vala",
+        "src/data/Runnable.vala",
+        "src/data/adapters/GamesAdapter.vala",
+        "src/data/compat/CustomEmulator.vala",
+        "src/data/compat/CustomScript.vala",
+        "src/data/compat/DOSBox.vala"
+      ],
+      "stars": 2711,
+      "forks": 193,
+      "open_issues": 272,
+      "updated_at": "2026-02-25T12:42:54Z",
+      "api_errors": []
+    }
+  ]
+}

@@ -111,6 +111,14 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 
 ---
 
+## **Upstream Research (reproducible)**
+
+- `ci/research/gamenative_forensic_audit.py` -> `docs/GAMENATIVE_BRANCH_AUDIT_LOG.md`
+- `ci/research/gamehub_provenance_audit.py` -> `docs/GAMEHUB_PROVENANCE_REPORT.md`
+- `bash ci/research/run_upstream_audits.sh` -> regenerates both reports + raw evidence in `docs/research/`
+
+---
+
 ## **Структура репозитория**
 
 - `ci/` — сборка, публикация, maintenance-утилиты
