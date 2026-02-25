@@ -522,6 +522,9 @@ winlator_adopt_bionic_unix_core_modules() {
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic unix source WCP not found: ${source_wcp}"
   winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic unix source WCP"
+  WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH="${source_wcp}"
+  WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256="$(winlator_sha256_file "${source_wcp}")"
+  export WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
@@ -658,6 +661,9 @@ winlator_adopt_bionic_launchers() {
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic launcher source WCP not found: ${source_wcp}"
   winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic launcher source WCP"
+  WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH="${source_wcp}"
+  WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256="$(winlator_sha256_file "${source_wcp}")"
+  export WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256
 
   tmp_extract="$(mktemp -d)"
   if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
