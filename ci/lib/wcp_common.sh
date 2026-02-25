@@ -59,11 +59,45 @@ wcp_build_log_file() {
 wcp_make_logged() {
   local jobs="$1" log_file="$2"
   shift 2
+  local stdout_mode heartbeat_sec target_desc make_pid log_size elapsed rc
 
   if [[ -n "${log_file}" ]]; then
     mkdir -p "$(dirname -- "${log_file}")"
-    make -j"${jobs}" "$@" 2>&1 | tee -a "${log_file}"
-    return "${PIPESTATUS[0]}"
+    stdout_mode="${WCP_BUILD_LOG_STDOUT_MODE:-tee}"
+    case "${stdout_mode}" in
+      tee)
+        make -j"${jobs}" "$@" 2>&1 | tee -a "${log_file}"
+        return "${PIPESTATUS[0]}"
+        ;;
+      quiet)
+        heartbeat_sec="${WCP_BUILD_HEARTBEAT_SEC:-60}"
+        target_desc="${*:-all}"
+        wcp_log "make -j${jobs} ${target_desc} (quiet mode, log -> ${log_file})"
+        printf '\n=== make -j%s %s @ %s ===\n' "${jobs}" "${target_desc}" "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "${log_file}"
+        make -j"${jobs}" "$@" >> "${log_file}" 2>&1 &
+        make_pid=$!
+        elapsed=0
+        while kill -0 "${make_pid}" >/dev/null 2>&1; do
+          sleep "${heartbeat_sec}"
+          elapsed=$((elapsed + heartbeat_sec))
+          if ! kill -0 "${make_pid}" >/dev/null 2>&1; then
+            break
+          fi
+          log_size="$(wc -c < "${log_file}" 2>/dev/null || echo 0)"
+          wcp_log "heartbeat: make -j${jobs} ${target_desc} running (${elapsed}s, log=${log_size}B)"
+        done
+        if wait "${make_pid}"; then
+          return 0
+        fi
+        rc=$?
+        wcp_log "make -j${jobs} ${target_desc} failed (rc=${rc}), tail ${log_file}:"
+        tail -n 160 "${log_file}" >&2 || true
+        return "${rc}"
+        ;;
+      *)
+        wcp_fail "WCP_BUILD_LOG_STDOUT_MODE must be tee or quiet (got: ${stdout_mode})"
+        ;;
+    esac
   fi
 
   make -j"${jobs}" "$@"
