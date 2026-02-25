@@ -653,12 +653,12 @@ EOF_PROFILE
 wcp_write_forensic_manifest() {
   local wcp_root="$1"
   local forensic_root manifest_file source_refs_file env_file index_file hashes_file utc_now repo_commit repo_remote
-  local external_runtime_audit_file
+  local external_runtime_audit_file unix_module_abi_file
   local glibc_runtime_index glibc_runtime_markers glibc_runtime_present
   local glibc_stage_reports_index glibc_stage_reports_dir
   local fex_bundled_present=0 boxed_runtime_detected=0
   local -a critical_paths
-  local rel hash runtime_class_detected unix_abi_detected wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason
+  local rel hash runtime_class_detected unix_abi_detected wine_launcher_abi wineserver_launcher_abi runtime_mismatch_reason module_abi
   local emulation_policy policy_violation_reason policy_violations_file policy_hits
 
   : "${WCP_FORENSICS_ALWAYS_ON:=1}"
@@ -673,6 +673,7 @@ wcp_write_forensic_manifest() {
   index_file="${forensic_root}/file-index.txt"
   hashes_file="${forensic_root}/critical-sha256.tsv"
   external_runtime_audit_file="${forensic_root}/external-runtime-components.tsv"
+  unix_module_abi_file="${forensic_root}/unix-module-abi.tsv"
   policy_violations_file="${forensic_root}/policy-violations.txt"
   glibc_runtime_index="${forensic_root}/glibc-runtime-libs.tsv"
   glibc_runtime_markers="${forensic_root}/glibc-runtime-version-markers.tsv"
@@ -857,6 +858,16 @@ wcp_write_forensic_manifest() {
 }
 EOF_SOURCE_REFS
   wcp_write_external_runtime_component_audit "${wcp_root}" "${external_runtime_audit_file}"
+  : > "${unix_module_abi_file}"
+  if [[ -d "${wcp_root}/lib/wine/aarch64-unix" ]]; then
+    while IFS= read -r rel; do
+      module_abi="$(winlator_detect_unix_module_abi_from_path "${wcp_root}/${rel}")"
+      printf '%s\t%s\n' "${rel}" "${module_abi}" >> "${unix_module_abi_file}"
+    done < <(
+      find "${wcp_root}/lib/wine/aarch64-unix" -maxdepth 1 -type f -name '*.so' \
+        -printf '%P\n' | LC_ALL=C sort | sed 's#^#lib/wine/aarch64-unix/#'
+    )
+  fi
 
   glibc_runtime_present=0
   : > "${glibc_runtime_index}"
@@ -976,6 +987,7 @@ EOF_SOURCE_REFS
     "index": "share/wcp-forensics/file-index.txt",
     "criticalSha256": "share/wcp-forensics/critical-sha256.tsv",
     "externalRuntimeAudit": "share/wcp-forensics/external-runtime-components.tsv",
+    "unixModuleAbiIndex": "share/wcp-forensics/unix-module-abi.tsv",
     "glibcRuntimeIndex": "share/wcp-forensics/glibc-runtime-libs.tsv",
     "glibcRuntimeVersionMarkers": "share/wcp-forensics/glibc-runtime-version-markers.tsv",
     "glibcStageReportsIndex": "share/wcp-forensics/glibc-stage-reports-index.tsv",
@@ -998,6 +1010,7 @@ wcp_validate_forensic_manifest() {
     "${wcp_root}/share/wcp-forensics/manifest.json"
     "${wcp_root}/share/wcp-forensics/critical-sha256.tsv"
     "${wcp_root}/share/wcp-forensics/external-runtime-components.tsv"
+    "${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-libs.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-runtime-version-markers.tsv"
     "${wcp_root}/share/wcp-forensics/glibc-stage-reports-index.tsv"
@@ -1142,6 +1155,7 @@ smoke_check_wcp() {
   grep -qx 'share/wcp-forensics/manifest.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/manifest.json"
   grep -qx 'share/wcp-forensics/critical-sha256.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/critical-sha256.tsv"
   grep -qx 'share/wcp-forensics/external-runtime-components.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/external-runtime-components.tsv"
+  grep -qx 'share/wcp-forensics/unix-module-abi.tsv' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/unix-module-abi.tsv"
   grep -qx 'share/wcp-forensics/file-index.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/file-index.txt"
   grep -qx 'share/wcp-forensics/build-env.txt' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/build-env.txt"
   grep -qx 'share/wcp-forensics/source-refs.json' "${normalized_file}" || wcp_fail "Missing share/wcp-forensics/source-refs.json"
