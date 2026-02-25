@@ -117,6 +117,9 @@ main() {
   require_contains "ci/lib/wcp_common.sh" 'WCP_POLICY_SOURCE'
   require_contains "ci/lib/wcp_common.sh" 'share/wcp-forensics/unix-module-abi.tsv'
   require_contains "ci/lib/wcp_common.sh" '"unixModuleAbiIndex"'
+  require_contains "ci/ci-build.sh" 'winlator_preflight_bionic_source_contract'
+  require_contains "ci/proton-ge10/ci-build-proton-ge10-wcp.sh" 'winlator_preflight_bionic_source_contract'
+  require_contains "ci/protonwine10/ci-build-protonwine10-wcp.sh" 'winlator_preflight_bionic_source_contract'
 
   require_file "docs/GN_GH_BACKLOG_MATRIX.md"
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameNative'
