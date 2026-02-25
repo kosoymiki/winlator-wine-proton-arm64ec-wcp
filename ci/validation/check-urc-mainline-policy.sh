@@ -78,6 +78,7 @@ detect_winlator_release_line() {
 check_workflow_env_contract() {
   local wf="$1"
   require_file "${wf}"
+  require_contains "${wf}" 'cancel-in-progress: false'
   require_contains "${wf}" 'WCP_RUNTIME_CLASS_TARGET: bionic-native'
   require_contains "${wf}" 'WCP_MAINLINE_BIONIC_ONLY: "1"'
   require_contains "${wf}" 'WCP_MAINLINE_FEX_EXTERNAL_ONLY: "1"'
