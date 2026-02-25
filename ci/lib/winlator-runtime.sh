@@ -90,7 +90,8 @@ winlator_download_cached_archive() {
   fi
 
   log "Downloading ${label}: ${url}"
-  curl -fL --retry 5 --retry-delay 2 -o "${cache_path}.tmp" "${url}" || fail "Failed to download ${label} from ${url}"
+  curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 900 \
+    -o "${cache_path}.tmp" "${url}" || fail "Failed to download ${label} from ${url}"
   mv -f "${cache_path}.tmp" "${cache_path}"
   winlator_verify_sha256 "${cache_path}" "${expected_sha}" "${label}"
 }
