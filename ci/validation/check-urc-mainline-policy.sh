@@ -54,6 +54,10 @@ for name in required:
         value = (entry.get(key) or "").lower()
         if not re.fullmatch(r"[0-9a-f]{64}", value):
             errors.append(f"packages.{name}.{key} must be 64 lowercase hex chars")
+    if (entry.get("launcherSourceWcpUrl") or "") != (entry.get("unixSourceWcpUrl") or ""):
+        errors.append(f"packages.{name}.launcherSourceWcpUrl and unixSourceWcpUrl must match in mainline")
+    if (entry.get("launcherSourceSha256") or "").lower() != (entry.get("unixSourceSha256") or "").lower():
+        errors.append(f"packages.{name}.launcherSourceSha256 and unixSourceSha256 must match in mainline")
     if int(entry.get("unixCoreAdopt", 0)) != 1:
         errors.append(f"packages.{name}.unixCoreAdopt must be 1")
     modules = entry.get("unixCoreModules") or []
