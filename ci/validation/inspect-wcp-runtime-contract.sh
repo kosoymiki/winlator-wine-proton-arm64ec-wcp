@@ -79,6 +79,11 @@ main() {
     grep -E '"WCP_BIONIC_SOURCE_MAP_|"WCP_BIONIC_(LAUNCHER|UNIX)_SOURCE_WCP_(RESOLVED_)?(PATH|SHA256)"' \
       "${wcp_root}/share/wcp-forensics/source-refs.json" || true
   fi
+  if [[ -f "${wcp_root}/share/wcp-forensics/bionic-source-entry.json" ]]; then
+    log "forensicBionicSourceEntry:"
+    grep -E '"packageName"|"path"|"sha256"|"resolved(Sha256|Path)"|"donorPreflightDone"' \
+      "${wcp_root}/share/wcp-forensics/bionic-source-entry.json" || true
+  fi
 }
 
 main "$@"
