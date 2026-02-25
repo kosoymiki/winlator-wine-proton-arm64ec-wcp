@@ -15,7 +15,7 @@ middle of the stack.
 - `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
 - `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
 - `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX/Box preset editor surface expansion,
-  upscale runtime binding gates, forensic log sink reliability fixes, common runtime profile system, and follow-up driver browser UI/source pruning fixes
+  upscale runtime binding gates, forensic log sink reliability fixes, common runtime profile system, launch precheck contract guardrails, and follow-up driver browser UI/source pruning fixes
 
 ## Upscale patch consolidation note
 
@@ -55,6 +55,10 @@ consolidated into:
   - adds a runtime-common profile layer (independent from FEX/Box presets), persists it in container/settings UI, bridges it into launcher env overlays, and emits forensic telemetry for applied common profile selection
 - `0042-external-runtime-placeholders-and-fex-resolution.patch`
   - switches Box/WoWBox/FEX version pickers to installed-only lists with neutral `—` placeholder when external runtime packages are absent, sanitizes placeholder tokens from persisted container/shortcut data, resolves FEX/WoWBox runtime payload from installed Contents profiles (no embedded tar fallback for ARM64EC path), and applies non-crashing HODLL fallback selection during launch
+- `0043-runtime-profile-translator-preset-migration-and-defaults.patch`
+  - binds common runtime profile policy to translator preset defaults/migration (legacy `COMPATIBILITY`/`INTERMEDIATE` values map to profile-matched overlays for non-`AUTO` mode), unifies default Box64/FEX presets in container/settings/normalizer, and logs requested vs effective preset resolution in launcher forensics
+- `0044-runtime-launch-precheck-and-forensic-guardrails.patch`
+  - introduces a launch precheck contract between `XServerDisplayActivity` and `GuestProgramLauncherComponent` (route/kind/target/reason/shell-fallback markers), hardens missing-shortcut or empty-command launches with deterministic shell fallback, and adds reason-coded forensic telemetry for launch acceptance and runtime preset migration guards
 
 ## Known high-overlap files (intentional)
 

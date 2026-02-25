@@ -1,0 +1,267 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 1a2bf64..1e50e59 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -216,10 +216,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     private boolean isDarkMode;
+ 
+-    private String screenEffectProfile;
+-
+-    private GuestProgramLauncherComponent guestProgramLauncherComponent;
+-    private EnvVars overrideEnvVars;
++    private String screenEffectProfile;
++
++    private GuestProgramLauncherComponent guestProgramLauncherComponent;
++    private EnvVars overrideEnvVars;
++    private LaunchPreflightDecision launchPreflightDecision;
+ 
+     private void createNotifcationChannel() {
+         String name = "Winlator";
+@@ -1169,11 +1170,29 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         FileUtils.clear(imageFs.getTmpDir());
+ 
+ 
+-        guestProgramLauncherComponent = new GuestProgramLauncherComponent(
+-                contentsManager,
+-                contentsManager.getProfileByEntryName(container.getWineVersion()),
+-                shortcut
+-        );
++        launchPreflightDecision = resolveLaunchPreflightDecision();
++        forensicRouteSource = launchPreflightDecision.route;
++        ForensicLogger.logEvent(this,
++                launchPreflightDecision.shellFallback ? "warn" : "info",
++                "LAUNCH_PRECHECK_RESOLVED",
++                forensicTraceId,
++                "setup_xenvironment",
++                launchPreflightDecision.shellFallback
++                        ? "launch precheck resolved with shell fallback"
++                        : "launch precheck resolved",
++                ForensicLogger.fields(
++                        "route", launchPreflightDecision.route,
++                        "container_id", container != null ? container.id : 0,
++                        "launch_kind", launchPreflightDecision.launchKind,
++                        "target_executable", launchPreflightDecision.targetExecutable,
++                        "precheck_reason", launchPreflightDecision.reason,
++                        "precheck_shell_fallback", launchPreflightDecision.shellFallback ? "1" : "0"));
++
++        guestProgramLauncherComponent = new GuestProgramLauncherComponent(
++                contentsManager,
++                contentsManager.getProfileByEntryName(container.getWineVersion()),
++                shortcut
++        );
+ 
+         // Additional container checks and environment configuration
+         if (container != null) {
+@@ -1191,9 +1210,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 guestProgramLauncherComponent.setFexcoreVersionOverride(runtimeNormalization.fexcoreVersion);
+             }
+ 
+-            String guestExecutable = "wine explorer /desktop=shell," + xServer.screenInfo + " " + getWineStartCommand();
++            String guestExecutable = "wine explorer /desktop=shell," + xServer.screenInfo + " " + launchPreflightDecision.startCommand;
+ 
+             guestProgramLauncherComponent.setGuestExecutable(guestExecutable);
++            guestProgramLauncherComponent.setLaunchKind(launchPreflightDecision.launchKind);
++            guestProgramLauncherComponent.setLaunchTargetExecutable(launchPreflightDecision.targetExecutable);
++            guestProgramLauncherComponent.setLaunchPrecheckReason(launchPreflightDecision.reason);
++            guestProgramLauncherComponent.setLaunchPrecheckShellFallback(launchPreflightDecision.shellFallback);
+ 
+             if (runtimeNormalization != null) envVars.putAll(runtimeNormalization.envVars);
+             else envVars.putAll(container.getEnvVars());
+@@ -2221,6 +2244,64 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 || normalized.equals("wineboot.exe");
+     }
+ 
++    private LaunchPreflightDecision resolveLaunchPreflightDecision() {
++        String route = forensicRouteSource != null ? forensicRouteSource.trim() : "";
++        if (route.isEmpty()) route = shortcut != null ? "shortcut" : "container";
++
++        String targetExecutable = getExecutable();
++        if (targetExecutable == null || targetExecutable.trim().isEmpty()) targetExecutable = "wfm.exe";
++        String execLower = targetExecutable.trim().toLowerCase();
++
++        boolean shortcutLaunch = shortcut != null;
++        boolean serviceProcess = isServiceLauncherExecutable(execLower);
++        boolean shortcutMissing = false;
++        if (shortcutLaunch) {
++            String shortcutPath = shortcut.path;
++            shortcutMissing = shortcutPath == null || shortcutPath.trim().isEmpty() || !(new File(shortcutPath)).isFile();
++        }
++
++        String startCommand = getWineStartCommand();
++        boolean emptyStartCommand = startCommand == null || startCommand.trim().isEmpty();
++
++        boolean shellFallback = shortcutMissing || emptyStartCommand;
++        if (shellFallback) {
++            startCommand = "winhandler.exe \"wfm.exe\"";
++        } else {
++            startCommand = startCommand.trim();
++        }
++
++        ArrayList<String> reasons = new ArrayList<>();
++        if (shortcutMissing) reasons.add("shortcut_missing");
++        if (emptyStartCommand) reasons.add("empty_start_command");
++        if (serviceProcess) reasons.add("service_process");
++        if (!shortcutLaunch) reasons.add("container_launch");
++        String reason = reasons.isEmpty() ? "ok" : android.text.TextUtils.join(",", reasons);
++
++        String launchKind;
++        if (shortcutLaunch) launchKind = serviceProcess ? "shortcut_service" : "shortcut_program";
++        else launchKind = serviceProcess ? "container_service" : "container_shell";
++
++        return new LaunchPreflightDecision(route, launchKind, targetExecutable, startCommand, reason, shellFallback);
++    }
++
++    private static final class LaunchPreflightDecision {
++        final String route;
++        final String launchKind;
++        final String targetExecutable;
++        final String startCommand;
++        final String reason;
++        final boolean shellFallback;
++
++        LaunchPreflightDecision(String route, String launchKind, String targetExecutable, String startCommand, String reason, boolean shellFallback) {
++            this.route = route;
++            this.launchKind = launchKind;
++            this.targetExecutable = targetExecutable;
++            this.startCommand = startCommand;
++            this.reason = reason;
++            this.shellFallback = shellFallback;
++        }
++    }
++
+     private String classifyUpscaleBackend() {
+         String wrapper = dxwrapper != null ? dxwrapper.trim().toLowerCase() : "";
+         if (wrapper.contains("dxvk")) return "vulkan";
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index c578335..b74582a 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -67,6 +67,10 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+     private String emulatorOverride;
+     private String box64VersionOverride;
+     private String fexcoreVersionOverride;
++    private String launchKind = "";
++    private String launchTargetExecutable = "";
++    private String launchPrecheckReason = "";
++    private boolean launchPrecheckShellFallback;
+ 
+     public void setWineInfo(WineInfo wineInfo) {
+         this.wineInfo = wineInfo;
+@@ -83,6 +87,10 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+     public void setEmulatorOverride(String emulatorOverride) { this.emulatorOverride = emulatorOverride; }
+     public void setBox64VersionOverride(String box64VersionOverride) { this.box64VersionOverride = box64VersionOverride; }
+     public void setFexcoreVersionOverride(String fexcoreVersionOverride) { this.fexcoreVersionOverride = fexcoreVersionOverride; }
++    public void setLaunchKind(String launchKind) { this.launchKind = launchKind != null ? launchKind : ""; }
++    public void setLaunchTargetExecutable(String launchTargetExecutable) { this.launchTargetExecutable = launchTargetExecutable != null ? launchTargetExecutable : ""; }
++    public void setLaunchPrecheckReason(String launchPrecheckReason) { this.launchPrecheckReason = launchPrecheckReason != null ? launchPrecheckReason : ""; }
++    public void setLaunchPrecheckShellFallback(boolean launchPrecheckShellFallback) { this.launchPrecheckShellFallback = launchPrecheckShellFallback; }
+ 
+     private void extractBox64Files() {
+         ImageFs imageFs = environment.getImageFs();
+@@ -302,10 +310,17 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         String requestedFexcorePreset = fexcorePreset;
+         String effectiveBox64Preset = RuntimeProfileManager.resolveBox64PresetId(runtimeProfile, requestedBox64Preset);
+         String effectiveFexcorePreset = RuntimeProfileManager.resolveFexcorePresetId(runtimeProfile, requestedFexcorePreset);
++        String runtimePresetGuardReason = buildRuntimePresetGuardReason(
++                runtimeProfile,
++                requestedBox64Preset,
++                effectiveBox64Preset,
++                requestedFexcorePreset,
++                effectiveFexcorePreset);
+ 
+         addBox64EnvVars(envVars, enableBox64Logs, effectiveBox64Preset);
+         envVars.putAll(FEXCorePresetManager.getEnvVars(context, effectiveFexcorePreset));
+         envVars.putAll(RuntimeProfileManager.getEnvVars(context, runtimeProfile));
++        envVars.put("WINLATOR_RUNTIME_PRESET_GUARD_REASON", runtimePresetGuardReason);
+ 
+         if (forensicMode || !isEmpty(forensicTraceId)) {
+             ForensicLogger.logEvent(context, "info", "RUNTIME_COMMON_PROFILE_APPLIED", forensicTraceId, "launcher",
+@@ -317,7 +332,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "requested_box64_preset", requestedBox64Preset,
+                             "effective_box64_preset", effectiveBox64Preset,
+                             "requested_fexcore_preset", requestedFexcorePreset,
+-                            "effective_fexcore_preset", effectiveFexcorePreset));
++                            "effective_fexcore_preset", effectiveFexcorePreset,
++                            "runtime_preset_guard_reason", runtimePresetGuardReason));
+         }
+ 
+         String renderer = GPUInformation.getRenderer(null, null);
+@@ -409,6 +425,10 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         if (this.envVars != null) {
+             envVars.putAll(this.envVars);
+         }
++        if (!isEmpty(launchKind)) envVars.put("WINLATOR_LAUNCH_KIND", launchKind);
++        if (!isEmpty(launchTargetExecutable)) envVars.put("WINLATOR_LAUNCH_TARGET_EXECUTABLE", launchTargetExecutable);
++        if (!isEmpty(launchPrecheckReason)) envVars.put("WINLATOR_LAUNCH_PRECHECK_REASON", launchPrecheckReason);
++        envVars.put("WINLATOR_LAUNCH_PRECHECK_FALLBACK", launchPrecheckShellFallback ? "1" : "0");
+ 
+         if (wineInfo.isArm64EC()) {
+             String resolvedWineDllPath = envVars.get("WINEDLLPATH");
+@@ -542,6 +562,23 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         }
+ 
+         if (forensicMode || !isEmpty(forensicTraceId)) {
++            ForensicLogger.logEvent(context,
++                    launchPrecheckShellFallback ? "warn" : "info",
++                    "LAUNCH_PRECHECK_ACCEPTED",
++                    forensicTraceId,
++                    "launcher",
++                    launchPrecheckShellFallback
++                            ? "launcher accepted precheck with shell fallback"
++                            : "launcher accepted precheck",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "launch_kind", launchKind,
++                            "target_executable", launchTargetExecutable,
++                            "precheck_reason", launchPrecheckReason,
++                            "precheck_shell_fallback", launchPrecheckShellFallback ? "1" : "0",
++                            "runtime_profile", runtimeProfile,
++                            "runtime_preset_guard_reason", runtimePresetGuardReason));
+             ForensicLogger.logEvent(context, "info", "RUNTIME_PRE_EXEC_STAGE", forensicTraceId, "launcher",
+                     "Final launcher pre-exec stage reached",
+                     ForensicLogger.fields(
+@@ -572,6 +609,11 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
+                             "fexcore_version", !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container != null ? container.getFEXCoreVersion() : "",
+                             "wine_runtime_class", wineRuntimeClass,
++                            "launch_kind", launchKind,
++                            "launch_target_executable", launchTargetExecutable,
++                            "launch_precheck_reason", launchPrecheckReason,
++                            "launch_precheck_shell_fallback", launchPrecheckShellFallback ? "1" : "0",
++                            "runtime_preset_guard_reason", runtimePresetGuardReason,
+                             "perf_preset", envVars.get("WINLATOR_PERF_PRESET"),
+                             "perf_preset_source", envVars.get("WINLATOR_PERF_PRESET_SOURCE"),
+                             "graphics_suitability_tier", envVars.get("WINLATOR_GRAPHICS_SUITABILITY_TIER"),
+@@ -752,6 +794,30 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return ContentsManager.normalizeRuntimeVersionToken(value);
+     }
+ 
++    private static String buildRuntimePresetGuardReason(
++            String runtimeProfile,
++            String requestedBox64Preset,
++            String effectiveBox64Preset,
++            String requestedFexcorePreset,
++            String effectiveFexcorePreset) {
++        String normalizedProfile = RuntimeProfileManager.normalizeId(runtimeProfile);
++        boolean boxChanged = !safe(requestedBox64Preset).equals(safe(effectiveBox64Preset));
++        boolean fexChanged = !safe(requestedFexcorePreset).equals(safe(effectiveFexcorePreset));
++        if (!boxChanged && !fexChanged) {
++            return RuntimeProfile.AUTO.equals(normalizedProfile) ? "auto_passthrough" : "profile_passthrough";
++        }
++
++        ArrayList<String> reasons = new ArrayList<>();
++        reasons.add("profile:" + normalizedProfile);
++        if (boxChanged) reasons.add("box64_migrated");
++        if (fexChanged) reasons.add("fexcore_migrated");
++        return String.join(",", reasons);
++    }
++
++    private static String safe(String value) {
++        return value == null ? "" : value.trim();
++    }
++
+     private static boolean isEmpty(String value) {
+         return value == null || value.trim().isEmpty();
+     }
