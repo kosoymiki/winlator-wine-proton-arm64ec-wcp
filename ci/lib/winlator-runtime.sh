@@ -239,6 +239,22 @@ winlator_detect_unix_module_abi_from_path() {
   printf '%s' "unknown"
 }
 
+winlator_list_glibc_unix_modules() {
+  local unix_dir="$1"
+  local mod mod_name mod_abi
+  [[ -d "${unix_dir}" ]] || return 0
+
+  shopt -s nullglob
+  for mod in "${unix_dir}"/*.so; do
+    [[ -f "${mod}" ]] || continue
+    mod_name="$(basename "${mod}")"
+    mod_abi="$(winlator_detect_unix_module_abi_from_path "${mod}")"
+    [[ "${mod_abi}" == "glibc-unix" ]] || continue
+    printf '%s\n' "${mod_name}"
+  done
+  shopt -u nullglob
+}
+
 winlator_extract_wcp_archive() {
   local archive="$1" out_dir="$2"
   [[ -f "${archive}" ]] || return 1
@@ -354,9 +370,10 @@ winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
   local unix_abi source_wcp source_url cache_dir archive_path
-  local tmp_extract src_unix dst_unix mod source_unix_abi
+  local tmp_extract src_unix dst_unix mod source_unix_abi src_mod_abi
   local copied_count=0
   local -a core_modules
+  local -a glibc_modules replaced_glibc
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
@@ -450,6 +467,25 @@ winlator_adopt_bionic_unix_core_modules() {
     fi
     log "Skipping unix core adoption: no requested modules found in donor WCP"
     return 0
+  fi
+
+  if winlator_bionic_mainline_strict; then
+    mapfile -t glibc_modules < <(winlator_list_glibc_unix_modules "${dst_unix}")
+    for mod in "${glibc_modules[@]}"; do
+      [[ -f "${src_unix}/${mod}" ]] || continue
+      src_mod_abi="$(winlator_detect_unix_module_abi_from_path "${src_unix}/${mod}")"
+      [[ "${src_mod_abi}" == "bionic-unix" ]] || continue
+      cp -f "${src_unix}/${mod}" "${dst_unix}/${mod}"
+      chmod +x "${dst_unix}/${mod}" || true
+      replaced_glibc+=("${mod}")
+    done
+    if [[ "${#replaced_glibc[@]}" -gt 0 ]]; then
+      log "Replaced additional glibc unix modules from donor: ${replaced_glibc[*]}"
+    fi
+    mapfile -t glibc_modules < <(winlator_list_glibc_unix_modules "${dst_unix}")
+    if [[ "${#glibc_modules[@]}" -gt 0 ]]; then
+      fail "Strict bionic mainline found remaining glibc unix modules after adoption: ${glibc_modules[*]}"
+    fi
   fi
 
   rm -rf "${tmp_extract}"
