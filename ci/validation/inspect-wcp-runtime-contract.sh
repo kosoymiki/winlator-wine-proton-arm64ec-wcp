@@ -69,6 +69,11 @@ main() {
     log "profileRuntimeFields:"
     grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"|"bionic(SourceMap|LauncherSource|UnixSource)"' "${wcp_root}/profile.json" || true
   fi
+  if [[ -f "${wcp_root}/share/wcp-forensics/source-refs.json" ]]; then
+    log "forensicSourceRefs:"
+    grep -E '"WCP_BIONIC_SOURCE_MAP_|"WCP_BIONIC_(LAUNCHER|UNIX)_SOURCE_WCP_(RESOLVED_)?(PATH|SHA256)"' \
+      "${wcp_root}/share/wcp-forensics/source-refs.json" || true
+  fi
 }
 
 main "$@"
