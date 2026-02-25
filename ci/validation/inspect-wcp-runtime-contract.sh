@@ -67,7 +67,7 @@ main() {
 
   if [[ -f "${wcp_root}/profile.json" ]]; then
     log "profileRuntimeFields:"
-    grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"' "${wcp_root}/profile.json" || true
+    grep -E '"runtimeClass(Target|Detected)"|"unixAbiDetected"|"runtimeMismatchReason"|"bionic(SourceMap|LauncherSource|UnixSource)"' "${wcp_root}/profile.json" || true
   fi
 }
 
