@@ -185,6 +185,7 @@ main() {
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/unix-module-abi.tsv'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicLauncherSourceResolvedSha256'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicDonorPreflightDone'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'inspect-wcp-runtime-contract.sh --strict-bionic'
   require_file "ci/validation/inspect-wcp-runtime-contract.sh"
   [[ -x "ci/validation/inspect-wcp-runtime-contract.sh" ]] || fail "inspect-wcp-runtime-contract.sh must be executable"

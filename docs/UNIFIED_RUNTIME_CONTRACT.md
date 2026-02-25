@@ -28,6 +28,7 @@ The package/runtime metadata must expose:
 - `bionicUnixSourceSha256`
 - `bionicLauncherSourceResolvedSha256`
 - `bionicUnixSourceResolvedSha256`
+- `bionicDonorPreflightDone`
 
 ## Deterministic Fallback Chain
 
