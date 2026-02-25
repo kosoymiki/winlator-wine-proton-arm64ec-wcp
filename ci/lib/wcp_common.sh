@@ -520,6 +520,9 @@ compose_wcp_tree_from_stage() {
   : "${WCP_ARTIFACT_NAME:=${WCP_NAME}.wcp}"
   : "${WCP_SHA256_ARTIFACT_NAME:=SHA256SUMS-${WCP_NAME}.txt}"
   : "${WCP_SHA256_URL:=https://github.com/${WCP_SOURCE_REPO}/releases/download/${WCP_RELEASE_TAG}/${WCP_SHA256_ARTIFACT_NAME}}"
+  : "${WCP_WRAPPER_POLICY_VERSION:=urc-v1}"
+  : "${WCP_POLICY_SOURCE:=aeroso-mainline}"
+  : "${WCP_FALLBACK_SCOPE:=bionic-internal-only}"
   if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
     if [[ "${WCP_RUNTIME_CLASS_TARGET}" == "glibc-wrapped" ]]; then
       WCP_GLIBC_SOURCE_MODE="pinned-source"
@@ -549,6 +552,9 @@ compose_wcp_tree_from_stage() {
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  [[ -n "${WCP_WRAPPER_POLICY_VERSION}" ]] || wcp_fail "WCP_WRAPPER_POLICY_VERSION must not be empty"
+  [[ -n "${WCP_POLICY_SOURCE}" ]] || wcp_fail "WCP_POLICY_SOURCE must not be empty"
+  [[ -n "${WCP_FALLBACK_SCOPE}" ]] || wcp_fail "WCP_FALLBACK_SCOPE must not be empty"
   wcp_enforce_mainline_bionic_policy
   wcp_enforce_mainline_external_runtime_policy
 
@@ -612,6 +618,9 @@ compose_wcp_tree_from_stage() {
     "runtimeMismatchReason": "$(wcp_json_escape "${runtime_mismatch_reason}")",
     "runtimeClassAutoPromoted": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
     "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
+    "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION}")",
+    "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE}")",
+    "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE}")",
     "boxedRuntimeInWcpDetected": false,
     "policyViolationReason": "none",
     "fexExpectationMode": "$(wcp_json_escape "${WCP_FEX_EXPECTATION_MODE}")",
@@ -707,6 +716,9 @@ wcp_write_forensic_manifest() {
     echo "WCP_RELEASE_TAG=${WCP_RELEASE_TAG:-}"
     echo "WCP_ARTIFACT_NAME=${WCP_ARTIFACT_NAME:-}"
     echo "WCP_SHA256_URL=${WCP_SHA256_URL:-}"
+    echo "WCP_WRAPPER_POLICY_VERSION=${WCP_WRAPPER_POLICY_VERSION:-urc-v1}"
+    echo "WCP_POLICY_SOURCE=${WCP_POLICY_SOURCE:-aeroso-mainline}"
+    echo "WCP_FALLBACK_SCOPE=${WCP_FALLBACK_SCOPE:-bionic-internal-only}"
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
     echo "WCP_RUNTIME_CLASS_TARGET=${WCP_RUNTIME_CLASS_TARGET:-}"
     echo "WCP_RUNTIME_CLASS_ENFORCE=${WCP_RUNTIME_CLASS_ENFORCE:-}"
@@ -787,6 +799,9 @@ wcp_write_forensic_manifest() {
     "WCP_RELEASE_TAG": "$(wcp_json_escape "${WCP_RELEASE_TAG:-}")",
     "WCP_ARTIFACT_NAME": "$(wcp_json_escape "${WCP_ARTIFACT_NAME:-}")",
     "WCP_SHA256_URL": "$(wcp_json_escape "${WCP_SHA256_URL:-}")",
+    "WCP_WRAPPER_POLICY_VERSION": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-urc-v1}")",
+    "WCP_POLICY_SOURCE": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aeroso-mainline}")",
+    "WCP_FALLBACK_SCOPE": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
     "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
     "WCP_RUNTIME_CLASS_ENFORCE": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_ENFORCE:-}")",
     "WCP_RUNTIME_CLASS_AUTO_PROMOTED": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_AUTO_PROMOTED:-0}")",
@@ -898,6 +913,9 @@ EOF_SOURCE_REFS
     "allowGlibcExperimental": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
     "mainlineBionicOnly": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
+    "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-urc-v1}")",
+    "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aeroso-mainline}")",
+    "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
     "boxedRuntimeInWcpDetected": ${boxed_runtime_detected},
     "policyViolationReason": "$(wcp_json_escape "${policy_violation_reason}")",
     "pruneExternalComponents": "$(wcp_json_escape "${WCP_PRUNE_EXTERNAL_COMPONENTS:-1}")",
@@ -1058,7 +1076,7 @@ pack_wcp() {
 smoke_check_wcp() {
   local wcp_path="$1"
   local wcp_compress="${2:-${WCP_COMPRESS:-xz}}"
-  local list_file normalized_file shebang
+  local list_file normalized_file shebang profile_json
   local forbidden
 
   [[ -f "${wcp_path}" ]] || wcp_fail "WCP artifact not found: ${wcp_path}"
@@ -1094,6 +1112,20 @@ smoke_check_wcp() {
   grep -q '^lib/wine/aarch64-unix/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-unix"
   grep -q '^lib/wine/aarch64-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/aarch64-windows"
   grep -q '^lib/wine/i386-windows/' "${normalized_file}" || wcp_fail "Missing lib/wine/i386-windows"
+
+  profile_json=""
+  case "${wcp_compress}" in
+    xz)
+      profile_json="$(tar -xJOf "${wcp_path}" ./profile.json 2>/dev/null || tar -xJOf "${wcp_path}" profile.json 2>/dev/null || true)"
+      ;;
+    zst|zstd)
+      profile_json="$(tar --zstd -xOf "${wcp_path}" ./profile.json 2>/dev/null || tar --zstd -xOf "${wcp_path}" profile.json 2>/dev/null || true)"
+      ;;
+  esac
+  [[ -n "${profile_json}" ]] || wcp_fail "Unable to read profile.json from archive"
+  grep -q '"wrapperPolicyVersion"' <<< "${profile_json}" || wcp_fail "profile.json is missing runtime.wrapperPolicyVersion"
+  grep -q '"policySource"' <<< "${profile_json}" || wcp_fail "profile.json is missing runtime.policySource"
+  grep -q '"fallbackScope"' <<< "${profile_json}" || wcp_fail "profile.json is missing runtime.fallbackScope"
 
   : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
   : "${WCP_PRUNE_EXTERNAL_COMPONENTS:=1}"
