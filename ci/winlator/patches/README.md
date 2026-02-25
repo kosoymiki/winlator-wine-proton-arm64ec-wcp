@@ -59,6 +59,8 @@ consolidated into:
   - binds common runtime profile policy to translator preset defaults/migration (legacy `COMPATIBILITY`/`INTERMEDIATE` values map to profile-matched overlays for non-`AUTO` mode), unifies default Box64/FEX presets in container/settings/normalizer, and logs requested vs effective preset resolution in launcher forensics
 - `0044-runtime-launch-precheck-and-forensic-guardrails.patch`
   - introduces a launch precheck contract between `XServerDisplayActivity` and `GuestProgramLauncherComponent` (route/kind/target/reason/shell-fallback markers), hardens missing-shortcut or empty-command launches with deterministic shell fallback, and adds reason-coded forensic telemetry for launch acceptance and runtime preset migration guards
+- `0045-graphics-driver-fallback-chain-and-telemetry.patch`
+  - adds deterministic graphics driver probe fallback chain (`requested -> fallback candidate -> system`), exports probe-chain env telemetry for runtime triage, and refines graphics suitability fallback severity when a usable non-system fallback driver is selected
 
 ## Known high-overlap files (intentional)
 
