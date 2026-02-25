@@ -1,7 +1,7 @@
 # Commit Progression Journal (0a-9z)
 
 - База отсчёта: `1cd36fb` (первый commit в текущей длинной линии работ)
-- Текущий диапазон: `0a..2z` (78 commit(s))
+- Текущий диапазон: `0a..6h` (164 commit(s))
 - Схема версий: `0a..0z`, `1a..1z`, `2a..2z` ... до `9z` (260 слотов)
 - Назначение: фиксировать этапы и причины добавления commit-ов без потери причинной истории patch-stack
 
@@ -36,6 +36,9 @@
 
 ### `2y-2z` — Полный импорт Box/WoWBox параметров и runtime-common профили
 - Зачем добавлялись: Расширение Box/WoWBox env surface и device-tier пресетов, плюс внедрение унифицированной runtime-common профильной модели в container/settings/launcher path.
+
+### `3a-6h` — Mainline bionic donor contract hardening + forensic lock
+- Зачем добавлялись: Жесткий preflight донор-архивов (SHA/ABI), кэш доноров в workflows, строгая проверка runtime-контракта на каждом WCP артефакте, расширение forensic-индексов (`unix-module-abi.tsv`, `bionic-source-entry.json`) и закрепление этих инвариантов в валидации/документации.
 
 ## Полная карта commit -> версия
 
@@ -125,7 +128,7 @@
 - Исторические журналы (`docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md` и др.) сохраняют исходные метки `0.2b`; они не переписывались как архивные артефакты.
 - Эта карта отражает инженерную последовательность commit-ов в `main`, а не маркетинговые релизные версии.
 
-## Карта patch-stack (`0001..0040`) по этапам
+## Карта patch-stack (`0001..0048`) по этапам
 
 ### `0001-0004` — Базовый форк, runtime/FEX и тема
 - `0001`: базовый ARM64EC runtime/FEX patch-stack поверх `winlator_bionic`
@@ -161,7 +164,7 @@
 - `0026`: container bridge + launch normalization + upscale UI layer
 - `0027`: container settings как owner upscale config + legacy env migration
 
-### `0028-0040` — Adrenotools UX, forensic telemetry, FEX/Box/FEXCore UI, upscale binding refinements, Contents row polish, runtime-common profiles
+### `0028-0048` — Adrenotools UX, forensic telemetry, FEX/Box/FEXCore UI, upscale binding refinements, Contents row polish, runtime-common profiles, runtime appcompat and source-trust/fallback orchestration
 - `0028`: native GameNative browser + version sorting + `Recommended`
 - `0029`: launcher pre-exec forensic telemetry
 - `0030`: FEXCore upstream config vars + inline help
@@ -173,6 +176,9 @@
 - `0038`: `Contents` row layout polish для длинных названий пакетов
 - `0039`: полный импорт Box64/WoWBox64 env-vars + пресеты по классам устройств 2026
 - `0040`: унифицированный runtime-common профиль (container/settings UI + launcher overlay + forensic)
+- `0041-0042`: runtime unix-path linking + external runtime placeholders/FEX resolution
+- `0043-0044`: runtime profile migration + launch precheck forensic guardrails
+- `0045-0048`: driver fallback chain ranking, guarded appcompat rules, source-trust orchestration в `Adrenotools`
 
 ## Что можно безопасно объединять (кандидаты)
 
