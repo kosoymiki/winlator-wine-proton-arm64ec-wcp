@@ -90,6 +90,75 @@ report() {
   printf '%s\t%s\t%s\t%s\t%s\n' "${TARGET}" "${patch}" "${action}" "${result}" "${detail}" >> "${WCP_GN_PATCHSET_REPORT}"
 }
 
+file_has_fixed() {
+  local file="$1" needle="$2"
+  [[ -f "${file}" ]] || return 1
+  grep -Fq "${needle}" "${file}"
+}
+
+file_has_regex() {
+  local file="$1" pattern="$2"
+  [[ -f "${file}" ]] || return 1
+  grep -Eq "${pattern}" "${file}"
+}
+
+verify_patch_contract_markers() {
+  local patch="$1"
+  case "${patch}" in
+    dlls_ntdll_loader_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/loader.c" 'libarm64ecfex.dll'
+      ;;
+    dlls_winex11_drv_window_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/window.c" 'class_hints->res_name = process_name;'
+      ;;
+    dlls_wow64_syscall_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'L"HODLL"'
+      ;;
+    programs_wineboot_wineboot_c.patch)
+      file_has_fixed "${SOURCE_DIR}/programs/wineboot/wineboot.c" 'initialize_xstate_features(struct _KUSER_SHARED_DATA *data)'
+      ;;
+    test-bylaws/dlls_ntdll_loader_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/loader.c" 'SkipLoaderInit'
+      ;;
+    test-bylaws/dlls_ntdll_signal_arm64_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/signal_arm64.c" 'RtlWow64SuspendThread'
+      ;;
+    test-bylaws/dlls_ntdll_signal_arm64ec_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/signal_arm64ec.c" 'ARM64EC_NT_XCONTEXT'
+      ;;
+    test-bylaws/dlls_ntdll_signal_x86_64_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/signal_x86_64.c" 'RtlWow64SuspendThread'
+      ;;
+    test-bylaws/dlls_ntdll_unix_thread_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/unix/thread.c" 'THREAD_CREATE_FLAGS_SKIP_LOADER_INIT'
+      ;;
+    test-bylaws/dlls_ntdll_unix_virtual_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/unix/virtual.c" 'MemoryFexStatsShm'
+      ;;
+    test-bylaws/dlls_wow64_process_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'RtlWow64SuspendThread'
+      ;;
+    test-bylaws/dlls_wow64_syscall_c.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'Wow64SuspendLocalThread'
+      ;;
+    test-bylaws/include_winternl_h.patch)
+      file_has_fixed "${SOURCE_DIR}/include/winternl.h" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE'
+      ;;
+    test-bylaws/server_thread_c.patch)
+      file_has_fixed "${SOURCE_DIR}/server/thread.c" 'bypass_proc_suspend'
+      ;;
+    test-bylaws/server_thread_h.patch)
+      file_has_fixed "${SOURCE_DIR}/server/thread.h" 'bypass_proc_suspend'
+      ;;
+    test-bylaws/tools_makedep_c.patch)
+      file_has_regex "${SOURCE_DIR}/tools/makedep.c" 'aarch64-windows|%s-windows'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 git_apply_check() {
   local patch_file="$1"
   git -C "${SOURCE_DIR}" apply --check "${patch_file}" >/dev/null 2>&1
@@ -134,7 +203,12 @@ run_verify_action() {
     return 0
   fi
 
-  report "${patch}" "verify" "unknown" "apply-and-reverse-failed"
+  if verify_patch_contract_markers "${patch}"; then
+    report "${patch}" "verify" "verified" "contract-markers"
+    return 0
+  fi
+
+  report "${patch}" "verify" "diverged" "apply-reverse-failed-no-contract-marker"
   return 0
 }
 
