@@ -100,6 +100,7 @@ preflight_runtime_profile() {
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_enforce_mainline_bionic_policy
   wcp_enforce_mainline_external_runtime_policy
+  winlator_preflight_bionic_source_contract
 }
 
 ensure_symlink() {

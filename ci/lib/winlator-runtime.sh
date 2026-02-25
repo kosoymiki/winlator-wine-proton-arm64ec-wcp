@@ -262,6 +262,83 @@ winlator_list_glibc_unix_modules() {
   fi
 }
 
+winlator_verify_bionic_unix_source_archive() {
+  local source_wcp="$1"
+  local label="${2:-bionic unix source WCP}"
+  local tmp_extract src_unix source_unix_abi
+
+  tmp_extract="$(mktemp -d)"
+  if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
+    rm -rf "${tmp_extract}"
+    fail "Unable to extract ${label}: ${source_wcp}"
+  fi
+  src_unix="$(find "${tmp_extract}" -type d -path '*/lib/wine/aarch64-unix' | head -n1 || true)"
+  [[ -n "${src_unix}" ]] || { rm -rf "${tmp_extract}"; fail "${label} is missing lib/wine/aarch64-unix"; }
+  source_unix_abi="$(winlator_detect_unix_module_abi_from_path "${src_unix}/ntdll.so")"
+  rm -rf "${tmp_extract}"
+  [[ "${source_unix_abi}" == "bionic-unix" ]] || fail "${label} has non-bionic unix ABI (detected=${source_unix_abi})"
+}
+
+winlator_verify_bionic_launcher_source_archive() {
+  local source_wcp="$1"
+  local label="${2:-bionic launcher source WCP}"
+  local tmp_extract src_wine src_wineserver
+
+  tmp_extract="$(mktemp -d)"
+  if ! winlator_extract_wcp_archive "${source_wcp}" "${tmp_extract}"; then
+    rm -rf "${tmp_extract}"
+    fail "Unable to extract ${label}: ${source_wcp}"
+  fi
+  src_wine="$(find "${tmp_extract}" -type f -path '*/bin/wine' | head -n1 || true)"
+  src_wineserver="$(find "${tmp_extract}" -type f -path '*/bin/wineserver' | head -n1 || true)"
+  [[ -n "${src_wine}" ]] || { rm -rf "${tmp_extract}"; fail "${label} is missing bin/wine"; }
+  [[ -n "${src_wineserver}" ]] || { rm -rf "${tmp_extract}"; fail "${label} is missing bin/wineserver"; }
+  winlator_is_bionic_launcher "${src_wine}" || { rm -rf "${tmp_extract}"; fail "${label} bin/wine is not bionic-native (/system/bin/linker64)"; }
+  winlator_is_bionic_launcher "${src_wineserver}" || { rm -rf "${tmp_extract}"; fail "${label} bin/wineserver is not bionic-native (/system/bin/linker64)"; }
+  rm -rf "${tmp_extract}"
+}
+
+winlator_preflight_bionic_source_contract() {
+  local strict_mode=0
+  local launcher_wcp launcher_url launcher_sha launcher_cache
+  local unix_wcp unix_url unix_sha unix_cache
+
+  [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
+  [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" ]] || return 0
+  if winlator_bionic_mainline_strict; then
+    strict_mode=1
+  fi
+  [[ "${strict_mode}" == "1" ]] || return 0
+
+  winlator_apply_bionic_source_map_overrides
+
+  launcher_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
+  launcher_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
+  launcher_sha="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}"
+  launcher_cache="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}/launcher-source.wcp"
+  if [[ -z "${launcher_wcp}" && -n "${launcher_url}" ]]; then
+    winlator_download_cached_archive "${launcher_url}" "${launcher_cache}" "${launcher_sha}" "bionic launcher source WCP"
+    launcher_wcp="${launcher_cache}"
+  fi
+  [[ -n "${launcher_wcp}" ]] || fail "Bionic launcher source WCP is required but unresolved in strict mainline mode"
+  [[ -f "${launcher_wcp}" ]] || fail "Bionic launcher source WCP not found: ${launcher_wcp}"
+  winlator_verify_sha256 "${launcher_wcp}" "${launcher_sha}" "bionic launcher source WCP"
+  winlator_verify_bionic_launcher_source_archive "${launcher_wcp}" "bionic launcher source WCP"
+
+  unix_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
+  unix_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${launcher_url}}"
+  unix_sha="${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}"
+  unix_cache="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}/unix-source.wcp"
+  if [[ -z "${unix_wcp}" && -n "${unix_url}" ]]; then
+    winlator_download_cached_archive "${unix_url}" "${unix_cache}" "${unix_sha}" "bionic unix source WCP"
+    unix_wcp="${unix_cache}"
+  fi
+  [[ -n "${unix_wcp}" ]] || fail "Bionic unix source WCP is required but unresolved in strict mainline mode"
+  [[ -f "${unix_wcp}" ]] || fail "Bionic unix source WCP not found: ${unix_wcp}"
+  winlator_verify_sha256 "${unix_wcp}" "${unix_sha}" "bionic unix source WCP"
+  winlator_verify_bionic_unix_source_archive "${unix_wcp}" "bionic unix source WCP"
+}
+
 winlator_extract_wcp_archive() {
   local archive="$1" out_dir="$2"
   [[ -f "${archive}" ]] || return 1

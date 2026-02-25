@@ -617,6 +617,7 @@ main() {
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_enforce_mainline_bionic_policy
   wcp_enforce_mainline_external_runtime_policy
+  winlator_preflight_bionic_source_contract
 
   check_host_arch
   ensure_llvm_mingw
