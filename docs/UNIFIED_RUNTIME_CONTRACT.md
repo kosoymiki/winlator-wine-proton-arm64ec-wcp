@@ -43,6 +43,7 @@ The package/runtime metadata must expose:
 2. Validate bionic donor contract preflight (archive integrity + ABI class).
 3. Apply runtime env atomically.
 4. Abort only on fatal preflight violations; warn on non-fatal mismatch.
+5. CI must run strict artifact inspection (`inspect-wcp-runtime-contract.sh --strict-bionic`) before release upload.
 
 ### Unix ABI forensic contract
 
