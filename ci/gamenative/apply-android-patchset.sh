@@ -591,6 +591,58 @@ path.write_text(updated, encoding="utf-8")
 PY
 }
 
+backport_protonge_unix_server() {
+  local file
+  file="${SOURCE_DIR}/dlls/ntdll/unix/server.c"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  if grep -Fq 'symlink( "/storage/emulated/0/", "dosdevices/d:" );' "${file}" \
+    && grep -Fq 'symlink( "/data/data/app.gamenative/files/imagefs/", "dosdevices/z:" );' "${file}"; then
+    return 0
+  fi
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+
+pattern = re.compile(
+    r'if \(!mkdir\( "dosdevices", 0777 \)\)\n'
+    r'\s*\{\n'
+    r'\s*mkdir\( "drive_c", 0777 \);\n'
+    r'\s*symlink\( "\.\./drive_c", "dosdevices/c:" \);\n'
+    r'\s*symlink\( "/", "dosdevices/z:" \);\n'
+    r'\s*\}',
+    re.M,
+)
+
+replace = (
+    'if (!mkdir( "dosdevices", 0777 ))\n'
+    '    {\n'
+    '#ifdef __ANDROID__\n'
+    '        mkdir( "drive_d", 0777 );\n'
+    '        symlink( "../drive_c", "dosdevices/c:" );\n'
+    '        symlink( "/storage/emulated/0/", "dosdevices/d:" );\n'
+    '        symlink( "/data/data/app.gamenative/files/imagefs/", "dosdevices/z:" );\n'
+    '#else\n'
+    '        mkdir( "drive_c", 0777 );\n'
+    '        symlink( "../drive_c", "dosdevices/c:" );\n'
+    '        symlink( "/", "dosdevices/z:" );\n'
+    '#endif\n'
+    '    }'
+)
+
+updated, count = pattern.subn(replace, text, count=1)
+if count != 1:
+    raise SystemExit("unix/server.c dosdevices block replacement failed")
+
+path.write_text(updated, encoding="utf-8")
+PY
+}
+
 run_backport_action() {
   local patch="$1" action="$2"
 
@@ -603,6 +655,9 @@ run_backport_action() {
       ;;
     backport_protonge_winex11)
       backport_protonge_winex11
+      ;;
+    backport_protonge_unix_server)
+      backport_protonge_unix_server
       ;;
     backport_include_winternl_fex)
       backport_include_winternl_fex
