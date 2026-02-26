@@ -70,6 +70,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - `ci/winlator/forensic-regression-local.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
 - `ci/validation/inspect-wcp-runtime-contract.sh`
+- `share/wcp-forensics/unix-module-abi.tsv` (inside built `.wcp`)
 
 **RU:** Используйте форензик-логи для проверки FEX/Vulkan/Turnip/Box64 и причин падений контейнеров.  
 **EN:** Use forensic logs to validate FEX/Vulkan/Turnip/Box64 behavior and container crash root causes.
