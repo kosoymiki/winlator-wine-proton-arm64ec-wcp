@@ -188,7 +188,9 @@ jobs:
           EOF_NOTES
 
       - name: Publish to GitHub Release
+        id: publish_release
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         uses: ncipollo/release-action@v1
         with:
           tag: wine-11-arm64ec-latest
@@ -199,3 +201,27 @@ jobs:
           artifacts: out/wine/wine-11-arm64ec.wcp,out/wine/SHA256SUMS-wine-11-arm64ec.txt
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md
+
+      - name: Fallback publish to GitHub Release via gh (retry)
+        if: github.event_name != 'pull_request' && steps.publish_release.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          TAG="wine-11-arm64ec-latest"
+          NAME="Wine 11 ARM64EC Latest"
+          ASSET_WCP="out/wine/wine-11-arm64ec.wcp"
+          ASSET_SHA="out/wine/SHA256SUMS-wine-11-arm64ec.txt"
+          for attempt in 1 2 3 4 5; do
+            if gh release view "${TAG}" >/dev/null 2>&1; then
+              gh release edit "${TAG}" --title "${NAME}" --notes-file RELEASE_NOTES.md --prerelease || true
+            else
+              gh release create "${TAG}" "${ASSET_WCP}" "${ASSET_SHA}" --title "${NAME}" --notes-file RELEASE_NOTES.md --prerelease && exit 0
+            fi
+            if gh release upload "${TAG}" "${ASSET_WCP}" "${ASSET_SHA}" --clobber; then
+              exit 0
+            fi
+            sleep $((attempt * 10))
+          done
+          echo "Fallback release publish failed after retries" >&2
+          exit 1
