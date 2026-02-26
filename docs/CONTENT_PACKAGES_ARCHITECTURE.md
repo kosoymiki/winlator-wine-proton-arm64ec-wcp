@@ -19,6 +19,7 @@ Required legacy fields still supported:
 New/extended fields used by this fork:
 - `channel`: `stable | beta | nightly` (primary visibility filter)
 - `delivery`: `remote | embedded` (UI honesty; current WCP entries use `remote`)
+- `internalType`: Wine-family subtype (`wine | proton | protonge | protonwine`) while keeping `type=Wine` for compatibility
 - `displayCategory`: UI label override (we use `Wine/Proton`)
 - `sourceRepo`: provenance (`owner/repo`)
 - `releaseTag`: release source (`wcp-stable` or per-package rolling tag like `wine-11-arm64ec-latest`)
@@ -30,6 +31,7 @@ New/extended fields used by this fork:
 
 ## Type and display mapping
 - Internal content type remains `Wine` for compatibility with Winlator internals.
+- Wine-family subtypes are carried by `internalType` for deterministic package identity (`wine/protonge/protonwine`) without fragmenting the main UI group.
 - UI display label maps `Wine` entries to `Wine/Proton`.
 - This avoids breaking existing parsing while keeping the UI accurate.
 

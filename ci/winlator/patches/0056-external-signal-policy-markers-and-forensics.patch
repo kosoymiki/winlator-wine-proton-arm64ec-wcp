@@ -1,0 +1,162 @@
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index d686114..9d4ef65 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -38,16 +38,19 @@ import com.winlator.cmod.xenvironment.ImageFs;
+ 
+ import java.io.BufferedReader;
+ import java.io.File;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import java.io.InputStreamReader;
+-import java.net.InetAddress;
+-import java.net.URL;
+-import java.nio.file.Files;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.InputStreamReader;
++import java.net.InetAddress;
++import java.net.URL;
++import java.security.MessageDigest;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
++import java.util.LinkedHashSet;
+ import java.util.List;
+ 
+ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+@@ -436,8 +439,9 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         String compatExecutable = !isEmpty(launchTargetExecutable) ? launchTargetExecutable : guestExecutable;
+         AppCompatRegistry appCompatRegistry = AppCompatRegistry.defaultRegistry();
+         List<String> appliedCompatRules = appCompatRegistry.apply(compatExecutable, envVars);
++        String appCompatRules = "";
+         if (!appliedCompatRules.isEmpty()) {
+-            String appCompatRules = appCompatRegistry.describeRuleIds(appliedCompatRules);
++            appCompatRules = appCompatRegistry.describeRuleIds(appliedCompatRules);
+             envVars.put("WINLATOR_APPCOMPAT_RULES", appCompatRules);
+             envVars.put("WINLATOR_APPCOMPAT_EXECUTABLE", compatExecutable);
+             if (forensicMode || !isEmpty(forensicTraceId)) {
+@@ -510,6 +514,15 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+ 
+         String wineRuntimeClass = detectWineRuntimeClass(wineBinPath);
+         envVars.put("WINLATOR_WINE_RUNTIME_CLASS", wineRuntimeClass);
++        applyExternalSignalMarkers(
++                context,
++                envVars,
++                runtimeProfile,
++                runtimePresetGuardReason,
++                effectiveEmulator,
++                wineRuntimeClass,
++                appCompatRules,
++                appliedCompatRules);
+         if (forensicMode || !isEmpty(forensicTraceId)) {
+             File wineDir = new File(imageFs.getWinePath());
+             File wineWrapper = new File(wineDir, "bin/wine");
+@@ -1469,9 +1482,103 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         return parsed;
+     }
+ 
++    private void applyExternalSignalMarkers(
++            Context context,
++            EnvVars envVars,
++            String runtimeProfile,
++            String runtimePresetGuardReason,
++            String effectiveEmulator,
++            String wineRuntimeClass,
++            String appCompatRules,
++            List<String> appliedCompatRules) {
++        ArrayList<String> sources = new ArrayList<>();
++        sources.add("runtime_profile");
++        if (!isEmpty(runtimePresetGuardReason) && !runtimePresetGuardReason.contains("passthrough")) {
++            sources.add("translator_migration");
++        }
++        if (appliedCompatRules != null && !appliedCompatRules.isEmpty()) {
++            sources.add("appcompat_rules");
++        }
++        if (!isEmpty(launchPrecheckReason) || launchPrecheckShellFallback) {
++            sources.add("launch_precheck");
++        }
++
++        String x11Backend = X11CompatManager.normalizeBackend(envVars.get(X11CompatManager.ENV_BACKEND));
++        if (X11CompatManager.BACKEND_TERMUX_COMPAT.equals(x11Backend)) {
++            sources.add("x11_termux_compat");
++        }
++        if (!isEmpty(envVars.get("WINLATOR_DRIVER_PROBE_REASON"))) {
++            sources.add("driver_probe");
++        }
++        if (!isEmpty(envVars.get("WINLATOR_UPSCALER_BINDING_GUARD_REASON"))) {
++            sources.add("upscaler_binding");
++        }
++
++        ArrayList<String> dedupedSources = new ArrayList<>(new LinkedHashSet<>(sources));
++        String signalPolicy = "external_contract_v1";
++        String normalizedProfile = RuntimeProfileManager.normalizeId(runtimeProfile);
++        String sourceList = String.join(",", dedupedSources);
++        String decisionSeed = String.join("|",
++                signalPolicy,
++                normalizedProfile,
++                safe(runtimePresetGuardReason),
++                safe(wineRuntimeClass),
++                safe(effectiveEmulator),
++                safe(launchKind),
++                safe(launchTargetExecutable),
++                safe(launchPrecheckReason),
++                launchPrecheckShellFallback ? "1" : "0",
++                safe(x11Backend),
++                safe(appCompatRules),
++                sourceList);
++
++        envVars.put("WINLATOR_SIGNAL_POLICY", signalPolicy);
++        envVars.put("WINLATOR_SIGNAL_SOURCES", sourceList);
++        envVars.put("WINLATOR_SIGNAL_DECISION_HASH", sha1Hex(decisionSeed));
++        envVars.put("WINLATOR_SIGNAL_DECISION_COUNT", String.valueOf(dedupedSources.size()));
++        envVars.put("WINLATOR_SIGNAL_RUNTIME_PROFILE", normalizedProfile);
++        envVars.put("WINLATOR_SIGNAL_PRESET_GUARD_REASON", safe(runtimePresetGuardReason));
++
++        if (forensicMode || !isEmpty(forensicTraceId)) {
++            ForensicLogger.logEvent(context, "info", "RUNTIME_SIGNAL_POLICY_APPLIED", forensicTraceId, "launcher",
++                    "Applied external signal policy markers",
++                    ForensicLogger.fields(
++                            "container_id", container != null ? container.id : 0,
++                            "route", forensicRouteSource,
++                            "signal_policy", signalPolicy,
++                            "signal_sources", sourceList,
++                            "signal_decision_hash", envVars.get("WINLATOR_SIGNAL_DECISION_HASH"),
++                            "signal_decision_count", dedupedSources.size(),
++                            "runtime_profile", normalizedProfile,
++                            "runtime_preset_guard_reason", runtimePresetGuardReason,
++                            "appcompat_rules", appCompatRules,
++                            "wine_runtime_class", wineRuntimeClass,
++                            "x11_backend", x11Backend,
++                            "effective_emulator", effectiveEmulator));
++        }
++    }
++
++    private static String sha1Hex(String value) {
++        try {
++            MessageDigest digest = MessageDigest.getInstance("SHA-1");
++            return bytesToHex(digest.digest((value == null ? "" : value).getBytes(StandardCharsets.UTF_8)));
++        } catch (Exception ignored) {
++            return Integer.toHexString((value == null ? "" : value).hashCode());
++        }
++    }
++
++    private static String bytesToHex(byte[] bytes) {
++        if (bytes == null) return "";
++        StringBuilder sb = new StringBuilder(bytes.length * 2);
++        for (byte b : bytes) {
++            sb.append(String.format("%02x", b));
++        }
++        return sb.toString();
++    }
++
+     private void addBox64EnvVars(EnvVars envVars, boolean enableLogs, String presetId) {
+         envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
+-        envVars.put("BOX64_DYNAREC", "1");
++        envVars.put("BOX64_DYNAREC", "1");
+ 
+         if (enableLogs) {
+             envVars.put("BOX64_LOG", "1");

@@ -55,6 +55,8 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - **EN:** Wine/Proton content is sourced from this repository (GitHub Releases).
 - **RU:** В UI Winlator они отображаются в совместимой группе `Wine/Proton`.
 - **EN:** In Winlator UI they are displayed in a compatible `Wine/Proton` group.
+- **RU:** Для Wine-family подгрупп показываются subtype-маркеры (`Proton`, `Proton GE`, `ProtonWine`) в строке метаданных и окне информации.
+- **EN:** Wine-family subtype markers (`Proton`, `Proton GE`, `ProtonWine`) are shown in metadata rows and the content info dialog.
 - **RU:** Пустые значения показываются честным placeholder `—`.
 - **EN:** Empty values are represented by the honest placeholder `—`.
 
@@ -69,6 +71,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - `ci/winlator/forensic-adb-matrix.sh`
 - `ci/winlator/forensic-regression-local.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
+- `ci/gamenative/selftest-normalizers.sh`
 - `ci/validation/inspect-wcp-runtime-contract.sh`
 - `share/wcp-forensics/unix-module-abi.tsv` (inside built `.wcp`)
 

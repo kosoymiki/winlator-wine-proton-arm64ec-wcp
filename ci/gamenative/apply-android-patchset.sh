@@ -778,9 +778,6 @@ path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 updated = text
 
-if "send_android_message" not in updated and "WINE_OPEN_WITH_ANDROID_BROWSER" not in updated:
-    raise SystemExit(0)
-
 updated = re.sub(
     r'send\(\s*sock_fd\s*,\s*&net_requestcode\s*,\s*sizeof\(net_requestcode\)\s*,\s*0\s*\)',
     'send(sock_fd, (const char *)&net_requestcode, sizeof(net_requestcode), 0)',
@@ -838,6 +835,33 @@ def wrap_calls(src: str, symbol: str) -> str:
 
 updated = wrap_calls(updated, "pXFixesHideCursor")
 updated = wrap_calls(updated, "pXFixesShowCursor")
+
+if updated != text:
+    path.write_text(updated, encoding="utf-8")
+PY
+}
+
+normalize_winex11_mouse_xfixes_guards() {
+  local file
+  file="${SOURCE_DIR}/dlls/winex11.drv/mouse.c"
+  [[ -f "${file}" ]] || return 0
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+# Keep cursor hide/show calls behind both xfixes header and runtime SONAME guard.
+updated = re.sub(
+    r'^\s*#ifdef\s+HAVE_X11_EXTENSIONS_XFIXES_H\s*$',
+    '#if defined(HAVE_X11_EXTENSIONS_XFIXES_H) && defined(SONAME_LIBXFIXES)',
+    updated,
+    flags=re.M,
+)
 
 if updated != text:
     path.write_text(updated, encoding="utf-8")
@@ -915,6 +939,53 @@ if updated != text:
 PY
 }
 
+assert_known_gn_postfixes() {
+  local file_winebrowser file_mouse file_winnt
+  file_winebrowser="${SOURCE_DIR}/programs/winebrowser/main.c"
+  file_mouse="${SOURCE_DIR}/dlls/winex11.drv/mouse.c"
+  file_winnt="${SOURCE_DIR}/include/winnt.h"
+
+  python3 - "${file_winebrowser}" "${file_mouse}" "${file_winnt}" <<'PY'
+import pathlib
+import re
+import sys
+
+winebrowser = pathlib.Path(sys.argv[1])
+mouse = pathlib.Path(sys.argv[2])
+winnt = pathlib.Path(sys.argv[3])
+errors = []
+
+if winebrowser.exists():
+    text = winebrowser.read_text(encoding="utf-8")
+    if re.search(r'send\(\s*sock_fd\s*,\s*&net_requestcode\s*,\s*sizeof\(net_requestcode\)\s*,\s*0\s*\)', text):
+        errors.append("winebrowser/main.c still passes &net_requestcode to send()")
+    if re.search(r'send\(\s*sock_fd\s*,\s*&net_data_length\s*,\s*sizeof\(net_data_length\)\s*,\s*0\s*\)', text):
+        errors.append("winebrowser/main.c still passes &net_data_length to send()")
+    if "WINE_OPEN_WITH_ANDROID_BROwSER" in text:
+        errors.append("winebrowser/main.c still contains typo WINE_OPEN_WITH_ANDROID_BROwSER")
+
+if mouse.exists():
+    text = mouse.read_text(encoding="utf-8")
+    for symbol in ("pXFixesHideCursor", "pXFixesShowCursor"):
+        idx = text.find(symbol)
+        if idx >= 0:
+            before = text[max(0, idx - 260):idx]
+            if "defined(HAVE_X11_EXTENSIONS_XFIXES_H) && defined(SONAME_LIBXFIXES)" not in before:
+                errors.append(f"winex11.drv/mouse.c has unguarded {symbol} call")
+
+if winnt.exists():
+    text = winnt.read_text(encoding="utf-8")
+    if "InterlockedOr(&dummy, 0);" in text and "long volatile dummy = 0;" not in text:
+        errors.append("include/winnt.h still uses non-volatile InterlockedOr dummy")
+
+if errors:
+    print("[gamenative][patchset][error] post-normalization contract failures:")
+    for item in errors:
+        print(f"[gamenative][patchset][error] - {item}")
+    raise SystemExit(1)
+PY
+}
+
 run_post_patch_normalization() {
   normalize_winnt_interlocked_dummy
   report "__post_patch__/winnt" "normalize" "applied" "interlocked-dummy-volatile-fix"
@@ -922,8 +993,16 @@ run_post_patch_normalization() {
   report "__post_patch__/winebrowser" "normalize" "applied" "bridge-cast-env-fixes"
   normalize_winex11_mouse_xfixes_calls
   report "__post_patch__/winex11-mouse" "normalize" "applied" "xfixes-guard-fix"
+  normalize_winex11_mouse_xfixes_guards
+  report "__post_patch__/winex11-mouse" "normalize" "applied" "xfixes-soname-guard-fix"
   normalize_winex11_window_rawinput_guard
   report "__post_patch__/winex11-window" "normalize" "applied" "xinput2-rawinput-guard"
+  if assert_known_gn_postfixes; then
+    report "__post_patch__/contract" "verify" "verified" "normalization-contract-ok"
+  else
+    report "__post_patch__/contract" "verify" "failed" "normalization-contract-failed"
+    fail "post-normalization contract checks failed"
+  fi
 }
 
 ensure_android_sysvshm_header() {

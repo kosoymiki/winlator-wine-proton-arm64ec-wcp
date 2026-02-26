@@ -1,0 +1,29 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index f26a9ca..89fef7b 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1179,6 +1179,24 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         launchPreflightDecision = resolveLaunchPreflightDecision();
+         forensicRouteSource = launchPreflightDecision.route;
++        envVars.put("WINLATOR_SIGNAL_INPUT_ROUTE", launchPreflightDecision.route);
++        envVars.put("WINLATOR_SIGNAL_INPUT_LAUNCH_KIND", launchPreflightDecision.launchKind);
++        envVars.put("WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE", launchPreflightDecision.targetExecutable);
++        envVars.put("WINLATOR_SIGNAL_INPUT_PRECHECK_REASON", launchPreflightDecision.reason);
++        envVars.put("WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK", launchPreflightDecision.shellFallback ? "1" : "0");
++        ForensicLogger.logEvent(this,
++                launchPreflightDecision.shellFallback ? "warn" : "info",
++                "RUNTIME_SIGNAL_INPUTS_PREPARED",
++                forensicTraceId,
++                "setup_xenvironment",
++                "Prepared external signal inputs from launch precheck",
++                ForensicLogger.fields(
++                        "route", launchPreflightDecision.route,
++                        "container_id", container != null ? container.id : 0,
++                        "launch_kind", launchPreflightDecision.launchKind,
++                        "target_executable", launchPreflightDecision.targetExecutable,
++                        "precheck_reason", launchPreflightDecision.reason,
++                        "precheck_shell_fallback", launchPreflightDecision.shellFallback ? "1" : "0"));
+         ForensicLogger.logEvent(this,
+                 launchPreflightDecision.shellFallback ? "warn" : "info",
+                 "LAUNCH_PRECHECK_RESOLVED",

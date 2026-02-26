@@ -8,6 +8,8 @@ SRC_DIR="${WORK_DIR}/src"
 LOG_DIR="${OUT_DIR}/logs"
 INSPECT_DIR="${LOG_DIR}/inspect-upstream"
 DOC_REPORT="${WINLATOR_ANALYSIS_REPORT:-${ROOT_DIR}/docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md}"
+PATCH_AUDIT_REPORT="${WINLATOR_PATCH_AUDIT_REPORT:-${ROOT_DIR}/docs/PATCH_STACK_REFLECTIVE_AUDIT.md}"
+RUNTIME_CONTRACT_AUDIT_REPORT="${WINLATOR_RUNTIME_CONTRACT_AUDIT_REPORT:-${ROOT_DIR}/docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md}"
 
 : "${WINLATOR_LUDASHI_REPO:=https://github.com/StevenMXZ/Winlator-Ludashi.git}"
 : "${WINLATOR_LUDASHI_REF:=winlator_bionic}"
@@ -47,9 +49,15 @@ inspect_upstream() {
 
 apply_patches() {
   bash "${ROOT_DIR}/ci/winlator/apply-repo-patches.sh" "${SRC_DIR}" "${ROOT_DIR}/ci/winlator/patches"
+  bash "${ROOT_DIR}/ci/winlator/run-reflective-audits.sh" \
+    "${ROOT_DIR}/ci/winlator/patches" \
+    "${PATCH_AUDIT_REPORT}" \
+    "${RUNTIME_CONTRACT_AUDIT_REPORT}"
   bash "${ROOT_DIR}/ci/winlator/assets-fixes/remove-broken-anim.sh" "${SRC_DIR}"
   git -C "${SRC_DIR}" diff --stat > "${LOG_DIR}/patch-diffstat.log"
   git -C "${SRC_DIR}" diff > "${LOG_DIR}/patch.diff"
+  cp -f "${PATCH_AUDIT_REPORT}" "${LOG_DIR}/patch-stack-reflective-audit.md"
+  cp -f "${RUNTIME_CONTRACT_AUDIT_REPORT}" "${LOG_DIR}/patch-stack-runtime-contract-audit.md"
 }
 
 build_apk() {

@@ -6,6 +6,7 @@
 - [ ] Each `Wine/Proton` stable entry points to `wcp-stable`
 - [ ] Each `Wine/Proton` entry points to its per-package rolling tag (`*-latest`)
 - [ ] `channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag` are present
+- [ ] Wine-family entries carry `internalType` (`wine|proton|protonge|protonwine`) while `type` stays `Wine`
 
 ## Winlator UI behavior
 - [ ] Spinner/category shows `Wine/Proton` (not just `Wine`) for package entries

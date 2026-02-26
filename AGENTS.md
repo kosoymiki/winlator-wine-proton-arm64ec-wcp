@@ -46,6 +46,12 @@ This file is an **operational guide** for contributors/agents working in this re
 
 Run the narrowest relevant checks:
 
+- Winlator patch stack / contents contract changes:
+  - `bash ci/winlator/validate-patch-sequence.sh`
+  - `bash ci/winlator/run-reflective-audits.sh`
+  - `bash ci/validation/check-urc-mainline-policy.sh`
+- Patch-stack apply safety (when touching `ci/winlator/patches/*.patch`):
+  - `bash ci/winlator/check-patch-stack.sh /path/to/winlator-upstream-git`
 - Wine pipeline changes:
   - `bash -n ci/ci-build.sh`
 - Proton GE pipeline changes:

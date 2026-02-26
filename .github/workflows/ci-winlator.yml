@@ -69,6 +69,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             bash curl git git-lfs python3 tar xz-utils zstd unzip zip rsync file
 
+      - name: Validate Winlator patch-stack contracts
+        run: |
+          set -euxo pipefail
+          bash ci/winlator/run-reflective-audits.sh
+
       - name: Build Winlator Ludashi fork APK (debug, no embedded runtimes)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,6 +90,8 @@ jobs:
             out/winlator/SHA256SUMS
             out/winlator/logs/**
             docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
+            docs/PATCH_STACK_REFLECTIVE_AUDIT.md
+            docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md
           if-no-files-found: error
           retention-days: 14
 
@@ -100,12 +107,14 @@ jobs:
           - Contents source: this repository Releases (Wine/Proton WCP)
           - Turnip UI: latest + version picker support
           - Forensic logging and diagnostics improvements are included in this patch line
+          - Includes patch-stack audit reports: PATCH_STACK_REFLECTIVE_AUDIT.md + PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md
 
           EN:
           - APK package: by.aero.so.benchmark
           - Contents source: this repository Releases (Wine/Proton WCP)
           - Turnip UI: latest + version picker support
           - Forensic logging and diagnostics improvements are included in this patch line
+          - Includes patch-stack audit reports: PATCH_STACK_REFLECTIVE_AUDIT.md + PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md
 
           Commit: ${{ github.sha }}
           Workflow run: ${{ github.run_id }}
@@ -120,6 +129,6 @@ jobs:
           allowUpdates: true
           prerelease: true
           removeArtifacts: false
-          artifacts: out/winlator/*.apk,out/winlator/SHA256SUMS,docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
+          artifacts: out/winlator/*.apk,out/winlator/SHA256SUMS,docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md,docs/PATCH_STACK_REFLECTIVE_AUDIT.md,docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md
           artifactErrorsFailBuild: true
           bodyFile: RELEASE_NOTES.md

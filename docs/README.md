@@ -8,8 +8,14 @@ This repository keeps docs in two buckets:
 ## Active Ops
 
 - `docs/CI_FAILURE_PLAYBOOK.md` - triage path for failed Wine/Proton workflows.
+- `ci/validation/extract-gh-job-failures.sh` - raw GH job log parser to isolate first hard failures.
+- `ci/validation/gh-latest-failures.sh` - fetch + parse latest failed GH runs/jobs in one command.
 - `docs/PATCHSET_CONFLICT_REPORT.md` - generated ownership/conflict report for GN patchset.
+- `docs/PATCH_STACK_REFLECTIVE_AUDIT.md` - generated overlap/risk report for Winlator patch stack hot files.
+- `docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md` - generated runtime-forensics contract report for XServer/Launcher patch coverage.
+- `ci/winlator/validate-patch-sequence.sh` - enforces contiguous `NNNN-` patch numbering before audits/build.
 - `docs/UNIFIED_RUNTIME_CONTRACT.md` - runtime contract for WCP packaging.
+- `docs/EXTERNAL_SIGNAL_CONTRACT.md` - arbitration contract for external runtime signal sources (GN/GH/Termux lanes).
 - `docs/X11_TERMUX_COMPAT_CONTRACT.md` - optional `termux_compat` backend contract (preflight/env/forensics).
 - `docs/CONTENT_PACKAGES_ARCHITECTURE.md` - content package model used by Winlator UI.
 - `docs/CONTENTS_QA_CHECKLIST.md` - QA checklist for contents/adrenotools paths.

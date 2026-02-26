@@ -22,6 +22,28 @@ require_not_contains() {
   fi
 }
 
+check_winlator_audit_docs_sync() {
+  local tmp_reflective tmp_runtime norm_reflective norm_runtime
+  tmp_reflective="$(mktemp /tmp/winlator_reflective_audit.XXXXXX.md)"
+  tmp_runtime="$(mktemp /tmp/winlator_runtime_audit.XXXXXX.md)"
+  norm_reflective="$(mktemp /tmp/winlator_reflective_audit_norm.XXXXXX.md)"
+  norm_runtime="$(mktemp /tmp/winlator_runtime_audit_norm.XXXXXX.md)"
+
+  python3 ci/winlator/patch-stack-reflective-audit.py --strict --output "${tmp_reflective}" >/dev/null
+  python3 ci/winlator/patch-stack-runtime-contract-audit.py --strict --output "${tmp_runtime}" >/dev/null
+
+  sed '/^Generated: /d' "${tmp_reflective}" > "${norm_reflective}"
+  sed '/^Generated: /d' docs/PATCH_STACK_REFLECTIVE_AUDIT.md > "${norm_reflective}.repo"
+  sed '/^Generated: /d' "${tmp_runtime}" > "${norm_runtime}"
+  sed '/^Generated: /d' docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md > "${norm_runtime}.repo"
+
+  cmp -s "${norm_reflective}" "${norm_reflective}.repo" || \
+    fail "docs/PATCH_STACK_REFLECTIVE_AUDIT.md is stale; run ci/winlator/run-reflective-audits.sh"
+  cmp -s "${norm_runtime}" "${norm_runtime}.repo" || \
+    fail "docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md is stale; run ci/winlator/run-reflective-audits.sh"
+  rm -f "${tmp_reflective}" "${tmp_runtime}" "${norm_reflective}" "${norm_reflective}.repo" "${norm_runtime}" "${norm_runtime}.repo"
+}
+
 check_bionic_source_map() {
   local map_file="ci/runtime-sources/bionic-source-map.json"
   require_file "${map_file}"
@@ -152,16 +174,66 @@ main() {
   require_contains "ci/ci-build.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/proton-ge10/ci-build-proton-ge10-wcp.sh" 'winlator_preflight_bionic_source_contract'
   require_contains "ci/protonwine10/ci-build-protonwine10-wcp.sh" 'winlator_preflight_bionic_source_contract'
+  require_file "ci/gamenative/apply-android-patchset.sh"
+  require_file "ci/gamenative/selftest-normalizers.sh"
+  [[ -x "ci/gamenative/selftest-normalizers.sh" ]] || fail "ci/gamenative/selftest-normalizers.sh must be executable"
+  bash "ci/gamenative/selftest-normalizers.sh"
 
   require_file "docs/GN_GH_BACKLOG_MATRIX.md"
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameNative'
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameHub'
+  require_file "ci/contents/validate-contents-json.py"
+  require_file "contents/contents.json"
+  python3 "ci/contents/validate-contents-json.py" "contents/contents.json" >/dev/null
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
+  require_file "docs/EXTERNAL_SIGNAL_CONTRACT.md"
+  require_file "docs/PATCH_STACK_REFLECTIVE_AUDIT.md"
+  require_file "docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md"
+  require_file "ci/winlator/patch-stack-reflective-audit.py"
+  require_file "ci/winlator/patch-stack-runtime-contract-audit.py"
+  require_file "ci/winlator/run-reflective-audits.sh"
+  require_file "ci/winlator/validate-patch-sequence.sh"
+  require_file "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch"
+  require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'RuntimeSignalContract'
+  require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'WINLATOR_SIGNAL_POLICY'
+  require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'WINLATOR_SIGNAL_INPUT_ROUTE'
+  require_file "ci/winlator/patches/0060-contents-internal-type-canonicalization.patch"
+  require_contains "ci/winlator/patches/0060-contents-internal-type-canonicalization.patch" 'MARK_INTERNAL_TYPE'
+  require_contains "ci/winlator/patches/0060-contents-internal-type-canonicalization.patch" 'internalType'
+  require_contains "ci/winlator/patches/0060-contents-internal-type-canonicalization.patch" 'resolveInternalTypeName'
+  require_contains "ci/winlator/ci-build-winlator-ludashi.sh" 'run-reflective-audits\.sh'
+  require_contains "ci/winlator/run-reflective-audits.sh" 'validate-patch-sequence\.sh'
+  require_contains "ci/winlator/run-reflective-audits.sh" 'patch-stack-reflective-audit\.py'
+  require_contains "ci/winlator/run-reflective-audits.sh" 'patch-stack-runtime-contract-audit\.py'
+  require_contains "docs/README.md" 'PATCH_STACK_REFLECTIVE_AUDIT\.md'
+  require_contains "docs/README.md" 'PATCH_STACK_RUNTIME_CONTRACT_AUDIT\.md'
+  require_contains "docs/README.md" 'EXTERNAL_SIGNAL_CONTRACT\.md'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/unix-module-abi.tsv'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/bionic-source-entry.json'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicLauncherSourceResolvedSha256'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicDonorPreflightDone'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'inspect-wcp-runtime-contract.sh --strict-bionic'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_POLICY'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_SOURCES'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_DECISION_HASH'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_DECISION_COUNT'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_ROUTE'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_LAUNCH_KIND'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_PRECHECK_REASON'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'external-only'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_POLICY'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_SOURCES'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_DECISION_HASH'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_DECISION_COUNT'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_ROUTE'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_LAUNCH_KIND'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_PRECHECK_REASON'
+  require_contains "docs/EXTERNAL_SIGNAL_CONTRACT.md" 'WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK'
+  require_contains "docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md" 'external_signal_inputs'
+  check_winlator_audit_docs_sync
   require_file "ci/validation/inspect-wcp-runtime-contract.sh"
   [[ -x "ci/validation/inspect-wcp-runtime-contract.sh" ]] || fail "inspect-wcp-runtime-contract.sh must be executable"
   require_contains "docs/PROTON10_WCP.md" 'inspect-wcp-runtime-contract.sh'

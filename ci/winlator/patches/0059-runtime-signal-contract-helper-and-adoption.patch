@@ -1,0 +1,265 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 02958c4..02da927 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -54,13 +54,14 @@ import com.winlator.cmod.container.ContainerForensicSnapshot;
+ import com.winlator.cmod.container.ContainerManager;
+ import com.winlator.cmod.container.ContainerNormalizer;
+ import com.winlator.cmod.container.Shortcut;
+-import com.winlator.cmod.contentdialog.ContentDialog;
+-import com.winlator.cmod.contentdialog.DXVKConfigDialog;
+-import com.winlator.cmod.contentdialog.DebugDialog;
+-import com.winlator.cmod.contentdialog.GraphicsDriverConfigDialog;
+-import com.winlator.cmod.contentdialog.ScreenEffectDialog;
+-import com.winlator.cmod.contentdialog.WineD3DConfigDialog;
+-import com.winlator.cmod.contents.ContentProfile;
++import com.winlator.cmod.contentdialog.ContentDialog;
++import com.winlator.cmod.contentdialog.DXVKConfigDialog;
++import com.winlator.cmod.contentdialog.DebugDialog;
++import com.winlator.cmod.contentdialog.GraphicsDriverConfigDialog;
++import com.winlator.cmod.contentdialog.ScreenEffectDialog;
++import com.winlator.cmod.contentdialog.WineD3DConfigDialog;
++import com.winlator.cmod.contract.RuntimeSignalContract;
++import com.winlator.cmod.contents.ContentProfile;
+ import com.winlator.cmod.contents.ContentsManager;
+ import com.winlator.cmod.contents.AdrenotoolsManager;
+ import com.winlator.cmod.core.AppUtils;
+@@ -1179,14 +1180,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         launchPreflightDecision = resolveLaunchPreflightDecision();
+         forensicRouteSource = launchPreflightDecision.route;
+-        envVars.put("WINLATOR_SIGNAL_INPUT_ROUTE", launchPreflightDecision.route);
+-        envVars.put("WINLATOR_SIGNAL_INPUT_LAUNCH_KIND", launchPreflightDecision.launchKind);
+-        envVars.put("WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE", launchPreflightDecision.targetExecutable);
+-        envVars.put("WINLATOR_SIGNAL_INPUT_PRECHECK_REASON", launchPreflightDecision.reason);
+-        envVars.put("WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK", launchPreflightDecision.shellFallback ? "1" : "0");
++        RuntimeSignalContract.putSignalInputMarkers(
++                envVars,
++                launchPreflightDecision.route,
++                launchPreflightDecision.launchKind,
++                launchPreflightDecision.targetExecutable,
++                launchPreflightDecision.reason,
++                launchPreflightDecision.shellFallback);
+         ForensicLogger.logEvent(this,
+                 launchPreflightDecision.shellFallback ? "warn" : "info",
+-                "RUNTIME_SIGNAL_INPUTS_PREPARED",
++                RuntimeSignalContract.EVENT_SIGNAL_INPUTS_PREPARED,
+                 forensicTraceId,
+                 "setup_xenvironment",
+                 "Prepared external signal inputs from launch precheck",
+@@ -1326,11 +1329,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "route", forensicRouteSource,
+                         "container_id", container != null ? container.id : 0,
+                         "env_hash", ForensicLogger.hashEnvVars(envVars),
+-                        "signal_input_route", envVars.get("WINLATOR_SIGNAL_INPUT_ROUTE"),
+-                        "signal_input_launch_kind", envVars.get("WINLATOR_SIGNAL_INPUT_LAUNCH_KIND"),
+-                        "signal_input_target_executable", envVars.get("WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE"),
+-                        "signal_input_precheck_reason", envVars.get("WINLATOR_SIGNAL_INPUT_PRECHECK_REASON"),
+-                        "signal_input_precheck_fallback", envVars.get("WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK"),
++                        "signal_input_route", envVars.get(RuntimeSignalContract.ENV_SIGNAL_INPUT_ROUTE),
++                        "signal_input_launch_kind", envVars.get(RuntimeSignalContract.ENV_SIGNAL_INPUT_LAUNCH_KIND),
++                        "signal_input_target_executable", envVars.get(RuntimeSignalContract.ENV_SIGNAL_INPUT_TARGET_EXECUTABLE),
++                        "signal_input_precheck_reason", envVars.get(RuntimeSignalContract.ENV_SIGNAL_INPUT_PRECHECK_REASON),
++                        "signal_input_precheck_fallback", envVars.get(RuntimeSignalContract.ENV_SIGNAL_INPUT_PRECHECK_FALLBACK),
+                         "x11_backend", envVars.get(X11CompatManager.ENV_BACKEND),
+                         "x11_termux_compat", envVars.get(X11CompatManager.ENV_TERMUX_COMPAT),
+                         "x11_preflight_status", envVars.get(X11CompatManager.ENV_PREFLIGHT_STATUS),
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 9d4ef65..64965e4 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -12,6 +12,7 @@ import androidx.preference.PreferenceManager;
+ import com.winlator.cmod.compat.AppCompatRegistry;
+ import com.winlator.cmod.box64.Box64Preset;
+ import com.winlator.cmod.box64.Box64PresetManager;
++import com.winlator.cmod.contract.RuntimeSignalContract;
+ import com.winlator.cmod.container.Container;
+ import com.winlator.cmod.container.Shortcut;
+ import com.winlator.cmod.contents.ContentProfile;
+@@ -43,14 +44,11 @@ import java.io.InputStream;
+ import java.io.InputStreamReader;
+ import java.net.InetAddress;
+ import java.net.URL;
+-import java.security.MessageDigest;
+-import java.nio.charset.StandardCharsets;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
+-import java.util.LinkedHashSet;
+ import java.util.List;
+ 
+ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+@@ -1514,9 +1512,9 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+             sources.add("upscaler_binding");
+         }
+ 
+-        ArrayList<String> dedupedSources = new ArrayList<>(new LinkedHashSet<>(sources));
+         String signalPolicy = "external_contract_v1";
+         String normalizedProfile = RuntimeProfileManager.normalizeId(runtimeProfile);
++        ArrayList<String> dedupedSources = RuntimeSignalContract.orderedDistinct(sources);
+         String sourceList = String.join(",", dedupedSources);
+         String decisionSeed = String.join("|",
+                 signalPolicy,
+@@ -1532,22 +1530,23 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                 safe(appCompatRules),
+                 sourceList);
+ 
+-        envVars.put("WINLATOR_SIGNAL_POLICY", signalPolicy);
+-        envVars.put("WINLATOR_SIGNAL_SOURCES", sourceList);
+-        envVars.put("WINLATOR_SIGNAL_DECISION_HASH", sha1Hex(decisionSeed));
+-        envVars.put("WINLATOR_SIGNAL_DECISION_COUNT", String.valueOf(dedupedSources.size()));
+-        envVars.put("WINLATOR_SIGNAL_RUNTIME_PROFILE", normalizedProfile);
+-        envVars.put("WINLATOR_SIGNAL_PRESET_GUARD_REASON", safe(runtimePresetGuardReason));
++        RuntimeSignalContract.putSignalPolicyMarkers(
++                envVars,
++                signalPolicy,
++                dedupedSources,
++                normalizedProfile,
++                runtimePresetGuardReason,
++                decisionSeed);
+ 
+         if (forensicMode || !isEmpty(forensicTraceId)) {
+-            ForensicLogger.logEvent(context, "info", "RUNTIME_SIGNAL_POLICY_APPLIED", forensicTraceId, "launcher",
++            ForensicLogger.logEvent(context, "info", RuntimeSignalContract.EVENT_SIGNAL_POLICY_APPLIED, forensicTraceId, "launcher",
+                     "Applied external signal policy markers",
+                     ForensicLogger.fields(
+                             "container_id", container != null ? container.id : 0,
+                             "route", forensicRouteSource,
+                             "signal_policy", signalPolicy,
+                             "signal_sources", sourceList,
+-                            "signal_decision_hash", envVars.get("WINLATOR_SIGNAL_DECISION_HASH"),
++                            "signal_decision_hash", envVars.get(RuntimeSignalContract.ENV_SIGNAL_DECISION_HASH),
+                             "signal_decision_count", dedupedSources.size(),
+                             "runtime_profile", normalizedProfile,
+                             "runtime_preset_guard_reason", runtimePresetGuardReason,
+@@ -1558,24 +1557,6 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+         }
+     }
+ 
+-    private static String sha1Hex(String value) {
+-        try {
+-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+-            return bytesToHex(digest.digest((value == null ? "" : value).getBytes(StandardCharsets.UTF_8)));
+-        } catch (Exception ignored) {
+-            return Integer.toHexString((value == null ? "" : value).hashCode());
+-        }
+-    }
+-
+-    private static String bytesToHex(byte[] bytes) {
+-        if (bytes == null) return "";
+-        StringBuilder sb = new StringBuilder(bytes.length * 2);
+-        for (byte b : bytes) {
+-            sb.append(String.format("%02x", b));
+-        }
+-        return sb.toString();
+-    }
+-
+     private void addBox64EnvVars(EnvVars envVars, boolean enableLogs, String presetId) {
+         envVars.put("BOX64_NOBANNER", ProcessHelper.PRINT_DEBUG && enableLogs ? "0" : "1");
+         envVars.put("BOX64_DYNAREC", "1");
+diff --git a/app/src/main/java/com/winlator/cmod/contract/RuntimeSignalContract.java b/app/src/main/java/com/winlator/cmod/contract/RuntimeSignalContract.java
+new file mode 100644
+index 0000000..e73aa64
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/contract/RuntimeSignalContract.java
+@@ -0,0 +1,98 @@
++package com.winlator.cmod.contract;
++
++import com.winlator.cmod.core.EnvVars;
++
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.util.ArrayList;
++import java.util.LinkedHashSet;
++import java.util.List;
++
++public final class RuntimeSignalContract {
++    public static final String ENV_SIGNAL_POLICY = "WINLATOR_SIGNAL_POLICY";
++    public static final String ENV_SIGNAL_SOURCES = "WINLATOR_SIGNAL_SOURCES";
++    public static final String ENV_SIGNAL_DECISION_HASH = "WINLATOR_SIGNAL_DECISION_HASH";
++    public static final String ENV_SIGNAL_DECISION_COUNT = "WINLATOR_SIGNAL_DECISION_COUNT";
++    public static final String ENV_SIGNAL_RUNTIME_PROFILE = "WINLATOR_SIGNAL_RUNTIME_PROFILE";
++    public static final String ENV_SIGNAL_PRESET_GUARD_REASON = "WINLATOR_SIGNAL_PRESET_GUARD_REASON";
++
++    public static final String ENV_SIGNAL_INPUT_ROUTE = "WINLATOR_SIGNAL_INPUT_ROUTE";
++    public static final String ENV_SIGNAL_INPUT_LAUNCH_KIND = "WINLATOR_SIGNAL_INPUT_LAUNCH_KIND";
++    public static final String ENV_SIGNAL_INPUT_TARGET_EXECUTABLE = "WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE";
++    public static final String ENV_SIGNAL_INPUT_PRECHECK_REASON = "WINLATOR_SIGNAL_INPUT_PRECHECK_REASON";
++    public static final String ENV_SIGNAL_INPUT_PRECHECK_FALLBACK = "WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK";
++
++    public static final String EVENT_SIGNAL_POLICY_APPLIED = "RUNTIME_SIGNAL_POLICY_APPLIED";
++    public static final String EVENT_SIGNAL_INPUTS_PREPARED = "RUNTIME_SIGNAL_INPUTS_PREPARED";
++
++    private RuntimeSignalContract() {}
++
++    public static void putSignalInputMarkers(
++            EnvVars envVars,
++            String route,
++            String launchKind,
++            String targetExecutable,
++            String precheckReason,
++            boolean precheckFallback) {
++        if (envVars == null) return;
++        envVars.put(ENV_SIGNAL_INPUT_ROUTE, safe(route));
++        envVars.put(ENV_SIGNAL_INPUT_LAUNCH_KIND, safe(launchKind));
++        envVars.put(ENV_SIGNAL_INPUT_TARGET_EXECUTABLE, safe(targetExecutable));
++        envVars.put(ENV_SIGNAL_INPUT_PRECHECK_REASON, safe(precheckReason));
++        envVars.put(ENV_SIGNAL_INPUT_PRECHECK_FALLBACK, precheckFallback ? "1" : "0");
++    }
++
++    public static String putSignalPolicyMarkers(
++            EnvVars envVars,
++            String policy,
++            List<String> sources,
++            String runtimeProfile,
++            String presetGuardReason,
++            String decisionSeed) {
++        if (envVars == null) return "";
++        ArrayList<String> deduped = orderedDistinct(sources);
++        String normalizedPolicy = safe(policy);
++        String sourceList = String.join(",", deduped);
++        String decisionHash = sha1Hex(safe(decisionSeed));
++
++        envVars.put(ENV_SIGNAL_POLICY, normalizedPolicy);
++        envVars.put(ENV_SIGNAL_SOURCES, sourceList);
++        envVars.put(ENV_SIGNAL_DECISION_HASH, decisionHash);
++        envVars.put(ENV_SIGNAL_DECISION_COUNT, String.valueOf(deduped.size()));
++        envVars.put(ENV_SIGNAL_RUNTIME_PROFILE, safe(runtimeProfile));
++        envVars.put(ENV_SIGNAL_PRESET_GUARD_REASON, safe(presetGuardReason));
++        return decisionHash;
++    }
++
++    public static ArrayList<String> orderedDistinct(List<String> values) {
++        if (values == null || values.isEmpty()) return new ArrayList<>();
++        LinkedHashSet<String> deduped = new LinkedHashSet<>();
++        for (String value : values) {
++            String normalized = safe(value);
++            if (!normalized.isEmpty()) deduped.add(normalized);
++        }
++        return new ArrayList<>(deduped);
++    }
++
++    public static String sha1Hex(String value) {
++        try {
++            MessageDigest digest = MessageDigest.getInstance("SHA-1");
++            return bytesToHex(digest.digest(safe(value).getBytes(StandardCharsets.UTF_8)));
++        } catch (Exception ignored) {
++            return Integer.toHexString(safe(value).hashCode());
++        }
++    }
++
++    private static String bytesToHex(byte[] bytes) {
++        if (bytes == null) return "";
++        StringBuilder sb = new StringBuilder(bytes.length * 2);
++        for (byte b : bytes) {
++            sb.append(String.format("%02x", b));
++        }
++        return sb.toString();
++    }
++
++    public static String safe(String value) {
++        return value == null ? "" : value.trim();
++    }
++}

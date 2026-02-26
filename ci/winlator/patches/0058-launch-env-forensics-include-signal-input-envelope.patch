@@ -1,0 +1,16 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 89fef7b..02958c4 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1326,6 +1326,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "route", forensicRouteSource,
+                         "container_id", container != null ? container.id : 0,
+                         "env_hash", ForensicLogger.hashEnvVars(envVars),
++                        "signal_input_route", envVars.get("WINLATOR_SIGNAL_INPUT_ROUTE"),
++                        "signal_input_launch_kind", envVars.get("WINLATOR_SIGNAL_INPUT_LAUNCH_KIND"),
++                        "signal_input_target_executable", envVars.get("WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE"),
++                        "signal_input_precheck_reason", envVars.get("WINLATOR_SIGNAL_INPUT_PRECHECK_REASON"),
++                        "signal_input_precheck_fallback", envVars.get("WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK"),
+                         "x11_backend", envVars.get(X11CompatManager.ENV_BACKEND),
+                         "x11_termux_compat", envVars.get(X11CompatManager.ENV_TERMUX_COMPAT),
+                         "x11_preflight_status", envVars.get(X11CompatManager.ENV_PREFLIGHT_STATUS),

@@ -81,6 +81,20 @@ consolidated into:
   - accepts `proton*` type aliases (`proton`, `protonge`, `protonwine`, `wine/proton`) as Wine-family content in parser/resolver paths, and ensures local profile parsing treats those aliases as Wine for required `wine` metadata extraction
 - `0055-termux-x11-compat-contract-preflight-and-diagnostics.patch`
   - adds optional `termux_compat` X11 backend contract controls (settings + env export), performs startup preflight checks for TMPDIR/XKB/shared-tmp semantics with forensic events and fallback to internal backend, and exposes a diagnostics action to run the same preflight interactively
+- `0056-external-signal-policy-markers-and-forensics.patch`
+  - adds deterministic external signal markers in launcher runtime env (`WINLATOR_SIGNAL_POLICY`, `WINLATOR_SIGNAL_SOURCES`, `WINLATOR_SIGNAL_DECISION_HASH`, `WINLATOR_SIGNAL_DECISION_COUNT`) and emits forensic `RUNTIME_SIGNAL_POLICY_APPLIED` with policy/source metadata for GN/GH/Termux lane arbitration traces
+- `0057-signal-input-markers-from-launch-precheck.patch`
+  - exports launch-precheck inputs as explicit signal markers in `XServerDisplayActivity` (`WINLATOR_SIGNAL_INPUT_*`) before launcher start, and emits forensic `RUNTIME_SIGNAL_INPUTS_PREPARED` to bridge route/kind/target/fallback intent into runtime signal arbitration
+- `0058-launch-env-forensics-include-signal-input-envelope.patch`
+  - extends `LAUNCH_ENV_PREPARED` forensic payload with `WINLATOR_SIGNAL_INPUT_*` envelope fields so adb log triage can correlate launch-env hash with precheck signal inputs without decoding raw env dumps
+- `0059-runtime-signal-contract-helper-and-adoption.patch`
+  - introduces shared `RuntimeSignalContract` helper for signal marker keys/hash generation/deduped source lists, and rewires `XServerDisplayActivity` + `GuestProgramLauncherComponent` to use centralized contract methods/constants (reduces drift between signal docs and launcher implementation)
+- `0060-contents-internal-type-canonicalization.patch`
+  - adds explicit `internalType` metadata support for Wine-family entries (`wine`, `proton`, `protonge`, `protonwine`), canonicalizes aliases in contents parsing, and preserves source metadata fields when reading local profiles so UI/forensics can distinguish Wine-family subtype without breaking the unified `Wine/Proton` group
+- `0061-contents-wine-family-internal-type-labels.patch`
+  - uses `internalType` in `Contents` meta rows to surface Wine-family subtype labels (`Proton`, `Proton GE`, `ProtonWine`) for entries grouped under the shared `Wine/Proton` category
+- `0062-contents-info-dialog-wine-family-variant-and-meta-format.patch`
+  - extends the content info dialog to show Wine-family subtype (`Variant`) for Wine/Proton entries and normalizes metadata block formatting (`Channel/Delivery/Source/Artifact/SHA256`) without empty leading lines
 
 ## Known high-overlap files (intentional)
 
@@ -98,6 +112,8 @@ patches to avoid accidental regressions:
 Before pushing a new patch touching high-overlap files:
 
 ```bash
+bash ci/winlator/validate-patch-sequence.sh
+bash ci/winlator/run-reflective-audits.sh
 bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout
 ```
 

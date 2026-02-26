@@ -31,6 +31,9 @@ trap cleanup EXIT
 command -v git >/dev/null 2>&1 || fail "git not found"
 command -v awk >/dev/null 2>&1 || fail "awk not found"
 
+log "Validating patch numbering contract"
+bash "${ROOT_DIR}/ci/winlator/validate-patch-sequence.sh" "${PATCH_DIR}"
+
 TMP_DIR="$(mktemp -d /tmp/winlator_patch_stack_check_XXXXXX)"
 CLONE_DIR="${TMP_DIR}/src"
 

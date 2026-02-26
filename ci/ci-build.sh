@@ -662,7 +662,7 @@ main() {
   fi
   log "GameNative patchset mode for wine: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
   WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
-  WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
     WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
     WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
     WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \

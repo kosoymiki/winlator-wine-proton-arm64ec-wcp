@@ -6,6 +6,7 @@ from pathlib import Path
 
 ALLOWED_CHANNELS = {"stable", "beta", "nightly"}
 ALLOWED_DELIVERY = {"remote", "embedded", ""}
+ALLOWED_WINE_INTERNAL_TYPES = {"wine", "proton", "protonge", "protonwine"}
 WINE_VERSION_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)*(?:-[0-9]+(?:\.[0-9]+)*)?-(x86|x86_64|arm64ec)$")
 
 
@@ -39,6 +40,7 @@ def main() -> None:
         channel = str(item.get("channel", "stable")).strip().lower()
         delivery = str(item.get("delivery", "")).strip().lower()
         remote_url = str(item["remoteUrl"])
+        internal_type = str(item.get("internalType", "")).strip().lower()
         source_repo = str(item.get("sourceRepo", "")).strip()
         release_tag = str(item.get("releaseTag", "")).strip()
         source_version = str(item.get("sourceVersion", "")).strip()
@@ -51,8 +53,31 @@ def main() -> None:
             fail(f"entry {idx} has invalid delivery: {delivery}")
         if not remote_url.startswith("https://github.com/kosoymiki/winlator-wine-proton-arm64ec-wcp/releases/download/"):
             fail(f"entry {idx} remoteUrl must point to this repo releases: {remote_url}")
-        if type_name.lower() == "wine" and not WINE_VERSION_RE.match(ver_name):
-            fail(f"entry {idx} verName is not Winlator-parseable: {ver_name}")
+        if type_name.lower() == "wine":
+            if not WINE_VERSION_RE.match(ver_name):
+                fail(f"entry {idx} verName is not Winlator-parseable: {ver_name}")
+            if internal_type not in ALLOWED_WINE_INTERNAL_TYPES:
+                fail(
+                    f"entry {idx} internalType must be one of "
+                    f"{sorted(ALLOWED_WINE_INTERNAL_TYPES)} for Wine entries"
+                )
+            if internal_type == "wine":
+                if "wine-" not in release_tag:
+                    fail(f"entry {idx} Wine internalType requires wine-* releaseTag: {release_tag}")
+                if "wine-" not in artifact_name:
+                    fail(f"entry {idx} Wine internalType requires wine-* artifactName: {artifact_name}")
+            elif internal_type == "protonge":
+                if "proton-ge" not in release_tag:
+                    fail(f"entry {idx} protonge internalType requires proton-ge* releaseTag: {release_tag}")
+                if "proton-ge" not in artifact_name:
+                    fail(f"entry {idx} protonge internalType requires proton-ge* artifactName: {artifact_name}")
+            elif internal_type == "protonwine":
+                if "protonwine" not in release_tag:
+                    fail(f"entry {idx} protonwine internalType requires protonwine* releaseTag: {release_tag}")
+                if "protonwine" not in artifact_name:
+                    fail(f"entry {idx} protonwine internalType requires protonwine* artifactName: {artifact_name}")
+        elif internal_type:
+            fail(f"entry {idx} non-Wine entry must not set internalType: {internal_type}")
         if not source_repo:
             fail(f"entry {idx} missing sourceRepo")
         if not release_tag:
@@ -72,9 +97,9 @@ def main() -> None:
         if not artifact_name.endswith(".wcp"):
             fail(f"entry {idx} artifactName must end with .wcp: {artifact_name}")
 
-        key = (type_name.lower(), ver_name, ver_code)
+        key = (type_name.lower(), internal_type, ver_name, ver_code)
         if key in seen:
-            fail(f"duplicate type/verName/verCode entry: {key}")
+            fail(f"duplicate type/internalType/verName/verCode entry: {key}")
         seen.add(key)
 
         if channel == "nightly":

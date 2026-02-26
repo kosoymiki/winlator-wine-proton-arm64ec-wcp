@@ -69,6 +69,25 @@ When signals diverge:
 3. Lower-regression path with better forensic observability wins.
 4. Unproven behavior remains in research lane until validated.
 
+## External Signal Bridge
+
+See `docs/EXTERNAL_SIGNAL_CONTRACT.md` for source arbitration across GN/GH/Termux
+lanes. Runtime launcher/export paths must preserve these markers when external
+signals modify effective policy:
+
+- `WINLATOR_SIGNAL_POLICY`
+- `WINLATOR_SIGNAL_SOURCES`
+- `WINLATOR_SIGNAL_DECISION_HASH`
+- `WINLATOR_SIGNAL_DECISION_COUNT`
+
+Launch precheck must also export signal input envelope:
+
+- `WINLATOR_SIGNAL_INPUT_ROUTE`
+- `WINLATOR_SIGNAL_INPUT_LAUNCH_KIND`
+- `WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE`
+- `WINLATOR_SIGNAL_INPUT_PRECHECK_REASON`
+- `WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK`
+
 ## Evidence Requirement
 
 Each accepted change must be linked in `docs/REFLECTIVE_HARVARD_LEDGER.md` with:
