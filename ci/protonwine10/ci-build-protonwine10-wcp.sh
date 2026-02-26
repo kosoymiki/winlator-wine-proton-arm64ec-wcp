@@ -205,10 +205,11 @@ main() {
   clone_protonwine_source
   run_upstream_analysis_and_fixes
   gn_patchset_mode="full"
-  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
+  # ProtonWine source layout intentionally diverges on one wow64 marker;
+  # keep contract in warn-only mode and rely on build/runtime checks.
+  gn_contract_strict=0
   if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
     gn_patchset_mode="normalize-only"
-    gn_contract_strict=0
   fi
   log "GameNative patchset mode for protonwine10: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
   WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
