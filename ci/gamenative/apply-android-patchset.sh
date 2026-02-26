@@ -883,7 +883,41 @@ path.write_text(updated, encoding="utf-8")
 PY
 }
 
+normalize_winnt_interlocked_dummy() {
+  local file
+  file="${SOURCE_DIR}/include/winnt.h"
+  [[ -f "${file}" ]] || return 0
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+pattern = re.compile(
+    r'(?P<indent>[ \t]*)LONG dummy;\n'
+    r'(?P=indent)InterlockedOr\(\s*&dummy\s*,\s*0\s*\);'
+)
+
+def repl(match):
+    indent = match.group("indent")
+    return (
+        f"{indent}long volatile dummy = 0;\n"
+        f"{indent}InterlockedOr(&dummy, 0);"
+    )
+
+updated = pattern.sub(repl, updated)
+if updated != text:
+    path.write_text(updated, encoding="utf-8")
+PY
+}
+
 run_post_patch_normalization() {
+  normalize_winnt_interlocked_dummy
+  report "__post_patch__/winnt" "normalize" "applied" "interlocked-dummy-volatile-fix"
   normalize_winebrowser_android_bridge
   report "__post_patch__/winebrowser" "normalize" "applied" "bridge-cast-env-fixes"
   normalize_winex11_mouse_xfixes_calls

@@ -107,10 +107,11 @@ f_ntdll_spec="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
 f_wow64_syscall="${SOURCE_DIR}/dlls/wow64/syscall.c"
 f_wow64_spec="${SOURCE_DIR}/dlls/wow64/wow64.spec"
 f_winternl="${SOURCE_DIR}/include/winternl.h"
+f_winnt="${SOURCE_DIR}/include/winnt.h"
 f_menubuilder="${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c"
 f_winebrowser="${SOURCE_DIR}/programs/winebrowser/main.c"
 
-for f in "${f_loader}" "${f_ntdll_spec}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_menubuilder}"; do
+for f in "${f_loader}" "${f_ntdll_spec}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_winnt}" "${f_menubuilder}"; do
   [[ -f "${f}" ]] || fail "required source file missing: ${f}"
 done
 
@@ -126,6 +127,7 @@ check_fixed "${f_wow64_spec}" 'Wow64SuspendLocalThread' 'wow64.spec exports Wow6
 check_fixed "${f_winternl}" 'THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH' 'winternl exposes SKIP_THREAD_ATTACH'
 check_fixed "${f_winternl}" 'THREAD_CREATE_FLAGS_SKIP_LOADER_INIT' 'winternl exposes SKIP_LOADER_INIT'
 check_fixed "${f_winternl}" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE' 'winternl exposes BYPASS_PROCESS_FREEZE'
+check_fixed "${f_winnt}" 'long volatile dummy = 0;' 'winnt uses volatile dummy for InterlockedOr probe'
 
 # Winlator shortcut contract from winemenubuilder.
 check_regex "${f_menubuilder}" 'icons\\\\hicolor' 'winemenubuilder writes icons to xdg hicolor path'
