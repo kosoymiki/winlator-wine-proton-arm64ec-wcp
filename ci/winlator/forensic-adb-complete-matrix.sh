@@ -32,6 +32,16 @@ adb_s() { adb -s "${ADB_SERIAL_PICKED}" "$@"; }
 
 iso_now() { date -Is; }
 
+sanitize_label() {
+  local raw="$1" safe
+  safe="$(printf '%s' "${raw}" | tr -cs '[:alnum:]._-:' '_')"
+  safe="${safe//:/_}"
+  safe="${safe##_}"
+  safe="${safe%%_}"
+  [[ -n "${safe}" ]] || safe="scenario"
+  printf '%s\n' "${safe}"
+}
+
 logcat_has_trace_event() {
   local file="$1"
   local trace_id="$2"
@@ -195,19 +205,28 @@ main() {
     done
   fi
 
-  local spec label
+  local spec label safe_label
+  local -A seen_labels=()
   for spec in "${scenario_specs[@]}"; do
+    [[ "${spec}" == *:* ]] || fail "Invalid scenario spec '${spec}' (expected label:containerId)"
     label="${spec%%:*}"
     cid="${spec##*:}"
+    [[ -n "${label}" ]] || fail "Scenario label cannot be empty in '${spec}'"
+    [[ "${cid}" =~ ^[0-9]+$ ]] || fail "Scenario container id must be numeric in '${spec}'"
+    safe_label="$(sanitize_label "${label}")"
+    if [[ -n "${seen_labels[${safe_label}]:-}" ]]; then
+      fail "Duplicate scenario label after sanitization: '${label}' -> '${safe_label}'"
+    fi
+    seen_labels["${safe_label}"]=1
     local before_runtime_index
-    scenario_dir="${WLT_OUT_DIR}/${label}"
+    scenario_dir="${WLT_OUT_DIR}/${safe_label}"
     mkdir -p "${scenario_dir}"
     before_runtime_index="${scenario_dir}/sdcard-runtime-before.txt"
-    printf 'label=%s\ncontainer_id=%s\ntime=%s\n' "${label}" "${cid}" "$(iso_now)" > "${scenario_dir}/scenario_meta.txt"
+    printf 'label=%s\nsafe_label=%s\ncontainer_id=%s\ntime=%s\n' "${label}" "${safe_label}" "${cid}" "$(iso_now)" > "${scenario_dir}/scenario_meta.txt"
 
     adb_s logcat -c || true
     snapshot_sdcard_runtime_index "${before_runtime_index}"
-    trace_id="$(start_direct_route "${cid}" "${label}")"
+    trace_id="$(start_direct_route "${cid}" "${safe_label}")"
     printf '%s\n' "${trace_id}" > "${scenario_dir}/trace_id.txt"
     wait_for_trace_settle "${trace_id}" "${scenario_dir}"
 

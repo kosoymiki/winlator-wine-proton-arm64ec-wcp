@@ -183,6 +183,15 @@ main() {
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameNative'
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameHub'
   require_file "ci/contents/validate-contents-json.py"
+  require_file "ci/validation/gh-mainline-health.sh"
+  require_file "ci/validation/collect-mainline-forensic-snapshot.sh"
+  require_contains "ci/validation/gh-mainline-health.sh" 'Build Wine 11 ARM64EC \(WCP\)'
+  require_contains "ci/validation/gh-mainline-health.sh" 'Build Proton GE10 ARM64EC \(WCP\)'
+  require_contains "ci/validation/gh-mainline-health.sh" 'Build ProtonWine10 GameNative ARM64EC \(WCP\)'
+  require_contains "ci/validation/gh-mainline-health.sh" 'Build Winlator ARM64EC \(no-embedded-runtimes\)'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'gh-mainline-health\.sh'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'gh-latest-failures\.sh'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'check-urc-mainline-policy\.sh'
   require_file "contents/contents.json"
   python3 "ci/contents/validate-contents-json.py" "contents/contents.json" >/dev/null
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
@@ -193,6 +202,12 @@ main() {
   require_file "ci/winlator/patch-stack-runtime-contract-audit.py"
   require_file "ci/winlator/run-reflective-audits.sh"
   require_file "ci/winlator/validate-patch-sequence.sh"
+  require_file "ci/winlator/forensic-adb-runtime-contract.sh"
+  require_file "ci/winlator/forensic-runtime-mismatch-matrix.py"
+  require_file "ci/winlator/selftest-runtime-mismatch-matrix.sh"
+  [[ -x "ci/winlator/forensic-adb-runtime-contract.sh" ]] || fail "ci/winlator/forensic-adb-runtime-contract.sh must be executable"
+  [[ -x "ci/winlator/selftest-runtime-mismatch-matrix.sh" ]] || fail "ci/winlator/selftest-runtime-mismatch-matrix.sh must be executable"
+  bash "ci/winlator/selftest-runtime-mismatch-matrix.sh"
   require_file "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch"
   require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'RuntimeSignalContract'
   require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'WINLATOR_SIGNAL_POLICY'

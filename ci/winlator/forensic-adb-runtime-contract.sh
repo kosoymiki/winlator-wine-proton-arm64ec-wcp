@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+: "${WLT_OUT_DIR:=/tmp/winlator-runtime-contract-$(date +%Y%m%d_%H%M%S)}"
+: "${WLT_BASELINE_LABEL:=steven104}"
+: "${WLT_SCENARIOS:=wine11:1 protonwine10:2 steven104:3}"
+: "${WLT_FAIL_ON_MISMATCH:=0}"
+
+log() { printf '[forensic-runtime] %s\n' "$*"; }
+fail() { printf '[forensic-runtime][error] %s\n' "$*" >&2; exit 1; }
+
+command -v adb >/dev/null 2>&1 || fail "adb not found"
+command -v python3 >/dev/null 2>&1 || fail "python3 not found"
+
+log "Running complete ADB forensic matrix"
+log "scenarios=${WLT_SCENARIOS}"
+WLT_OUT_DIR="${WLT_OUT_DIR}" \
+WLT_SCENARIOS="${WLT_SCENARIOS}" \
+  bash "${ROOT_DIR}/ci/winlator/forensic-adb-complete-matrix.sh"
+
+log "Building runtime mismatch matrix"
+args=(
+  --input "${WLT_OUT_DIR}"
+  --baseline-label "${WLT_BASELINE_LABEL}"
+  --output-prefix "${WLT_OUT_DIR}/runtime-mismatch-matrix"
+)
+if [[ "${WLT_FAIL_ON_MISMATCH}" == "1" ]]; then
+  args+=(--fail-on-mismatch)
+fi
+python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-mismatch-matrix.py" \
+  "${args[@]}"
+
+summary_file="${WLT_OUT_DIR}/runtime-mismatch-matrix.summary.txt"
+if [[ -f "${summary_file}" ]]; then
+  log "Summary:"
+  sed 's/^/[forensic-runtime]   /' "${summary_file}"
+fi
+
+log "Done: ${WLT_OUT_DIR}"

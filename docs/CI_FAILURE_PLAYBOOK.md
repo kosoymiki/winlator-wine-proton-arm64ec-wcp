@@ -83,5 +83,49 @@ To fetch recent failed runs and auto-parse their first failed job logs:
 
 - `bash ci/validation/gh-latest-failures.sh`
 - `bash ci/validation/gh-latest-failures.sh 5`
+- `bash ci/validation/gh-latest-failures.sh 20 main 24`
+- `WLT_FAILURES_OUTPUT_PREFIX=/tmp/gh-active-failures bash ci/validation/gh-latest-failures.sh 20 main 24`
 
 This is the fast path before manual `gh run view ... --log` triage.
+
+Use the third argument (`since_hours`) to filter stale failures and focus only on fresh regressions.
+The command now reports only workflows whose latest run is still failed (active failure state).
+With `WLT_FAILURES_OUTPUT_PREFIX`, it also writes `.tsv` + `.meta` snapshots for automation.
+
+## 8.1) Check mainline workflow health before deep triage
+
+- `bash ci/validation/gh-mainline-health.sh`
+- `bash ci/validation/gh-mainline-health.sh main 24`
+- `WLT_HEALTH_OUTPUT_PREFIX=/tmp/mainline-health bash ci/validation/gh-mainline-health.sh main 24`
+
+This validates the latest run status of the four critical workflows and fails if any is not `fresh + success`.
+
+## 9) Runtime crash matrix (device-side)
+
+For runtime startup/crash triage across `wine11`, `protonwine10`, and `steven104`:
+
+- `bash ci/winlator/forensic-adb-runtime-contract.sh`
+- `WLT_FAIL_ON_MISMATCH=1 bash ci/winlator/forensic-adb-runtime-contract.sh`
+- `bash ci/winlator/selftest-runtime-mismatch-matrix.sh`
+
+Outputs:
+- Complete per-scenario forensic capture (`logcat`, `wait-status`, `forensics tail`).
+- `runtime-mismatch-matrix.tsv`, `runtime-mismatch-matrix.md`, and `runtime-mismatch-matrix.json` with baseline comparison.
+- `runtime-mismatch-matrix.summary.txt` with status/severity aggregate counters.
+- With `WLT_FAIL_ON_MISMATCH=1`, exits non-zero when non-baseline scenarios drift from baseline contract.
+- `selftest-runtime-mismatch-matrix.sh` validates classifier behavior and exit contract without adb/device.
+- Scenario format in `WLT_SCENARIOS` is strict: `label:containerId` (numeric container id).
+- Labels are sanitized to safe folder names in output artifacts (`safe_label` stored in `scenario_meta.txt`).
+
+## 10) One-shot forensic snapshot (mainline)
+
+To collect a single consolidated snapshot (`health + active failures + urc check + git state`):
+
+- `bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+
+Generated in snapshot dir:
+- `mainline-health.tsv/.json`
+- `active-failures.tsv/.meta`
+- `health.log`, `active-failures.log`, `urc-check.log`
+- `snapshot.meta`, `status.meta`, `git-head.txt`, `git-status.txt`

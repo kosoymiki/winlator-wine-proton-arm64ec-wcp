@@ -69,7 +69,12 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 ## Diagnostics & Forensics / Диагностика и форензика
 
 - `ci/winlator/forensic-adb-matrix.sh`
+- `ci/winlator/forensic-adb-runtime-contract.sh`
 - `ci/winlator/forensic-regression-local.sh`
+- `ci/winlator/forensic-runtime-mismatch-matrix.py`
+- `ci/winlator/selftest-runtime-mismatch-matrix.sh`
+- `ci/validation/gh-mainline-health.sh`
+- `ci/validation/collect-mainline-forensic-snapshot.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
 - `ci/gamenative/selftest-normalizers.sh`
 - `ci/validation/inspect-wcp-runtime-contract.sh`
