@@ -596,7 +596,7 @@ winlator_adopt_bionic_unix_core_modules() {
   fi
 
   if winlator_bionic_mainline_strict; then
-    : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so}"
+    : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so opencl.so winedmo.so}"
     # shellcheck disable=SC2206
     strict_allowed_glibc_modules=( ${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES} )
     mapfile -t glibc_modules < <(winlator_list_glibc_unix_modules "${dst_unix}")

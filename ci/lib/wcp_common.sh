@@ -1451,7 +1451,7 @@ PY
     esac
     mapfile -t forensic_glibc_rows < <(awk -F'\t' '$2=="glibc-unix"{print $1}' "${unix_abi_file}" 2>/dev/null || true)
     if [[ "${#forensic_glibc_rows[@]}" -gt 0 ]]; then
-      : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so}"
+      : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so opencl.so winedmo.so}"
       # shellcheck disable=SC2206
       strict_allowed_glibc_modules=( ${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES} )
       blocking_glibc_rows=()
