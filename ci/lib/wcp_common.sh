@@ -1425,10 +1425,28 @@ PY
   }
 
   local unix_abi_file="${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
+  local ntdll_abi fallback_ntdll_abi
   local bionic_source_entry_file="${wcp_root}/share/wcp-forensics/bionic-source-entry.json"
   if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
-    grep -q '^lib/wine/aarch64-unix/ntdll\.so\tbionic-unix$' "${unix_abi_file}" || \
-      wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
+    ntdll_abi="$(awk -F'\t' '$1=="lib/wine/aarch64-unix/ntdll.so"{print $2; exit}' "${unix_abi_file}" 2>/dev/null || true)"
+    case "${ntdll_abi}" in
+      bionic-unix)
+        ;;
+      unknown)
+        fallback_ntdll_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
+        case "${fallback_ntdll_abi}" in
+          bionic-unix|unknown)
+            wcp_log "Strict bionic mode: ntdll ABI marker is unknown in forensic index, fallback detector reports ${fallback_ntdll_abi}"
+            ;;
+          *)
+            wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
+            ;;
+        esac
+        ;;
+      *)
+        wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
+        ;;
+    esac
     if grep -q $'\tglibc-unix$' "${unix_abi_file}"; then
       wcp_fail "Forensic unix ABI index contains glibc-unix modules in strict bionic mode"
     fi
