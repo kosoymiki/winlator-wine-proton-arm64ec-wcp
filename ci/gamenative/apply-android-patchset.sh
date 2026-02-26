@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 : "${WCP_GN_PATCHSET_ENABLE:=1}"
+: "${WCP_GN_PATCHSET_MODE:=auto}"
 : "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
 : "${WCP_GN_PATCHSET_STRICT:=1}"
 : "${WCP_GN_PATCHSET_VERIFY_AUTOFIX:=1}"
@@ -22,6 +23,7 @@ Usage: $(basename "$0") --target <wine|protonge> --source-dir <path>
 
 Env:
   WCP_GN_PATCHSET_ENABLE        default: 1
+  WCP_GN_PATCHSET_MODE          default: auto (auto|full|normalize-only|off)
   WCP_GN_PATCHSET_REF           default: 28c3a06ba773f6d29b9f3ed23b9297f94af4771c
   WCP_GN_PATCHSET_STRICT        default: 1
   WCP_GN_PATCHSET_VERIFY_AUTOFIX default: 1 (apply clean verify-missing patches)
@@ -42,6 +44,15 @@ require_bool() {
     0|1) ;;
     *) fail "${name} must be 0 or 1 (got: ${value})" ;;
   esac
+}
+
+require_enum() {
+  local name="$1" value="$2"; shift 2
+  local candidate
+  for candidate in "$@"; do
+    [[ "${value}" == "${candidate}" ]] && return 0
+  done
+  fail "${name} must be one of: $* (got: ${value})"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -80,11 +91,7 @@ esac
 require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
 require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
 require_bool WCP_GN_PATCHSET_VERIFY_AUTOFIX "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}"
-
-if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
-  log "Patchset integration disabled (WCP_GN_PATCHSET_ENABLE=0)"
-  exit 0
-fi
+require_enum WCP_GN_PATCHSET_MODE "${WCP_GN_PATCHSET_MODE}" auto full normalize-only off
 
 if [[ -z "${WCP_GN_PATCHSET_REPORT}" ]]; then
   WCP_GN_PATCHSET_REPORT="${SOURCE_DIR}/../gamenative-patchset-${TARGET}.tsv"
@@ -807,30 +814,72 @@ path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 updated = text
 
-hide_call = "    pXFixesHideCursor( data->display, root_window );"
-show_call = "    pXFixesShowCursor( data->display, root_window );"
-
-def wrap_once(src: str, call: str) -> str:
-    escaped = re.escape(call)
-    already = re.compile(
-        r"#ifdef HAVE_X11_EXTENSIONS_XFIXES_H\s*\n"
-        + escaped
-        + r"\s*\n#endif",
-        re.M,
-    )
-    if already.search(src):
-        return src
-    return src.replace(
-        call,
-        "#ifdef HAVE_X11_EXTENSIONS_XFIXES_H\n" + call + "\n#endif",
-        1,
+def wrap_calls(src: str, symbol: str) -> str:
+    pattern = re.compile(
+        r'(?P<indent>[ \t]*)' + re.escape(symbol) + r'\s*\([^;\n]*\)\s*;\n'
     )
 
-updated = wrap_once(updated, hide_call)
-updated = wrap_once(updated, show_call)
+    def repl(match):
+        indent = match.group("indent")
+        before = src[max(0, match.start() - 220):match.start()]
+        after = src[match.end():match.end() + 64]
+        if (
+            "#ifdef HAVE_X11_EXTENSIONS_XFIXES_H" in before
+            and "#endif" in after
+        ):
+            return match.group(0)
+        return (
+            f"{indent}#ifdef HAVE_X11_EXTENSIONS_XFIXES_H\n"
+            f"{match.group(0)}"
+            f"{indent}#endif\n"
+        )
+
+    return pattern.sub(repl, src)
+
+updated = wrap_calls(updated, "pXFixesHideCursor")
+updated = wrap_calls(updated, "pXFixesShowCursor")
 
 if updated != text:
     path.write_text(updated, encoding="utf-8")
+PY
+}
+
+normalize_winex11_window_rawinput_guard() {
+  local file
+  file="${SOURCE_DIR}/dlls/winex11.drv/window.c"
+  [[ -f "${file}" ]] || return 0
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+rawinput = re.compile(
+    r'(?P<indent>[ \t]*)data->xinput2_rawinput = TRUE;\n'
+    r'(?P=indent)x11drv_xinput2_enable\( data->display, DefaultRootWindow\( data->display \) \);\n'
+)
+match = rawinput.search(updated)
+if not match:
+    raise SystemExit(0)
+
+start, end = match.span()
+before = updated[max(0, start - 260):start]
+after = updated[end:end + 140]
+if "#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H" in before and "#endif" in after:
+    raise SystemExit(0)
+
+indent = match.group("indent")
+replacement = (
+    f"{indent}#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H\n"
+    f"{match.group(0)}"
+    f"{indent}#endif\n"
+)
+updated = updated[:start] + replacement + updated[end:]
+path.write_text(updated, encoding="utf-8")
 PY
 }
 
@@ -839,6 +888,8 @@ run_post_patch_normalization() {
   report "__post_patch__/winebrowser" "normalize" "applied" "bridge-cast-env-fixes"
   normalize_winex11_mouse_xfixes_calls
   report "__post_patch__/winex11-mouse" "normalize" "applied" "xfixes-guard-fix"
+  normalize_winex11_window_rawinput_guard
+  report "__post_patch__/winex11-window" "normalize" "applied" "xinput2-rawinput-guard"
 }
 
 ensure_android_sysvshm_header() {
@@ -871,55 +922,76 @@ ensure_android_shm_utils_header() {
   log "Injected android shm_utils shim header: ${dst_hdr}"
 }
 
-log "Applying GameNative patchset ${WCP_GN_PATCHSET_REF} to target=${TARGET}"
+patchset_mode="${WCP_GN_PATCHSET_MODE}"
+if [[ "${patchset_mode}" == "auto" ]]; then
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
+    patchset_mode="full"
+  else
+    patchset_mode="normalize-only"
+  fi
+fi
+
+log "Applying GameNative patchset ${WCP_GN_PATCHSET_REF} to target=${TARGET} (mode=${patchset_mode})"
 log "manifest=${WCP_GN_PATCHSET_MANIFEST}"
 log "source=${SOURCE_DIR}"
+
+if [[ "${patchset_mode}" == "off" ]]; then
+  report "__patchset__" "mode" "off" "skipped-by-policy"
+  log "Patchset mode=off: skipped all patch and normalization steps"
+  exit 0
+fi
+
 ensure_android_sysvshm_header
 ensure_android_shm_utils_header
 
-line_no=0
-while IFS=$'\t' read -r patch wine_action protonge_action required note; do
-  required_for_target=0
-  line_no=$((line_no + 1))
-  if [[ ${line_no} -eq 1 ]]; then
-    continue
-  fi
-  [[ -n "${patch}" ]] || continue
-  [[ "${patch}" =~ ^# ]] && continue
+if [[ "${patchset_mode}" == "full" ]]; then
+  line_no=0
+  while IFS=$'\t' read -r patch wine_action protonge_action required note; do
+    required_for_target=0
+    line_no=$((line_no + 1))
+    if [[ ${line_no} -eq 1 ]]; then
+      continue
+    fi
+    [[ -n "${patch}" ]] || continue
+    [[ "${patch}" =~ ^# ]] && continue
 
-  case "${TARGET}" in
-    wine) action="${wine_action}" ;;
-    protonge) action="${protonge_action}" ;;
-  esac
+    case "${TARGET}" in
+      wine) action="${wine_action}" ;;
+      protonge) action="${protonge_action}" ;;
+    esac
 
-  patch_file="${WCP_GN_PATCHSET_PATCH_ROOT}/${patch}"
-  [[ -f "${patch_file}" ]] || fail "patch file missing: ${patch_file}"
-  if target_is_required "${required}"; then
-    required_for_target=1
-  fi
+    patch_file="${WCP_GN_PATCHSET_PATCH_ROOT}/${patch}"
+    [[ -f "${patch_file}" ]] || fail "patch file missing: ${patch_file}"
+    if target_is_required "${required}"; then
+      required_for_target=1
+    fi
 
-  case "${action}" in
-    skip)
-      if [[ "${required_for_target}" == "1" ]]; then
-        report "${patch}" "skip" "invalid" "required-for-${TARGET}-but-skipped"
-        fail "manifest mismatch: ${patch} required for ${TARGET} but action is skip"
-      fi
-      report "${patch}" "skip" "skipped" "not-applicable-for-${TARGET}"
-      ;;
-    apply)
-      run_apply_action "${patch}" "${patch_file}" "${required_for_target}"
-      ;;
-    verify)
-      run_verify_action "${patch}" "${patch_file}" "${required_for_target}"
-      ;;
-    backport_*)
-      run_backport_action "${patch}" "${action}"
-      ;;
-    *)
-      fail "Unknown action '${action}' for patch ${patch}"
-      ;;
-  esac
-done < "${WCP_GN_PATCHSET_MANIFEST}"
+    case "${action}" in
+      skip)
+        if [[ "${required_for_target}" == "1" ]]; then
+          report "${patch}" "skip" "invalid" "required-for-${TARGET}-but-skipped"
+          fail "manifest mismatch: ${patch} required for ${TARGET} but action is skip"
+        fi
+        report "${patch}" "skip" "skipped" "not-applicable-for-${TARGET}"
+        ;;
+      apply)
+        run_apply_action "${patch}" "${patch_file}" "${required_for_target}"
+        ;;
+      verify)
+        run_verify_action "${patch}" "${patch_file}" "${required_for_target}"
+        ;;
+      backport_*)
+        run_backport_action "${patch}" "${action}"
+        ;;
+      *)
+        fail "Unknown action '${action}' for patch ${patch}"
+        ;;
+    esac
+  done < "${WCP_GN_PATCHSET_MANIFEST}"
+else
+  report "__patchset__" "mode" "normalize-only" "manifest-phase-skipped"
+  log "Patchset mode=normalize-only: skipping manifest apply/verify phase"
+fi
 
 run_post_patch_normalization
 

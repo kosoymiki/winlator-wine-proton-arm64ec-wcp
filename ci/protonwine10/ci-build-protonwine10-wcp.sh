@@ -61,7 +61,7 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${WCP_BIONIC_UNIX_SOURCE_WCP_URL:=}"
 : "${WCP_BIONIC_DONOR_PREFLIGHT:=1}"
 : "${WCP_BIONIC_UNIX_CORE_ADOPT:=0}"
-: "${WCP_GN_PATCHSET_ENABLE:=0}"
+: "${WCP_GN_PATCHSET_ENABLE:=1}"
 : "${WCP_GN_PATCHSET_REF:=28c3a06ba773f6d29b9f3ed23b9297f94af4771c}"
 : "${WCP_GN_PATCHSET_STRICT:=1}"
 : "${WCP_GN_PATCHSET_VERIFY_AUTOFIX:=1}"
@@ -152,7 +152,6 @@ run_upstream_analysis_and_fixes() {
   bash "${ROOT_DIR}/ci/protonwine10/inspect-upstreams.sh"
   bash "${ROOT_DIR}/ci/protonwine10/android-support-review.sh"
   bash "${ROOT_DIR}/ci/protonwine10/apply-upstream-fixes.sh"
-  bash "${ROOT_DIR}/ci/protonwine10/apply-our-fixes.sh"
 }
 
 build_wine() {
@@ -181,7 +180,7 @@ build_wine() {
 }
 
 main() {
-  local artifact
+  local artifact gn_patchset_mode gn_contract_strict
 
   require_cmd bash
   require_cmd curl
@@ -199,22 +198,26 @@ main() {
   require_cmd pkg-config
 
   preflight_runtime_profile
+  log "GN patchset mode: WCP_GN_PATCHSET_ENABLE=${WCP_GN_PATCHSET_ENABLE} (ref=${WCP_GN_PATCHSET_REF}, strict=${WCP_GN_PATCHSET_STRICT}, autofix=${WCP_GN_PATCHSET_VERIFY_AUTOFIX})"
   wcp_check_host_arch
   prepare_layout
   ensure_llvm_mingw
   clone_protonwine_source
   run_upstream_analysis_and_fixes
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
-    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
-      WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-      WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-      WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
-  else
-    log "GameNative patchset integration disabled for protonwine10 (WCP_GN_PATCHSET_ENABLE=0)"
+  gn_patchset_mode="full"
+  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
+    gn_patchset_mode="normalize-only"
+    gn_contract_strict=0
   fi
-  log "Running GameNative contract in warn-only mode for protonwine source"
-  WCP_GN_PATCHSET_STRICT=0 \
+  log "GameNative patchset mode for protonwine10: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
+  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
+    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
+    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
+    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
+    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
+  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
     bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   build_wine
 

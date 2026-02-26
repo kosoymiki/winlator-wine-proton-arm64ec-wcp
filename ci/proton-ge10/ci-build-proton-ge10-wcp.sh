@@ -177,25 +177,6 @@ apply_proton_ge_patches() {
   log "Proton GE patch application completed without fatal markers"
 }
 
-fix_winnt_interlocked_types() {
-  local winnt_h
-  winnt_h="${WINE_SRC_DIR}/include/winnt.h"
-  [[ -f "${winnt_h}" ]] || fail "Missing ${winnt_h}"
-
-  if grep -q '^    LONG dummy;$' "${winnt_h}"; then
-    sed -i 's/^    LONG dummy;$/    long volatile dummy = 0;/' "${winnt_h}"
-    log "Applied winnt.h InterlockedOr type hotfix for WINE_NO_LONG_TYPES"
-  fi
-}
-
-fix_winebus_sdl_stub() {
-  local bus_sdl_c
-  bus_sdl_c="${WINE_SRC_DIR}/dlls/winebus.sys/bus_sdl.c"
-  [[ -f "${bus_sdl_c}" ]] || fail "Missing ${bus_sdl_c}"
-
-  perl -0pi -e 's/#else\n\nNTSTATUS sdl_bus_init\(void \*args\)/#else\n\nBOOL is_sdl_ignored_device(WORD vid, WORD pid)\n{\n    return FALSE;\n}\n\nNTSTATUS sdl_bus_init(void *args)/' "${bus_sdl_c}"
-}
-
 ensure_sdl2_tooling() {
   [[ "${WCP_ENABLE_SDL2_RUNTIME}" == "1" ]] || return
   require_cmd pkg-config
@@ -248,7 +229,7 @@ build_wine() {
 }
 
 main() {
-  local artifact
+  local artifact gn_patchset_mode gn_contract_strict
 
   require_cmd bash
   require_cmd curl
@@ -271,19 +252,20 @@ main() {
   ensure_llvm_mingw
   run_arm64ec_flow
   apply_proton_ge_patches
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
-    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
-      WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-      WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-      WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
-  else
-    log "GameNative patchset integration disabled for proton-ge (WCP_GN_PATCHSET_ENABLE=0)"
+  gn_patchset_mode="full"
+  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
+    gn_patchset_mode="normalize-only"
+    gn_contract_strict=0
   fi
-  wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
-  fix_winnt_interlocked_types
-  fix_winebus_sdl_stub
+  log "GameNative patchset mode for proton-ge: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
+  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
   WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
+    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
+    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
+    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
+  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
     bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
   build_wine
 

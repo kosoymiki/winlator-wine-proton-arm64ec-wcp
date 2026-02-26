@@ -654,17 +654,20 @@ main() {
 
   fetch_wine_sources
   mkdir -p "${OUT_DIR}/logs"
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" == "1" ]]; then
-    WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
-      WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-      WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-      WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-      bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
-  else
-    log "GameNative patchset integration disabled for wine (WCP_GN_PATCHSET_ENABLE=0)"
+  gn_patchset_mode="full"
+  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
+  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
+    gn_patchset_mode="normalize-only"
+    gn_contract_strict=0
   fi
-  wcp_patch_winemenubuilder_for_winlator "${WINE_SRC_DIR}"
+  log "GameNative patchset mode for wine: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
+  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
   WCP_GN_PATCHSET_STRICT="${WCP_GN_PATCHSET_STRICT}" \
+    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
+    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
+    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
+    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
+  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
     bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
   build_wine
   if [[ "${WCP_INCLUDE_FEX_DLLS}" == "1" ]]; then

@@ -30,6 +30,10 @@ on:
         description: "Compression format: xz or zst"
         required: false
         default: "xz"
+      gn_patchset_enable:
+        description: "Enable GameNative patchset overlay (0 or 1)"
+        required: false
+        default: "1"
 
 concurrency:
   group: wcp-${{ github.workflow }}-${{ github.ref }}
@@ -76,7 +80,7 @@ env:
   WCP_BIONIC_SOURCE_MAP_FORCE: "0"
   WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"
   WCP_BIONIC_DONOR_PREFLIGHT: "1"
-  WCP_GN_PATCHSET_ENABLE: "0"
+  WCP_GN_PATCHSET_ENABLE: ${{ github.event.inputs.gn_patchset_enable || '1' }}
   WCP_GN_PATCHSET_REF: 28c3a06ba773f6d29b9f3ed23b9297f94af4771c
   WCP_GN_PATCHSET_STRICT: "1"
   WCP_GN_PATCHSET_VERIFY_AUTOFIX: "1"
