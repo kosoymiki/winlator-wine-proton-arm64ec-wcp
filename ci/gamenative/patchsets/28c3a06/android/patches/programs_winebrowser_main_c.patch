@@ -70,10 +70,10 @@ index 738930e..94988b9 100644
 +}
 +
 +static char *from_unix_to_dos_path(const char *url) {
-+    const char *path = url + 7;
++    char *path = url + 7;
 +    char *temp = strdup(path);
 +    char *token = strtok(temp, "/");
-+    const char *new_url = NULL;
++    char *new_url = NULL;
 +
 +    while (token != NULL) {
 +        if (strcmp("dosdevices", token) == 0) {
@@ -85,11 +85,9 @@ index 738930e..94988b9 100644
 +        token = strtok(NULL, "/");
 +    }
 +
-+    {
-+        char *result = new_url ? strdup(new_url) : NULL;
-+        free(temp);
-+        return result;
-+    }
++    free(temp);
++
++    return new_url;
 +}
 +
 +static int launch_url_with_internet_explorer(const char *url) {
@@ -114,12 +112,8 @@ index 738930e..94988b9 100644
 -    WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
 +
 +    if (strstr(cmdline, "file://")) {
-+        char *mapped_cmdline = from_unix_to_dos_path(cmdline);
-+        if (mapped_cmdline) {
-+            free( cmdline );
-+            cmdline = mapped_cmdline;
-+        }
-+    }
++        cmdline = from_unix_to_dos_path(cmdline);
++     }
 +
 +    if (!launch_url_with_internet_explorer(cmdline)) WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
  
@@ -137,33 +131,22 @@ index 738930e..94988b9 100644
      if (r != ERROR_SUCCESS)
          memcpy( browsers, defaultbrowsers, sizeof(defaultbrowsers) );
  
-+    {
-+        const char *open_with_android = getenv("WINE_OPEN_WITH_ANDROID_BROWSER");
-+        wine_open_with_android_browser = open_with_android && atoi(open_with_android);
-+    }
++    wine_open_with_android_browser = getenv("WINE_OPEN_WITH_ANDROID_BROwSER") && atoi(getenv("WINE_OPEN_WITH_ANDROID_BROWSER"));
 +
 +    if (wine_open_with_android_browser) {
 +        char *p = strdup_unixcp(url);
-+        if (p && strstr(p, "file://")) {
-+            char *dos_path = from_unix_to_dos_path(p);
-+            if (dos_path && launch_url_with_internet_explorer(dos_path)) {
-+                free( dos_path );
-+                free( p );
-+                return 0;
-+            }
-+            free( dos_path );
++           if (strstr(p, "file://")) {
++            if (launch_url_with_internet_explorer(from_unix_to_dos_path(p)))
++                   return 0;
 +        }
-+        else if (p) {
++        else {
 +            android_message_t message;
 +            ZeroMemory(&message, sizeof(message));
 +            message.request_code = 1;
 +            message.data = p;
-+            if (send_android_message(message)) {
-+                free( p );
-+                return 0;
-+            }
++               if (send_android_message(message))
++                  return 0;
 +        }
-+        free( p );
 +    }
 +
      return launch_app( browsers, url );
