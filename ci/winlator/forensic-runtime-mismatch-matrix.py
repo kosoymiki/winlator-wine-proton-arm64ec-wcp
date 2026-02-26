@@ -22,6 +22,13 @@ KEY_FIELDS = (
     "signal_inputs",
 )
 
+SEVERITY_RANK = {
+    "info": 0,
+    "low": 1,
+    "medium": 2,
+    "high": 3,
+}
+
 
 def classify_row(row: dict[str, str], baseline: dict[str, str]) -> tuple[str, str, str, str]:
     if row["label"] == baseline["label"]:
@@ -202,6 +209,7 @@ def append_mismatch_fields(rows: list[dict[str, str]], baseline: dict[str, str])
         status, severity, focus, patch_hint = classify_row(row, baseline)
         row["status"] = status
         row["severity"] = severity
+        row["severity_rank"] = str(SEVERITY_RANK.get(severity, 9))
         row["recommended_focus"] = focus
         row["patch_hint"] = patch_hint
 
@@ -224,11 +232,11 @@ def write_markdown(path: Path, rows: list[dict[str, str]], baseline: dict[str, s
     lines.append(f"- Baseline label: `{baseline['label']}`")
     lines.append(f"- Baseline container: `{baseline.get('container_id', '-')}`")
     lines.append("")
-    lines.append("| Label | Container | Submit | Terminal | Launch Submit | Launch Exit | Runtime Class | Signal Policy | Mismatch Count | Status | Severity | Focus | Patch Hint | Mismatch Keys |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | --- | --- | --- | --- | --- |")
+    lines.append("| Label | Container | Submit | Terminal | Launch Submit | Launch Exit | Runtime Class | Signal Policy | Mismatch Count | Status | Severity | Rank | Focus | Patch Hint | Mismatch Keys |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | --- | --- | ---: | --- | --- | --- |")
     for row in rows:
         lines.append(
-            "| {label} | {container_id} | {saw_submit} | {saw_terminal} | {launch_submit} | {launch_exit} | {runtime_class} | {signal_policy} | {mismatch_count} | {status} | {severity} | {recommended_focus} | {patch_hint} | {mismatch_keys} |".format(
+            "| {label} | {container_id} | {saw_submit} | {saw_terminal} | {launch_submit} | {launch_exit} | {runtime_class} | {signal_policy} | {mismatch_count} | {status} | {severity} | {severity_rank} | {recommended_focus} | {patch_hint} | {mismatch_keys} |".format(
                 **row
             )
         )
@@ -288,6 +296,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Return exit code 2 if any non-baseline row has mismatch_count > 0",
     )
+    parser.add_argument(
+        "--fail-on-severity-at-or-above",
+        choices=("off", "info", "low", "medium", "high"),
+        default="off",
+        help="Return exit code 3 if a non-baseline drift row has severity at/above this level.",
+    )
     return parser.parse_args()
 
 
@@ -328,6 +342,21 @@ def main() -> int:
         if any(row["label"] != baseline["label"] and row.get("mismatch_count") != "0" for row in rows):
             print("[runtime-mismatch] mismatch detected against baseline")
             return 2
+    if args.fail_on_severity_at_or_above != "off":
+        threshold = SEVERITY_RANK[args.fail_on_severity_at_or_above]
+        for row in rows:
+            if row["label"] == baseline["label"]:
+                continue
+            if row.get("status") in {"ok", "baseline"}:
+                continue
+            sev_rank = int(row.get("severity_rank", "9"))
+            if sev_rank >= threshold:
+                print(
+                    "[runtime-mismatch] severity threshold reached: "
+                    f"label={row.get('label')} severity={row.get('severity')} "
+                    f"threshold={args.fail_on_severity_at_or_above}"
+                )
+                return 3
     return 0
 
 

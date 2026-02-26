@@ -7,12 +7,16 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_BASELINE_LABEL:=steven104}"
 : "${WLT_SCENARIOS:=wine11:1 protonwine10:2 steven104:3}"
 : "${WLT_FAIL_ON_MISMATCH:=0}"
+: "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE:=off}"
 
 log() { printf '[forensic-runtime] %s\n' "$*"; }
 fail() { printf '[forensic-runtime][error] %s\n' "$*" >&2; exit 1; }
 
 command -v adb >/dev/null 2>&1 || fail "adb not found"
 command -v python3 >/dev/null 2>&1 || fail "python3 not found"
+[[ "${WLT_FAIL_ON_MISMATCH}" =~ ^[01]$ ]] || fail "WLT_FAIL_ON_MISMATCH must be 0 or 1"
+[[ "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE}" =~ ^(off|info|low|medium|high)$ ]] || \
+  fail "WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE must be one of: off, info, low, medium, high"
 
 log "Running complete ADB forensic matrix"
 log "scenarios=${WLT_SCENARIOS}"
@@ -28,6 +32,9 @@ args=(
 )
 if [[ "${WLT_FAIL_ON_MISMATCH}" == "1" ]]; then
   args+=(--fail-on-mismatch)
+fi
+if [[ "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE}" != "off" ]]; then
+  args+=(--fail-on-severity-at-or-above "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE}")
 fi
 python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-mismatch-matrix.py" \
   "${args[@]}"

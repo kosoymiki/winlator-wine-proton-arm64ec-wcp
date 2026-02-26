@@ -22,6 +22,10 @@ Examples:
 
 Env:
   WLT_FAILURES_OUTPUT_PREFIX=/tmp/gh-active-failures  # optional .tsv/.meta outputs
+  WLT_AUTO_TRIAGE_FAILED_RUNS=0  # when 1, run gh-run-root-cause.sh per active failed run
+  WLT_AUTO_TRIAGE_MAX_RUNS=3
+  WLT_AUTO_TRIAGE_MAX_JOBS=3
+  WLT_AUTO_TRIAGE_DIR=/tmp/gh-active-run-triage-<ts>
 EOF
 }
 
@@ -32,10 +36,21 @@ branch="${2:-main}"
 since_hours="${3:-24}"
 [[ "${since_hours}" =~ ^[0-9]+$ ]] || { usage; fail "since_hours must be numeric"; }
 : "${WLT_FAILURES_OUTPUT_PREFIX:=}"
+: "${WLT_AUTO_TRIAGE_FAILED_RUNS:=0}"
+: "${WLT_AUTO_TRIAGE_MAX_RUNS:=3}"
+: "${WLT_AUTO_TRIAGE_MAX_JOBS:=3}"
+: "${WLT_AUTO_TRIAGE_DIR:=}"
+[[ "${WLT_AUTO_TRIAGE_FAILED_RUNS}" =~ ^[01]$ ]] || fail "WLT_AUTO_TRIAGE_FAILED_RUNS must be 0 or 1"
+[[ "${WLT_AUTO_TRIAGE_MAX_RUNS}" =~ ^[0-9]+$ ]] || fail "WLT_AUTO_TRIAGE_MAX_RUNS must be numeric"
+[[ "${WLT_AUTO_TRIAGE_MAX_JOBS}" =~ ^[0-9]+$ ]] || fail "WLT_AUTO_TRIAGE_MAX_JOBS must be numeric"
 
 command -v gh >/dev/null 2>&1 || fail "gh is required"
 [[ -x "${ROOT_DIR}/ci/validation/extract-gh-job-failures.sh" ]] || \
   fail "Missing executable parser: ci/validation/extract-gh-job-failures.sh"
+if [[ "${WLT_AUTO_TRIAGE_FAILED_RUNS}" == "1" ]]; then
+  [[ -x "${ROOT_DIR}/ci/validation/gh-run-root-cause.sh" ]] || \
+    fail "Missing executable triage helper: ci/validation/gh-run-root-cause.sh"
+fi
 command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 
 since_epoch="$(
@@ -126,6 +141,7 @@ if [[ -z "${runs}" ]]; then
       printf 'branch=%s\n' "${branch}"
       printf 'since_hours=%s\n' "${since_hours}"
       printf 'count=0\n'
+      printf 'auto_triage=%s\n' "${WLT_AUTO_TRIAGE_FAILED_RUNS}"
     } > "${WLT_FAILURES_OUTPUT_PREFIX}.meta"
     log "wrote ${WLT_FAILURES_OUTPUT_PREFIX}.tsv"
     log "wrote ${WLT_FAILURES_OUTPUT_PREFIX}.meta"
@@ -143,9 +159,19 @@ if [[ -n "${WLT_FAILURES_OUTPUT_PREFIX}" ]]; then
     printf 'branch=%s\n' "${branch}"
     printf 'since_hours=%s\n' "${since_hours}"
     printf 'count=%s\n' "$(printf '%s\n' "${runs}" | wc -l | tr -d ' ')"
+    printf 'auto_triage=%s\n' "${WLT_AUTO_TRIAGE_FAILED_RUNS}"
   } > "${WLT_FAILURES_OUTPUT_PREFIX}.meta"
   log "wrote ${WLT_FAILURES_OUTPUT_PREFIX}.tsv"
   log "wrote ${WLT_FAILURES_OUTPUT_PREFIX}.meta"
+fi
+
+triage_count=0
+triage_base=""
+triage_failures=0
+if [[ "${WLT_AUTO_TRIAGE_FAILED_RUNS}" == "1" ]]; then
+  triage_base="${WLT_AUTO_TRIAGE_DIR:-/tmp/gh-active-run-triage-$(date +%Y%m%d_%H%M%S)}"
+  mkdir -p "${triage_base}"
+  log "auto-triage enabled: base=${triage_base} max_runs=${WLT_AUTO_TRIAGE_MAX_RUNS} max_jobs=${WLT_AUTO_TRIAGE_MAX_JOBS}"
 fi
 
 while IFS=$'\t' read -r run_id workflow created_at run_url title; do
@@ -172,4 +198,23 @@ while IFS=$'\t' read -r run_id workflow created_at run_url title; do
   }
   bash "${ROOT_DIR}/ci/validation/extract-gh-job-failures.sh" "${tmp_log}"
   rm -f "${tmp_log}"
+
+  if [[ "${WLT_AUTO_TRIAGE_FAILED_RUNS}" == "1" ]]; then
+    if (( triage_count < WLT_AUTO_TRIAGE_MAX_RUNS )); then
+      triage_count=$((triage_count + 1))
+      triage_dir="${triage_base}/run-${run_id}"
+      triage_log="${triage_base}/run-${run_id}.log"
+      log "Auto-triage run ${run_id} -> ${triage_dir}"
+      if ! WLT_RUN_TRIAGE_DIR="${triage_dir}" \
+        bash "${ROOT_DIR}/ci/validation/gh-run-root-cause.sh" "${run_id}" "${WLT_AUTO_TRIAGE_MAX_JOBS}" \
+        > "${triage_log}" 2>&1; then
+        triage_failures=$((triage_failures + 1))
+        log "Auto-triage failed for run ${run_id}; see ${triage_log}"
+      fi
+    fi
+  fi
 done <<< "${runs}"
+
+if [[ "${WLT_AUTO_TRIAGE_FAILED_RUNS}" == "1" ]]; then
+  log "Auto-triage summary: attempts=${triage_count} failures=${triage_failures} base=${triage_base}"
+fi

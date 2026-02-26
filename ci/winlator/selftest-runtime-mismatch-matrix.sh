@@ -65,6 +65,17 @@ else
   [[ "${rc}" == "2" ]] || fail "expected exit code 2 for mismatch, got ${rc}"
 fi
 
+if python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-mismatch-matrix.py" \
+  --input "${tmp_dir}" \
+  --baseline-label steven104 \
+  --output-prefix "${out_prefix}" \
+  --fail-on-severity-at-or-above medium; then
+  fail "expected --fail-on-severity-at-or-above medium to return non-zero"
+else
+  rc=$?
+  [[ "${rc}" == "3" ]] || fail "expected exit code 3 for severity threshold, got ${rc}"
+fi
+
 python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-mismatch-matrix.py" \
   --input "${tmp_dir}" \
   --baseline-label steven104 \
@@ -84,12 +95,15 @@ rows = {row["label"]: row for row in payload["rows"]}
 assert rows["steven104"]["status"] == "baseline"
 assert rows["wine11"]["status"] == "hang_after_submit"
 assert rows["wine11"]["severity"] == "high"
+assert rows["wine11"]["severity_rank"] == "3"
 assert "GuestProgramLauncherComponent.java" in rows["wine11"]["patch_hint"]
 assert rows["protonwine10"]["status"] == "runtime_class_mismatch"
 assert rows["protonwine10"]["severity"] == "high"
+assert rows["protonwine10"]["severity_rank"] == "3"
 assert "wcp_common.sh" in rows["protonwine10"]["patch_hint"]
 assert rows["guarded"]["status"] == "runtime_guard_blocked"
 assert rows["guarded"]["severity"] == "high"
+assert rows["guarded"]["severity_rank"] == "3"
 assert "XServerDisplayActivity.java" in rows["guarded"]["patch_hint"]
 
 summary = summary_path.read_text(encoding="utf-8")

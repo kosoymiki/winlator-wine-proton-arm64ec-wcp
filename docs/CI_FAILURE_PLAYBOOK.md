@@ -85,12 +85,14 @@ To fetch recent failed runs and auto-parse their first failed job logs:
 - `bash ci/validation/gh-latest-failures.sh 5`
 - `bash ci/validation/gh-latest-failures.sh 20 main 24`
 - `WLT_FAILURES_OUTPUT_PREFIX=/tmp/gh-active-failures bash ci/validation/gh-latest-failures.sh 20 main 24`
+- `WLT_AUTO_TRIAGE_FAILED_RUNS=1 WLT_AUTO_TRIAGE_MAX_RUNS=3 WLT_AUTO_TRIAGE_MAX_JOBS=3 bash ci/validation/gh-latest-failures.sh 20 main 24`
 
 This is the fast path before manual `gh run view ... --log` triage.
 
 Use the third argument (`since_hours`) to filter stale failures and focus only on fresh regressions.
 The command now reports only workflows whose latest run is still failed (active failure state).
 With `WLT_FAILURES_OUTPUT_PREFIX`, it also writes `.tsv` + `.meta` snapshots for automation.
+With `WLT_AUTO_TRIAGE_FAILED_RUNS=1`, it also runs run-scoped root-cause triage for active failed runs.
 
 ## 8.1) Check mainline workflow health before deep triage
 
@@ -112,6 +114,7 @@ Outputs include:
 - `failed-jobs.tsv` with failed/cancelled/timed_out jobs.
 - per-job `*.analysis.txt` generated via `extract-gh-job-failures.sh`.
 - `root-cause-summary.tsv` for fast patch routing.
+- `root-cause-summary.json` with machine-readable `category/root_cause/first_hard_marker_line`.
 
 ## 9) Runtime crash matrix (device-side)
 
@@ -126,8 +129,10 @@ Outputs:
 - `runtime-mismatch-matrix.tsv`, `runtime-mismatch-matrix.md`, and `runtime-mismatch-matrix.json` with baseline comparison.
 - `runtime-mismatch-matrix.summary.txt` with status/severity aggregate counters.
 - Matrix rows include `patch_hint` (file-level fix target) to speed direct patch routing.
+- Matrix rows include `severity_rank` for deterministic severity threshold gates.
 - Runtime orchestrator console now prints non-baseline actionable rows as `status|severity|label|patch_hint|mismatch_keys`.
 - With `WLT_FAIL_ON_MISMATCH=1`, exits non-zero when non-baseline scenarios drift from baseline contract.
+- With `WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE=medium|high`, exits non-zero when drift severity reaches threshold.
 - `selftest-runtime-mismatch-matrix.sh` validates classifier behavior and exit contract without adb/device.
 - Scenario format in `WLT_SCENARIOS` is strict: `label:containerId` (numeric container id).
 - Labels are sanitized to safe folder names in output artifacts (`safe_label` stored in `scenario_meta.txt`).

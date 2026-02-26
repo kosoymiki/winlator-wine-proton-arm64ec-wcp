@@ -9,12 +9,12 @@ This repository keeps docs in two buckets:
 
 - `docs/CI_FAILURE_PLAYBOOK.md` - triage path for failed Wine/Proton workflows.
 - `ci/validation/extract-gh-job-failures.sh` - raw GH job log parser to isolate first hard failures.
-- `ci/validation/gh-latest-failures.sh` - fetch + parse active failed workflows (latest-run failure only) in one command, with optional TSV/meta export.
+- `ci/validation/gh-latest-failures.sh` - fetch + parse active failed workflows (latest-run failure only) in one command, with optional TSV/meta export and optional auto run-level triage.
 - `ci/validation/gh-mainline-health.sh` - checks latest health state of critical mainline workflows (`fresh + success`) and can export TSV/JSON snapshots.
 - `ci/validation/gh-run-root-cause.sh` - run-scoped triage: fetch failed jobs for one run and produce root-cause summaries/artifacts.
 - `ci/validation/collect-mainline-forensic-snapshot.sh` - one-shot collection of mainline health + active failures + URC check logs/metadata (optional per-run triage).
 - `ci/winlator/forensic-adb-runtime-contract.sh` - adb runtime forensic orchestrator for wine/proton scenario matrix.
-- `ci/winlator/forensic-runtime-mismatch-matrix.py` - baseline mismatch TSV/MD/JSON generator with status/severity/patch-hint routing.
+- `ci/winlator/forensic-runtime-mismatch-matrix.py` - baseline mismatch TSV/MD/JSON generator with status/severity/severity-rank/patch-hint routing.
 - `ci/winlator/selftest-runtime-mismatch-matrix.sh` - local selftest for mismatch classifier/exit-code contract.
 - `docs/PATCHSET_CONFLICT_REPORT.md` - generated ownership/conflict report for GN patchset.
 - `docs/PATCH_STACK_REFLECTIVE_AUDIT.md` - generated overlap/risk report for Winlator patch stack hot files.

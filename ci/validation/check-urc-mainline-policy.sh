@@ -12,12 +12,12 @@ require_file() {
 
 require_contains() {
   local file="$1" pattern="$2"
-  grep -qE "${pattern}" "${file}" || fail "Missing pattern '${pattern}' in ${file}"
+  grep -qE -- "${pattern}" "${file}" || fail "Missing pattern '${pattern}' in ${file}"
 }
 
 require_not_contains() {
   local file="$1" pattern="$2"
-  if grep -qE "${pattern}" "${file}"; then
+  if grep -qE -- "${pattern}" "${file}"; then
     fail "Forbidden pattern '${pattern}' found in ${file}"
   fi
 }
@@ -185,8 +185,13 @@ main() {
   require_file "ci/contents/validate-contents-json.py"
   require_file "ci/validation/gh-mainline-health.sh"
   require_file "ci/validation/gh-run-root-cause.sh"
+  require_file "ci/validation/gh-latest-failures.sh"
   require_file "ci/validation/collect-mainline-forensic-snapshot.sh"
   [[ -x "ci/validation/gh-run-root-cause.sh" ]] || fail "ci/validation/gh-run-root-cause.sh must be executable"
+  require_contains "ci/validation/gh-latest-failures.sh" 'WLT_AUTO_TRIAGE_FAILED_RUNS'
+  require_contains "ci/validation/gh-latest-failures.sh" 'WLT_AUTO_TRIAGE_MAX_RUNS'
+  require_contains "ci/validation/gh-latest-failures.sh" 'WLT_AUTO_TRIAGE_MAX_JOBS'
+  require_contains "ci/validation/gh-latest-failures.sh" 'gh-run-root-cause\.sh'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build Wine 11 ARM64EC \(WCP\)'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build Proton GE10 ARM64EC \(WCP\)'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build ProtonWine10 GameNative ARM64EC \(WCP\)'
@@ -211,8 +216,11 @@ main() {
   [[ -x "ci/winlator/forensic-adb-runtime-contract.sh" ]] || fail "ci/winlator/forensic-adb-runtime-contract.sh must be executable"
   [[ -x "ci/winlator/selftest-runtime-mismatch-matrix.sh" ]] || fail "ci/winlator/selftest-runtime-mismatch-matrix.sh must be executable"
   require_contains "ci/winlator/forensic-adb-runtime-contract.sh" 'Actionable drift rows'
+  require_contains "ci/winlator/forensic-adb-runtime-contract.sh" 'WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE'
   require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'patch_hint'
   require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'runtime_guard_blocked'
+  require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'severity_rank'
+  require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" '--fail-on-severity-at-or-above'
   bash "ci/winlator/selftest-runtime-mismatch-matrix.sh"
   require_file "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch"
   require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'RuntimeSignalContract'
