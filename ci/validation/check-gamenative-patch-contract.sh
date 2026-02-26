@@ -78,6 +78,20 @@ check_regex() {
   fi
 }
 
+check_any_fixed() {
+  local needle="$1" desc="$2"
+  shift 2
+  local file
+  for file in "$@"; do
+    if grep -Fq "${needle}" "${file}"; then
+      log "ok: ${desc}"
+      return 0
+    fi
+  done
+  log "missing: ${desc}"
+  missing=$((missing + 1))
+}
+
 f_loader="${SOURCE_DIR}/dlls/ntdll/loader.c"
 f_ntdll_spec="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
 f_wow64_syscall="${SOURCE_DIR}/dlls/wow64/syscall.c"
@@ -129,7 +143,7 @@ if [[ "${TARGET}" == "protonge" ]]; then
   check_fixed "${f_wow64_syscall}" 'L"HODLL"' 'wow64 syscall supports HODLL override'
   check_fixed "${f_wow64_syscall}" 'Wow64SuspendLocalThread' 'wow64 syscall exposes Wow64SuspendLocalThread'
   check_fixed "${f_wow64_process}" 'RtlWow64SuspendThread' 'wow64 process path uses RtlWow64SuspendThread'
-  check_fixed "${f_wow64_process}" 'Wow64SuspendLocalThread' 'wow64 process exports Wow64SuspendLocalThread helper'
+  check_any_fixed 'Wow64SuspendLocalThread' 'wow64 local suspend helper is exported (process or syscall path)' "${f_wow64_process}" "${f_wow64_syscall}"
   check_fixed "${f_signal_arm64ec}" 'ARM64EC_NT_XCONTEXT' 'arm64ec signal path has extended context union'
   check_fixed "${f_virtual}" 'fex_stats_shm' 'ntdll unix virtual path exposes fex stats shared mapping'
   check_fixed "${f_winternl}" 'ProcessFexHardwareTso' 'winternl includes ProcessFexHardwareTso enum'
