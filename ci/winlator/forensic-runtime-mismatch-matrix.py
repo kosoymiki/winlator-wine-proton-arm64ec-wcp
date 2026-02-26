@@ -23,25 +23,54 @@ KEY_FIELDS = (
 )
 
 
-def classify_row(row: dict[str, str], baseline: dict[str, str]) -> tuple[str, str, str]:
+def classify_row(row: dict[str, str], baseline: dict[str, str]) -> tuple[str, str, str, str]:
     if row["label"] == baseline["label"]:
-        return ("baseline", "info", "reference-row")
+        return ("baseline", "info", "reference-row", "-")
+
+    mismatch_reason = row.get("runtime_mismatch_reason", "-").strip().lower()
+    if mismatch_reason not in {"", "-", "none", "null"}:
+        return (
+            "runtime_guard_blocked",
+            "high",
+            "runtime-mismatch-guard",
+            "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java + app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+        )
 
     if row.get("launch_submit") == "0" and row.get("saw_submit") == "0":
-        return ("no_submit", "high", "launch-route-or-precheck")
+        return (
+            "no_submit",
+            "high",
+            "launch-route-or-precheck",
+            "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java + app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+        )
 
     if row.get("launch_submit") == "1" and row.get("launch_exit") == "0" and row.get("saw_terminal") == "0":
-        return ("hang_after_submit", "high", "runtime-exec-path")
+        return (
+            "hang_after_submit",
+            "high",
+            "runtime-exec-path",
+            "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+        )
 
     baseline_runtime = baseline.get("runtime_class", "-")
     runtime_class = row.get("runtime_class", "-")
     if baseline_runtime != "-" and runtime_class != "-" and runtime_class != baseline_runtime:
-        return ("runtime_class_mismatch", "high", "bionic-runtime-contract")
+        return (
+            "runtime_class_mismatch",
+            "high",
+            "bionic-runtime-contract",
+            "ci/lib/wcp_common.sh + ci/lib/winlator-runtime.sh",
+        )
 
     if row.get("mismatch_count", "0") != "0":
-        return ("contract_drift", "medium", "signal-envelope-and-policy")
+        return (
+            "contract_drift",
+            "medium",
+            "signal-envelope-and-policy",
+            "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java + app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+        )
 
-    return ("ok", "low", "none")
+    return ("ok", "low", "none", "-")
 
 
 def read_text(path: Path) -> str:
@@ -170,10 +199,11 @@ def append_mismatch_fields(rows: list[dict[str, str]], baseline: dict[str, str])
                 mismatch_keys.append(key)
         row["mismatch_count"] = str(len(mismatch_keys))
         row["mismatch_keys"] = ",".join(mismatch_keys) if mismatch_keys else "-"
-        status, severity, focus = classify_row(row, baseline)
+        status, severity, focus, patch_hint = classify_row(row, baseline)
         row["status"] = status
         row["severity"] = severity
         row["recommended_focus"] = focus
+        row["patch_hint"] = patch_hint
 
 
 def write_tsv(path: Path, rows: list[dict[str, str]]) -> None:
@@ -194,11 +224,11 @@ def write_markdown(path: Path, rows: list[dict[str, str]], baseline: dict[str, s
     lines.append(f"- Baseline label: `{baseline['label']}`")
     lines.append(f"- Baseline container: `{baseline.get('container_id', '-')}`")
     lines.append("")
-    lines.append("| Label | Container | Submit | Terminal | Launch Submit | Launch Exit | Runtime Class | Signal Policy | Mismatch Count | Status | Severity | Focus | Mismatch Keys |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | --- | --- | --- | --- |")
+    lines.append("| Label | Container | Submit | Terminal | Launch Submit | Launch Exit | Runtime Class | Signal Policy | Mismatch Count | Status | Severity | Focus | Patch Hint | Mismatch Keys |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- | --- | ---: | --- | --- | --- | --- | --- |")
     for row in rows:
         lines.append(
-            "| {label} | {container_id} | {saw_submit} | {saw_terminal} | {launch_submit} | {launch_exit} | {runtime_class} | {signal_policy} | {mismatch_count} | {status} | {severity} | {recommended_focus} | {mismatch_keys} |".format(
+            "| {label} | {container_id} | {saw_submit} | {saw_terminal} | {launch_submit} | {launch_exit} | {runtime_class} | {signal_policy} | {mismatch_count} | {status} | {severity} | {recommended_focus} | {patch_hint} | {mismatch_keys} |".format(
                 **row
             )
         )

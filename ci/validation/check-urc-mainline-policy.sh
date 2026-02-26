@@ -207,6 +207,9 @@ main() {
   require_file "ci/winlator/selftest-runtime-mismatch-matrix.sh"
   [[ -x "ci/winlator/forensic-adb-runtime-contract.sh" ]] || fail "ci/winlator/forensic-adb-runtime-contract.sh must be executable"
   [[ -x "ci/winlator/selftest-runtime-mismatch-matrix.sh" ]] || fail "ci/winlator/selftest-runtime-mismatch-matrix.sh must be executable"
+  require_contains "ci/winlator/forensic-adb-runtime-contract.sh" 'Actionable drift rows'
+  require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'patch_hint'
+  require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'runtime_guard_blocked'
   bash "ci/winlator/selftest-runtime-mismatch-matrix.sh"
   require_file "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch"
   require_contains "ci/winlator/patches/0059-runtime-signal-contract-helper-and-adoption.patch" 'RuntimeSignalContract'

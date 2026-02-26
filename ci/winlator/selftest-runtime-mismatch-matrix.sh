@@ -11,7 +11,7 @@ cleanup() { rm -rf "${tmp_dir}"; }
 trap cleanup EXIT
 
 mk_scenario() {
-  local label="$1" cid="$2" saw_submit="$3" saw_terminal="$4" runtime_class="$5" with_exit="$6"
+  local label="$1" cid="$2" saw_submit="$3" saw_terminal="$4" runtime_class="$5" with_exit="$6" mismatch_reason="${7:-}"
   local dir="${tmp_dir}/${label}"
   mkdir -p "${dir}"
   cat > "${dir}/scenario_meta.txt" <<EOF
@@ -33,6 +33,7 @@ EOF
     echo 'LAUNCH_EXEC_SUBMIT'
     [[ "${with_exit}" == "1" ]] && echo 'LAUNCH_EXEC_EXIT'
     echo "runtimeClass=${runtime_class}"
+    [[ -n "${mismatch_reason}" ]] && echo "runtimeMismatchReason=${mismatch_reason}"
     echo 'WINLATOR_SIGNAL_POLICY=external-only'
     echo 'WINLATOR_SIGNAL_INPUT_ROUTE=shortcut'
     echo 'WINLATOR_SIGNAL_INPUT_LAUNCH_KIND=guest'
@@ -48,6 +49,7 @@ EOF
 mk_scenario "steven104" "3" "1" "1" "bionic-native" "1"
 mk_scenario "wine11" "1" "1" "0" "bionic-native" "0"
 mk_scenario "protonwine10" "2" "1" "1" "glibc_wrapped" "1"
+mk_scenario "guarded" "4" "1" "0" "bionic-native" "0" "runtime_class_guard_failed"
 
 out_prefix="${tmp_dir}/out/runtime-mismatch-matrix"
 mkdir -p "$(dirname -- "${out_prefix}")"
@@ -82,12 +84,17 @@ rows = {row["label"]: row for row in payload["rows"]}
 assert rows["steven104"]["status"] == "baseline"
 assert rows["wine11"]["status"] == "hang_after_submit"
 assert rows["wine11"]["severity"] == "high"
+assert "GuestProgramLauncherComponent.java" in rows["wine11"]["patch_hint"]
 assert rows["protonwine10"]["status"] == "runtime_class_mismatch"
 assert rows["protonwine10"]["severity"] == "high"
+assert "wcp_common.sh" in rows["protonwine10"]["patch_hint"]
+assert rows["guarded"]["status"] == "runtime_guard_blocked"
+assert rows["guarded"]["severity"] == "high"
+assert "XServerDisplayActivity.java" in rows["guarded"]["patch_hint"]
 
 summary = summary_path.read_text(encoding="utf-8")
-assert "rows_with_mismatch=2" in summary
-assert "status_counts=baseline:1,hang_after_submit:1,runtime_class_mismatch:1" in summary
+assert "rows_with_mismatch=3" in summary
+assert "status_counts=baseline:1,hang_after_submit:1,runtime_class_mismatch:1,runtime_guard_blocked:1" in summary
 PY
 
 log "runtime mismatch matrix selftest passed"

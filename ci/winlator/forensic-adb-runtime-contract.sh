@@ -38,4 +38,32 @@ if [[ -f "${summary_file}" ]]; then
   sed 's/^/[forensic-runtime]   /' "${summary_file}"
 fi
 
+json_file="${WLT_OUT_DIR}/runtime-mismatch-matrix.json"
+if [[ -f "${json_file}" ]]; then
+  log "Actionable drift rows (status|severity|label|patch_hint|mismatch_keys):"
+  python3 - "${json_file}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+rows = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("rows", [])
+printed = False
+for row in rows:
+    if row.get("status") in {"baseline", "ok"}:
+        continue
+    print(
+        "[forensic-runtime]   {status}|{severity}|{label}|{patch_hint}|{mismatch_keys}".format(
+            status=row.get("status", "-"),
+            severity=row.get("severity", "-"),
+            label=row.get("label", "-"),
+            patch_hint=row.get("patch_hint", "-"),
+            mismatch_keys=row.get("mismatch_keys", "-"),
+        )
+    )
+    printed = True
+if not printed:
+    print("[forensic-runtime]   none")
+PY
+fi
+
 log "Done: ${WLT_OUT_DIR}"

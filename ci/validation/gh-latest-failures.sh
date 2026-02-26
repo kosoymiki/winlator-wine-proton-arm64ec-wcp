@@ -57,6 +57,8 @@ runs_json="$(
 )"
 
 runs_json_file="$(mktemp /tmp/gh-active-runs.XXXXXX.json)"
+cleanup_tmp() { rm -f "${runs_json_file}"; }
+trap cleanup_tmp EXIT
 printf '%s\n' "${runs_json}" > "${runs_json_file}"
 
 runs="$(
@@ -113,6 +115,7 @@ for row in bad[:limit]:
 PY
 )"
 rm -f "${runs_json_file}"
+trap - EXIT
 
 if [[ -z "${runs}" ]]; then
   log "No active failed workflows for branch=${branch} within ${since_hours}h."

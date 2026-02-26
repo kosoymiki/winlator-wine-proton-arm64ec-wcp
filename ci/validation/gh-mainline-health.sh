@@ -40,16 +40,21 @@ runs_json="$(
     --json databaseId,workflowName,status,conclusion,createdAt,url
 )"
 
+tmp_runs_json="$(mktemp /tmp/gh_mainline_health_runs_XXXXXX.json)"
+cleanup() { rm -f "${tmp_runs_json}"; }
+trap cleanup EXIT
+printf '%s' "${runs_json}" > "${tmp_runs_json}"
+
 report="$(
-  RUNS_JSON="${runs_json}" python3 - "${since_hours}" <<'PY'
+  python3 - "${tmp_runs_json}" "${since_hours}" <<'PY'
 import json
-import os
 import sys
 from datetime import datetime, timezone
 
-since_hours = int(sys.argv[1])
+with open(sys.argv[1], "r", encoding="utf-8") as fh:
+    runs = json.load(fh)
+since_hours = int(sys.argv[2])
 now = datetime.now(timezone.utc)
-runs = json.loads(os.environ.get("RUNS_JSON", "[]") or "[]")
 
 targets = [
     "Build Wine 11 ARM64EC (WCP)",

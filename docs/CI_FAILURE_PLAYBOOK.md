@@ -112,6 +112,8 @@ Outputs:
 - Complete per-scenario forensic capture (`logcat`, `wait-status`, `forensics tail`).
 - `runtime-mismatch-matrix.tsv`, `runtime-mismatch-matrix.md`, and `runtime-mismatch-matrix.json` with baseline comparison.
 - `runtime-mismatch-matrix.summary.txt` with status/severity aggregate counters.
+- Matrix rows include `patch_hint` (file-level fix target) to speed direct patch routing.
+- Runtime orchestrator console now prints non-baseline actionable rows as `status|severity|label|patch_hint|mismatch_keys`.
 - With `WLT_FAIL_ON_MISMATCH=1`, exits non-zero when non-baseline scenarios drift from baseline contract.
 - `selftest-runtime-mismatch-matrix.sh` validates classifier behavior and exit contract without adb/device.
 - Scenario format in `WLT_SCENARIOS` is strict: `label:containerId` (numeric container id).
