@@ -574,10 +574,6 @@ backport_protonge_winex11() {
   file="${SOURCE_DIR}/dlls/winex11.drv/window.c"
   [[ -f "${file}" ]] || fail "missing ${file}"
 
-  if grep -Fq 'class_hints->res_name = process_name;' "${file}" && grep -Fq '#ifdef __ANDROID__' "${file}"; then
-    return 0
-  fi
-
   python3 - "${file}" <<'PY'
 import pathlib
 import re
@@ -587,40 +583,48 @@ path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 updated = text
 
-old_block = re.compile(
-    r'\s*static char steam_proton\[\] = "steam_proton";\n'
-    r'\s*const char \*app_id = getenv\("SteamAppId"\);\n'
-    r'\s*char proton_app_class\[128\];\n\n'
-    r'\s*if\(app_id && \*app_id\)\{\n'
-    r'\s*snprintf\(proton_app_class, sizeof\(proton_app_class\), "steam_app_%s", app_id\);\n'
-    r'\s*class_hints->res_name = proton_app_class;\n'
-    r'\s*class_hints->res_class = proton_app_class;\n'
-    r'\s*\}else\{\n'
-    r'\s*class_hints->res_name = steam_proton;\n'
-    r'\s*class_hints->res_class = steam_proton;\n'
-    r'\s*\}\n'
+steam_marker = 'static char steam_proton[] = "steam_proton";'
+process_marker = "class_hints->res_name = process_name;"
+set_hint_marker = 'XSetClassHint( display, window, class_hints );'
+replacement = (
+    "        #ifdef __ANDROID__\n"
+    "        class_hints->res_name = process_name;\n"
+    "        class_hints->res_class = process_name;\n"
+    "        #else\n"
+    "        static char steam_proton[] = \"steam_proton\";\n"
+    "        const char *app_id = getenv(\"SteamAppId\");\n"
+    "        char proton_app_class[128];\n"
+    "\n"
+    "        if (app_id && *app_id)\n"
+    "        {\n"
+    "            snprintf( proton_app_class, sizeof(proton_app_class), \"steam_app_%s\", app_id );\n"
+    "            class_hints->res_name = proton_app_class;\n"
+    "            class_hints->res_class = proton_app_class;\n"
+    "        }\n"
+    "        else\n"
+    "        {\n"
+    "            class_hints->res_name = steam_proton;\n"
+    "            class_hints->res_class = steam_proton;\n"
+    "        }\n"
+    "        #endif\n"
+    "\n"
 )
-new_block = (
-    '        #ifdef __ANDROID__\n'
-    '        class_hints->res_name = process_name;\n'
-    '        class_hints->res_class = process_name;\n'
-    '        #else\n'
-    '        static char steam_proton[] = "steam_proton";\n'
-    '        const char *app_id = getenv("SteamAppId");\n'
-    '        char proton_app_class[128];\n\n'
-    '        if(app_id && *app_id){\n'
-    '            snprintf(proton_app_class, sizeof(proton_app_class), "steam_app_%s", app_id);\n'
-    '            class_hints->res_name = proton_app_class;\n'
-    '            class_hints->res_class = proton_app_class;\n'
-    '        }else{\n'
-    '            class_hints->res_name = steam_proton;\n'
-    '            class_hints->res_class = steam_proton;\n'
-    '        }\n'
-    '        #endif\n'
-)
-updated, class_count = old_block.subn(new_block, updated, count=1)
-if class_count != 1:
-    raise SystemExit("class hints replacement failed")
+if steam_marker in updated or process_marker in updated:
+    pivot = updated.find(steam_marker) if steam_marker in updated else updated.find(process_marker)
+    start = updated.rfind("\n", 0, pivot)
+    andr_if = updated.rfind("#ifdef __ANDROID__", 0, pivot)
+    if andr_if >= 0:
+        start = updated.rfind("\n", 0, andr_if)
+    if start < 0:
+        start = 0
+    else:
+        start += 1
+    end = updated.find(set_hint_marker, pivot)
+    if end < 0:
+        raise SystemExit("XSetClassHint marker not found for class hints block")
+    updated = updated[:start] + replacement + updated[end:]
+else:
+    raise SystemExit("class hints marker not found")
 
 pid_block = re.compile(
     r'(\s*/\* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties \*/\n'
@@ -630,8 +634,11 @@ pid_block = re.compile(
     r'\s*XChangeProperty\(display, window, x11drv_atom\(_NET_WM_PID\),\n'
     r'\s*XA_CARDINAL, 32, PropModeReplace, \(unsigned char \*\)&i, 1\);\n)'
 )
-updated, pid_count = pid_block.subn(r'\1#ifndef __ANDROID__\n\2#endif\n', updated, count=1)
-if pid_count != 1:
+if "#ifndef __ANDROID__" not in updated:
+    updated, pid_count = pid_block.subn(r'\1#ifndef __ANDROID__\n\2#endif\n', updated, count=1)
+else:
+    pid_count = 1
+if pid_count < 1:
     raise SystemExit("pid guard insertion failed")
 
 if 'NtUserGetWindowThread( hwnd, &pid );' not in updated:
@@ -650,6 +657,21 @@ if 'NtUserGetWindowThread( hwnd, &pid );' not in updated:
     if marker not in updated:
         raise SystemExit("set_net_active_window marker not found")
     updated = updated.replace(marker, insert, 1)
+
+# Some proton-ge trees use xinput2_rawinput in window.c while the field can be
+# absent depending on x11 feature probing. Guard this usage explicitly.
+rawinput_block = (
+    "                data->xinput2_rawinput = TRUE;\n"
+    "                x11drv_xinput2_enable( data->display, DefaultRootWindow( data->display ) );\n"
+)
+if rawinput_block in updated and "#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H" not in updated[updated.find(rawinput_block)-160:updated.find(rawinput_block)+80]:
+    updated = updated.replace(
+        rawinput_block,
+        "#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H\n"
+        + rawinput_block +
+        "#endif\n",
+        1,
+    )
 
 path.write_text(updated, encoding="utf-8")
 PY

@@ -42,7 +42,7 @@ main() {
   [[ -f "${wcp_path}" ]] || fail "WCP not found: ${wcp_path}"
 
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "${tmp_dir}"' EXIT
+  trap 'rm -rf "${tmp_dir:-}"' EXIT
   winlator_extract_wcp_archive "${wcp_path}" "${tmp_dir}" || fail "Unable to extract WCP"
   wcp_root="${tmp_dir}"
 
