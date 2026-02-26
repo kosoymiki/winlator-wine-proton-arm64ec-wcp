@@ -168,7 +168,7 @@ wcp_configure_profile_args() {
 --without-wayland
 --without-xcomposite
 --without-xcursor
---without-xfixes
+--with-xfixes
 --without-xinerama
 --without-xinput
 --without-xinput2

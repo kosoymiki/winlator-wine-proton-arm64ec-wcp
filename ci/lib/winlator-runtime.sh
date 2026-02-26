@@ -498,7 +498,7 @@ winlator_adopt_bionic_unix_core_modules() {
   local tmp_extract src_unix dst_unix mod source_unix_abi src_mod_abi
   local copied_count=0
   local -a core_modules
-  local -a glibc_modules replaced_glibc
+  local -a glibc_modules replaced_glibc strict_allowed_glibc_modules blocking_glibc_modules
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
@@ -596,6 +596,9 @@ winlator_adopt_bionic_unix_core_modules() {
   fi
 
   if winlator_bionic_mainline_strict; then
+    : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so}"
+    # shellcheck disable=SC2206
+    strict_allowed_glibc_modules=( ${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES} )
     mapfile -t glibc_modules < <(winlator_list_glibc_unix_modules "${dst_unix}")
     for mod in "${glibc_modules[@]}"; do
       [[ -f "${src_unix}/${mod}" ]] || continue
@@ -610,7 +613,24 @@ winlator_adopt_bionic_unix_core_modules() {
     fi
     mapfile -t glibc_modules < <(winlator_list_glibc_unix_modules "${dst_unix}")
     if [[ "${#glibc_modules[@]}" -gt 0 ]]; then
-      fail "Strict bionic mainline found remaining glibc unix modules after adoption: ${glibc_modules[*]}"
+      blocking_glibc_modules=()
+      for mod in "${glibc_modules[@]}"; do
+        local allowed=0
+        local opt
+        for opt in "${strict_allowed_glibc_modules[@]}"; do
+          [[ "${mod}" == "${opt}" ]] || continue
+          allowed=1
+          break
+        done
+        if [[ "${allowed}" != "1" ]]; then
+          blocking_glibc_modules+=("${mod}")
+        fi
+      done
+
+      if [[ "${#blocking_glibc_modules[@]}" -gt 0 ]]; then
+        fail "Strict bionic mainline found remaining glibc unix modules after adoption: ${blocking_glibc_modules[*]}"
+      fi
+      log "Strict bionic mode tolerated optional glibc unix modules: ${glibc_modules[*]}"
     fi
   fi
 
