@@ -757,6 +757,90 @@ run_backport_action() {
   report "${patch}" "${action}" "applied" "targeted-backport"
 }
 
+normalize_winebrowser_android_bridge() {
+  local file
+  file="${SOURCE_DIR}/programs/winebrowser/main.c"
+  [[ -f "${file}" ]] || return 0
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+if "send_android_message" not in updated and "WINE_OPEN_WITH_ANDROID_BROWSER" not in updated:
+    raise SystemExit(0)
+
+updated = re.sub(
+    r'send\(\s*sock_fd\s*,\s*&net_requestcode\s*,\s*sizeof\(net_requestcode\)\s*,\s*0\s*\)',
+    'send(sock_fd, (const char *)&net_requestcode, sizeof(net_requestcode), 0)',
+    updated,
+)
+updated = re.sub(
+    r'send\(\s*sock_fd\s*,\s*&net_data_length\s*,\s*sizeof\(net_data_length\)\s*,\s*0\s*\)',
+    'send(sock_fd, (const char *)&net_data_length, sizeof(net_data_length), 0)',
+    updated,
+)
+
+# Fix historical typo that silently disables the env gate.
+updated = updated.replace("WINE_OPEN_WITH_ANDROID_BROwSER", "WINE_OPEN_WITH_ANDROID_BROWSER")
+
+if updated != text:
+    path.write_text(updated, encoding="utf-8")
+PY
+}
+
+normalize_winex11_mouse_xfixes_calls() {
+  local file
+  file="${SOURCE_DIR}/dlls/winex11.drv/mouse.c"
+  [[ -f "${file}" ]] || return 0
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+
+hide_call = "    pXFixesHideCursor( data->display, root_window );"
+show_call = "    pXFixesShowCursor( data->display, root_window );"
+
+def wrap_once(src: str, call: str) -> str:
+    escaped = re.escape(call)
+    already = re.compile(
+        r"#ifdef HAVE_X11_EXTENSIONS_XFIXES_H\s*\n"
+        + escaped
+        + r"\s*\n#endif",
+        re.M,
+    )
+    if already.search(src):
+        return src
+    return src.replace(
+        call,
+        "#ifdef HAVE_X11_EXTENSIONS_XFIXES_H\n" + call + "\n#endif",
+        1,
+    )
+
+updated = wrap_once(updated, hide_call)
+updated = wrap_once(updated, show_call)
+
+if updated != text:
+    path.write_text(updated, encoding="utf-8")
+PY
+}
+
+run_post_patch_normalization() {
+  normalize_winebrowser_android_bridge
+  report "__post_patch__/winebrowser" "normalize" "applied" "bridge-cast-env-fixes"
+  normalize_winex11_mouse_xfixes_calls
+  report "__post_patch__/winex11-mouse" "normalize" "applied" "xfixes-guard-fix"
+}
+
 ensure_android_sysvshm_header() {
   local src_shm_h dst_shm_h
   src_shm_h="${WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT}/sys/shm.h"
@@ -836,5 +920,7 @@ while IFS=$'\t' read -r patch wine_action protonge_action required note; do
       ;;
   esac
 done < "${WCP_GN_PATCHSET_MANIFEST}"
+
+run_post_patch_normalization
 
 log "Patchset report: ${WCP_GN_PATCHSET_REPORT}"

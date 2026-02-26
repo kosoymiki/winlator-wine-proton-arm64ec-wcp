@@ -92,12 +92,23 @@ check_any_fixed() {
   missing=$((missing + 1))
 }
 
+check_absent_fixed() {
+  local file="$1" needle="$2" desc="$3"
+  if grep -Fq "${needle}" "${file}"; then
+    log "missing: ${desc}"
+    missing=$((missing + 1))
+  else
+    log "ok: ${desc}"
+  fi
+}
+
 f_loader="${SOURCE_DIR}/dlls/ntdll/loader.c"
 f_ntdll_spec="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
 f_wow64_syscall="${SOURCE_DIR}/dlls/wow64/syscall.c"
 f_wow64_spec="${SOURCE_DIR}/dlls/wow64/wow64.spec"
 f_winternl="${SOURCE_DIR}/include/winternl.h"
 f_menubuilder="${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c"
+f_winebrowser="${SOURCE_DIR}/programs/winebrowser/main.c"
 
 for f in "${f_loader}" "${f_ntdll_spec}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_menubuilder}"; do
   [[ -f "${f}" ]] || fail "required source file missing: ${f}"
@@ -120,6 +131,13 @@ check_fixed "${f_winternl}" 'THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE' 'wintern
 check_regex "${f_menubuilder}" 'icons\\\\hicolor' 'winemenubuilder writes icons to xdg hicolor path'
 check_fixed "${f_menubuilder}" 'WINECONFIGDIR' 'winemenubuilder uses WINECONFIGDIR in Exec line'
 check_regex "${f_menubuilder}" 'fprintf\(file, "wine ' 'winemenubuilder prefixes Exec with wine'
+
+if [[ -f "${f_winebrowser}" ]] && grep -Fq 'send_android_message' "${f_winebrowser}"; then
+  check_regex "${f_winebrowser}" 'send\(sock_fd,\s*\(const char \*\)&net_requestcode,\s*sizeof\(net_requestcode\),\s*0\)' 'winebrowser send() casts request code buffer'
+  check_regex "${f_winebrowser}" 'send\(sock_fd,\s*\(const char \*\)&net_data_length,\s*sizeof\(net_data_length\),\s*0\)' 'winebrowser send() casts payload length buffer'
+  check_fixed "${f_winebrowser}" 'WINE_OPEN_WITH_ANDROID_BROWSER' 'winebrowser uses canonical WINE_OPEN_WITH_ANDROID_BROWSER env key'
+  check_absent_fixed "${f_winebrowser}" 'WINE_OPEN_WITH_ANDROID_BROwSER' 'winebrowser does not use typo BROwSER env key'
+fi
 
 if [[ "${TARGET}" == "wine" ]]; then
   f_wineboot="${SOURCE_DIR}/programs/wineboot/wineboot.c"

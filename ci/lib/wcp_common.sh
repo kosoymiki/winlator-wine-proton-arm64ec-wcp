@@ -86,8 +86,11 @@ wcp_make_logged() {
           log_size="$(wc -c < "${log_file}" 2>/dev/null || echo 0)"
           wcp_log "heartbeat: make -j${jobs} ${target_desc} running (${elapsed}s, log=${log_size}B)"
         done
-        wait "${make_pid}" || rc=$?
-        if [[ ${rc:-0} -eq 0 ]]; then
+        rc=0
+        if ! wait "${make_pid}"; then
+          rc=$?
+        fi
+        if [[ ${rc} -eq 0 ]]; then
           return 0
         fi
         wcp_log "make -j${jobs} ${target_desc} failed (rc=${rc}), tail ${log_file}:"
