@@ -23,10 +23,16 @@ Default WCP builds now target `bionic/native` runtime class and do not bundle
   from a pinned glibc source tarball and supplements adjacent runtime libs.
   This is used automatically in `pinned-source` mode when no prebuilt runtime
   dir/archive is provided.
+- `source-patches/apply-android-seccomp-compat.sh` — optional Termux-inspired
+  source patchset for Android app seccomp compatibility (`rseq`/`set_robust_list`
+  guardrails). Wired automatically for non-`host` glibc source mode unless
+  explicitly overridden.
 
 ## CI variables (all WCP builders)
 
 - `WCP_GLIBC_SOURCE_MODE=host|pinned-source`
+- `WCP_GLIBC_SOURCE_PATCH_ID`
+- `WCP_GLIBC_SOURCE_PATCH_SCRIPT`
 - `WCP_GLIBC_RUNTIME_DIR`
 - `WCP_GLIBC_RUNTIME_ARCHIVE`
 - `WCP_GLIBC_RUNTIME_SUBDIR`
@@ -49,6 +55,7 @@ default and auto-switches to enforce mode for `pinned-source` runtime builds.
 Current `glibc-wrapped` lane targets:
 - `WCP_GLIBC_SOURCE_MODE=pinned-source`
 - `WCP_GLIBC_VERSION=2.43`
+- `WCP_GLIBC_SOURCE_PATCH_ID=android-seccomp-rseq-robust-v1`
 
 Default builder runtime policy:
 - `WCP_RUNTIME_CLASS_TARGET=bionic-native`

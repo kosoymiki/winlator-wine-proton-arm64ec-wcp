@@ -892,6 +892,8 @@ winlator_bundle_glibc_runtime_from_pinned_source() {
   local build_script="${ROOT_DIR:-}/ci/runtime-bundle/build-glibc-runtime-from-source.sh"
   local cache_root="${WCP_GLIBC_BUILD_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-glibc-runtime-cache}"
   local cached_runtime_dir="${cache_root}/runtime-${WCP_GLIBC_VERSION:-unknown}-${WCP_GLIBC_TARGET_VERSION:-target}"
+  local source_patch_script="${WCP_GLIBC_SOURCE_PATCH_SCRIPT:-}"
+  local source_patch_id="${WCP_GLIBC_SOURCE_PATCH_ID:-}"
   local -a build_args=()
 
   case "${WCP_GLIBC_SOURCE_MODE:-host}" in
@@ -922,6 +924,12 @@ winlator_bundle_glibc_runtime_from_pinned_source() {
       )
       if [[ -n "${WCP_GLIBC_SOURCE_SHA256:-}" ]]; then
         build_args+=(--src-sha256 "${WCP_GLIBC_SOURCE_SHA256}")
+      fi
+      if [[ -n "${source_patch_script}" ]]; then
+        build_args+=(--source-patch-script "${source_patch_script}")
+      fi
+      if [[ -n "${source_patch_id}" ]]; then
+        build_args+=(--source-patch-id "${source_patch_id}")
       fi
       "${build_script}" "${build_args[@]}"
     fi
@@ -1068,12 +1076,20 @@ loader="\${runtime}/ld-linux-aarch64.so.1"
 real="\${bindir}/${real_name}"
 libpath="\${runtime}:\${runtime}/deps:\${root}/lib:\${root}/lib64:\${root}/lib/aarch64-linux-gnu:\${root}/lib/wine:\${root}/lib/wine/aarch64-unix:\${root}/lib/wine/x86_64-unix:\${root}/usr/lib:\${root}/usr/lib64:\${root}/usr/lib/aarch64-linux-gnu"
 winedllpath="\${root}/lib/wine/aarch64-windows:\${root}/lib/wine/i386-windows:\${root}/lib/wine/x86_64-windows:\${root}/lib/wine/aarch64-unix:\${root}/lib/wine/x86_64-unix"
+tmpdir="\${root}/tmp"
+vartmp="\${root}/var/tmp"
+xdg_runtime="\${tmpdir}/xdg-runtime"
+mkdir -p "\${tmpdir}" "\${vartmp}" "\${xdg_runtime}" 2>/dev/null || true
 export PATH="\${bindir}:\${root}/bin:\${PATH}"
 export WINEDLLPATH="\${winedllpath}\${WINEDLLPATH:+:\${WINEDLLPATH}}"
 export LD_LIBRARY_PATH="\${libpath}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+export GLIBC_LD_LIBRARY_PATH="\${libpath}\${GLIBC_LD_LIBRARY_PATH:+:\${GLIBC_LD_LIBRARY_PATH}}"
+[ -n "\${TMPDIR:-}" ] || export TMPDIR="\${tmpdir}"
+[ -n "\${XDG_RUNTIME_DIR:-}" ] || export XDG_RUNTIME_DIR="\${xdg_runtime}"
 # Winlator injects Android sysvshm as a bionic LD_PRELOAD. This breaks glibc-wrapped Wine/Hangover
 # launchers (missing libdl.so/ld-android.so or early traps), so glibc wrappers must clear it.
 unset LD_PRELOAD
+unset GLIBC_LD_PRELOAD
 # Android app seccomp often blocks glibc rseq and causes SIGSYS (signal 31) very early.
 case ":\${GLIBC_TUNABLES:-}:" in
   *:glibc.pthread.rseq=*:) ;;
@@ -1192,9 +1208,13 @@ winlator_validate_launchers() {
     shebang="$(head -n1 "${wine_bin}" || true)"
     [[ "${shebang}" == "#!/system/bin/sh" ]] || fail "bin/wine wrapper must use #!/system/bin/sh for Android execution"
     [[ -x "${WCP_ROOT}/lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1" ]] || fail "Missing wrapped runtime loader: lib/wine/wcp-glibc-runtime/ld-linux-aarch64.so.1"
+    grep -Fq 'export GLIBC_LD_LIBRARY_PATH=' "${wine_bin}" || fail "bin/wine glibc wrapper must mirror library search path into GLIBC_LD_LIBRARY_PATH"
+    grep -Fq 'export TMPDIR=' "${wine_bin}" || fail "bin/wine glibc wrapper must ensure TMPDIR for Android path compatibility"
     grep -Fq 'unset LD_PRELOAD' "${wine_bin}" || fail "bin/wine glibc wrapper must clear LD_PRELOAD for Android bionic preload compatibility"
+    grep -Fq 'unset GLIBC_LD_PRELOAD' "${wine_bin}" || fail "bin/wine glibc wrapper must clear GLIBC_LD_PRELOAD for Android bionic preload compatibility"
     grep -Fq 'glibc.pthread.rseq=0' "${wine_bin}" || fail "bin/wine glibc wrapper must disable glibc rseq on Android"
     grep -Fq 'unset LD_PRELOAD' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must clear LD_PRELOAD for Android bionic preload compatibility"
+    grep -Fq 'unset GLIBC_LD_PRELOAD' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must clear GLIBC_LD_PRELOAD for Android bionic preload compatibility"
     grep -Fq 'glibc.pthread.rseq=0' "${wineserver_bin}" || fail "bin/wineserver glibc wrapper must disable glibc rseq on Android"
   fi
 

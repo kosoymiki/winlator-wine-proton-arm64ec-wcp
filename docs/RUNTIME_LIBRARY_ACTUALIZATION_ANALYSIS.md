@@ -13,6 +13,10 @@ This document tracks which runtime libraries in the WCP packaging pipeline shoul
   - `GLIBC_TUNABLES=glibc.pthread.rseq=0`
 - Repo now has **glibc runtime lane plumbing** (`host` vs `pinned-source`) and WCP forensics provenance fields, and WCP builders now default to **`pinned-source` target `2.43`** (with host override still available).
 - Repo now records a **glibc runtime bundle inventory** and **version markers** (`glibc-runtime-libs.tsv`, `glibc-runtime-version-markers.tsv`) and can run lock validation in audit/enforce mode.
+- Repo now has an optional **Android seccomp source patch lane** for pinned glibc builds:
+  - `WCP_GLIBC_SOURCE_PATCH_ID=android-seccomp-rseq-robust-v1`
+  - `WCP_GLIBC_SOURCE_PATCH_SCRIPT=ci/runtime-bundle/source-patches/apply-android-seccomp-compat.sh`
+  - applies before `glibc` configure/build in `pinned-source` mode.
 
 ## Reflexive analysis
 
@@ -26,6 +30,18 @@ This document tracks which runtime libraries in the WCP packaging pipeline shoul
 **Conclusion**
 - First step is a **pinned glibc source/runtime lane** (experiment with `2.43`) before considering glibc source patching.
 - If `2.43` still reproduces the same signal, patching glibc may be required, but only after telemetry comparison.
+
+### 1.1) Termux-pacman patchset transfer: what is reusable
+
+Observed in `termux-pacman/glibc-packages`:
+- `rseq` and `set_robust_list` are explicitly deactivated in NPTL paths for Android compatibility.
+- fake-syscall policy is broad in Termux and includes many syscalls returning `ENOSYS`.
+- path-hack policy rewrites many hardcoded glibc paths to Termux prefixes.
+
+Transfer decision for this repo:
+- **adopted (experimental):** `rseq` + `set_robust_list` seccomp guardrails (`android-seccomp-rseq-robust-v1`).
+- **not adopted by default:** broad fake-syscall map (too invasive for Wine/WCP causality).
+- **not adopted by default:** Termux prefix path-hacks (incompatible with Winlator layout).
 
 ### 2) glibc-adjacent libs should be treated as one bundle, not individually
 

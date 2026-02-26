@@ -21,6 +21,9 @@ Optional:
   --cache-dir DIR               Build/download cache dir (default: /tmp/wcp-glibc-build)
   --enable-kernel VER           glibc --enable-kernel (default: 4.14)
   --jobs N                      make -jN (default: nproc)
+  --source-patch-script FILE    Executable script to patch extracted glibc sources
+                                before configure. Called as: script SRC_DIR REPORT_DIR
+  --source-patch-id ID          Patchset label recorded in runtime metadata
   --strip                       Strip installed libs if strip available
   --host-triplet TRIPLET        Explicit triplet (default: gcc -dumpmachine)
   --keep-workdir                Keep glibc source/build/dest workdir cache (disabled by default)
@@ -75,6 +78,8 @@ JOBS="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 DO_STRIP=0
 HOST_TRIPLET=""
 KEEP_WORKDIR=0
+SOURCE_PATCH_SCRIPT=""
+SOURCE_PATCH_ID=""
 
 while (($#)); do
   case "$1" in
@@ -86,6 +91,8 @@ while (($#)); do
     --cache-dir) CACHE_DIR="${2:-}"; shift 2 ;;
     --enable-kernel) ENABLE_KERNEL="${2:-}"; shift 2 ;;
     --jobs) JOBS="${2:-}"; shift 2 ;;
+    --source-patch-script) SOURCE_PATCH_SCRIPT="${2:-}"; shift 2 ;;
+    --source-patch-id) SOURCE_PATCH_ID="${2:-}"; shift 2 ;;
     --strip) DO_STRIP=1; shift ;;
     --host-triplet) HOST_TRIPLET="${2:-}"; shift 2 ;;
     --keep-workdir) KEEP_WORKDIR=1; shift ;;
@@ -110,6 +117,10 @@ command -v msgfmt >/dev/null 2>&1 || log "msgfmt not found (gettext optional; gl
 
 if [[ -z "${HOST_TRIPLET}" ]]; then
   HOST_TRIPLET="$(gcc -dumpmachine)"
+fi
+
+if [[ -n "${SOURCE_PATCH_SCRIPT}" ]]; then
+  [[ -x "${SOURCE_PATCH_SCRIPT}" ]] || fail "source patch script is not executable: ${SOURCE_PATCH_SCRIPT}"
 fi
 
 mkdir -p "${CACHE_DIR}"
@@ -159,7 +170,17 @@ if [[ ! -f "${STAMP_FILE}" ]]; then
     echo "caller_RANLIB=${RANLIB:-}"
     echo "caller_CFLAGS=${CFLAGS:-}"
     echo "caller_LDFLAGS=${LDFLAGS:-}"
+    echo "source_patch_id=${SOURCE_PATCH_ID}"
+    echo "source_patch_script=${SOURCE_PATCH_SCRIPT}"
   } > "${REPORT_DIR}/toolchain-env.txt"
+
+  if [[ -n "${SOURCE_PATCH_SCRIPT}" ]]; then
+    log "Applying glibc source patch script (${SOURCE_PATCH_ID:-custom})"
+    if ! "${SOURCE_PATCH_SCRIPT}" "${SRC_DIR}" "${REPORT_DIR}" > "${REPORT_DIR}/source-patch.log" 2>&1; then
+      print_log_tail "${REPORT_DIR}/source-patch.log"
+      fail "glibc source patch script failed (see ${REPORT_DIR}/source-patch.log)"
+    fi
+  fi
 
   if ! command -v makeinfo >/dev/null 2>&1; then
     log "makeinfo not found, glibc docs generation will be disabled (MAKEINFO=true)"
@@ -298,6 +319,8 @@ source_tarball=${SRC_TARBALL}
 source_sha256=${SRC_SHA256}
 host_triplet=${HOST_TRIPLET}
 enable_kernel=${ENABLE_KERNEL}
+source_patch_id=${SOURCE_PATCH_ID}
+source_patch_script=${SOURCE_PATCH_SCRIPT}
 built_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 EOF_META
 

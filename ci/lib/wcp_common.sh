@@ -718,6 +718,8 @@ compose_wcp_tree_from_stage() {
   : "${WCP_GLIBC_SOURCE_URL:=https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz}"
   : "${WCP_GLIBC_SOURCE_SHA256:=d9c86c6b5dbddb43a3e08270c5844fc5177d19442cf5b8df4be7c07cd5fa3831}"
   : "${WCP_GLIBC_SOURCE_REF:=glibc-2.43}"
+  : "${WCP_GLIBC_SOURCE_PATCH_ID:=android-seccomp-rseq-robust-v1}"
+  : "${WCP_GLIBC_SOURCE_PATCH_SCRIPT:=}"
   : "${WCP_GLIBC_PATCHSET_ID:=}"
   : "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:=}"
   : "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:=}"
@@ -735,6 +737,12 @@ compose_wcp_tree_from_stage() {
   wcp_require_bool WCP_INCLUDE_FEX_DLLS "${WCP_INCLUDE_FEX_DLLS}"
   wcp_require_bool WCP_MAINLINE_FEX_EXTERNAL_ONLY "${WCP_MAINLINE_FEX_EXTERNAL_ONLY}"
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
+  if [[ -z "${WCP_GLIBC_SOURCE_PATCH_SCRIPT}" && "${WCP_GLIBC_SOURCE_MODE}" != "host" ]]; then
+    local source_patch_default="${ROOT_DIR}/ci/runtime-bundle/source-patches/apply-android-seccomp-compat.sh"
+    if [[ -x "${source_patch_default}" ]]; then
+      WCP_GLIBC_SOURCE_PATCH_SCRIPT="${source_patch_default}"
+    fi
+  fi
   [[ -n "${WCP_WRAPPER_POLICY_VERSION}" ]] || wcp_fail "WCP_WRAPPER_POLICY_VERSION must not be empty"
   [[ -n "${WCP_POLICY_SOURCE}" ]] || wcp_fail "WCP_POLICY_SOURCE must not be empty"
   [[ -n "${WCP_FALLBACK_SCOPE}" ]] || wcp_fail "WCP_FALLBACK_SCOPE must not be empty"
@@ -935,6 +943,8 @@ wcp_write_forensic_manifest() {
     echo "WCP_GLIBC_SOURCE_URL=${WCP_GLIBC_SOURCE_URL:-}"
     echo "WCP_GLIBC_SOURCE_SHA256=${WCP_GLIBC_SOURCE_SHA256:-}"
     echo "WCP_GLIBC_SOURCE_REF=${WCP_GLIBC_SOURCE_REF:-}"
+    echo "WCP_GLIBC_SOURCE_PATCH_ID=${WCP_GLIBC_SOURCE_PATCH_ID:-}"
+    echo "WCP_GLIBC_SOURCE_PATCH_SCRIPT=${WCP_GLIBC_SOURCE_PATCH_SCRIPT:-}"
     echo "WCP_GLIBC_PATCHSET_ID=${WCP_GLIBC_PATCHSET_ID:-}"
     echo "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR=${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}"
     echo "WCP_GLIBC_RUNTIME_PATCH_SCRIPT=${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}"
@@ -998,6 +1008,8 @@ wcp_write_forensic_manifest() {
     "WCP_GLIBC_SOURCE_URL": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
     "WCP_GLIBC_SOURCE_SHA256": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_SHA256:-}")",
     "WCP_GLIBC_SOURCE_REF": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
+    "WCP_GLIBC_SOURCE_PATCH_ID": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_PATCH_ID:-}")",
+    "WCP_GLIBC_SOURCE_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_PATCH_SCRIPT:-}")",
     "WCP_GLIBC_PATCHSET_ID": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_OVERLAY_DIR:-}")",
     "WCP_GLIBC_RUNTIME_PATCH_SCRIPT": "$(wcp_json_escape "${WCP_GLIBC_RUNTIME_PATCH_SCRIPT:-}")",
@@ -1204,6 +1216,8 @@ EOF_BIONIC_SOURCE
     "targetVersion": "$(wcp_json_escape "${WCP_GLIBC_TARGET_VERSION:-}")",
     "sourceUrl": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_URL:-}")",
     "sourceRef": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_REF:-}")",
+    "sourcePatchId": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_PATCH_ID:-}")",
+    "sourcePatchScript": "$(wcp_json_escape "${WCP_GLIBC_SOURCE_PATCH_SCRIPT:-}")",
     "patchsetId": "$(wcp_json_escape "${WCP_GLIBC_PATCHSET_ID:-}")",
     "runtimeLockId": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_ID:-}")",
     "runtimeLockFile": "$(wcp_json_escape "${WCP_RUNTIME_BUNDLE_LOCK_FILE:-}")",
