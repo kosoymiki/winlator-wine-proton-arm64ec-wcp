@@ -495,10 +495,13 @@ winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
   local unix_abi source_wcp source_url source_sha cache_dir archive_path
-  local tmp_extract src_unix dst_unix mod source_unix_abi src_mod_abi
+  local tmp_extract src_unix dst_unix src_pe64 src_pe32 dst_pe64 dst_pe32
+  local mod pe_mod source_unix_abi src_mod_abi
   local copied_count=0
+  local paired_count=0
   local -a core_modules
   local -a glibc_modules replaced_glibc strict_allowed_glibc_modules blocking_glibc_modules
+  local -a paired_win_modules
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
@@ -554,6 +557,10 @@ winlator_adopt_bionic_unix_core_modules() {
   [[ -n "${src_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Bionic unix source WCP is missing lib/wine/aarch64-unix"; }
   dst_unix="${wcp_root}/lib/wine/aarch64-unix"
   [[ -d "${dst_unix}" ]] || { rm -rf "${tmp_extract}"; fail "Target WCP is missing lib/wine/aarch64-unix"; }
+  src_pe64="$(find "${tmp_extract}" -type d -path '*/lib/wine/aarch64-windows' | head -n1 || true)"
+  src_pe32="$(find "${tmp_extract}" -type d -path '*/lib/wine/i386-windows' | head -n1 || true)"
+  dst_pe64="${wcp_root}/lib/wine/aarch64-windows"
+  dst_pe32="${wcp_root}/lib/wine/i386-windows"
   source_unix_abi="$(winlator_detect_unix_module_abi_from_path "${src_unix}/ntdll.so")"
   if [[ "${source_unix_abi}" != "bionic-unix" ]]; then
     rm -rf "${tmp_extract}"
@@ -584,6 +591,31 @@ winlator_adopt_bionic_unix_core_modules() {
     cp -f "${src_unix}/${mod}" "${dst_unix}/${mod}"
     chmod +x "${dst_unix}/${mod}" || true
     copied_count=$((copied_count + 1))
+
+    # Keep unix<->PE core modules in the same donor generation to avoid startup ABI drift
+    # (e.g. ntdll.so from donor + ntdll.dll from local build).
+    pe_mod=""
+    case "${mod}" in
+      ntdll.so) pe_mod="ntdll.dll" ;;
+      win32u.so) pe_mod="win32u.dll" ;;
+      ws2_32.so) pe_mod="ws2_32.dll" ;;
+      winevulkan.so) pe_mod="winevulkan.dll" ;;
+      winebus.so|winebus.sys.so) pe_mod="winebus.sys" ;;
+    esac
+    [[ -n "${pe_mod}" ]] || continue
+
+    if [[ -n "${src_pe64}" && -d "${dst_pe64}" && -f "${src_pe64}/${pe_mod}" ]]; then
+      cp -f "${src_pe64}/${pe_mod}" "${dst_pe64}/${pe_mod}"
+      chmod +x "${dst_pe64}/${pe_mod}" || true
+      paired_count=$((paired_count + 1))
+      paired_win_modules+=("aarch64-windows/${pe_mod}")
+    fi
+    if [[ -n "${src_pe32}" && -d "${dst_pe32}" && -f "${src_pe32}/${pe_mod}" ]]; then
+      cp -f "${src_pe32}/${pe_mod}" "${dst_pe32}/${pe_mod}"
+      chmod +x "${dst_pe32}/${pe_mod}" || true
+      paired_count=$((paired_count + 1))
+      paired_win_modules+=("i386-windows/${pe_mod}")
+    fi
   done
 
   if [[ "${copied_count}" -eq 0 ]]; then
@@ -593,6 +625,9 @@ winlator_adopt_bionic_unix_core_modules() {
     fi
     log "Skipping unix core adoption: no requested modules found in donor WCP"
     return 0
+  fi
+  if [[ "${paired_count}" -gt 0 ]]; then
+    log "Adopted paired PE core modules from donor: ${paired_win_modules[*]}"
   fi
 
   if winlator_bionic_mainline_strict; then
