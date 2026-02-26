@@ -61,6 +61,9 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
 : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
 : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
+: "${WCP_WRAPPER_POLICY_VERSION:=urc-v1}"
+: "${WCP_POLICY_SOURCE:=aeroso-mainline}"
+: "${WCP_FALLBACK_SCOPE:=bionic-internal-only}"
 : "${WCP_BIONIC_SOURCE_MAP_FILE:=${ROOT_DIR}/ci/runtime-sources/bionic-source-map.json}"
 : "${WCP_BIONIC_SOURCE_MAP_FORCE:=0}"
 : "${WCP_BIONIC_SOURCE_MAP_REQUIRED:=0}"
@@ -472,6 +475,9 @@ WINETOOLS
     "wineserverLauncherAbi": "$(printf '%s' "$(winlator_detect_launcher_abi "${WCP_ROOT}/bin/wineserver")" | sed 's/"/\\"/g')",
     "runtimeMismatchReason": "$(printf '%s' "$(winlator_detect_runtime_mismatch_reason "${WCP_ROOT}" "${WCP_RUNTIME_CLASS_TARGET}")" | sed 's/"/\\"/g')",
     "emulationPolicy": "$(printf '%s' "${emulation_policy}" | sed 's/"/\\"/g')",
+    "wrapperPolicyVersion": "$(printf '%s' "${WCP_WRAPPER_POLICY_VERSION}" | sed 's/"/\\"/g')",
+    "policySource": "$(printf '%s' "${WCP_POLICY_SOURCE}" | sed 's/"/\\"/g')",
+    "fallbackScope": "$(printf '%s' "${WCP_FALLBACK_SCOPE}" | sed 's/"/\\"/g')",
     "boxedRuntimeInWcpDetected": false,
     "policyViolationReason": "none",
     "fexExpectationMode": "$(printf '%s' "${WCP_FEX_EXPECTATION_MODE}" | sed 's/"/\\"/g')",

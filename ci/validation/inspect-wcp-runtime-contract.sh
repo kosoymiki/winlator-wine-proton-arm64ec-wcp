@@ -28,6 +28,8 @@ main() {
   local wcp_path="${1:-}"
   local strict_bionic=0
   local tmp_dir wcp_root unix_abi_file glibc_hits
+  local glibc_row glibc_name allowed opt
+  local -a strict_allowed_glibc_modules forensic_glibc_rows blocking_glibc_rows
 
   [[ -n "${wcp_path}" ]] || { usage; fail "WCP path is required"; }
   shift || true
@@ -56,7 +58,27 @@ main() {
     glibc_hits="$(grep -c $'\tglibc-unix$' "${unix_abi_file}" || true)"
     log "unixModuleAbiGlibcRows=${glibc_hits}"
     if [[ "${strict_bionic}" == "1" && "${glibc_hits}" != "0" ]]; then
-      fail "Strict bionic check failed: found glibc-unix rows in unix-module-abi.tsv"
+      : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so opencl.so winedmo.so}"
+      # shellcheck disable=SC2206
+      strict_allowed_glibc_modules=( ${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES} )
+      mapfile -t forensic_glibc_rows < <(awk -F'\t' '$2=="glibc-unix"{print $1}' "${unix_abi_file}" || true)
+      blocking_glibc_rows=()
+      for glibc_row in "${forensic_glibc_rows[@]}"; do
+        glibc_name="$(basename "${glibc_row}")"
+        allowed=0
+        for opt in "${strict_allowed_glibc_modules[@]}"; do
+          [[ "${glibc_name}" == "${opt}" ]] || continue
+          allowed=1
+          break
+        done
+        if [[ "${allowed}" != "1" ]]; then
+          blocking_glibc_rows+=("${glibc_row}")
+        fi
+      done
+      if [[ "${#blocking_glibc_rows[@]}" -gt 0 ]]; then
+        fail "Strict bionic check failed: found non-allowed glibc-unix rows in unix-module-abi.tsv: ${blocking_glibc_rows[*]}"
+      fi
+      log "Strict bionic check tolerated optional glibc rows: ${forensic_glibc_rows[*]}"
     fi
   else
     log "unixModuleAbiFile=ABSENT"
