@@ -2,80 +2,35 @@
   <img src="docs/assets/winlator-cmod-aeroso-logo.png" alt="Winlator CMOD Aero.so" width="680">
 </p>
 
-# **Winlator CMOD Aero.so** *(ARM64EC / FEX / WCP Toolkit)*
+# Winlator CMOD Aero.so
 
-**Winlator CMOD Aero.so** — форк Winlator (через базу *Winlator Ludashi*), ориентированный на **ARM64EC + FEXCore**, аккуратную работу с **WCP-пакетами**, расширенную **forensic-диагностику** и воспроизводимую CI-сборку.
+**RU:** Витринный форк Winlator/Ludashi для ARM64EC + FEXCore + WCP-потока, с форензикой и воспроизводимым CI.
 
-> Пакет приложения: **`by.aero.so.benchmark`** *(суффикс `.benchmark` оставлен намеренно для поведения некоторых OEM game-mode профилей).*
+**EN:** Showcase Winlator/Ludashi fork for ARM64EC + FEXCore + WCP workflow, with forensic tooling and reproducible CI.
 
----
-
-## **Что здесь есть**
-
-- **Winlator APK** (CI-сборка форка, без embedded runtime по умолчанию)
-- **WCP пакеты**:
-  - `wine-11-arm64ec.wcp`
-  - `proton-ge10-arm64ec.wcp`
-  - `protonwine10-gamenative-arm64ec.wcp`
-- **Patch stack Winlator** (`ci/winlator/patches/*.patch`)
-- **Contents index** (`contents/contents.json`) для overlay `Wine/Proton`
-- **Forensic / ADB tooling** для runtime-диагностики
+- **App package / Пакет приложения:** `by.aero.so.benchmark`
+- **Main branch / Основная ветка:** `main`
+- **Current line / Текущая линейка:** `0.9b`
 
 ---
 
-## **Release Policy (без каши и дублей)**
+## Artifacts & Releases / Артефакты и релизы
 
-### **Rolling releases (по одному пакету на релиз)**
+| Component | Artifact | Rolling Tag | Stable Line |
+|---|---|---|---|
+| Winlator APK | `by.aero.so.benchmark-*.apk` | `winlator-latest` | `v0.9b` |
+| Wine 11 ARM64EC | `wine-11-arm64ec.wcp` | `wine-11-arm64ec-latest` | `wcp-stable` |
+| Proton GE10 ARM64EC | `proton-ge10-arm64ec.wcp` | `proton-ge10-arm64ec-latest` | `wcp-stable` |
+| ProtonWine10 GameNative ARM64EC | `protonwine10-gamenative-arm64ec.wcp` | `protonwine10-gamenative-arm64ec-latest` | `wcp-stable` |
 
-Каждый пакет имеет **свой rolling release** и **свою SHA256**:
-
-- **Winlator APK:** `winlator-latest`
-- **Wine 11 ARM64EC:** `wine-11-arm64ec-latest`
-- **Proton GE10 ARM64EC:** `proton-ge10-arm64ec-latest`
-- **ProtonWine10 GameNative ARM64EC:** `protonwine10-gamenative-arm64ec-latest`
-
-### **Stable releases**
-
-- **Winlator app:** `v0.9b`
-- **WCP bundle:** `wcp-stable`
-
-**Принцип:** *новый артефакт заменяет предыдущий внутри своего релиза*; дубли и лишние служебные файлы удаляются.
+**RU:** Rolling-теги обновляются последним успешным артефактом без дублей.  
+**EN:** Rolling tags are updated with the latest successful artifact without duplicates.
 
 ---
 
-## **Contents / пакеты внутри Winlator**
+## Quick Start / Быстрый старт
 
-- **WCP Hub** используется для общего контента (layers/tools и т.п.)
-- **Наш репозиторий** используется для **Wine/Proton** пакетов
-- В UI `Wine/Proton` отображается как одна группа (совместимый internal type остаётся `Wine`)
-- Для `Wine/Proton` **нет искусственного разделения на stable/nightly**
-- Для пустых/неустановленных значений используется честный placeholder: **`—`**
-
-См. также:
-- `docs/CONTENT_PACKAGES_ARCHITECTURE.md`
-- `docs/CONTENTS_QA_CHECKLIST.md`
-
----
-
-## **Winlator Patch Stack**
-
-Ниже — *эволюция форка* (ключевые этапы):
-
-- `0001`–`0004` — ARM64EC/FEX runtime база, debug/no-embedded-runtime, WCPHub baseline, dark-green theme
-- `0005`–`0009` — Aero.so branding, logs, contents fixes, Turnip/contents UX, container create/download fixes
-- `0010`–`0014` — driver probe hardening, session-exit diagnostics, contents UI polish, WCPHub channels, Adrenotools source links
-- `0015`–`0019` — driver catalog expansion, dynamic sources, ARM64EC switch logic, glibc wrapper/rseq compatibility
-- `0020`–`0024` — glibc `LD_PRELOAD` fix, forensic logging defaults, honest Wine picker, hierarchical Adrenotools browser, dead-code cleanup
-
-Патчи Winlator всегда применяются через:
-- `ci/winlator/apply-repo-patches.sh`
-- `ci/winlator/ci-build-winlator-ludashi.sh`
-
----
-
-## **Локальная сборка (быстрый старт)**
-
-### **WCP пакеты**
+### Build WCP packages / Сборка WCP-пакетов
 
 ```bash
 bash ci/ci-build.sh
@@ -83,62 +38,80 @@ bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 ```
 
-### **Winlator APK**
+### Build Winlator APK / Сборка Winlator APK
 
 ```bash
 bash ci/winlator/ci-build-winlator-ludashi.sh
 ```
 
-Обычно APK именуется в формате:
-- `by.aero.so.benchmark-debug-<upstream_sha>.apk`
+**RU:** Результаты сборки лежат в `out/`.  
+**EN:** Build outputs are written to `out/`.
 
 ---
 
-## **Диагностика и forensic workflow**
+## Runtime & Contents Model / Модель runtime и contents
 
-### **Что добавлено в форк**
+- **RU:** Для Wine/Proton контента используется этот репозиторий (GitHub Releases).
+- **EN:** Wine/Proton content is sourced from this repository (GitHub Releases).
+- **RU:** В UI Winlator они отображаются в совместимой группе `Wine/Proton`.
+- **EN:** In Winlator UI they are displayed in a compatible `Wine/Proton` group.
+- **RU:** Пустые значения показываются честным placeholder `—`.
+- **EN:** Empty values are represented by the honest placeholder `—`.
 
-- structured runtime/launch events (`ROUTE_*`, `RUNTIME_*`, `LAUNCH_*`, `SESSION_EXIT_*`)
-- логирование `FEX / Vulkan / Turnip / Box64`
-- строгий bionic donor preflight (URL + SHA256 + ABI verification до долгой сборки)
-- forensic индекс `share/wcp-forensics/unix-module-abi.tsv` для контроля glibc/bionic unix-модулей
-- вкладка **Diagnostics** для прямого forensic-запуска `XServerDisplayActivity`
-- ADB сценарии для сравнения контейнеров и поиска root cause
+См./See:
+- `docs/CONTENT_PACKAGES_ARCHITECTURE.md`
+- `docs/CONTENTS_QA_CHECKLIST.md`
 
-### **Полезные скрипты**
+---
+
+## Diagnostics & Forensics / Диагностика и форензика
 
 - `ci/winlator/forensic-adb-matrix.sh`
 - `ci/winlator/forensic-regression-local.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
 - `ci/validation/inspect-wcp-runtime-contract.sh`
 
----
-
-## **Upstream Research (reproducible)**
-
-- `ci/research/gamenative_forensic_audit.py` -> `docs/GAMENATIVE_BRANCH_AUDIT_LOG.md`
-- `ci/research/gamehub_provenance_audit.py` -> `docs/GAMEHUB_PROVENANCE_REPORT.md`
-- `bash ci/research/run_upstream_audits.sh` -> regenerates both reports + raw evidence in `docs/research/`
+**RU:** Используйте форензик-логи для проверки FEX/Vulkan/Turnip/Box64 и причин падений контейнеров.  
+**EN:** Use forensic logs to validate FEX/Vulkan/Turnip/Box64 behavior and container crash root causes.
 
 ---
 
-## **Структура репозитория**
+## Release Policy (Detailed) / Политика релизов (детально)
 
-- `ci/` — сборка, публикация, maintenance-утилиты
-- `ci/lib/` — общие runtime/WCP helper-скрипты
-- `ci/winlator/patches/` — patch stack форка Winlator
-- `.github/workflows/` — GitHub Actions workflows
-- `contents/` — overlay index для Winlator `Contents`
-- `docs/` — архитектура, QA, forensic/reflective документы
-- `work/`, `out/` — локальные рабочие директории *(gitignored)*
+### Rolling releases
+
+- `winlator-latest`
+- `wine-11-arm64ec-latest`
+- `proton-ge10-arm64ec-latest`
+- `protonwine10-gamenative-arm64ec-latest`
+
+### Stable line
+
+- Winlator app line: `v0.9b`
+- WCP bundle line: `wcp-stable`
+
+**RU:** Каждый артефакт имеет собственный тег и SHA256; новый успешный артефакт заменяет старый в рамках того же тега.  
+**EN:** Each artifact has its own tag and SHA256; a new successful artifact replaces the previous one under the same tag.
 
 ---
 
-## **Credits / Thanks**
+## Repository Map / Карта репозитория
+
+- `ci/` — build/release automation scripts
+- `ci/lib/` — shared runtime and packaging helpers
+- `ci/winlator/patches/` — Winlator fork patch stack
+- `.github/workflows/` — CI/CD workflows
+- `contents/` — Winlator contents index
+- `docs/` — architecture, QA, forensic reports
+- `out/`, `work/` — local/generated build artifacts
+
+---
+
+## Credits / Благодарности
 
 - **Original Winlator** — [brunodev85](https://github.com/brunodev85/winlator)
 - **Winlator Bionic** — [Pipetto-crypto](https://github.com/Pipetto-crypto/winlator)
-- **Winlator Ludashi (upstream base for this fork)** — [StevenMXZ](https://github.com/StevenMXZ)
+- **Winlator Ludashi base** — [StevenMXZ](https://github.com/StevenMXZ)
 - **Ludashi backup** — [StevenMX-backup](https://github.com/StevenMX-backup/Ludashi-Backup)
 - **coffincolors fork** — [coffincolors/winlator](https://github.com/coffincolors/winlator)
 - **Box64** — [ptitSeb/box64](https://github.com/ptitSeb/box64)
@@ -151,4 +124,5 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - **CNC DDraw** — [FunkyFr3sh/cnc-ddraw](https://github.com/FunkyFr3sh/cnc-ddraw)
 - **PRoot** — [proot-me.github.io](https://proot-me.github.io)
 
-*Отдельная благодарность Ludashi-ветке за практическую базу, UI-идеи и исходный импульс форка.*
+**RU:** Отдельная благодарность Ludashi-ветке за практическую основу и UX-направление форка.  
+**EN:** Special thanks to the Ludashi branch for the practical base and UX direction of this fork.
