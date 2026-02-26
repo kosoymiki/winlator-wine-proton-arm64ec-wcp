@@ -13,6 +13,8 @@ The integration model is manifest-driven:
 - `patchsets/28c3a06/android/android_sysvshm/sys/shm.h` — Android sysvshm shim header injected into non-GameNative trees when needed
 - `patchsets/28c3a06/manifest.tsv` — per-patch action matrix for `wine` and `proton-ge`
 - `apply-android-patchset.sh` — applies/validates/backports according to the manifest
+- `PATCHSET_PIPELINE.md` — pipeline policy and mode semantics
+- `patchset-conflict-audit.py` — ownership overlap audit tool
 
 Supported per-target actions:
 
@@ -23,3 +25,10 @@ Supported per-target actions:
 - `backport_wineboot_xstate` — targeted xstate backport
 - `backport_protonge_hodll` — targeted `HODLL` override backport for wow64
 - `backport_protonge_winex11` — targeted Android class hints/window integration backport
+
+Runtime modes (`WCP_GN_PATCHSET_MODE`):
+
+- `full` — manifest apply/verify/backport + normalization phase
+- `normalize-only` — skip manifest apply/verify, keep normalization safety fixes
+- `off` — skip all patchset actions
+- `auto` — resolved from `WCP_GN_PATCHSET_ENABLE` (`1` -> `full`, `0` -> `normalize-only`)
