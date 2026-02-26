@@ -1,0 +1,893 @@
+diff --git a/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java b/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
+index d973e2b..dba0e4e 100644
+--- a/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/DiagnosticsFragment.java
+@@ -1,6 +1,8 @@
+ package com.winlator.cmod;
+ 
++import android.content.Context;
+ import android.content.Intent;
++import android.content.SharedPreferences;
+ import android.os.Bundle;
+ import android.text.TextUtils;
+ import android.view.LayoutInflater;
+@@ -15,10 +17,17 @@ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ import androidx.appcompat.app.AppCompatActivity;
+ import androidx.fragment.app.Fragment;
++import androidx.preference.PreferenceManager;
+ 
+ import com.winlator.cmod.container.ContainerDiscovery;
++import com.winlator.cmod.container.Container;
+ import com.winlator.cmod.container.ContainerManager;
++import com.winlator.cmod.core.EnvVars;
+ import com.winlator.cmod.core.ForensicLogger;
++import com.winlator.cmod.x11.X11CompatManager;
++import com.winlator.cmod.xenvironment.ImageFs;
++
++import org.json.JSONObject;
+ 
+ public class DiagnosticsFragment extends Fragment {
+     private EditText etContainerId;
+@@ -40,10 +49,12 @@ public class DiagnosticsFragment extends Fragment {
+ 
+         Button btRunDirect = view.findViewById(R.id.BTRunDirectXServer);
+         Button btValidateParser = view.findViewById(R.id.BTValidateContainersParser);
++        Button btRunX11Preflight = view.findViewById(R.id.BTRunX11Preflight);
+         Button btShowLastTrace = view.findViewById(R.id.BTShowLastForensicTrace);
+ 
+         btRunDirect.setOnClickListener(v -> runDirectXServerForensic());
+         btValidateParser.setOnClickListener(v -> validateContainersParser());
++        btRunX11Preflight.setOnClickListener(v -> runX11CompatPreflight());
+         btShowLastTrace.setOnClickListener(v -> showLastForensicTrace());
+     }
+ 
+@@ -93,6 +104,51 @@ public class DiagnosticsFragment extends Fragment {
+                 report.toJson());
+     }
+ 
++    private void runX11CompatPreflight() {
++        Context context = requireContext();
++        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
++        EnvVars launchEnv = new EnvVars();
++        Integer containerId = parseContainerId();
++        Container container = null;
++        if (containerId != null && containerId > 0) {
++            ContainerManager manager = new ContainerManager(context);
++            container = manager.getContainerById(containerId);
++            if (container != null) {
++                launchEnv.putAll(container.getEnvVars());
++            } else {
++                toast(R.string.diagnostics_x11_preflight_container_not_found);
++            }
++        }
++
++        X11CompatManager.PreflightResult result = X11CompatManager.runPreflight(
++                preferences,
++                ImageFs.find(context).getRootDir(),
++                launchEnv
++        );
++        X11CompatManager.applyContractEnv(launchEnv, result);
++
++        String summary = getString(
++                R.string.diagnostics_x11_preflight_result,
++                result.status(),
++                result.reason,
++                result.effectiveBackend,
++                result.effectiveTmpDir
++        );
++        tvResult.setText(summary);
++
++        JSONObject fields = result.toFields();
++        ForensicLogger.logEvent(context,
++                result.preflightOk ? "info" : "warn",
++                "X11_PREFLIGHT_DIAG_UI",
++                ForensicLogger.newTraceId(),
++                "diagnostics_ui",
++                "Diagnostics UI executed X11 compat preflight",
++                ForensicLogger.snapshotFields(fields, "", ForensicLogger.fields(
++                        "container_id", container != null ? container.id : 0,
++                        "requested_container_id", containerId != null ? containerId : 0
++                )));
++    }
++
+     private void showLastForensicTrace() {
+         String summary = ForensicLogger.describeLatestTrace(requireContext());
+         tvResult.setText(summary);
+diff --git a/app/src/main/java/com/winlator/cmod/SettingsFragment.java b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
+index 99b180f..fe51deb 100644
+--- a/app/src/main/java/com/winlator/cmod/SettingsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/SettingsFragment.java
+@@ -20,16 +20,18 @@ import android.view.KeyEvent;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.view.ViewGroup;
+-import android.widget.Button;
+-import android.widget.CheckBox;
+-import android.widget.EditText;
+-import android.widget.FrameLayout;
+-import android.widget.LinearLayout;
+-import android.widget.RadioButton;
+-import android.widget.RadioGroup;
+-import android.widget.SeekBar;
+-import android.widget.Spinner;
+-import android.widget.TextView;
++import android.widget.Button;
++import android.widget.CheckBox;
++import android.widget.EditText;
++import android.widget.FrameLayout;
++import android.widget.LinearLayout;
++import android.widget.ArrayAdapter;
++import android.widget.AdapterView;
++import android.widget.RadioButton;
++import android.widget.RadioGroup;
++import android.widget.SeekBar;
++import android.widget.Spinner;
++import android.widget.TextView;
+ 
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+@@ -60,8 +62,9 @@ import com.winlator.cmod.inputcontrols.PreferenceKeys;
+ import com.winlator.cmod.midi.MidiManager;
+ import com.winlator.cmod.runtimeprofile.RuntimeProfile;
+ import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
+-import com.winlator.cmod.widget.InputControlsView;
+-import com.winlator.cmod.xenvironment.ImageFsInstaller;
++import com.winlator.cmod.x11.X11CompatManager;
++import com.winlator.cmod.widget.InputControlsView;
++import com.winlator.cmod.xenvironment.ImageFsInstaller;
+ 
+ import org.json.JSONArray;
+ import org.json.JSONException;
+@@ -208,7 +211,13 @@ public class SettingsFragment extends Fragment {
+         final Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
+         RuntimeProfileManager.loadSpinner(sRuntimeProfile, preferences.getString("runtime_profile", RuntimeProfile.AUTO));
+ 
+-        final Spinner sMIDISoundFont = view.findViewById(R.id.SMIDISoundFont);
++        final Spinner sX11Backend = view.findViewById(R.id.SX11Backend);
++        final CheckBox cbX11RequireSharedTmp = view.findViewById(R.id.CBX11RequireSharedTmp);
++        final EditText etX11XkbRoot = view.findViewById(R.id.ETX11XkbRoot);
++        final Spinner sX11DebugLevel = view.findViewById(R.id.SX11DebugLevel);
++        setupX11CompatControls(sX11Backend, cbX11RequireSharedTmp, etX11XkbRoot, sX11DebugLevel);
++
++        final Spinner sMIDISoundFont = view.findViewById(R.id.SMIDISoundFont);
+ 
+         sMIDISoundFont.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+ 
+@@ -326,10 +335,14 @@ public class SettingsFragment extends Fragment {
+ 
+             // Save Dark Mode setting
+             editor.putBoolean("dark_mode", cbDarkMode.isChecked());
+-            editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
+-            editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
++            editor.putString("box64_preset", Box64PresetManager.getSpinnerSelectedId(sBox64Preset));
++            editor.putString("fexcore_preset", FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset));
+             editor.putString("runtime_profile", RuntimeProfileManager.getSpinnerSelectedId(sRuntimeProfile));
+-            editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
++            editor.putString("x11_backend", getSelectedX11Backend(sX11Backend));
++            editor.putBoolean("x11_require_shared_tmp", cbX11RequireSharedTmp.isChecked());
++            editor.putString("x11_xkb_root", etX11XkbRoot.getText().toString().trim());
++            editor.putString("x11_debug_level", String.valueOf(sX11DebugLevel.getSelectedItemPosition()));
++            editor.putBoolean("use_dri3", cbUseDRI3.isChecked());
+             editor.putBoolean("use_xr", cbUseXR.isChecked());
+             editor.putFloat("cursor_speed", sbCursorSpeed.getProgress() / 100.0f);
+             editor.putBoolean("enable_wine_debug", cbEnableWineDebug.isChecked());
+@@ -393,7 +406,13 @@ public class SettingsFragment extends Fragment {
+ 
+         Spinner sRuntimeProfile = view.findViewById(R.id.SRuntimeProfile);
+         sRuntimeProfile.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+-    }
++
++        Spinner sX11Backend = view.findViewById(R.id.SX11Backend);
++        sX11Backend.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++
++        Spinner sX11DebugLevel = view.findViewById(R.id.SX11DebugLevel);
++        sX11DebugLevel.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
++    }
+ 
+     private void applyDynamicStylesRecursively(View view) {
+         TextView box64Label = view.findViewById(R.id.TVBox64);
+@@ -421,10 +440,13 @@ public class SettingsFragment extends Fragment {
+ //        applyFieldSetLabelStyle(shortcutSettingsLabel, isDarkMode);
+ 
+         // Inputs tab labels
+-        TextView xServerLabel = view.findViewById(R.id.TVXServer);
+-        applyFieldSetLabelStyle(xServerLabel, isDarkMode);
+-
+-        // Advanced tab labels
++        TextView xServerLabel = view.findViewById(R.id.TVXServer);
++        applyFieldSetLabelStyle(xServerLabel, isDarkMode);
++
++        TextView x11CompatLabel = view.findViewById(R.id.TVX11Compat);
++        applyFieldSetLabelStyle(x11CompatLabel, isDarkMode);
++
++        // Advanced tab labels
+         TextView logsLabel = view.findViewById(R.id.TVLogs);
+         applyFieldSetLabelStyle(logsLabel, isDarkMode);
+ 
+@@ -476,23 +498,89 @@ public class SettingsFragment extends Fragment {
+         });
+     }
+ 
+-    private void saveCustomApiKeySettings(SharedPreferences.Editor editor) {
+-        // Save custom API key preferences
+-        boolean isCustomApiKeyEnabled = cbEnableCustomApiKey.isChecked();
+-        editor.putBoolean("enable_custom_api_key", isCustomApiKeyEnabled);
++    private void saveCustomApiKeySettings(SharedPreferences.Editor editor) {
++        // Save custom API key preferences
++        boolean isCustomApiKeyEnabled = cbEnableCustomApiKey.isChecked();
++        editor.putBoolean("enable_custom_api_key", isCustomApiKeyEnabled);
+ 
+         if (isCustomApiKeyEnabled) {
+             String customApiKey = etCustomApiKey.getText().toString().trim();
+             editor.putString("custom_api_key", customApiKey);
+         } else {
+-            editor.remove("custom_api_key");
+-        }
+-    }
+-
+-    private void loadBox64PresetSpinners(View view, final Spinner sBox64Preset) {
+-        final ArrayMap<String, Spinner> spinners = new ArrayMap<String, Spinner>() {{
+-            put("box64", sBox64Preset);
+-        }};
++            editor.remove("custom_api_key");
++        }
++    }
++
++    private void setupX11CompatControls(
++            Spinner sX11Backend,
++            CheckBox cbX11RequireSharedTmp,
++            EditText etX11XkbRoot,
++            Spinner sX11DebugLevel
++    ) {
++        String[] backendLabels = new String[] {
++                getString(R.string.x11_backend_internal),
++                getString(R.string.x11_backend_termux_compat)
++        };
++        sX11Backend.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, backendLabels));
++        sX11Backend.setSelection(getX11BackendPosition(preferences.getString(X11CompatManager.PREF_BACKEND, X11CompatManager.BACKEND_INTERNAL)), false);
++
++        String[] debugLabels = new String[] {
++                getString(R.string.x11_debug_level_off),
++                "1",
++                "2",
++                "3"
++        };
++        sX11DebugLevel.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, debugLabels));
++        int debugLevel = X11CompatManager.parseDebugLevel(preferences.getString(X11CompatManager.PREF_DEBUG_LEVEL, "0"));
++        sX11DebugLevel.setSelection(debugLevel, false);
++
++        cbX11RequireSharedTmp.setChecked(preferences.getBoolean(X11CompatManager.PREF_REQUIRE_SHARED_TMP, true));
++        etX11XkbRoot.setText(preferences.getString(X11CompatManager.PREF_XKB_ROOT, ""));
++
++        updateX11CompatWidgets(getSelectedX11Backend(sX11Backend), cbX11RequireSharedTmp, etX11XkbRoot, sX11DebugLevel);
++        sX11Backend.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
++            @Override
++            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
++                updateX11CompatWidgets(getSelectedX11Backend(sX11Backend), cbX11RequireSharedTmp, etX11XkbRoot, sX11DebugLevel);
++            }
++
++            @Override
++            public void onNothingSelected(AdapterView<?> parent) {
++                updateX11CompatWidgets(getSelectedX11Backend(sX11Backend), cbX11RequireSharedTmp, etX11XkbRoot, sX11DebugLevel);
++            }
++        });
++    }
++
++    private String getSelectedX11Backend(Spinner sX11Backend) {
++        return sX11Backend.getSelectedItemPosition() == 1
++                ? X11CompatManager.BACKEND_TERMUX_COMPAT
++                : X11CompatManager.BACKEND_INTERNAL;
++    }
++
++    private int getX11BackendPosition(String backendId) {
++        return X11CompatManager.BACKEND_TERMUX_COMPAT.equals(X11CompatManager.normalizeBackend(backendId)) ? 1 : 0;
++    }
++
++    private void updateX11CompatWidgets(
++            String backendId,
++            CheckBox cbX11RequireSharedTmp,
++            EditText etX11XkbRoot,
++            Spinner sX11DebugLevel
++    ) {
++        boolean compatEnabled = X11CompatManager.BACKEND_TERMUX_COMPAT.equals(X11CompatManager.normalizeBackend(backendId));
++        cbX11RequireSharedTmp.setEnabled(compatEnabled);
++        etX11XkbRoot.setEnabled(compatEnabled);
++        sX11DebugLevel.setEnabled(compatEnabled);
++        float alpha = compatEnabled ? 1.0f : 0.6f;
++        cbX11RequireSharedTmp.setAlpha(alpha);
++        etX11XkbRoot.setAlpha(alpha);
++        sX11DebugLevel.setAlpha(alpha);
++    }
++
++    private void loadBox64PresetSpinners(View view, final Spinner sBox64Preset) {
++        final ArrayMap<String, Spinner> spinners = new ArrayMap<String, Spinner>() {{
++            put("box64", sBox64Preset);
++        }};
+         final Context context = getContext();
+ 
+         Callback<String> updateSpinner = (prefix) -> {
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index aea1b6e..f26a9ca 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -104,13 +104,14 @@ import com.winlator.cmod.renderer.effects.ToonEffect;
+ import com.winlator.cmod.widget.FrameRating;
+ import com.winlator.cmod.widget.InputControlsView;
+ import com.winlator.cmod.widget.LogView;
+-import com.winlator.cmod.widget.MagnifierView;
+-import com.winlator.cmod.widget.TouchpadView;
+-import com.winlator.cmod.widget.XServerView;
+-import com.winlator.cmod.winhandler.MouseEventFlags;
+-import com.winlator.cmod.winhandler.TaskManagerDialog;
+-import com.winlator.cmod.winhandler.WinHandler;
+-import com.winlator.cmod.xconnector.UnixSocketConfig;
++import com.winlator.cmod.widget.MagnifierView;
++import com.winlator.cmod.widget.TouchpadView;
++import com.winlator.cmod.widget.XServerView;
++import com.winlator.cmod.winhandler.MouseEventFlags;
++import com.winlator.cmod.winhandler.TaskManagerDialog;
++import com.winlator.cmod.winhandler.WinHandler;
++import com.winlator.cmod.x11.X11CompatManager;
++import com.winlator.cmod.xconnector.UnixSocketConfig;
+ import com.winlator.cmod.xenvironment.ImageFs;
+ import com.winlator.cmod.xenvironment.XEnvironment;
+ import com.winlator.cmod.xenvironment.components.ALSAServerComponent;
+@@ -226,6 +227,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private GuestProgramLauncherComponent guestProgramLauncherComponent;
+     private EnvVars overrideEnvVars;
+     private LaunchPreflightDecision launchPreflightDecision;
++    private X11CompatManager.PreflightResult x11PreflightResult;
+ 
+     private void createNotifcationChannel() {
+         String name = "Winlator";
+@@ -1254,14 +1256,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             );
+         }
+ 
+-        // Merge overrideEnvVars if present
+-        if (overrideEnvVars != null) {
+-            envVars.putAll(overrideEnvVars);
+-            overrideEnvVars.clear(); // Clear overrideEnvVars as per smali logic
+-        }
+-
+-        // Create our overall XEnvironment with various components
+-        environment = new XEnvironment(this, imageFs);
++        // Merge overrideEnvVars if present
++        if (overrideEnvVars != null) {
++            envVars.putAll(overrideEnvVars);
++            overrideEnvVars.clear(); // Clear overrideEnvVars as per smali logic
++        }
++
++        x11PreflightResult = X11CompatManager.runPreflight(preferences, imageFs.getRootDir(), envVars);
++        X11CompatManager.applyContractEnv(envVars, x11PreflightResult);
++        logX11PreflightResult(x11PreflightResult);
++
++        // Create our overall XEnvironment with various components
++        environment = new XEnvironment(this, imageFs);
+         environment.addComponent(
+                 new SysVSharedMemoryComponent(
+                         xServer,
+@@ -1302,6 +1308,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "route", forensicRouteSource,
+                         "container_id", container != null ? container.id : 0,
+                         "env_hash", ForensicLogger.hashEnvVars(envVars),
++                        "x11_backend", envVars.get(X11CompatManager.ENV_BACKEND),
++                        "x11_termux_compat", envVars.get(X11CompatManager.ENV_TERMUX_COMPAT),
++                        "x11_preflight_status", envVars.get(X11CompatManager.ENV_PREFLIGHT_STATUS),
++                        "x11_preflight_reason", envVars.get(X11CompatManager.ENV_PREFLIGHT_REASON),
+                         "wine_path", imageFs.getWinePath(),
+                         "dxwrapper", dxwrapper,
+                         "dxwrapper_config_hash", ForensicLogger.sha256Hex(String.valueOf(dxwrapperConfig))));
+@@ -1317,15 +1327,51 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         if (wineRequestHandler != null) wineRequestHandler.start();
+ 
+-        // Reset dxwrapper config
+-        dxwrapperConfig = null;
+-        
+-    }
+-
+-    private void createWrapperScript(String path, String content) {
+-        File scriptFile = new File(path);
+-        FileUtils.writeString(scriptFile, content);
+-        scriptFile.setExecutable(true);
++        // Reset dxwrapper config
++        dxwrapperConfig = null;
++        
++    }
++
++    private void logX11PreflightResult(X11CompatManager.PreflightResult result) {
++        if (result == null) return;
++        JSONObject fields = result.toFields();
++        try {
++            fields.put("route", forensicRouteSource);
++            fields.put("container_id", container != null ? container.id : 0);
++        }
++        catch (JSONException ignored) {}
++
++        ForensicLogger.logEvent(
++                this,
++                result.preflightOk ? "info" : "warn",
++                result.preflightOk ? "X11_PREFLIGHT_OK" : "X11_PREFLIGHT_FAIL",
++                forensicTraceId,
++                "setup_xenvironment",
++                result.preflightOk ? "x11 compat preflight passed" : "x11 compat preflight failed",
++                fields
++        );
++
++        if (X11CompatManager.REASON_TMPDIR_MISMATCH.equals(result.reason)) {
++            ForensicLogger.logEvent(this, "warn", "X11_TMPDIR_MISMATCH", forensicTraceId, "setup_xenvironment",
++                    "X11 compat TMPDIR contract mismatch",
++                    fields);
++        } else if (X11CompatManager.REASON_XKB_MISSING.equals(result.reason)) {
++            ForensicLogger.logEvent(this, "warn", "X11_XKB_MISSING", forensicTraceId, "setup_xenvironment",
++                    "X11 compat XKB root is missing",
++                    fields);
++        }
++
++        if (result.fallbackApplied) {
++            ForensicLogger.logEvent(this, "warn", "X11_LOADER_FALLBACK", forensicTraceId, "setup_xenvironment",
++                    "X11 compat backend fallback to internal backend",
++                    fields);
++        }
++    }
++
++    private void createWrapperScript(String path, String content) {
++        File scriptFile = new File(path);
++        FileUtils.writeString(scriptFile, content);
++        scriptFile.setExecutable(true);
+     }
+ 
+     private void setupUI() {
+diff --git a/app/src/main/java/com/winlator/cmod/x11/X11CompatManager.java b/app/src/main/java/com/winlator/cmod/x11/X11CompatManager.java
+new file mode 100644
+index 0000000..2cd8b6c
+--- /dev/null
++++ b/app/src/main/java/com/winlator/cmod/x11/X11CompatManager.java
+@@ -0,0 +1,247 @@
++package com.winlator.cmod.x11;
++
++import android.content.SharedPreferences;
++import android.text.TextUtils;
++
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++
++import com.winlator.cmod.core.EnvVars;
++
++import org.json.JSONException;
++import org.json.JSONObject;
++
++import java.io.File;
++import java.io.IOException;
++import java.util.Locale;
++
++public final class X11CompatManager {
++    public static final String BACKEND_INTERNAL = "internal";
++    public static final String BACKEND_TERMUX_COMPAT = "termux_compat";
++
++    public static final String PREF_BACKEND = "x11_backend";
++    public static final String PREF_REQUIRE_SHARED_TMP = "x11_require_shared_tmp";
++    public static final String PREF_XKB_ROOT = "x11_xkb_root";
++    public static final String PREF_DEBUG_LEVEL = "x11_debug_level";
++
++    public static final String ENV_BACKEND = "WCP_X11_BACKEND";
++    public static final String ENV_TERMUX_COMPAT = "WCP_X11_TERMUX_COMPAT";
++    public static final String ENV_REQUIRE_SHARED_TMP = "WCP_X11_REQUIRE_SHARED_TMP";
++    public static final String ENV_XKB_ROOT = "WCP_X11_XKB_ROOT";
++    public static final String ENV_DEBUG_LEVEL = "WCP_X11_DEBUG_LEVEL";
++    public static final String ENV_PREFLIGHT_STATUS = "WCP_X11_PREFLIGHT_STATUS";
++    public static final String ENV_PREFLIGHT_REASON = "WCP_X11_PREFLIGHT_REASON";
++    public static final String ENV_TMPDIR_EXPECTED = "WCP_X11_TMPDIR_EXPECTED";
++    public static final String ENV_TMPDIR_EFFECTIVE = "WCP_X11_TMPDIR_EFFECTIVE";
++
++    public static final String PREFLIGHT_OK = "ok";
++    public static final String PREFLIGHT_FAIL = "fail";
++    public static final String REASON_OK = "ok";
++    public static final String REASON_TMPDIR_UNAVAILABLE = "tmpdir_unavailable";
++    public static final String REASON_TMPDIR_MISMATCH = "tmpdir_mismatch";
++    public static final String REASON_XKB_MISSING = "xkb_missing";
++
++    private X11CompatManager() {}
++
++    public static final class PreflightResult {
++        public final String requestedBackend;
++        public final String effectiveBackend;
++        public final boolean compatRequested;
++        public final boolean compatEnabled;
++        public final boolean requireSharedTmp;
++        public final int debugLevel;
++        public final String xkbRoot;
++        public final String expectedTmpDir;
++        public final String effectiveTmpDir;
++        public final boolean preflightOk;
++        public final boolean fallbackApplied;
++        public final String reason;
++
++        private PreflightResult(
++                String requestedBackend,
++                String effectiveBackend,
++                boolean compatRequested,
++                boolean compatEnabled,
++                boolean requireSharedTmp,
++                int debugLevel,
++                String xkbRoot,
++                String expectedTmpDir,
++                String effectiveTmpDir,
++                boolean preflightOk,
++                boolean fallbackApplied,
++                String reason
++        ) {
++            this.requestedBackend = requestedBackend;
++            this.effectiveBackend = effectiveBackend;
++            this.compatRequested = compatRequested;
++            this.compatEnabled = compatEnabled;
++            this.requireSharedTmp = requireSharedTmp;
++            this.debugLevel = debugLevel;
++            this.xkbRoot = xkbRoot;
++            this.expectedTmpDir = expectedTmpDir;
++            this.effectiveTmpDir = effectiveTmpDir;
++            this.preflightOk = preflightOk;
++            this.fallbackApplied = fallbackApplied;
++            this.reason = reason;
++        }
++
++        public String status() {
++            return preflightOk ? PREFLIGHT_OK : PREFLIGHT_FAIL;
++        }
++
++        public JSONObject toFields() {
++            JSONObject fields = new JSONObject();
++            try {
++                fields.put("x11_requested_backend", requestedBackend);
++                fields.put("x11_effective_backend", effectiveBackend);
++                fields.put("x11_termux_compat_requested", compatRequested ? "1" : "0");
++                fields.put("x11_termux_compat_enabled", compatEnabled ? "1" : "0");
++                fields.put("x11_require_shared_tmp", requireSharedTmp ? "1" : "0");
++                fields.put("x11_debug_level", debugLevel);
++                fields.put("x11_xkb_root", xkbRoot);
++                fields.put("x11_tmpdir_expected", expectedTmpDir);
++                fields.put("x11_tmpdir_effective", effectiveTmpDir);
++                fields.put("x11_preflight_status", status());
++                fields.put("x11_preflight_reason", reason);
++                fields.put("x11_loader_fallback", fallbackApplied ? "1" : "0");
++            }
++            catch (JSONException ignored) {}
++            return fields;
++        }
++    }
++
++    public static String getBackendPreference(@Nullable SharedPreferences preferences) {
++        if (preferences == null) return BACKEND_INTERNAL;
++        return normalizeBackend(preferences.getString(PREF_BACKEND, BACKEND_INTERNAL));
++    }
++
++    public static String normalizeBackend(@Nullable String value) {
++        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.US);
++        if (BACKEND_TERMUX_COMPAT.equals(normalized)) return BACKEND_TERMUX_COMPAT;
++        return BACKEND_INTERNAL;
++    }
++
++    public static int parseDebugLevel(@Nullable String value) {
++        if (value == null) return 0;
++        try {
++            return clampDebugLevel(Integer.parseInt(value.trim()));
++        }
++        catch (NumberFormatException ignored) {
++            return 0;
++        }
++    }
++
++    public static PreflightResult runPreflight(@Nullable SharedPreferences preferences, @NonNull File imageRootDir, @Nullable EnvVars launchEnv) {
++        String requestedBackend = getBackendPreference(preferences);
++        boolean compatRequested = BACKEND_TERMUX_COMPAT.equals(requestedBackend);
++        boolean requireSharedTmp = preferences == null || preferences.getBoolean(PREF_REQUIRE_SHARED_TMP, true);
++        String xkbRoot = preferences == null ? "" : safePath(preferences.getString(PREF_XKB_ROOT, ""));
++        int debugLevel = parseDebugLevel(preferences == null ? "0" : preferences.getString(PREF_DEBUG_LEVEL, "0"));
++
++        File tmpDir = new File(imageRootDir, "usr/tmp");
++        String expectedTmpDir = normalizePath(tmpDir.getPath());
++        String effectiveTmpDir = normalizePath(readEffectiveTmpDir(launchEnv, expectedTmpDir));
++
++        String reason = REASON_OK;
++        boolean ok = true;
++
++        if (!tmpDir.isDirectory() && !tmpDir.mkdirs()) {
++            ok = false;
++            reason = REASON_TMPDIR_UNAVAILABLE;
++        } else if (compatRequested && requireSharedTmp && !TextUtils.equals(expectedTmpDir, effectiveTmpDir)) {
++            ok = false;
++            reason = REASON_TMPDIR_MISMATCH;
++        } else if (compatRequested && !xkbRoot.isEmpty() && !new File(xkbRoot).isDirectory()) {
++            ok = false;
++            reason = REASON_XKB_MISSING;
++        }
++
++        String effectiveBackend = requestedBackend;
++        boolean fallbackApplied = false;
++        if (compatRequested && !ok) {
++            effectiveBackend = BACKEND_INTERNAL;
++            fallbackApplied = true;
++        }
++
++        boolean compatEnabled = BACKEND_TERMUX_COMPAT.equals(effectiveBackend);
++        if (!compatRequested) {
++            ok = true;
++            reason = REASON_OK;
++        }
++
++        return new PreflightResult(
++                requestedBackend,
++                effectiveBackend,
++                compatRequested,
++                compatEnabled,
++                requireSharedTmp,
++                debugLevel,
++                xkbRoot,
++                expectedTmpDir,
++                effectiveTmpDir,
++                ok,
++                fallbackApplied,
++                reason
++        );
++    }
++
++    public static void applyContractEnv(@NonNull EnvVars envVars, @NonNull PreflightResult result) {
++        envVars.put(ENV_BACKEND, result.effectiveBackend);
++        envVars.put(ENV_TERMUX_COMPAT, result.compatEnabled ? "1" : "0");
++        envVars.put(ENV_REQUIRE_SHARED_TMP, result.requireSharedTmp ? "1" : "0");
++        envVars.put(ENV_XKB_ROOT, result.xkbRoot);
++        envVars.put(ENV_DEBUG_LEVEL, String.valueOf(result.debugLevel));
++        envVars.put(ENV_PREFLIGHT_STATUS, result.status());
++        envVars.put(ENV_PREFLIGHT_REASON, result.reason);
++        envVars.put(ENV_TMPDIR_EXPECTED, result.expectedTmpDir);
++        envVars.put(ENV_TMPDIR_EFFECTIVE, result.effectiveTmpDir);
++
++        if (result.compatEnabled) {
++            if (envVars.get("TMPDIR").isEmpty()) envVars.put("TMPDIR", result.expectedTmpDir);
++            if (envVars.get("XDG_RUNTIME_DIR").isEmpty()) envVars.put("XDG_RUNTIME_DIR", result.expectedTmpDir);
++            if (!result.xkbRoot.isEmpty()) envVars.put("XKB_CONFIG_ROOT", result.xkbRoot);
++            if (result.debugLevel > 0) envVars.put("TERMUX_X11_DEBUG", String.valueOf(result.debugLevel));
++            else envVars.remove("TERMUX_X11_DEBUG");
++        }
++    }
++
++    public static void normalizeLaunchEnv(@NonNull File imageRootDir, @NonNull EnvVars envVars) {
++        String backend = normalizeBackend(envVars.get(ENV_BACKEND));
++        if (!BACKEND_TERMUX_COMPAT.equals(backend)) return;
++
++        File tmpDir = new File(imageRootDir, "usr/tmp");
++        String normalizedTmpDir = normalizePath(tmpDir.getPath());
++        if (envVars.get("TMPDIR").isEmpty()) envVars.put("TMPDIR", normalizedTmpDir);
++        if (envVars.get("XDG_RUNTIME_DIR").isEmpty()) envVars.put("XDG_RUNTIME_DIR", normalizedTmpDir);
++
++        String xkbRoot = safePath(envVars.get(ENV_XKB_ROOT));
++        if (!xkbRoot.isEmpty()) envVars.put("XKB_CONFIG_ROOT", xkbRoot);
++
++        int debugLevel = parseDebugLevel(envVars.get(ENV_DEBUG_LEVEL));
++        if (debugLevel > 0) envVars.put("TERMUX_X11_DEBUG", String.valueOf(debugLevel));
++    }
++
++    private static int clampDebugLevel(int value) {
++        return Math.max(0, Math.min(3, value));
++    }
++
++    private static String readEffectiveTmpDir(@Nullable EnvVars launchEnv, @NonNull String fallback) {
++        if (launchEnv == null) return fallback;
++        String tmp = launchEnv.get("TMPDIR");
++        return tmp == null || tmp.trim().isEmpty() ? fallback : tmp.trim();
++    }
++
++    private static String safePath(@Nullable String value) {
++        return value == null ? "" : value.trim();
++    }
++
++    private static String normalizePath(@Nullable String path) {
++        if (path == null || path.trim().isEmpty()) return "";
++        try {
++            return new File(path.trim()).getCanonicalPath();
++        }
++        catch (IOException ignored) {
++            return new File(path.trim()).getAbsolutePath();
++        }
++    }
++}
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 9e97662..d686114 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -31,7 +31,8 @@ import com.winlator.cmod.fexcore.FEXCorePreset;
+ import com.winlator.cmod.fexcore.FEXCorePresetManager;
+ import com.winlator.cmod.runtimeprofile.RuntimeProfile;
+ import com.winlator.cmod.runtimeprofile.RuntimeProfileManager;
+-import com.winlator.cmod.xconnector.UnixSocketConfig;
++import com.winlator.cmod.x11.X11CompatManager;
++import com.winlator.cmod.xconnector.UnixSocketConfig;
+ import com.winlator.cmod.xenvironment.EnvironmentComponent;
+ import com.winlator.cmod.xenvironment.ImageFs;
+ 
+@@ -447,7 +448,17 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                                 "route", forensicRouteSource,
+                                 "executable", compatExecutable,
+                                 "rule_ids", appCompatRules,
+-                                "rule_details", appCompatRegistry.describeRules(appliedCompatRules)));
++                        "rule_details", appCompatRegistry.describeRules(appliedCompatRules)));
++            }
++        }
++
++        X11CompatManager.normalizeLaunchEnv(rootDir, envVars);
++        if (X11CompatManager.BACKEND_TERMUX_COMPAT.equals(
++                X11CompatManager.normalizeBackend(envVars.get(X11CompatManager.ENV_BACKEND)))) {
++            int x11DebugLevel = X11CompatManager.parseDebugLevel(envVars.get(X11CompatManager.ENV_DEBUG_LEVEL));
++            if (x11DebugLevel > 0) {
++                File x11LogFile = WinlatorLogUtils.createTimestampedLogFile(context, "x11_runtime");
++                envVars.put("WCP_X11_DEBUG_LOG_FILE", x11LogFile.getAbsolutePath());
+             }
+         }
+ 
+@@ -622,6 +633,12 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "glibc_tunables", envVars.get("GLIBC_TUNABLES"),
+                             "ld_preload", envVars.get("LD_PRELOAD"),
+                             "ld_library_path", envVars.get("LD_LIBRARY_PATH"),
++                            "x11_backend", envVars.get(X11CompatManager.ENV_BACKEND),
++                            "x11_termux_compat", envVars.get(X11CompatManager.ENV_TERMUX_COMPAT),
++                            "x11_preflight_status", envVars.get(X11CompatManager.ENV_PREFLIGHT_STATUS),
++                            "x11_preflight_reason", envVars.get(X11CompatManager.ENV_PREFLIGHT_REASON),
++                            "x11_debug_level", envVars.get(X11CompatManager.ENV_DEBUG_LEVEL),
++                            "x11_debug_log_file", envVars.get("WCP_X11_DEBUG_LOG_FILE"),
+                             "wine_debug_len", envVars.get("WINEDEBUG").length(),
+                             "fex_log_file", envVars.get("FEX_LOG_FILE"),
+                             "vk_api_dump_file", envVars.get("VK_APIDUMP_OUTPUT_FILENAME"),
+@@ -643,6 +660,12 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
+                             "fexcore_version", !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container != null ? container.getFEXCoreVersion() : "",
+                             "wine_runtime_class", wineRuntimeClass,
++                            "x11_backend", envVars.get(X11CompatManager.ENV_BACKEND),
++                            "x11_termux_compat", envVars.get(X11CompatManager.ENV_TERMUX_COMPAT),
++                            "x11_preflight_status", envVars.get(X11CompatManager.ENV_PREFLIGHT_STATUS),
++                            "x11_preflight_reason", envVars.get(X11CompatManager.ENV_PREFLIGHT_REASON),
++                            "x11_debug_level", envVars.get(X11CompatManager.ENV_DEBUG_LEVEL),
++                            "x11_debug_log_file", envVars.get("WCP_X11_DEBUG_LOG_FILE"),
+                             "launch_kind", launchKind,
+                             "launch_target_executable", launchTargetExecutable,
+                             "launch_precheck_reason", launchPrecheckReason,
+diff --git a/app/src/main/res/layout/diagnostics_fragment.xml b/app/src/main/res/layout/diagnostics_fragment.xml
+index 2497e1b..7f8d7fc 100644
+--- a/app/src/main/res/layout/diagnostics_fragment.xml
++++ b/app/src/main/res/layout/diagnostics_fragment.xml
+@@ -40,6 +40,13 @@
+             android:layout_marginTop="8dp"
+             android:text="@string/diagnostics_validate_parser" />
+ 
++        <Button
++            android:id="@+id/BTRunX11Preflight"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginTop="8dp"
++            android:text="@string/diagnostics_run_x11_preflight" />
++
+         <Button
+             android:id="@+id/BTShowLastForensicTrace"
+             android:layout_width="match_parent"
+diff --git a/app/src/main/res/layout/settings_fragment.xml b/app/src/main/res/layout/settings_fragment.xml
+index 794d7d9..8a08b52 100644
+--- a/app/src/main/res/layout/settings_fragment.xml
++++ b/app/src/main/res/layout/settings_fragment.xml
+@@ -447,15 +447,73 @@
+ 
+                 </LinearLayout>
+ 
+-                <TextView
+-                    android:id="@+id/TVXServer"
+-                    style="@style/FieldSetLabel"
+-                    android:text="@string/xserver" />
+-            </FrameLayout>
+-
+-            <FrameLayout
+-                android:layout_width="match_parent"
+-                android:layout_height="wrap_content">
++                <TextView
++                    android:id="@+id/TVXServer"
++                    style="@style/FieldSetLabel"
++                    android:text="@string/xserver" />
++            </FrameLayout>
++
++            <FrameLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content">
++
++                <LinearLayout style="@style/FieldSet">
++                    <TextView
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:text="@string/x11_backend" />
++
++                    <Spinner
++                        android:id="@+id/SX11Backend"
++                        style="@style/ComboBox"
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:spinnerMode="dialog" />
++
++                    <CheckBox
++                        android:id="@+id/CBX11RequireSharedTmp"
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="8dp"
++                        android:text="@string/x11_require_shared_tmp" />
++
++                    <TextView
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="8dp"
++                        android:text="@string/x11_xkb_root" />
++
++                    <EditText
++                        android:id="@+id/ETX11XkbRoot"
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:hint="@string/x11_xkb_root_hint"
++                        android:inputType="text"
++                        android:maxLines="1" />
++
++                    <TextView
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:layout_marginTop="8dp"
++                        android:text="@string/x11_debug_level" />
++
++                    <Spinner
++                        android:id="@+id/SX11DebugLevel"
++                        style="@style/ComboBox"
++                        android:layout_width="match_parent"
++                        android:layout_height="wrap_content"
++                        android:spinnerMode="dialog" />
++                </LinearLayout>
++
++                <TextView
++                    android:id="@+id/TVX11Compat"
++                    style="@style/FieldSetLabel"
++                    android:text="@string/x11_compat" />
++            </FrameLayout>
++
++            <FrameLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content">
+ 
+                 <LinearLayout style="@style/FieldSet">
+                     <CheckBox
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index d02cece..e5be375 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -719,7 +719,16 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="enable_fex_logs">Enable FEX logs</string>
+     <string name="enable_vulkan_api_dump">Enable dumping of Vulkan api calls to file.</string>
+     <string name="enable_turnip_logs">Enable Turnip/Mesa logs</string>
+-    <string name="dll_emulator">32bit Emulator</string>
++    <string name="x11_compat">X11 Compat</string>
++    <string name="x11_backend">X11 backend</string>
++    <string name="x11_backend_internal">Internal XServer</string>
++    <string name="x11_backend_termux_compat">Termux:X11 compat</string>
++    <string name="x11_require_shared_tmp">Require shared TMPDIR contract</string>
++    <string name="x11_xkb_root">XKB config root</string>
++    <string name="x11_xkb_root_hint">/usr/share/X11/xkb</string>
++    <string name="x11_debug_level">X11 debug level</string>
++    <string name="x11_debug_level_off">0 (off)</string>
++    <string name="dll_emulator">32bit Emulator</string>
+     <string name="open_with_android_browser">Open Android Browser in Wine</string>
+     <string name="share_android_clipboard">Share Android Clipboard with Wine</string>
+     <string name="ddraw_wrapper">DDraw Wrapper</string>
+@@ -742,8 +751,11 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="diagnostics_container_id_hint">Container ID (e.g. 1)</string>
+     <string name="diagnostics_run_direct_xserver">Run Direct XServer (forensic)</string>
+     <string name="diagnostics_validate_parser">Validate Containers Parser</string>
++    <string name="diagnostics_run_x11_preflight">Run X11 compat preflight</string>
+     <string name="diagnostics_show_last_trace">Show Last Forensic Trace</string>
+     <string name="diagnostics_waiting">Waiting for a diagnostics action...</string>
++    <string name="diagnostics_x11_preflight_result">X11 preflight: status=%1$s, reason=%2$s, backend=%3$s, tmp=%4$s</string>
++    <string name="diagnostics_x11_preflight_container_not_found">Container ID not found, using app defaults.</string>
+     <string name="diagnostics_parser_summary">Parser summary</string>
+     <string name="diagnostics_parser_warnings">Warnings</string>
+     <string name="diagnostics_invalid_container_id">Enter a valid container ID.</string>

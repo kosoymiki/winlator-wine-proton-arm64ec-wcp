@@ -10,6 +10,7 @@ This repository keeps docs in two buckets:
 - `docs/CI_FAILURE_PLAYBOOK.md` - triage path for failed Wine/Proton workflows.
 - `docs/PATCHSET_CONFLICT_REPORT.md` - generated ownership/conflict report for GN patchset.
 - `docs/UNIFIED_RUNTIME_CONTRACT.md` - runtime contract for WCP packaging.
+- `docs/X11_TERMUX_COMPAT_CONTRACT.md` - optional `termux_compat` backend contract (preflight/env/forensics).
 - `docs/CONTENT_PACKAGES_ARCHITECTURE.md` - content package model used by Winlator UI.
 - `docs/CONTENTS_QA_CHECKLIST.md` - QA checklist for contents/adrenotools paths.
 

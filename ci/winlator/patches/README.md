@@ -79,6 +79,8 @@ consolidated into:
   - adds runtime integrity validation for critical `imagefs/usr/lib/libGL.so.1.5.0` (ELF header/section table sanity), quarantines corrupted copies, re-extracts `graphics_driver/extra_libs.tzst` automatically, and emits forensic events for verify-fail/repair-applied/repair-failed paths
 - `0054-contents-proton-type-aliases.patch`
   - accepts `proton*` type aliases (`proton`, `protonge`, `protonwine`, `wine/proton`) as Wine-family content in parser/resolver paths, and ensures local profile parsing treats those aliases as Wine for required `wine` metadata extraction
+- `0055-termux-x11-compat-contract-preflight-and-diagnostics.patch`
+  - adds optional `termux_compat` X11 backend contract controls (settings + env export), performs startup preflight checks for TMPDIR/XKB/shared-tmp semantics with forensic events and fallback to internal backend, and exposes a diagnostics action to run the same preflight interactively
 
 ## Known high-overlap files (intentional)
 
