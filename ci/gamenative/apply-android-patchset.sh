@@ -657,8 +657,9 @@ backport_protonge_unix_server() {
   file="${SOURCE_DIR}/dlls/ntdll/unix/server.c"
   [[ -f "${file}" ]] || fail "missing ${file}"
 
-  if grep -Fq 'symlink( "/storage/emulated/0/", "dosdevices/d:" );' "${file}" \
-    && grep -Fq 'symlink( "/data/data/app.gamenative/files/imagefs/", "dosdevices/z:" );' "${file}"; then
+  if grep -Fq '__ANDROID__' "${file}" \
+    && grep -Fq 'dosdevices/d:' "${file}" \
+    && grep -Fq 'dosdevices/z:' "${file}"; then
     return 0
   fi
 
@@ -698,7 +699,20 @@ replace = (
 
 updated, count = pattern.subn(replace, text, count=1)
 if count != 1:
-    raise SystemExit("unix/server.c dosdevices block replacement failed")
+    if "__ANDROID__" in text and "dosdevices/d:" in text and "dosdevices/z:" in text:
+        raise SystemExit(0)
+    alt_pattern = re.compile(
+        r'if \(!mkdir\(\s*"dosdevices"\s*,\s*0777\s*\)\)\s*'
+        r'\{\s*'
+        r'mkdir\(\s*"drive_c"\s*,\s*0777\s*\);\s*'
+        r'symlink\(\s*"\.\./drive_c"\s*,\s*"dosdevices/c:"\s*\);\s*'
+        r'symlink\(\s*"/"\s*,\s*"dosdevices/z:"\s*\);\s*'
+        r'\}',
+        re.S,
+    )
+    updated, count = alt_pattern.subn(replace, text, count=1)
+    if count != 1:
+        raise SystemExit("unix/server.c dosdevices block replacement failed")
 
 path.write_text(updated, encoding="utf-8")
 PY
