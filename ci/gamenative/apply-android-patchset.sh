@@ -357,6 +357,38 @@ path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 updated = text
 
+if "SkipLoaderInit" not in updated:
+    teb_line = re.compile(
+        r'^\s*USHORT\s+SameTebFlags;\s*/\*\s*fca/17ee\s*\*/\s*$',
+        flags=re.M,
+    )
+    replacement = (
+        "    union {\n"
+        "        USHORT SameTebFlags;                                        /* fca/17ee */\n"
+        "        struct {\n"
+        "            USHORT SafeThunkCall : 1;\n"
+        "            USHORT InDebugPrint : 1;\n"
+        "            USHORT HasFiberData : 1;\n"
+        "            USHORT SkipThreadAttach : 1;\n"
+        "            USHORT WerInShipAssertCode : 1;\n"
+        "            USHORT RanProcessInit : 1;\n"
+        "            USHORT ClonedThread : 1;\n"
+        "            USHORT SuppressDebugMsg : 1;\n"
+        "            USHORT DisableUserStackWalk : 1;\n"
+        "            USHORT RtlExceptionAttached : 1;\n"
+        "            USHORT InitialThread : 1;\n"
+        "            USHORT SessionAware : 1;\n"
+        "            USHORT LoadOwner : 1;\n"
+        "            USHORT LoaderWorker : 1;\n"
+        "            USHORT SkipLoaderInit : 1;\n"
+        "            USHORT SkipFileAPIBrokering : 1;\n"
+        "        } DUMMYSTRUCTNAME;\n"
+        "    } DUMMYUNIONNAME1;"
+    )
+    updated, count = teb_line.subn(replacement, updated, count=1)
+    if count != 1:
+        raise SystemExit("SameTebFlags field marker not found for TEB bitfield backport")
+
 def patch_enum(block_name: str, closing_name: str, inject_after: str, inject_tail: str):
     global updated
     pattern = rf'(typedef enum _{block_name} \{{.*?)(\n\}}\s*{closing_name};)'
@@ -425,6 +457,35 @@ if "MEMORY_FEX_STATS_SHM_INFORMATION" not in updated:
         + "    void *shm_base;\n"
         + "    SIZE_T map_size;\n"
         + "} MEMORY_FEX_STATS_SHM_INFORMATION, *PMEMORY_FEX_STATS_SHM_INFORMATION;\n",
+        1,
+    )
+
+if "THREAD_CREATE_FLAGS_SKIP_LOADER_INIT" not in updated:
+    updated = re.sub(
+        r'^\s*#define THREAD_CREATE_FLAGS_HAS_SECURITY_DESCRIPTOR\s+0x00000010\s*$',
+        '#define THREAD_CREATE_FLAGS_LOADER_WORKER           0x00000010',
+        updated,
+        count=1,
+        flags=re.M,
+    )
+    updated = re.sub(
+        r'^\s*#define THREAD_CREATE_FLAGS_ACCESS_CHECK_IN_TARGET\s+0x00000020\s*$',
+        '#define THREAD_CREATE_FLAGS_SKIP_LOADER_INIT        0x00000020\n'
+        '#define THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE   0x00000040',
+        updated,
+        count=1,
+        flags=re.M,
+    )
+    if "THREAD_CREATE_FLAGS_SKIP_LOADER_INIT" not in updated:
+        raise SystemExit("thread flag backport marker not found in winternl.h")
+
+if "RtlWow64SuspendThread(HANDLE,ULONG*)" not in updated:
+    marker = "NTSYSAPI NTSTATUS  WINAPI RtlWow64IsWowGuestMachineSupported(USHORT,BOOLEAN*);\n"
+    if marker not in updated:
+        raise SystemExit("RtlWow64IsWowGuestMachineSupported marker not found")
+    updated = updated.replace(
+        marker,
+        marker + "NTSYSAPI NTSTATUS  WINAPI RtlWow64SuspendThread(HANDLE,ULONG*);\n",
         1,
     )
 
