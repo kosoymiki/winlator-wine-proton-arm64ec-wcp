@@ -53,6 +53,7 @@ Run the narrowest relevant checks:
   - `bash ci/winlator/selftest-runtime-mismatch-matrix.sh`
 - Mainline workflow health (pre-triage):
   - `bash ci/validation/gh-mainline-health.sh main 24`
+  - `bash ci/validation/gh-run-root-cause.sh <run-id>`
   - `bash ci/validation/collect-mainline-forensic-snapshot.sh`
 - Patch-stack apply safety (when touching `ci/winlator/patches/*.patch`):
   - `bash ci/winlator/check-patch-stack.sh /path/to/winlator-upstream-git`

@@ -74,6 +74,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 - `ci/winlator/forensic-runtime-mismatch-matrix.py`
 - `ci/winlator/selftest-runtime-mismatch-matrix.sh`
 - `ci/validation/gh-mainline-health.sh`
+- `ci/validation/gh-run-root-cause.sh`
 - `ci/validation/collect-mainline-forensic-snapshot.sh`
 - `ci/winlator/adb-logcat-winlator.sh`
 - `ci/gamenative/selftest-normalizers.sh`

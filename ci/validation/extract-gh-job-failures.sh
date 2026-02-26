@@ -36,10 +36,10 @@ else
 fi
 
 log "Failure markers"
-grep -nE '(^Error:|^\[.*error.*\]| make: \*\*\*|failed \(|The operation was canceled)' "${tmp}" | head -n 80 || true
+grep -nE '(##\[error\]|(^|[[:space:]])Error:| make: \*\*\*|failed \(|The operation was canceled|Process completed with exit code)' "${tmp}" | head -n 80 || true
 
 log "Compiler/runtime error lines"
-grep -nE '(^/home/runner/.*error:|^make: \*\*\*|^Error:|undefined reference|incompatible pointer types|undeclared function|contract validation failed|SDL2 runtime check failed)' "${tmp}" | head -n 120 || true
+grep -nE '(/home/runner/.*error:|##\[error\]|make: \*\*\*|(^|[[:space:]])Error:|undefined reference|incompatible pointer types|undeclared function|contract validation failed|SDL2 runtime check failed|Process completed with exit code)' "${tmp}" | head -n 120 || true
 
 log "Tail context"
 tail -n 120 "${tmp}"

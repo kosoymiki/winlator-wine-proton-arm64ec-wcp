@@ -100,6 +100,19 @@ With `WLT_FAILURES_OUTPUT_PREFIX`, it also writes `.tsv` + `.meta` snapshots for
 
 This validates the latest run status of the four critical workflows and fails if any is not `fresh + success`.
 
+## 8.2) Triage a specific failed run in one command
+
+When you already have a run ID/URL and need job-level root causes:
+
+- `bash ci/validation/gh-run-root-cause.sh 22446750044`
+- `bash ci/validation/gh-run-root-cause.sh "https://github.com/<org>/<repo>/actions/runs/22446750044"`
+- `WLT_RUN_TRIAGE_DIR=/tmp/gh-run-triage bash ci/validation/gh-run-root-cause.sh 22446750044 5`
+
+Outputs include:
+- `failed-jobs.tsv` with failed/cancelled/timed_out jobs.
+- per-job `*.analysis.txt` generated via `extract-gh-job-failures.sh`.
+- `root-cause-summary.tsv` for fast patch routing.
+
 ## 9) Runtime crash matrix (device-side)
 
 For runtime startup/crash triage across `wine11`, `protonwine10`, and `steven104`:
@@ -125,9 +138,11 @@ To collect a single consolidated snapshot (`health + active failures + urc check
 
 - `bash ci/validation/collect-mainline-forensic-snapshot.sh`
 - `WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_TRIAGE_ACTIVE_RUNS=1 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
 
 Generated in snapshot dir:
 - `mainline-health.tsv/.json`
 - `active-failures.tsv/.meta`
 - `health.log`, `active-failures.log`, `urc-check.log`
 - `snapshot.meta`, `status.meta`, `git-head.txt`, `git-status.txt`
+- If `WLT_TRIAGE_ACTIVE_RUNS=1`: `run-triage/run-<id>/` artifacts + `run-triage/run-<id>.log`

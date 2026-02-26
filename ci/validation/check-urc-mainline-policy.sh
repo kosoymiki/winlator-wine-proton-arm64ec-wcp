@@ -184,13 +184,16 @@ main() {
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameHub'
   require_file "ci/contents/validate-contents-json.py"
   require_file "ci/validation/gh-mainline-health.sh"
+  require_file "ci/validation/gh-run-root-cause.sh"
   require_file "ci/validation/collect-mainline-forensic-snapshot.sh"
+  [[ -x "ci/validation/gh-run-root-cause.sh" ]] || fail "ci/validation/gh-run-root-cause.sh must be executable"
   require_contains "ci/validation/gh-mainline-health.sh" 'Build Wine 11 ARM64EC \(WCP\)'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build Proton GE10 ARM64EC \(WCP\)'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build ProtonWine10 GameNative ARM64EC \(WCP\)'
   require_contains "ci/validation/gh-mainline-health.sh" 'Build Winlator ARM64EC \(no-embedded-runtimes\)'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'gh-mainline-health\.sh'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'gh-latest-failures\.sh'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'gh-run-root-cause\.sh'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'check-urc-mainline-policy\.sh'
   require_file "contents/contents.json"
   python3 "ci/contents/validate-contents-json.py" "contents/contents.json" >/dev/null
