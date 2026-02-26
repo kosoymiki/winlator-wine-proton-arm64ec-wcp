@@ -103,7 +103,7 @@ check_workflow_env_contract() {
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FORCE: "0"'
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"'
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FILE:'
-  require_contains "${wf}" 'WCP_BIONIC_DONOR_PREFLIGHT: "0"'
+  require_contains "${wf}" 'WCP_BIONIC_DONOR_PREFLIGHT: "1"'
   require_contains "${wf}" 'Inspect WCP runtime contract'
   require_contains "${wf}" 'inspect-wcp-runtime-contract\.sh'
   require_contains "${wf}" 'runtime-contract-inspection\.txt'
