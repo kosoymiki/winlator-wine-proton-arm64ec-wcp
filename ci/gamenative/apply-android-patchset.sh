@@ -10,6 +10,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WCP_GN_PATCHSET_MANIFEST:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/manifest.tsv}"
 : "${WCP_GN_PATCHSET_PATCH_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/patches}"
 : "${WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/android_sysvshm}"
+: "${WCP_GN_PATCHSET_ANDROID_SHM_UTILS_ROOT:=${ROOT_DIR}/ci/gamenative/patchsets/28c3a06/android/shm_utils}"
 : "${WCP_GN_PATCHSET_REPORT:=}"
 
 TARGET=""
@@ -27,6 +28,7 @@ Env:
   WCP_GN_PATCHSET_MANIFEST      default: ci/gamenative/patchsets/28c3a06/manifest.tsv
   WCP_GN_PATCHSET_PATCH_ROOT    default: ci/gamenative/patchsets/28c3a06/android/patches
   WCP_GN_PATCHSET_ANDROID_SYSVSHM_ROOT default: ci/gamenative/patchsets/28c3a06/android/android_sysvshm
+  WCP_GN_PATCHSET_ANDROID_SHM_UTILS_ROOT default: ci/gamenative/patchsets/28c3a06/android/shm_utils
   WCP_GN_PATCHSET_REPORT        optional TSV report path
 USAGE
 }
@@ -748,10 +750,26 @@ ensure_android_sysvshm_header() {
   log "Injected android sysvshm shim header: ${dst_shm_h}"
 }
 
+ensure_android_shm_utils_header() {
+  local src_hdr dst_hdr
+  src_hdr="${WCP_GN_PATCHSET_ANDROID_SHM_UTILS_ROOT}/shm_utils.h"
+  [[ -f "${src_hdr}" ]] || return 0
+
+  dst_hdr="${SOURCE_DIR}/android/shm_utils/shm_utils.h"
+  if [[ -f "${dst_hdr}" ]]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname -- "${dst_hdr}")"
+  cp -f "${src_hdr}" "${dst_hdr}"
+  log "Injected android shm_utils shim header: ${dst_hdr}"
+}
+
 log "Applying GameNative patchset ${WCP_GN_PATCHSET_REF} to target=${TARGET}"
 log "manifest=${WCP_GN_PATCHSET_MANIFEST}"
 log "source=${SOURCE_DIR}"
 ensure_android_sysvshm_header
+ensure_android_shm_utils_header
 
 line_no=0
 while IFS=$'\t' read -r patch wine_action protonge_action required note; do
