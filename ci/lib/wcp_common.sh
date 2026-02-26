@@ -1426,6 +1426,8 @@ PY
 
   local unix_abi_file="${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
   local ntdll_abi fallback_ntdll_abi
+  local glibc_row glibc_name allowed opt
+  local -a strict_allowed_glibc_modules forensic_glibc_rows blocking_glibc_rows
   local bionic_source_entry_file="${wcp_root}/share/wcp-forensics/bionic-source-entry.json"
   if [[ "${WCP_RUNTIME_CLASS_TARGET:-bionic-native}" == "bionic-native" && "${WCP_RUNTIME_CLASS_ENFORCE:-0}" == "1" ]]; then
     ntdll_abi="$(awk -F'\t' '$1=="lib/wine/aarch64-unix/ntdll.so"{print $2; exit}' "${unix_abi_file}" 2>/dev/null || true)"
@@ -1447,8 +1449,28 @@ PY
         wcp_fail "Forensic unix ABI index is missing bionic ntdll marker"
         ;;
     esac
-    if grep -q $'\tglibc-unix$' "${unix_abi_file}"; then
-      wcp_fail "Forensic unix ABI index contains glibc-unix modules in strict bionic mode"
+    mapfile -t forensic_glibc_rows < <(awk -F'\t' '$2=="glibc-unix"{print $1}' "${unix_abi_file}" 2>/dev/null || true)
+    if [[ "${#forensic_glibc_rows[@]}" -gt 0 ]]; then
+      : "${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES:=winebth.so}"
+      # shellcheck disable=SC2206
+      strict_allowed_glibc_modules=( ${WCP_BIONIC_STRICT_ALLOWED_GLIBC_UNIX_MODULES} )
+      blocking_glibc_rows=()
+      for glibc_row in "${forensic_glibc_rows[@]}"; do
+        glibc_name="$(basename "${glibc_row}")"
+        allowed=0
+        for opt in "${strict_allowed_glibc_modules[@]}"; do
+          [[ "${glibc_name}" == "${opt}" ]] || continue
+          allowed=1
+          break
+        done
+        if [[ "${allowed}" != "1" ]]; then
+          blocking_glibc_rows+=("${glibc_row}")
+        fi
+      done
+      if [[ "${#blocking_glibc_rows[@]}" -gt 0 ]]; then
+        wcp_fail "Forensic unix ABI index contains glibc-unix modules in strict bionic mode: ${blocking_glibc_rows[*]}"
+      fi
+      wcp_log "Strict bionic forensic check tolerated optional glibc unix modules: ${forensic_glibc_rows[*]}"
     fi
     wcp_validate_bionic_source_entry "${bionic_source_entry_file}" "1" || \
       wcp_fail "Forensic bionic source entry contract validation failed in strict bionic mode"
