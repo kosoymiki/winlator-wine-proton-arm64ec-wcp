@@ -42,12 +42,12 @@ index 738930e..94988b9 100644
 +    }
 +    int net_requestcode = htonl(message.request_code);
 +    int net_data_length = htonl(strlen(message.data));
-+    ret = send(sock_fd, &net_requestcode, sizeof(net_requestcode), 0);
++    ret = send(sock_fd, (const char *)&net_requestcode, sizeof(net_requestcode), 0);
 +    if (ret == SOCKET_ERROR) {
 +        TRACE( "Failed to send request code to server\n" );
 +        return 0;
 +    }
-+    ret = send(sock_fd, &net_data_length, sizeof(net_data_length), 0);
++    ret = send(sock_fd, (const char *)&net_data_length, sizeof(net_data_length), 0);
 +    if (ret == SOCKET_ERROR) {
 +        TRACE( "Failed to send data length to server\n" );
 +        return 0;
@@ -70,10 +70,10 @@ index 738930e..94988b9 100644
 +}
 +
 +static char *from_unix_to_dos_path(const char *url) {
-+    char *path = url + 7;
++    const char *path = url + 7;
 +    char *temp = strdup(path);
 +    char *token = strtok(temp, "/");
-+    char *new_url = NULL;
++    const char *new_url = NULL;
 +
 +    while (token != NULL) {
 +        if (strcmp("dosdevices", token) == 0) {
@@ -85,9 +85,11 @@ index 738930e..94988b9 100644
 +        token = strtok(NULL, "/");
 +    }
 +
-+    free(temp);
-+
-+    return new_url;
++    {
++        char *result = new_url ? strdup(new_url) : NULL;
++        free(temp);
++        return result;
++    }
 +}
 +
 +static int launch_url_with_internet_explorer(const char *url) {
@@ -112,8 +114,12 @@ index 738930e..94988b9 100644
 -    WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
 +
 +    if (strstr(cmdline, "file://")) {
-+        cmdline = from_unix_to_dos_path(cmdline);
-+     }
++        char *mapped_cmdline = from_unix_to_dos_path(cmdline);
++        if (mapped_cmdline) {
++            free( cmdline );
++            cmdline = mapped_cmdline;
++        }
++    }
 +
 +    if (!launch_url_with_internet_explorer(cmdline)) WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
  
@@ -131,22 +137,33 @@ index 738930e..94988b9 100644
      if (r != ERROR_SUCCESS)
          memcpy( browsers, defaultbrowsers, sizeof(defaultbrowsers) );
  
-+    wine_open_with_android_browser = getenv("WINE_OPEN_WITH_ANDROID_BROwSER") && atoi(getenv("WINE_OPEN_WITH_ANDROID_BROWSER"));
++    {
++        const char *open_with_android = getenv("WINE_OPEN_WITH_ANDROID_BROWSER");
++        wine_open_with_android_browser = open_with_android && atoi(open_with_android);
++    }
 +
 +    if (wine_open_with_android_browser) {
 +        char *p = strdup_unixcp(url);
-+           if (strstr(p, "file://")) {
-+            if (launch_url_with_internet_explorer(from_unix_to_dos_path(p)))
-+                   return 0;
++        if (p && strstr(p, "file://")) {
++            char *dos_path = from_unix_to_dos_path(p);
++            if (dos_path && launch_url_with_internet_explorer(dos_path)) {
++                free( dos_path );
++                free( p );
++                return 0;
++            }
++            free( dos_path );
 +        }
-+        else {
++        else if (p) {
 +            android_message_t message;
 +            ZeroMemory(&message, sizeof(message));
 +            message.request_code = 1;
 +            message.data = p;
-+               if (send_android_message(message))
-+                  return 0;
++            if (send_android_message(message)) {
++                free( p );
++                return 0;
++            }
 +        }
++        free( p );
 +    }
 +
      return launch_app( browsers, url );
