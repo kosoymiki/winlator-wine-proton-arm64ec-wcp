@@ -670,15 +670,14 @@ import sys
 
 path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
+if "__ANDROID__" in text and "dosdevices/d:" in text and "dosdevices/z:" in text:
+    raise SystemExit(0)
 
 pattern = re.compile(
-    r'if \(!mkdir\( "dosdevices", 0777 \)\)\n'
-    r'\s*\{\n'
-    r'\s*mkdir\( "drive_c", 0777 \);\n'
-    r'\s*symlink\( "\.\./drive_c", "dosdevices/c:" \);\n'
-    r'\s*symlink\( "/", "dosdevices/z:" \);\n'
-    r'\s*\}',
-    re.M,
+    r'if\s*\(!mkdir\(\s*"dosdevices"\s*,\s*0777\s*\)\)\s*'
+    r'\{.*?\}'
+    r'\s*else if\s*\(\s*errno\s*!=\s*EEXIST\s*\)',
+    re.S,
 )
 
 replace = (
@@ -694,25 +693,13 @@ replace = (
     '        symlink( "../drive_c", "dosdevices/c:" );\n'
     '        symlink( "/", "dosdevices/z:" );\n'
     '#endif\n'
-    '    }'
+    '    }\n'
+    '    else if (errno != EEXIST)'
 )
 
 updated, count = pattern.subn(replace, text, count=1)
 if count != 1:
-    if "__ANDROID__" in text and "dosdevices/d:" in text and "dosdevices/z:" in text:
-        raise SystemExit(0)
-    alt_pattern = re.compile(
-        r'if \(!mkdir\(\s*"dosdevices"\s*,\s*0777\s*\)\)\s*'
-        r'\{\s*'
-        r'mkdir\(\s*"drive_c"\s*,\s*0777\s*\);\s*'
-        r'symlink\(\s*"\.\./drive_c"\s*,\s*"dosdevices/c:"\s*\);\s*'
-        r'symlink\(\s*"/"\s*,\s*"dosdevices/z:"\s*\);\s*'
-        r'\}',
-        re.S,
-    )
-    updated, count = alt_pattern.subn(replace, text, count=1)
-    if count != 1:
-        raise SystemExit("unix/server.c dosdevices block replacement failed")
+    raise SystemExit("unix/server.c dosdevices block replacement failed")
 
 path.write_text(updated, encoding="utf-8")
 PY
