@@ -77,6 +77,8 @@ consolidated into:
   - completes the Eden transfer surface for renderer/gpu diagnostic controls (accuracy/AA/aspect/ASTC/screen-layout/VRAM mode, vertex-input dynamic state, GPU logging and unswizzle controls, GPU model/time tokens, Mesa debug), stores them in container-owned extras, strips legacy raw env duplication, and mirrors normalized aliases through runtime + launcher forensic contracts
 - `0053-graphics-lib-integrity-self-heal-and-forensics.patch`
   - adds runtime integrity validation for critical `imagefs/usr/lib/libGL.so.1.5.0` (ELF header/section table sanity), quarantines corrupted copies, re-extracts `graphics_driver/extra_libs.tzst` automatically, and emits forensic events for verify-fail/repair-applied/repair-failed paths
+- `0054-contents-proton-type-aliases.patch`
+  - accepts `proton*` type aliases (`proton`, `protonge`, `protonwine`, `wine/proton`) as Wine-family content in parser/resolver paths, and ensures local profile parsing treats those aliases as Wine for required `wine` metadata extraction
 
 ## Known high-overlap files (intentional)
 
