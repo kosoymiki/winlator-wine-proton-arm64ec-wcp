@@ -147,7 +147,8 @@ verify_patch_contract_markers() {
       ;;
     test-bylaws/dlls_wow64_process_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'RtlWow64SuspendThread' \
-        && file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'Wow64SuspendLocalThread'
+        && ( file_has_fixed "${SOURCE_DIR}/dlls/wow64/process.c" 'Wow64SuspendLocalThread' \
+          || file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'Wow64SuspendLocalThread' )
       ;;
     test-bylaws/dlls_wow64_syscall_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'Wow64SuspendLocalThread'
