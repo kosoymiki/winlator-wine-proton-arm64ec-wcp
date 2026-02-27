@@ -111,6 +111,7 @@ preflight_runtime_profile() {
   wcp_validate_winlator_profile_identifier "${WCP_VERSION_NAME}" "${WCP_VERSION_CODE}"
   wcp_enforce_mainline_bionic_policy
   wcp_enforce_mainline_external_runtime_policy
+  CHECK_REMOTE="${WCP_BIONIC_DONOR_PREFLIGHT:-1}" source "${ROOT_DIR}/ci/runtime-sources/resolve-bionic-donor.sh" "${WCP_NAME}"
   winlator_preflight_bionic_source_contract
 }
 

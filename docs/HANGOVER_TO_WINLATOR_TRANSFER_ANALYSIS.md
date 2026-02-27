@@ -2,7 +2,7 @@
 
 ## Summary
 
-This document captures a reflective engineering analysis of `AndreRH/hangover` and maps the parts that are useful for `Winlator CMOD Aero.so`.
+This document captures a reflective engineering analysis of `AndreRH/hangover` and maps the parts that are useful for `Aero.solator`.
 
 The core conclusion is straightforward: **Hangover helps us most as an architectural reference**, not as a direct code donor.
 

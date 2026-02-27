@@ -68,12 +68,42 @@ winlator_verify_sha256() {
   log "Verified ${label} SHA256 (${expected_sha,,})"
 }
 
+winlator_verify_sha256_with_alternates() {
+  local file_path="$1"
+  local expected_sha="$2"
+  local alternates="${3:-}"
+  local label="${4:-artifact}"
+  local actual_sha alt
+
+  [[ -f "${file_path}" ]] || fail "Cannot verify ${label} SHA256: missing file ${file_path}"
+  actual_sha="$(winlator_sha256_file "${file_path}")"
+  if [[ -n "${expected_sha}" && "${actual_sha}" == "${expected_sha,,}" ]]; then
+    log "Verified ${label} SHA256 (${expected_sha,,})"
+    return 0
+  fi
+  for alt in ${alternates}; do
+    [[ -n "${alt}" ]] || continue
+    if [[ "${actual_sha}" == "${alt,,}" ]]; then
+      log "Accepted alternate ${label} SHA256 (${actual_sha})"
+      return 0
+    fi
+  done
+  if [[ -n "${expected_sha}" ]]; then
+    fail "${label} SHA256 mismatch: expected=${expected_sha,,} actual=${actual_sha} file=${file_path}"
+  fi
+  if [[ -n "${alternates}" ]]; then
+    fail "${label} SHA256 mismatch against alternates: actual=${actual_sha} alternates=${alternates} file=${file_path}"
+  fi
+}
+
 winlator_download_cached_archive() {
   local url="$1"
   local cache_path="$2"
   local expected_sha="${3:-}"
-  local label="${4:-archive}"
+  local alternates="${4:-}"
+  local label="${5:-archive}"
   local actual_sha
+  local alt
 
   [[ -n "${url}" ]] || fail "Cannot download ${label}: empty URL"
   command -v curl >/dev/null 2>&1 || fail "curl is required to download ${label}"
@@ -81,12 +111,19 @@ winlator_download_cached_archive() {
   mkdir -p "$(dirname "${cache_path}")"
 
   if [[ -f "${cache_path}" ]]; then
-    if [[ -n "${expected_sha}" ]]; then
+    if [[ -n "${expected_sha}" || -n "${alternates}" ]]; then
       actual_sha="$(sha256sum "${cache_path}" | awk '{print tolower($1)}')"
-      if [[ "${actual_sha}" == "${expected_sha,,}" ]]; then
+      if [[ -n "${expected_sha}" && "${actual_sha}" == "${expected_sha,,}" ]]; then
         log "Using cached ${label} (${cache_path})"
         return 0
       fi
+      for alt in ${alternates}; do
+        [[ -n "${alt}" ]] || continue
+        if [[ "${actual_sha}" == "${alt,,}" ]]; then
+          log "Using cached ${label} with alternate SHA (${cache_path})"
+          return 0
+        fi
+      done
       log "Cached ${label} SHA256 mismatch; re-downloading (${cache_path})"
     else
       log "Using cached ${label} (${cache_path})"
@@ -98,7 +135,7 @@ winlator_download_cached_archive() {
   curl -fL --retry 5 --retry-delay 2 --connect-timeout 20 --max-time 900 \
     -o "${cache_path}.tmp" "${url}" || fail "Failed to download ${label} from ${url}"
   mv -f "${cache_path}.tmp" "${cache_path}"
-  winlator_verify_sha256 "${cache_path}" "${expected_sha}" "${label}"
+  winlator_verify_sha256_with_alternates "${cache_path}" "${expected_sha}" "${alternates}" "${label}"
 }
 
 winlator_detect_launcher_abi() {
@@ -370,8 +407,8 @@ winlator_verify_bionic_launcher_source_archive() {
 
 winlator_preflight_bionic_source_contract() {
   local strict_mode=0
-  local launcher_wcp launcher_url launcher_sha launcher_cache
-  local unix_wcp unix_url unix_sha unix_cache
+  local launcher_wcp launcher_url launcher_sha launcher_sha_alternates launcher_cache
+  local unix_wcp unix_url unix_sha unix_sha_alternates unix_cache
   local launcher_actual_sha unix_actual_sha
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
@@ -393,9 +430,10 @@ winlator_preflight_bionic_source_contract() {
   launcher_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}"
   launcher_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
   launcher_sha="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}"
+  launcher_sha_alternates="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256_ALTERNATES:-}"
   launcher_cache="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}/launcher-source.wcp"
   if [[ -z "${launcher_wcp}" && -n "${launcher_url}" ]]; then
-    winlator_download_cached_archive "${launcher_url}" "${launcher_cache}" "${launcher_sha}" "bionic launcher source WCP"
+    winlator_download_cached_archive "${launcher_url}" "${launcher_cache}" "${launcher_sha}" "${launcher_sha_alternates}" "bionic launcher source WCP"
     launcher_wcp="${launcher_cache}"
   fi
   if [[ -z "${launcher_wcp}" ]]; then
@@ -405,7 +443,7 @@ winlator_preflight_bionic_source_contract() {
     return 0
   fi
   [[ -f "${launcher_wcp}" ]] || fail "Bionic launcher source WCP not found: ${launcher_wcp}"
-  winlator_verify_sha256 "${launcher_wcp}" "${launcher_sha}" "bionic launcher source WCP"
+  winlator_verify_sha256_with_alternates "${launcher_wcp}" "${launcher_sha}" "${launcher_sha_alternates}" "bionic launcher source WCP"
   winlator_verify_bionic_launcher_source_archive "${launcher_wcp}" "bionic launcher source WCP"
   launcher_actual_sha="$(winlator_sha256_file "${launcher_wcp}")"
   WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH="${launcher_wcp}"
@@ -415,9 +453,10 @@ winlator_preflight_bionic_source_contract() {
   unix_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}"
   unix_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${launcher_url}}"
   unix_sha="${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}"
+  unix_sha_alternates="${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256_ALTERNATES:-}"
   unix_cache="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}/unix-source.wcp"
   if [[ -z "${unix_wcp}" && -n "${unix_url}" ]]; then
-    winlator_download_cached_archive "${unix_url}" "${unix_cache}" "${unix_sha}" "bionic unix source WCP"
+    winlator_download_cached_archive "${unix_url}" "${unix_cache}" "${unix_sha}" "${unix_sha_alternates}" "bionic unix source WCP"
     unix_wcp="${unix_cache}"
   fi
   if [[ -z "${unix_wcp}" ]]; then
@@ -427,7 +466,7 @@ winlator_preflight_bionic_source_contract() {
     return 0
   fi
   [[ -f "${unix_wcp}" ]] || fail "Bionic unix source WCP not found: ${unix_wcp}"
-  winlator_verify_sha256 "${unix_wcp}" "${unix_sha}" "bionic unix source WCP"
+  winlator_verify_sha256_with_alternates "${unix_wcp}" "${unix_sha}" "${unix_sha_alternates}" "bionic unix source WCP"
   winlator_verify_bionic_unix_source_archive "${unix_wcp}" "bionic unix source WCP"
   unix_actual_sha="$(winlator_sha256_file "${unix_wcp}")"
   WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH="${unix_wcp}"
@@ -515,6 +554,8 @@ emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL", "launcherSourceWcpUrl")
 emit("WCP_BIONIC_UNIX_SOURCE_WCP_URL", "unixSourceWcpUrl")
 emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256", "launcherSourceSha256")
 emit("WCP_BIONIC_UNIX_SOURCE_WCP_SHA256", "unixSourceSha256")
+emit("WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256_ALTERNATES", "launcherSourceSha256Alternates")
+emit("WCP_BIONIC_UNIX_SOURCE_WCP_SHA256_ALTERNATES", "unixSourceSha256Alternates")
 emit("WCP_BIONIC_UNIX_CORE_ADOPT", "unixCoreAdopt")
 emit("WCP_BIONIC_UNIX_CORE_MODULES", "unixCoreModules")
 if force:
@@ -532,7 +573,7 @@ PY
       fail "Bionic source-map entry for ${pkg_name} is required but missing in ${map_file}"
     fi
     case "${key}" in
-      WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256|WCP_BIONIC_UNIX_SOURCE_WCP_SHA256)
+      WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL|WCP_BIONIC_UNIX_SOURCE_WCP_URL|WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256|WCP_BIONIC_UNIX_SOURCE_WCP_SHA256|WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256_ALTERNATES|WCP_BIONIC_UNIX_SOURCE_WCP_SHA256_ALTERNATES)
         # In mainline, source-map should provide donor URLs/SHA by default while still
         # allowing explicit workflow/env overrides when FORCE=0.
         if [[ "${WCP_BIONIC_SOURCE_MAP_FORCE}" == "1" || -z "${!key:-}" ]]; then
@@ -559,7 +600,7 @@ PY
 winlator_adopt_bionic_unix_core_modules() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
-  local unix_abi source_wcp source_url source_sha cache_dir archive_path
+  local unix_abi source_wcp source_url source_sha source_sha_alternates cache_dir archive_path
   local tmp_extract src_unix dst_unix src_pe64 src_pe32 dst_pe64 dst_pe32
   local mod pe_mod source_unix_abi src_mod_abi
   local copied_count=0
@@ -591,11 +632,12 @@ winlator_adopt_bionic_unix_core_modules() {
   source_wcp="${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH:-${WCP_BIONIC_UNIX_SOURCE_WCP_PATH:-}}"
   source_url="${WCP_BIONIC_UNIX_SOURCE_WCP_URL:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}}"
   source_sha="${WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256:-${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256:-}}"
+  source_sha_alternates="${WCP_BIONIC_UNIX_SOURCE_WCP_SHA256_ALTERNATES:-}"
   cache_dir="${WCP_BIONIC_UNIX_SOURCE_WCP_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-unix-cache}"
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     archive_path="${cache_dir}/unix-source.wcp"
-    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "bionic unix source WCP"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "${source_sha_alternates}" "bionic unix source WCP"
     source_wcp="${archive_path}"
   fi
 
@@ -607,7 +649,7 @@ winlator_adopt_bionic_unix_core_modules() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic unix source WCP not found: ${source_wcp}"
-  winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic unix source WCP"
+  winlator_verify_sha256_with_alternates "${source_wcp}" "${source_sha}" "${source_sha_alternates}" "bionic unix source WCP"
   WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH="${source_wcp}"
   WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256="$(winlator_sha256_file "${source_wcp}")"
   export WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_PATH WCP_BIONIC_UNIX_SOURCE_WCP_RESOLVED_SHA256
@@ -751,7 +793,7 @@ winlator_adopt_bionic_launchers() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local target="${WCP_RUNTIME_CLASS_TARGET:-bionic-native}"
   local wine_bin wineserver_bin
-  local source_wcp source_url source_sha cache_dir archive_path
+  local source_wcp source_url source_sha source_sha_alternates cache_dir archive_path
   local tmp_extract src_wine src_wineserver src_preloader
   local detected unix_abi
   local needs_adoption runpath_invalid
@@ -800,11 +842,12 @@ winlator_adopt_bionic_launchers() {
   source_wcp="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_PATH:-}}"
   source_url="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_URL:-}"
   source_sha="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256:-${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256:-}}"
+  source_sha_alternates="${WCP_BIONIC_LAUNCHER_SOURCE_WCP_SHA256_ALTERNATES:-}"
   cache_dir="${WCP_BIONIC_LAUNCHER_CACHE_DIR:-${CACHE_DIR:-/tmp}/wcp-bionic-launcher-cache}"
 
   if [[ -z "${source_wcp}" && -n "${source_url}" ]]; then
     archive_path="${cache_dir}/launcher-source.wcp"
-    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "bionic launcher source WCP"
+    winlator_download_cached_archive "${source_url}" "${archive_path}" "${source_sha}" "${source_sha_alternates}" "bionic launcher source WCP"
     source_wcp="${archive_path}"
   fi
 
@@ -817,7 +860,7 @@ winlator_adopt_bionic_launchers() {
     return 0
   fi
   [[ -f "${source_wcp}" ]] || fail "Bionic launcher source WCP not found: ${source_wcp}"
-  winlator_verify_sha256 "${source_wcp}" "${source_sha}" "bionic launcher source WCP"
+  winlator_verify_sha256_with_alternates "${source_wcp}" "${source_sha}" "${source_sha_alternates}" "bionic launcher source WCP"
   WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH="${source_wcp}"
   WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256="$(winlator_sha256_file "${source_wcp}")"
   export WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_PATH WCP_BIONIC_LAUNCHER_SOURCE_WCP_RESOLVED_SHA256

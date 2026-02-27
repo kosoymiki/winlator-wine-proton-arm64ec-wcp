@@ -2,7 +2,7 @@
 
 ## Scope
 
-This contract defines the common behavior boundary for GameNative- and GameHub-derived improvements in Winlator CMOD Aero.so mainline.
+This contract defines the common behavior boundary for GameNative- and GameHub-derived improvements in Aero.solator mainline.
 
 ## Mainline Invariants
 

@@ -1,6 +1,6 @@
 # Winlator Fork Integration
 
-Этот pipeline собирает APK форка `Winlator CMOD Aero.so` (на базе upstream `Winlator-Ludashi`) с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
+Этот pipeline собирает APK форка `Aero.solator` (на базе upstream `Winlator-Ludashi`) с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
 
 ## Что делает сборка
 

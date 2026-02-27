@@ -27,6 +27,8 @@ This file is an **operational guide** for contributors/agents working in this re
 - `ci/protonwine10/ci-build-protonwine10-wcp.sh` - ProtonWine10 ARM64EC WCP pipeline.
 - `ci/gamenative/` - GameNative patchset orchestration (`apply-android-patchset.sh`, manifest, audit tooling).
 - `ci/winlator/` - Winlator build flow and patch stack application.
+- `ci/runtime-sources/` - bionic donor source map (v2), pinned SHA + alternate SHA policy.
+- `ci/reverse/online-intake.sh` - online-only upstream intake (GitHub API, no clone).
 - `.github/workflows/` - CI entrypoints and release publishing.
 - `contents/contents.json` - content catalog surface used by Winlator.
 
@@ -66,6 +68,9 @@ Run the narrowest relevant checks:
 - GN patchset logic changes:
   - `bash -n ci/gamenative/apply-android-patchset.sh`
   - `python3 -m py_compile ci/gamenative/patchset-conflict-audit.py` (if touched)
+- Runtime donor/source-map changes:
+  - `python3 -m json.tool ci/runtime-sources/bionic-source-map.json`
+  - `bash -n ci/lib/winlator-runtime.sh`
 - Workflow yaml changes:
   - parse/validate YAML locally before push.
 

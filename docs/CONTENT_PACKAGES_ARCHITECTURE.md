@@ -1,7 +1,7 @@
-# Content Packages Architecture (Winlator CMOD Aero.so)
+# Content Packages Architecture (Aero.solator)
 
 ## Goal
-`Contents` in Winlator CMOD Aero.so must clearly separate:
+`Contents` in Aero.solator must clearly separate:
 - local installed packages,
 - downloadable packages,
 - stable vs beta/nightly channels,

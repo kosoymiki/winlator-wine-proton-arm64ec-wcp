@@ -20,7 +20,7 @@ on:
 
 concurrency:
   group: winlator-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -84,7 +84,7 @@ jobs:
       - name: Upload Winlator artifact
         uses: actions/upload-artifact@v4
         with:
-          name: by.aero.so.benchmark-debug-0.9b
+          name: by.aero.so.benchmark-debug-0.9c+
           path: |
             out/winlator/*.apk
             out/winlator/SHA256SUMS
@@ -100,7 +100,7 @@ jobs:
         run: |
           set -euxo pipefail
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Winlator CMOD Aero.so (0.9b line / rolling)
+          Aero.solator (0.9c+ line / rolling)
 
           RU:
           - APK package: by.aero.so.benchmark
@@ -125,7 +125,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: winlator-latest
-          name: Winlator CMOD Aero.so Latest (0.9b line)
+          name: Aero.solator Latest (0.9c+ line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: false

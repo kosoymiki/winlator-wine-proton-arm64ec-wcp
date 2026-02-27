@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="docs/assets/winlator-cmod-aeroso-logo.png" alt="Winlator CMOD Aero.so" width="680">
+  <img src="docs/assets/winlator-cmod-aeroso-logo.png" alt="Aero.solator" width="680">
 </p>
 
-# Winlator CMOD Aero.so
+# Aero.solator
 
-**RU:** Витринный форк Winlator/Ludashi для ARM64EC + FEXCore + WCP-потока, с форензикой и воспроизводимым CI.
+**RU:** Авторский форк Winlator/Ludashi для ARM64EC + FEXCore + WCP-потока, с форензикой и воспроизводимым CI.
 
-**EN:** Showcase Winlator/Ludashi fork for ARM64EC + FEXCore + WCP workflow, with forensic tooling and reproducible CI.
+**EN:** Author fork of Winlator/Ludashi for ARM64EC + FEXCore + WCP workflow, with forensic tooling and reproducible CI.
 
 - **App package / Пакет приложения:** `by.aero.so.benchmark`
 - **Main branch / Основная ветка:** `main`
-- **Current line / Текущая линейка:** `0.9b`
+- **Current line / Текущая линейка:** `0.9c+`
 
 ---
 
@@ -18,7 +18,7 @@
 
 | Component | Artifact | Rolling Tag | Stable Line |
 |---|---|---|---|
-| Winlator APK | `by.aero.so.benchmark-*.apk` | `winlator-latest` | `v0.9b` |
+| Winlator APK | `by.aero.so.benchmark-*.apk` | `winlator-latest` | `v0.9c` |
 | Wine 11 ARM64EC | `wine-11-arm64ec.wcp` | `wine-11-arm64ec-latest` | `wcp-stable` |
 | Proton GE10 ARM64EC | `proton-ge10-arm64ec.wcp` | `proton-ge10-arm64ec-latest` | `wcp-stable` |
 | ProtonWine10 GameNative ARM64EC | `protonwine10-gamenative-arm64ec.wcp` | `protonwine10-gamenative-arm64ec-latest` | `wcp-stable` |
@@ -42,6 +42,12 @@ bash ci/protonwine10/ci-build-protonwine10-wcp.sh
 
 ```bash
 bash ci/winlator/ci-build-winlator-ludashi.sh
+```
+
+### Online reverse intake (no source clone) / Онлайн intake без скачивания исходников
+
+```bash
+ci/reverse/online-intake.sh
 ```
 
 **RU:** Результаты сборки лежат в `out/`.  
@@ -97,7 +103,7 @@ bash ci/winlator/ci-build-winlator-ludashi.sh
 
 ### Stable line
 
-- Winlator app line: `v0.9b`
+- Winlator app line: `v0.9c`
 - WCP bundle line: `wcp-stable`
 
 **RU:** Каждый артефакт имеет собственный тег и SHA256; новый успешный артефакт заменяет старый в рамках того же тега.  

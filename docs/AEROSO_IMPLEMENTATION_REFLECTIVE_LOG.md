@@ -1,4 +1,4 @@
-# Winlator CMOD Aero.so - Reflective Implementation Log
+# Aero.solator - Reflective Implementation Log
 
 ## Baseline (Stage 0)
 
@@ -124,7 +124,7 @@
 - `LogView` and runtime log files share the same `Winlator/logs` path policy.
 - Device-side validation is still required to confirm exact FEX env-var support on the shipped runtime build.
 
-## Stage 4 - Branding and package identity (`Winlator CMOD Aero.so`)
+## Stage 4 - Branding and package identity (`Aero.solator`)
 
 ### Before
 
@@ -139,7 +139,7 @@
 ### During
 
 - Updated `applicationId` to `by.aero.so.benchmark` and version name suffix for Aero.so benchmark build identity.
-- Switched app label to `@string/app_name` and set resource value to `Winlator CMOD Aero.so`.
+- Switched app label to `@string/app_name` and set resource value to `Aero.solator`.
 - Replaced hardcoded provider authorities with `${applicationId}` placeholders.
 - Removed an extra stray `>` in `AndroidManifest.xml` while touching the file.
 
@@ -174,7 +174,7 @@
 
 ### Before
 
-- Goal: clean repo noise and reposition project branding to `Winlator CMOD Aero.so`, while keeping Ludashi as upstream thanks.
+- Goal: clean repo noise and reposition project branding to `Aero.solator`, while keeping Ludashi as upstream thanks.
 - Risks:
   - Over-cleaning may hide files developers actually want tracked locally.
   - README rewrite can drift from real script names / artifact naming.
@@ -191,7 +191,7 @@
 
 ### After
 
-- Repo top-level presentation now reflects `Winlator CMOD Aero.so` as the primary fork identity.
+- Repo top-level presentation now reflects `Aero.solator` as the primary fork identity.
 - Ludashi remains credited as upstream base/inspiration rather than the main brand.
 - Cleanup stayed non-destructive: no user local work trees or `.rej` files were deleted.
 

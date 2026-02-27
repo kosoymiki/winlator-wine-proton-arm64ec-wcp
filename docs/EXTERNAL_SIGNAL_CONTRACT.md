@@ -2,7 +2,7 @@
 
 ## Scope
 
-This contract defines how Winlator CMOD Aero.so mainline accepts and resolves
+This contract defines how Aero.solator mainline accepts and resolves
 runtime signals imported from external lanes (GameNative, GameHub, Termux/FEX,
 legacy wrapper ecosystems).
 

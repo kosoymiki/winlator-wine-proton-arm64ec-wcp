@@ -1,4 +1,4 @@
-# Winlator by Aero.so 0.9b
+# Aero.solator 0.9c+
 
 ## RU
 - Пакет приложения: `by.aero.so.benchmark` (суффикс `.benchmark` сохранён намеренно).
@@ -13,5 +13,5 @@
 - Turnip/Adrenotools now supports version picker (latest + recent/history) and improved downloader.
 
 ## Included assets
-- Winlator by Aero.so APK (`by.aero.so.benchmark`)
+- Aero.solator APK (`by.aero.so.benchmark`)
 - `SHA256SUMS`

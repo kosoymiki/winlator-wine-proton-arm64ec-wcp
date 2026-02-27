@@ -55,6 +55,11 @@ from pathlib import Path
 
 map_path = Path(sys.argv[1])
 data = json.loads(map_path.read_text(encoding="utf-8"))
+schema = (data.get("schema") or "").strip()
+if schema != "bionic-source-map/v2":
+    print("[urc-check][error] Invalid bionic source map:")
+    print(f"[urc-check][error] - expected schema bionic-source-map/v2, got: {schema or '<missing>'}")
+    sys.exit(1)
 packages = data.get("packages") or {}
 baselines = data.get("baselines") or {}
 required = (
@@ -78,14 +83,30 @@ for name in required:
             continue
         if key.endswith("Sha256") and value.strip() and not re.fullmatch(r"[0-9a-f]{64}", value.strip().lower()):
             errors.append(f"packages.{name}.{key} must be 64 lowercase hex chars when set")
+    for key in ("launcherSourceSha256Alternates", "unixSourceSha256Alternates"):
+        value = entry.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, list):
+            errors.append(f"packages.{name}.{key} must be an array when set")
+            continue
+        for idx, alt in enumerate(value):
+            if not isinstance(alt, str) or not re.fullmatch(r"[0-9a-f]{64}", alt.strip().lower()):
+                errors.append(f"packages.{name}.{key}[{idx}] must be 64 lowercase hex chars")
     launcher_url = (entry.get("launcherSourceWcpUrl") or "").strip()
     unix_url = (entry.get("unixSourceWcpUrl") or "").strip()
     launcher_sha = (entry.get("launcherSourceSha256") or "").strip().lower()
     unix_sha = (entry.get("unixSourceSha256") or "").strip().lower()
-    if bool(launcher_url) != bool(launcher_sha):
-        errors.append(f"packages.{name}: launcher URL/SHA must be both set or both empty")
-    if bool(unix_url) != bool(unix_sha):
-        errors.append(f"packages.{name}: unix URL/SHA must be both set or both empty")
+    launcher_alt = [str(x).strip().lower() for x in (entry.get("launcherSourceSha256Alternates") or []) if str(x).strip()]
+    unix_alt = [str(x).strip().lower() for x in (entry.get("unixSourceSha256Alternates") or []) if str(x).strip()]
+    if launcher_url and not (launcher_sha or launcher_alt):
+        errors.append(f"packages.{name}: launcher URL requires launcherSourceSha256 or launcherSourceSha256Alternates")
+    if unix_url and not (unix_sha or unix_alt):
+        errors.append(f"packages.{name}: unix URL requires unixSourceSha256 or unixSourceSha256Alternates")
+    if (launcher_sha or launcher_alt) and not launcher_url:
+        errors.append(f"packages.{name}: launcher SHA data requires launcherSourceWcpUrl")
+    if (unix_sha or unix_alt) and not unix_url:
+        errors.append(f"packages.{name}: unix SHA data requires unixSourceWcpUrl")
     if launcher_url and unix_url and launcher_url != unix_url:
         errors.append(f"packages.{name}.launcherSourceWcpUrl and unixSourceWcpUrl must match when both set")
     if launcher_sha and unix_sha and launcher_sha != unix_sha:
@@ -315,6 +336,8 @@ main() {
   check_winlator_audit_docs_sync
   require_file "ci/validation/inspect-wcp-runtime-contract.sh"
   [[ -x "ci/validation/inspect-wcp-runtime-contract.sh" ]] || fail "inspect-wcp-runtime-contract.sh must be executable"
+  require_file "ci/runtime-sources/resolve-bionic-donor.sh"
+  [[ -x "ci/runtime-sources/resolve-bionic-donor.sh" ]] || fail "resolve-bionic-donor.sh must be executable"
   require_contains "ci/validation/inspect-wcp-runtime-contract.sh" '--strict-gamenative'
   require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'gamenativeBaseline'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" '--strict-gamenative'
@@ -330,7 +353,7 @@ main() {
   winlator_line="$(detect_winlator_release_line)"
   local version_patch="ci/winlator/patches/0007-aeroso-version-${winlator_line}.patch"
   require_file "${version_patch}"
-  require_contains "${version_patch}" "versionName \"${winlator_line}\""
+  require_contains "${version_patch}" "versionName \"${winlator_line}(\\+)?\""
 
   require_file "ci/release/publish-${winlator_line}.sh"
   require_file "ci/release/prepare-${winlator_line}-notes.sh"
