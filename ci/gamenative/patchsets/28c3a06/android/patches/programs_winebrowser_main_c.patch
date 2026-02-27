@@ -69,11 +69,11 @@ index 738930e..94988b9 100644
 +    return 1;
 +}
 +
-+static char *from_unix_to_dos_path(const char *url) {
-+    char *path = url + 7;
++static const char *from_unix_to_dos_path(const char *url) {
++    const char *path = url + 7;
 +    char *temp = strdup(path);
 +    char *token = strtok(temp, "/");
-+    char *new_url = NULL;
++    const char *new_url = NULL;
 +
 +    while (token != NULL) {
 +        if (strcmp("dosdevices", token) == 0) {
@@ -131,7 +131,7 @@ index 738930e..94988b9 100644
      if (r != ERROR_SUCCESS)
          memcpy( browsers, defaultbrowsers, sizeof(defaultbrowsers) );
  
-+    wine_open_with_android_browser = getenv("WINE_OPEN_WITH_ANDROID_BROwSER") && atoi(getenv("WINE_OPEN_WITH_ANDROID_BROWSER"));
++    wine_open_with_android_browser = getenv("WINE_OPEN_WITH_ANDROID_BROWSER") && atoi(getenv("WINE_OPEN_WITH_ANDROID_BROWSER"));
 +
 +    if (wine_open_with_android_browser) {
 +        char *p = strdup_unixcp(url);

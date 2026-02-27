@@ -34,7 +34,7 @@ iso_now() { date -Is; }
 
 sanitize_label() {
   local raw="$1" safe
-  safe="$(printf '%s' "${raw}" | tr -cs '[:alnum:]._-:' '_')"
+  safe="$(printf '%s' "${raw}" | tr -cs '[:alnum:]._:-' '_')"
   safe="${safe//:/_}"
   safe="${safe##_}"
   safe="${safe%%_}"

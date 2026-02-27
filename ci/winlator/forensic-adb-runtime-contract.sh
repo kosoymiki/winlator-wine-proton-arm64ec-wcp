@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 : "${WLT_OUT_DIR:=/tmp/winlator-runtime-contract-$(date +%Y%m%d_%H%M%S)}"
-: "${WLT_BASELINE_LABEL:=steven104}"
-: "${WLT_SCENARIOS:=wine11:1 protonwine10:2 steven104:3}"
+: "${WLT_BASELINE_LABEL:=gamenative104}"
+: "${WLT_SCENARIOS:=wine11:1 protonwine10:2 gamenative104:3}"
 : "${WLT_FAIL_ON_MISMATCH:=0}"
 : "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE:=off}"
 

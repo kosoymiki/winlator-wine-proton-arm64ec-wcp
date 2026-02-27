@@ -1,12 +1,12 @@
-# Steven Proton 10.4 WCP Reverse Analysis
+# GameNative Proton 10.4 WCP Baseline Analysis
 
 ## Scope
 
-Reference artifact analyzed:
+Reference artifact analyzed (GameNative line, not Steven fork):
 
 - `/home/mikhail/Загрузки/proton-10-4-arm64ec.wcp.xz`
 
-Goal: identify structural/runtime differences versus our WCP line (`Wine 11`, `Proton GE`, `ProtonWine GameNative`) that explain why Steven's package is a stable runtime baseline.
+Goal: identify structural/runtime differences versus our WCP line (`Wine 11`, `Proton GE`, `ProtonWine GameNative`) that explain why this GameNative package is a stable runtime baseline.
 
 ## Key Findings (facts)
 
@@ -49,7 +49,7 @@ Observed `profile.json`:
 This confirms two things:
 
 1. `versionCode=0` is valid in the wild and must be rendered gracefully (we already patched UI fallback/placeholder behavior).
-2. Steven package does not depend on extra metadata fields for runtime success.
+2. GameNative package does not depend on extra metadata fields for runtime success.
 
 ### 4) No bundled FEX in WCP (supports our new policy)
 
@@ -65,7 +65,7 @@ This matches the new repo policy introduced in CI:
 
 ## Comparative Interpretation (causal)
 
-### Why Steven's package is a useful baseline
+### Why this GameNative package is a useful baseline
 
 - It avoids the glibc-wrapped launcher class entirely.
 - It keeps WCP payload focused on Wine/Proton content.
@@ -89,11 +89,11 @@ This matches the new repo policy introduced in CI:
 
 ## Next engineering implication
 
-The remaining `Wine 11` failure (`signal_31`) should be treated as a **glibc runtime-class issue**, not as a Wine payload metadata or Turnip issue. Steven 10.4 remains the bionic/native baseline for runtime behavioral comparison.
+The remaining `Wine 11` failure (`signal_31`) should be treated as a **glibc runtime-class issue**, not as a Wine payload metadata or Turnip issue. GameNative 10.4 remains the bionic/native baseline for runtime behavioral comparison.
 
 ## Baseline policy extracted from this reference
 
-Use Steven 10.4 as the structural target for default WCP builds:
+Use GameNative 10.4 as the structural target for default WCP builds:
 
 - **runtime class:** `bionic/native`
 - **glibc bundle:** absent by default

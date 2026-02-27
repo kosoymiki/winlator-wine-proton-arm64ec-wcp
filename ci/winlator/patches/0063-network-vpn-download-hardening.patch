@@ -1,0 +1,307 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 2c98f39..71b65fc 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -43,8 +43,10 @@ import org.json.JSONObject;
+ import java.io.BufferedInputStream;
+ import java.io.File;
+ import java.io.FileOutputStream;
++import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.OutputStream;
++import java.net.HttpURLConnection;
+ import java.net.URL;
+ import java.net.URLConnection;
+ import java.net.URLDecoder;
+@@ -71,6 +73,10 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final Pattern TURNIP_REV_PATTERN = Pattern.compile("(?i)[_-]r(\\d+)");
+     private static final Pattern TURNIP_BUILD_PATTERN = Pattern.compile("(?i)[_-]b(\\d+)|[_-]a(\\d+)");
+     private static final Pattern QUALCOMM_VERSION_PATTERN = Pattern.compile("(?i)(\\d{3})\\.(\\d+)");
++    private static final int DOWNLOAD_CONNECT_TIMEOUT_MS = 15000;
++    private static final int DOWNLOAD_READ_TIMEOUT_MS = 30000;
++    private static final int DOWNLOAD_MAX_RETRIES = 3;
++    private static final String DOWNLOAD_USER_AGENT = "Aero.solator Adrenotools/0.9c+";
+ 
+     private AdrenotoolsManager adrenotoolsManager;
+     private RecyclerView recyclerView;
+@@ -621,30 +627,71 @@ public class AdrenotoolsFragment extends Fragment {
+ 
+ 
+     private void downloadFileWithProgress(String address, File file, ProgressCallback progressCallback) throws Exception {
+-        URLConnection connection = new URL(address).openConnection();
+-        connection.connect();
+-        int contentLength = connection.getContentLength();
+-
+-        try (InputStream input = new BufferedInputStream(connection.getInputStream());
+-             OutputStream output = new FileOutputStream(file)) {
+-            byte[] data = new byte[8192];
+-            long total = 0;
+-            int count;
+-            int lastProgress = -1;
+-            while ((count = input.read(data)) != -1) {
+-                output.write(data, 0, count);
+-                total += count;
+-                if (contentLength > 0) {
+-                    int progress = (int) ((total * 100L) / contentLength);
+-                    if (progress != lastProgress) {
+-                        lastProgress = progress;
+-                        progressCallback.onProgress(progress);
++        Exception lastError = null;
++        for (int attempt = 1; attempt <= DOWNLOAD_MAX_RETRIES; attempt++) {
++            URLConnection connection = null;
++            try {
++                connection = openDownloadConnection(address);
++                int contentLength = connection.getContentLength();
++                try (InputStream input = new BufferedInputStream(connection.getInputStream());
++                     OutputStream output = new FileOutputStream(file)) {
++                    byte[] data = new byte[8192];
++                    long total = 0;
++                    int count;
++                    int lastProgress = -1;
++                    while ((count = input.read(data)) != -1) {
++                        output.write(data, 0, count);
++                        total += count;
++                        if (contentLength > 0) {
++                            int progress = (int) ((total * 100L) / contentLength);
++                            if (progress != lastProgress) {
++                                lastProgress = progress;
++                                progressCallback.onProgress(progress);
++                            }
++                        }
++                    }
++                    progressCallback.onProgress(100);
++                    output.flush();
++                    return;
++                }
++            } catch (Exception e) {
++                lastError = e;
++                if (file.exists()) {
++                    //noinspection ResultOfMethodCallIgnored
++                    file.delete();
++                }
++                if (attempt < DOWNLOAD_MAX_RETRIES) {
++                    try {
++                        Thread.sleep(300L * attempt);
++                    } catch (InterruptedException ie) {
++                        Thread.currentThread().interrupt();
++                        throw new IOException("Download interrupted", ie);
+                     }
+                 }
++            } finally {
++                if (connection instanceof HttpURLConnection) {
++                    ((HttpURLConnection) connection).disconnect();
++                }
++            }
++        }
++        throw new IOException("Driver download failed for " + address, lastError);
++    }
++
++    private URLConnection openDownloadConnection(String address) throws Exception {
++        URLConnection connection = new URL(address).openConnection();
++        connection.setConnectTimeout(DOWNLOAD_CONNECT_TIMEOUT_MS);
++        connection.setReadTimeout(DOWNLOAD_READ_TIMEOUT_MS);
++        connection.setRequestProperty("User-Agent", DOWNLOAD_USER_AGENT);
++        connection.setRequestProperty("Accept", "*/*");
++        connection.connect();
++        if (connection instanceof HttpURLConnection) {
++            HttpURLConnection httpConnection = (HttpURLConnection) connection;
++            int responseCode = httpConnection.getResponseCode();
++            if (responseCode < 200 || responseCode >= 300) {
++                throw new IOException("HTTP " + responseCode + " for " + address);
+             }
+-            progressCallback.onProgress(100);
+-            output.flush();
+         }
++        return connection;
+     }
+ 
+     private String sanitizeFilename(String name) {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/Downloader.java b/app/src/main/java/com/winlator/cmod/contents/Downloader.java
+index 4d6c1f4..ae98b26 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/Downloader.java
++++ b/app/src/main/java/com/winlator/cmod/contents/Downloader.java
+@@ -1,66 +1,117 @@
+-package com.winlator.cmod.contents;
+-
+-import java.io.BufferedReader;
+-import java.io.File;
+-import java.io.FileOutputStream;
+-import java.io.InputStream;
+-import java.io.InputStreamReader;
+-import java.io.OutputStream;
+-import java.net.URL;
+-import java.net.URLConnection;
+-
+-public class Downloader {
+-
+-    public static boolean downloadFile(String address, File file) {
+-        try {
+-            URL url = new URL(address);
+-            URLConnection connection = url.openConnection();
+-            connection.connect();
+-
+-            // download the file
+-            InputStream input = url.openStream();
+-
+-            // Output stream
+-            OutputStream output = new FileOutputStream(file.getAbsolutePath());
+-
+-            byte[] data = new byte[1024];
+-
+-            int count;
+-            while ((count = input.read(data)) != -1) {
+-                output.write(data, 0, count);
+-            }
+-
+-            // flushing output
+-            output.flush();
+-
+-            // closing streams
+-            output.close();
+-            input.close();
+-            return true;
+-        } catch (Exception e) {
+-            e.printStackTrace();
+-            return false;
+-        }
+-    }
+-
+-    public static String downloadString(String address) {
+-        try {
+-            URL url = new URL(address);
+-            URLConnection connection = url.openConnection();
+-            connection.connect();
+-
+-            InputStream input = url.openStream();
+-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+-            StringBuilder sb = new StringBuilder();
+-            String line = null;
+-            while ((line = reader.readLine()) != null) {
+-                sb.append(line).append("\n");
+-            }
+-            reader.close();
+-            return sb.toString();
+-        } catch (Exception e) {
+-            e.printStackTrace();
+-            return null;
+-        }
+-    }
+-}
+\ No newline at end of file
++package com.winlator.cmod.contents;
++
++import java.io.BufferedInputStream;
++import java.io.BufferedReader;
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.InputStreamReader;
++import java.io.OutputStream;
++import java.net.HttpURLConnection;
++import java.net.URL;
++import java.net.URLConnection;
++import java.nio.charset.StandardCharsets;
++
++public class Downloader {
++    private static final int CONNECT_TIMEOUT_MS = 15000;
++    private static final int READ_TIMEOUT_MS = 30000;
++    private static final int MAX_RETRIES = 3;
++    private static final String USER_AGENT = "Aero.solator Downloader/0.9c+";
++
++    public static boolean downloadFile(String address, File file) {
++        Exception lastError = null;
++        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
++            URLConnection connection = null;
++            try {
++                connection = openConnection(address);
++                try (InputStream input = new BufferedInputStream(connection.getInputStream());
++                     OutputStream output = new FileOutputStream(file)) {
++                    byte[] data = new byte[8192];
++                    int count;
++                    while ((count = input.read(data)) != -1) {
++                        output.write(data, 0, count);
++                    }
++                    output.flush();
++                }
++                return true;
++            } catch (Exception e) {
++                lastError = e;
++                if (file.exists()) {
++                    //noinspection ResultOfMethodCallIgnored
++                    file.delete();
++                }
++                sleepBeforeRetry(attempt);
++            } finally {
++                disconnect(connection);
++            }
++        }
++        if (lastError != null) {
++            lastError.printStackTrace();
++        }
++        return false;
++    }
++
++    public static String downloadString(String address) {
++        Exception lastError = null;
++        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
++            URLConnection connection = null;
++            try {
++                connection = openConnection(address);
++                try (InputStream input = new BufferedInputStream(connection.getInputStream());
++                     BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
++                    StringBuilder sb = new StringBuilder();
++                    String line;
++                    while ((line = reader.readLine()) != null) {
++                        sb.append(line).append("\n");
++                    }
++                    return sb.toString();
++                }
++            } catch (Exception e) {
++                lastError = e;
++                sleepBeforeRetry(attempt);
++            } finally {
++                disconnect(connection);
++            }
++        }
++        if (lastError != null) {
++            lastError.printStackTrace();
++        }
++        return null;
++    }
++
++    private static URLConnection openConnection(String address) throws Exception {
++        URLConnection connection = new URL(address).openConnection();
++        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
++        connection.setReadTimeout(READ_TIMEOUT_MS);
++        connection.setRequestProperty("User-Agent", USER_AGENT);
++        connection.setRequestProperty("Accept", "*/*");
++        connection.connect();
++
++        if (connection instanceof HttpURLConnection) {
++            HttpURLConnection http = (HttpURLConnection) connection;
++            int code = http.getResponseCode();
++            if (code < 200 || code >= 300) {
++                throw new IOException("HTTP " + code + " for " + address);
++            }
++        }
++        return connection;
++    }
++
++    private static void disconnect(URLConnection connection) {
++        if (connection instanceof HttpURLConnection) {
++            ((HttpURLConnection) connection).disconnect();
++        }
++    }
++
++    private static void sleepBeforeRetry(int attempt) {
++        if (attempt >= MAX_RETRIES) {
++            return;
++        }
++        try {
++            Thread.sleep(300L * attempt);
++        } catch (InterruptedException ie) {
++            Thread.currentThread().interrupt();
++        }
++    }
++}

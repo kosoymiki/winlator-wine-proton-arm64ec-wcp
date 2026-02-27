@@ -60,6 +60,8 @@ env:
   WCP_BUILD_HEARTBEAT_SEC: "60"
   WCP_RUNTIME_CLASS_TARGET: bionic-native
   WCP_RUNTIME_CLASS_ENFORCE: "1"
+  WCP_STRICT_RUNPATH_CONTRACT: "1"
+  WCP_RUNPATH_ACCEPT_REGEX: '^/data/data/com\.termux/files/usr/lib$'
   WCP_PRUNE_EXTERNAL_COMPONENTS: "1"
   WCP_GLIBC_SOURCE_MODE: host
   WCP_RUNTIME_BUNDLE_LOCK_MODE: audit
@@ -75,6 +77,8 @@ env:
   WCP_BIONIC_SOURCE_MAP_FORCE: "0"
   WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"
   WCP_BIONIC_DONOR_PREFLIGHT: "1"
+  WCP_STRICT_GAMENATIVE_BASELINE: "1"
+  WCP_GAMENATIVE_BASELINE_URL: https://github.com/GameNative/proton-wine/releases/download/build-20260225-1/proton-wine-10.0-4-arm64ec.wcp.xz
   WCP_GN_PATCHSET_ENABLE: ${{ github.event.inputs.gn_patchset_enable || '1' }}
   WCP_GN_PATCHSET_REF: 28c3a06ba773f6d29b9f3ed23b9297f94af4771c
   WCP_GN_PATCHSET_STRICT: "1"
@@ -137,8 +141,20 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p "${WCP_OUTPUT_DIR}/logs"
-          bash ci/validation/inspect-wcp-runtime-contract.sh "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" --strict-bionic \
+          gn_flag=""
+          if [[ "${WCP_STRICT_GAMENATIVE_BASELINE:-0}" == "1" ]]; then
+            gn_flag="--strict-gamenative"
+          fi
+          bash ci/validation/inspect-wcp-runtime-contract.sh "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" --strict-bionic ${gn_flag} \
             | tee "${WCP_OUTPUT_DIR}/logs/runtime-contract-inspection.txt"
+
+      - name: Reverse compare vs GameNative Proton 10.4 baseline
+        run: |
+          set -euxo pipefail
+          mkdir -p "${WCP_OUTPUT_DIR}/logs"
+          bash ci/validation/reverse-compare-gamenative-baseline.sh \
+            "${WCP_OUTPUT_DIR}/${WCP_NAME}.wcp" \
+            "${WCP_OUTPUT_DIR}/logs"
 
       - name: Verify outputs
         run: |

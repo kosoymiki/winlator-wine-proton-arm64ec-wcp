@@ -127,11 +127,18 @@ verify_patch_contract_markers() {
     dlls_ntdll_ntdll_spec.patch|test-bylaws/dlls_ntdll_ntdll_spec.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/ntdll/ntdll.spec" 'RtlWow64SuspendThread'
       ;;
+    dlls_ntdll_ntdll_spec_ntuserpfn.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/ntdll/ntdll.spec" 'RtlInitializeNtUserPfn'
+      ;;
     dlls_winex11_drv_window_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/window.c" 'class_hints->res_name = process_name;'
       ;;
     dlls_wow64_syscall_c.patch)
       file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'L"HODLL"'
+      ;;
+    dlls_winex11_drv_mouse_c_wm_input_fix.patch)
+      file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'get_send_mouse_flags' \
+        && file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), input, 0 );'
       ;;
     programs_wineboot_wineboot_c.patch)
       file_has_fixed "${SOURCE_DIR}/programs/wineboot/wineboot.c" 'initialize_xstate_features(struct _KUSER_SHARED_DATA *data)'
@@ -350,6 +357,39 @@ static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
 """
 
 path.write_text(head + marker + aarch64_block + inject + "\n#else" + rest, encoding="utf-8")
+PY
+}
+
+backport_ntdll_spec_ntuserpfn() {
+  local file
+  file="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  if grep -Fq 'RtlInitializeNtUserPfn' "${file}"; then
+    return 0
+  fi
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+needle = "@ stdcall RtlInitializeHandleTable(long long ptr)\n"
+insert = "@ stdcall RtlInitializeNtUserPfn(ptr long ptr long ptr long)\n"
+
+if insert in text:
+    raise SystemExit(0)
+
+if needle in text:
+    text = text.replace(needle, needle + insert, 1)
+else:
+    fallback = "@ stdcall RtlInitializeSListHead(ptr)\n"
+    if fallback not in text:
+        raise SystemExit("ntdll.spec insertion anchor not found")
+    text = text.replace(fallback, insert + fallback, 1)
+
+path.write_text(text, encoding="utf-8")
 PY
 }
 
@@ -737,12 +777,72 @@ path.write_text(updated, encoding="utf-8")
 PY
 }
 
+backport_winex11_mouse_wm_input() {
+  local file
+  file="${SOURCE_DIR}/dlls/winex11.drv/mouse.c"
+  [[ -f "${file}" ]] || fail "missing ${file}"
+
+  python3 - "${file}" <<'PY'
+import pathlib
+import re
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+updated = text
+needs_fix = "SEND_HWMSG_NO_RAW" in updated or "NtUserSendHardwareInput" in updated
+
+if not needs_fix and "get_send_mouse_flags" not in updated:
+    raise SystemExit(0)
+
+if "get_send_mouse_flags" not in updated:
+    helper = (
+        "/* When XInput2 is available, explorer.exe centralises WM_INPUT generation via\n"
+        " * SEND_HWMSG_NO_MSG raw events, so game processes must suppress their own raw\n"
+        " * input dispatch to avoid duplicates (SEND_HWMSG_NO_RAW = legacy only).\n"
+        " * When XInput2 is absent (e.g. Android / --without-xinput2 builds) there is no\n"
+        " * explorer.exe raw input pipeline at all, so each process must generate WM_INPUT\n"
+        " * itself alongside the legacy message (flags = 0). */\n"
+        "#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H\n"
+        "static inline UINT get_send_mouse_flags(void)\n"
+        "{\n"
+        "    return xinput2_available ? SEND_HWMSG_NO_RAW : 0;\n"
+        "}\n"
+        "#else\n"
+        "static inline UINT get_send_mouse_flags(void) { return 0; }\n"
+        "#endif\n\n"
+    )
+    marker = "#undef MAKE_FUNCPTR\n#endif\n\n"
+    if marker in updated:
+        updated = updated.replace(marker, marker + helper, 1)
+    else:
+        marker = "#ifdef HAVE_X11_EXTENSIONS_XINPUT_H\n"
+        if marker not in updated:
+            raise SystemExit("mouse.c insertion marker not found for WM_INPUT helper")
+        updated = updated.replace(marker, helper + marker, 1)
+
+updated = re.sub(
+    r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*SEND_HWMSG_NO_RAW\s*,\s*input\s*,\s*0\s*\);',
+    'NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), input, 0 );',
+    updated,
+)
+
+if needs_fix and "NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), input, 0 );" not in updated:
+    raise SystemExit("mouse.c WM_INPUT fix not applied")
+
+path.write_text(updated, encoding="utf-8")
+PY
+}
+
 run_backport_action() {
   local patch="$1" action="$2"
 
   case "${action}" in
     backport_wineboot_xstate)
       backport_wineboot_xstate
+      ;;
+    backport_ntdll_spec_ntuserpfn)
+      backport_ntdll_spec_ntuserpfn
       ;;
     backport_protonge_hodll)
       backport_protonge_hodll
@@ -755,6 +855,9 @@ run_backport_action() {
       ;;
     backport_include_winternl_fex)
       backport_include_winternl_fex
+      ;;
+    backport_winex11_mouse_wm_input)
+      backport_winex11_mouse_wm_input
       ;;
     *)
       fail "Unsupported backport action: ${action}"
@@ -987,6 +1090,8 @@ PY
 }
 
 run_post_patch_normalization() {
+  backport_winex11_mouse_wm_input
+  report "__post_patch__/winex11-mouse" "normalize" "applied" "wm-input-no-xinput2-fix"
   normalize_winnt_interlocked_dummy
   report "__post_patch__/winnt" "normalize" "applied" "interlocked-dummy-volatile-fix"
   normalize_winebrowser_android_bridge

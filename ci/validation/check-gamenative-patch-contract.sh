@@ -110,6 +110,7 @@ f_winternl="${SOURCE_DIR}/include/winternl.h"
 f_winnt="${SOURCE_DIR}/include/winnt.h"
 f_menubuilder="${SOURCE_DIR}/programs/winemenubuilder/winemenubuilder.c"
 f_winebrowser="${SOURCE_DIR}/programs/winebrowser/main.c"
+f_winex11_mouse="${SOURCE_DIR}/dlls/winex11.drv/mouse.c"
 
 for f in "${f_loader}" "${f_ntdll_spec}" "${f_wow64_syscall}" "${f_wow64_spec}" "${f_winternl}" "${f_winnt}" "${f_menubuilder}"; do
   [[ -f "${f}" ]] || fail "required source file missing: ${f}"
@@ -120,6 +121,7 @@ check_fixed "${f_loader}" 'libarm64ecfex.dll' 'ntdll loader uses libarm64ecfex.d
 check_fixed "${f_loader}" 'pWow64SuspendLocalThread' 'ntdll loader has pWow64SuspendLocalThread pointer'
 check_fixed "${f_loader}" 'GET_PTR( Wow64SuspendLocalThread );' 'ntdll loader imports Wow64SuspendLocalThread'
 check_fixed "${f_ntdll_spec}" 'RtlWow64SuspendThread' 'ntdll.spec exports RtlWow64SuspendThread'
+check_fixed "${f_ntdll_spec}" 'RtlInitializeNtUserPfn' 'ntdll.spec exports RtlInitializeNtUserPfn'
 check_fixed "${f_wow64_syscall}" 'Wow64SuspendLocalThread' 'wow64 syscall exports local suspend helper'
 check_fixed "${f_wow64_spec}" 'Wow64SuspendLocalThread' 'wow64.spec exports Wow64SuspendLocalThread'
 
@@ -139,6 +141,12 @@ if [[ -f "${f_winebrowser}" ]] && grep -Fq 'send_android_message' "${f_winebrows
   check_regex "${f_winebrowser}" 'send\(sock_fd,\s*\(const char \*\)&net_data_length,\s*sizeof\(net_data_length\),\s*0\)' 'winebrowser send() casts payload length buffer'
   check_fixed "${f_winebrowser}" 'WINE_OPEN_WITH_ANDROID_BROWSER' 'winebrowser uses canonical WINE_OPEN_WITH_ANDROID_BROWSER env key'
   check_absent_fixed "${f_winebrowser}" 'WINE_OPEN_WITH_ANDROID_BROwSER' 'winebrowser does not use typo BROwSER env key'
+fi
+
+if [[ -f "${f_winex11_mouse}" ]]; then
+  check_fixed "${f_winex11_mouse}" 'get_send_mouse_flags' 'winex11 mouse has no-XInput2 WM_INPUT helper'
+  check_regex "${f_winex11_mouse}" 'NtUserSendHardwareInput\( hwnd, get_send_mouse_flags\(\), input, 0 \);' 'winex11 mouse routes input via get_send_mouse_flags()'
+  check_absent_fixed "${f_winex11_mouse}" 'NtUserSendHardwareInput( hwnd, SEND_HWMSG_NO_RAW, input, 0 );' 'winex11 mouse does not hardcode SEND_HWMSG_NO_RAW'
 fi
 
 if [[ "${TARGET}" == "wine" ]]; then

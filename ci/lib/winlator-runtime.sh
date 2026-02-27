@@ -193,6 +193,71 @@ winlator_is_bionic_launcher() {
   readelf -l "${bin_path}" 2>/dev/null | grep -q 'Requesting program interpreter: /system/bin/linker64'
 }
 
+winlator_extract_elf_runpath() {
+  local elf_path="$1"
+  local dyn
+  [[ -f "${elf_path}" ]] || return 0
+  dyn="$(readelf -d "${elf_path}" 2>/dev/null || true)"
+  [[ -n "${dyn}" ]] || return 0
+  awk '
+    /RUNPATH|RPATH/ {
+      if (match($0, /\[[^]]+\]/)) {
+        print substr($0, RSTART + 1, RLENGTH - 2)
+        exit
+      }
+    }
+  ' <<<"${dyn}"
+}
+
+winlator_validate_bionic_launcher_runpath() {
+  local launcher_path="$1"
+  local mode="${2:-enforce}"
+  local strict_set regex_set strict runpath_regex runpath
+  local default_regex
+  default_regex='^/data/data/(com\.termux|com\.winlator\.cmod|by\.aero\.so\.benchmark)/files/(usr/lib|imagefs/usr/lib)$'
+
+  strict_set="${WCP_STRICT_RUNPATH_CONTRACT+x}"
+  regex_set="${WCP_RUNPATH_ACCEPT_REGEX+x}"
+  : "${WCP_STRICT_RUNPATH_CONTRACT:=0}"
+  : "${WCP_RUNPATH_ACCEPT_REGEX:=${default_regex}}"
+  strict="${WCP_STRICT_RUNPATH_CONTRACT}"
+  runpath_regex="${WCP_RUNPATH_ACCEPT_REGEX}"
+
+  if [[ "${strict}" == "1" && -z "${regex_set}" ]] && winlator_bionic_mainline_strict; then
+    runpath_regex='^/data/data/com\.termux/files/usr/lib$'
+  fi
+
+  [[ "${mode}" == "enforce" || "${mode}" == "probe" ]] || fail "Unsupported runpath validation mode: ${mode}"
+  [[ "${strict}" =~ ^[01]$ ]] || fail "WCP_STRICT_RUNPATH_CONTRACT must be 0 or 1"
+  runpath="$(winlator_extract_elf_runpath "${launcher_path}" || true)"
+  if [[ "${strict}" == "1" ]]; then
+    if [[ -z "${runpath}" ]]; then
+      if [[ "${mode}" == "probe" ]]; then
+        return 1
+      fi
+      fail "Runpath contract failed for ${launcher_path}: RUNPATH is missing"
+    fi
+    if [[ ! "${runpath}" =~ ${runpath_regex} ]]; then
+      if [[ "${mode}" == "probe" ]]; then
+        return 1
+      fi
+      fail "Runpath contract failed for ${launcher_path}: ${runpath}"
+    fi
+    return 0
+  fi
+  if [[ -z "${runpath}" ]]; then
+    log "runpath warn: ${launcher_path} has no RUNPATH/RPATH entry"
+    return 0
+  fi
+  if [[ ! "${runpath}" =~ ${runpath_regex} ]]; then
+    if [[ "${mode}" == "probe" ]]; then
+      return 1
+    fi
+    log "runpath warn: ${launcher_path} runpath outside accepted regex (${runpath_regex}): ${runpath}"
+  fi
+  return 0
+}
+
 winlator_detect_unix_module_abi() {
   local wcp_root="${1:-${WCP_ROOT:-}}"
   local ntdll soname
@@ -689,6 +754,7 @@ winlator_adopt_bionic_launchers() {
   local source_wcp source_url source_sha cache_dir archive_path
   local tmp_extract src_wine src_wineserver src_preloader
   local detected unix_abi
+  local needs_adoption runpath_invalid
 
   [[ "${WCP_TARGET_RUNTIME:-winlator-bionic}" == "winlator-bionic" ]] || return 0
   [[ "${target}" == "bionic-native" ]] || return 0
@@ -699,7 +765,28 @@ winlator_adopt_bionic_launchers() {
   wineserver_bin="${wcp_root}/bin/wineserver"
   [[ -f "${wine_bin}" ]] || return 0
   [[ -f "${wineserver_bin}" ]] || return 0
-  winlator_is_glibc_launcher "${wine_bin}" || return 0
+  needs_adoption=0
+  if winlator_is_glibc_launcher "${wine_bin}" || winlator_is_glibc_launcher "${wineserver_bin}"; then
+    needs_adoption=1
+  fi
+  if [[ "${needs_adoption}" == "0" && "${WCP_STRICT_RUNPATH_CONTRACT:-0}" == "1" ]]; then
+    runpath_invalid=0
+    if winlator_is_bionic_launcher "${wine_bin}"; then
+      if ! winlator_validate_bionic_launcher_runpath "${wine_bin}" probe; then
+        runpath_invalid=1
+      fi
+    fi
+    if winlator_is_bionic_launcher "${wineserver_bin}"; then
+      if ! winlator_validate_bionic_launcher_runpath "${wineserver_bin}" probe; then
+        runpath_invalid=1
+      fi
+    fi
+    if [[ "${runpath_invalid}" == "1" ]]; then
+      log "Bionic launcher runpath contract mismatch detected; re-adopting launchers from donor WCP"
+      needs_adoption=1
+    fi
+  fi
+  [[ "${needs_adoption}" == "1" ]] || return 0
 
   unix_abi="$(winlator_detect_unix_module_abi "${wcp_root}")"
   if [[ "${unix_abi}" == "glibc-unix" ]]; then
@@ -765,6 +852,12 @@ winlator_adopt_bionic_launchers() {
   detected="$(winlator_detect_runtime_class "${wcp_root}")"
   if [[ "${detected}" != "bionic-native" ]]; then
     fail "Bionic launcher adoption failed: detected runtime class is ${detected}"
+  fi
+  if winlator_is_bionic_launcher "${wine_bin}"; then
+    winlator_validate_bionic_launcher_runpath "${wine_bin}"
+  fi
+  if winlator_is_bionic_launcher "${wineserver_bin}"; then
+    winlator_validate_bionic_launcher_runpath "${wineserver_bin}"
   fi
   log "Adopted bionic-native Wine launchers from source WCP"
 }
@@ -1201,6 +1294,12 @@ winlator_validate_launchers() {
   fi
   if winlator_is_glibc_launcher "${wineserver_bin}"; then
     fail "bin/wineserver is a raw glibc launcher for /lib/ld-linux-aarch64.so.1; Winlator bionic cannot execute it directly"
+  fi
+  if winlator_is_bionic_launcher "${wine_bin}"; then
+    winlator_validate_bionic_launcher_runpath "${wine_bin}"
+  fi
+  if winlator_is_bionic_launcher "${wineserver_bin}"; then
+    winlator_validate_bionic_launcher_runpath "${wineserver_bin}"
   fi
 
   if [[ -f "${WCP_ROOT}/bin/wine.glibc-real" ]]; then

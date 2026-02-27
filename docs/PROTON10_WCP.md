@@ -72,4 +72,17 @@ bash ci/proton-ge10/ci-build-proton-ge10-wcp.sh
 bash ci/validation/inspect-wcp-runtime-contract.sh \
   out/proton-ge10/proton-ge10-arm64ec.wcp \
   --strict-bionic
+
+# Optional: enforce GameNative Proton 10.4 export baseline when doing
+# side-by-side regression analysis against reference package behavior.
+bash ci/validation/inspect-wcp-runtime-contract.sh \
+  out/proton-ge10/proton-ge10-arm64ec.wcp \
+  --strict-gamenative
+
+# Optional: enforce strict launcher RUNPATH contract used in mainline CI.
+WCP_STRICT_RUNPATH_CONTRACT=1 \
+WCP_RUNPATH_ACCEPT_REGEX='^/data/data/com\.termux/files/usr/lib$' \
+bash ci/validation/inspect-wcp-runtime-contract.sh \
+  out/proton-ge10/proton-ge10-arm64ec.wcp \
+  --strict-bionic --strict-gamenative
 ```

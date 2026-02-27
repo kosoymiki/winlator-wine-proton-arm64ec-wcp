@@ -95,6 +95,10 @@ consolidated into:
   - uses `internalType` in `Contents` meta rows to surface Wine-family subtype labels (`Proton`, `Proton GE`, `ProtonWine`) for entries grouped under the shared `Wine/Proton` category
 - `0062-contents-info-dialog-wine-family-variant-and-meta-format.patch`
   - extends the content info dialog to show Wine-family subtype (`Variant`) for Wine/Proton entries and normalizes metadata block formatting (`Channel/Delivery/Source/Artifact/SHA256`) without empty leading lines
+- `0063-network-vpn-download-hardening.patch`
+  - hardens content/driver downloads with retry+timeout headers, HTTP status validation, and partial-file cleanup for unstable VPN/DNS conditions
+- `0064-vulkan-1-4-policy-and-negotiation.patch`
+  - adds Vulkan selector `auto`+`1.4`, defaults container graphics config to `vulkanPolicy=force_latest`, and negotiates runtime `WRAPPER_VK_VERSION` from requested/detected policy with forensic env markers
 
 ## Known high-overlap files (intentional)
 

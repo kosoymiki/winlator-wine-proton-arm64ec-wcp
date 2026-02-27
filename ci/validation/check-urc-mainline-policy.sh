@@ -56,6 +56,7 @@ from pathlib import Path
 map_path = Path(sys.argv[1])
 data = json.loads(map_path.read_text(encoding="utf-8"))
 packages = data.get("packages") or {}
+baselines = data.get("baselines") or {}
 required = (
     "wine-11-arm64ec",
     "proton-ge10-arm64ec",
@@ -91,6 +92,8 @@ for name in required:
         errors.append(f"packages.{name}.launcherSourceSha256 and unixSourceSha256 must match when both set")
     if int(entry.get("unixCoreAdopt", 0)) != 1:
         errors.append(f"packages.{name}.unixCoreAdopt must be 1")
+    if launcher_url and "github.com/GameNative/proton-wine/releases/download/" not in launcher_url:
+        errors.append(f"packages.{name}.launcherSourceWcpUrl must point to GameNative proton-wine release archive")
     modules = entry.get("unixCoreModules") or []
     if not isinstance(modules, list) or "ntdll.so" not in modules:
         errors.append(f"packages.{name}.unixCoreModules must include ntdll.so")
@@ -99,6 +102,17 @@ if errors:
     print("[urc-check][error] Invalid bionic source map:")
     for err in errors:
         print(f"[urc-check][error] - {err}")
+    sys.exit(1)
+
+baseline = baselines.get("gamenativeProton104Arm64ec")
+if not isinstance(baseline, dict):
+    print("[urc-check][error] Invalid bionic source map:")
+    print("[urc-check][error] - missing baselines.gamenativeProton104Arm64ec")
+    sys.exit(1)
+archive_url = (baseline.get("archiveUrl") or "").strip()
+if "github.com/GameNative/proton-wine/releases/download/" not in archive_url:
+    print("[urc-check][error] Invalid bionic source map:")
+    print("[urc-check][error] - baselines.gamenativeProton104Arm64ec.archiveUrl must point to GameNative release asset")
     sys.exit(1)
 PY
 }
@@ -118,6 +132,8 @@ check_workflow_env_contract() {
   require_contains "${wf}" 'CACHE_DIR: \$\{\{ github\.workspace \}\}/\.cache'
   require_contains "${wf}" 'WCP_RUNTIME_CLASS_TARGET: bionic-native'
   require_contains "${wf}" 'WCP_MAINLINE_BIONIC_ONLY: "1"'
+  require_contains "${wf}" 'WCP_STRICT_RUNPATH_CONTRACT: "1"'
+  require_contains "${wf}" 'WCP_RUNPATH_ACCEPT_REGEX: .*/data/data/com\\\.termux/files/usr/lib'
   require_contains "${wf}" 'WCP_MAINLINE_FEX_EXTERNAL_ONLY: "1"'
   require_contains "${wf}" 'WCP_ALLOW_GLIBC_EXPERIMENTAL: "0"'
   require_contains "${wf}" 'WCP_INCLUDE_FEX_DLLS: "0"'
@@ -126,8 +142,13 @@ check_workflow_env_contract() {
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_REQUIRED: "0"'
   require_contains "${wf}" 'WCP_BIONIC_SOURCE_MAP_FILE:'
   require_contains "${wf}" 'WCP_BIONIC_DONOR_PREFLIGHT: "1"'
+  require_contains "${wf}" 'WCP_STRICT_GAMENATIVE_BASELINE: "1"'
+  require_contains "${wf}" 'WCP_GAMENATIVE_BASELINE_URL:'
   require_contains "${wf}" 'Inspect WCP runtime contract'
   require_contains "${wf}" 'inspect-wcp-runtime-contract\.sh'
+  require_contains "${wf}" '--strict-gamenative'
+  require_contains "${wf}" 'Reverse compare vs GameNative Proton 10\.4 baseline'
+  require_contains "${wf}" 'reverse-compare-gamenative-baseline\.sh'
   require_contains "${wf}" 'runtime-contract-inspection\.txt'
 
   require_not_contains "${wf}" 'WCP_RUNTIME_CLASS_TARGET: glibc-wrapped'
@@ -186,6 +207,8 @@ main() {
   require_file "ci/validation/gh-mainline-health.sh"
   require_file "ci/validation/gh-run-root-cause.sh"
   require_file "ci/validation/gh-latest-failures.sh"
+  require_file "ci/validation/reverse-compare-gamenative-baseline.sh"
+  [[ -x "ci/validation/reverse-compare-gamenative-baseline.sh" ]] || fail "ci/validation/reverse-compare-gamenative-baseline.sh must be executable"
   require_file "ci/validation/collect-mainline-forensic-snapshot.sh"
   [[ -x "ci/validation/gh-run-root-cause.sh" ]] || fail "ci/validation/gh-run-root-cause.sh must be executable"
   require_contains "ci/validation/gh-latest-failures.sh" 'WLT_AUTO_TRIAGE_FAILED_RUNS'
@@ -204,6 +227,11 @@ main() {
   python3 "ci/contents/validate-contents-json.py" "contents/contents.json" >/dev/null
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
   require_file "docs/EXTERNAL_SIGNAL_CONTRACT.md"
+  require_file "ci/research/reverse-wcp-package.py"
+  require_file "ci/research/run-gamenative-proton104-reverse.sh"
+  [[ -x "ci/research/run-gamenative-proton104-reverse.sh" ]] || fail "ci/research/run-gamenative-proton104-reverse.sh must be executable"
+  require_file "docs/GAMENATIVE_PROTON104_WCP_REVERSE.md"
+  require_file "docs/ADB_HARVARD_DEVICE_FORENSICS.md"
   require_file "docs/PATCH_STACK_REFLECTIVE_AUDIT.md"
   require_file "docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md"
   require_file "ci/winlator/patch-stack-reflective-audit.py"
@@ -211,10 +239,26 @@ main() {
   require_file "ci/winlator/run-reflective-audits.sh"
   require_file "ci/winlator/validate-patch-sequence.sh"
   require_file "ci/winlator/forensic-adb-runtime-contract.sh"
+  require_file "ci/winlator/forensic-adb-harvard-suite.sh"
+  require_file "ci/winlator/adb-container-seed-matrix.sh"
+  require_file "ci/winlator/adb-ensure-artifacts-latest.sh"
+  require_file "ci/winlator/artifact-source-map.json"
   require_file "ci/winlator/forensic-runtime-mismatch-matrix.py"
   require_file "ci/winlator/selftest-runtime-mismatch-matrix.sh"
   [[ -x "ci/winlator/forensic-adb-runtime-contract.sh" ]] || fail "ci/winlator/forensic-adb-runtime-contract.sh must be executable"
+  [[ -x "ci/winlator/forensic-adb-harvard-suite.sh" ]] || fail "ci/winlator/forensic-adb-harvard-suite.sh must be executable"
+  [[ -x "ci/winlator/adb-container-seed-matrix.sh" ]] || fail "ci/winlator/adb-container-seed-matrix.sh must be executable"
+  [[ -x "ci/winlator/adb-ensure-artifacts-latest.sh" ]] || fail "ci/winlator/adb-ensure-artifacts-latest.sh must be executable"
   [[ -x "ci/winlator/selftest-runtime-mismatch-matrix.sh" ]] || fail "ci/winlator/selftest-runtime-mismatch-matrix.sh must be executable"
+  require_contains "ci/winlator/forensic-adb-harvard-suite.sh" 'forensic-adb-complete-matrix\.sh'
+  require_contains "ci/winlator/forensic-adb-harvard-suite.sh" 'forensic-runtime-mismatch-matrix\.py'
+  require_contains "ci/winlator/forensic-adb-harvard-suite.sh" 'adb-container-seed-matrix\.sh'
+  require_contains "ci/winlator/forensic-adb-harvard-suite.sh" 'adb-ensure-artifacts-latest\.sh'
+  require_contains "ci/winlator/adb-ensure-artifacts-latest.sh" 'artifact-source-map\.json'
+  require_contains "ci/winlator/artifact-source-map.json" 'wine11'
+  require_contains "ci/winlator/artifact-source-map.json" 'protonwine10'
+  require_contains "ci/winlator/artifact-source-map.json" 'protonge10'
+  require_contains "ci/winlator/artifact-source-map.json" 'gamenative104'
   require_contains "ci/winlator/forensic-adb-runtime-contract.sh" 'Actionable drift rows'
   require_contains "ci/winlator/forensic-adb-runtime-contract.sh" 'WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE'
   require_contains "ci/winlator/forensic-runtime-mismatch-matrix.py" 'patch_hint'
@@ -237,6 +281,12 @@ main() {
   require_contains "docs/README.md" 'PATCH_STACK_REFLECTIVE_AUDIT\.md'
   require_contains "docs/README.md" 'PATCH_STACK_RUNTIME_CONTRACT_AUDIT\.md'
   require_contains "docs/README.md" 'EXTERNAL_SIGNAL_CONTRACT\.md'
+  require_contains "docs/README.md" 'forensic-adb-harvard-suite\.sh'
+  require_contains "docs/README.md" 'adb-container-seed-matrix\.sh'
+  require_contains "docs/README.md" 'adb-ensure-artifacts-latest\.sh'
+  require_contains "docs/README.md" 'reverse-compare-gamenative-baseline\.sh'
+  require_contains "docs/README.md" 'reverse-wcp-package\.py'
+  require_contains "docs/README.md" 'run-gamenative-proton104-reverse\.sh'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/unix-module-abi.tsv'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'share/wcp-forensics/bionic-source-entry.json'
   require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" 'bionicLauncherSourceResolvedSha256'
@@ -265,6 +315,10 @@ main() {
   check_winlator_audit_docs_sync
   require_file "ci/validation/inspect-wcp-runtime-contract.sh"
   [[ -x "ci/validation/inspect-wcp-runtime-contract.sh" ]] || fail "inspect-wcp-runtime-contract.sh must be executable"
+  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" '--strict-gamenative'
+  require_contains "ci/validation/inspect-wcp-runtime-contract.sh" 'gamenativeBaseline'
+  require_contains "docs/UNIFIED_RUNTIME_CONTRACT.md" '--strict-gamenative'
+  require_contains "docs/PROTON10_WCP.md" '--strict-gamenative'
   require_contains "docs/PROTON10_WCP.md" 'inspect-wcp-runtime-contract.sh'
 
   require_file "docs/REFLECTIVE_HARVARD_LEDGER.md"

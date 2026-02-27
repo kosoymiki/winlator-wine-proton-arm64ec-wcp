@@ -7,7 +7,7 @@ source "${ROOT_DIR}/ci/lib/winlator-runtime.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  bash ci/validation/inspect-wcp-runtime-contract.sh <path-to.wcp> [--strict-bionic]
+  bash ci/validation/inspect-wcp-runtime-contract.sh <path-to.wcp> [--strict-bionic] [--strict-gamenative]
 
 Outputs:
   - runtime class / launcher ABI / unix ABI summary
@@ -24,22 +24,60 @@ log() {
   printf '[inspect-wcp] %s\n' "$*"
 }
 
+extract_elf_runpath() {
+  local elf_path="$1"
+  local dyn
+  dyn="$(readelf -d "${elf_path}" 2>/dev/null || true)"
+  [[ -n "${dyn}" ]] || return 0
+  awk '
+    /RUNPATH|RPATH/ {
+      if (match($0, /\[[^]]+\]/)) {
+        print substr($0, RSTART + 1, RLENGTH - 2)
+        exit
+      }
+    }
+  ' <<<"${dyn}"
+}
+
 main() {
   local wcp_path="${1:-}"
   local strict_bionic=0
+  local strict_gamenative=0
+  local strict_runpath
+  local runpath_contract_set runpath_regex_set
   local tmp_dir wcp_root unix_abi_file glibc_hits
   local glibc_row glibc_name allowed opt
+  local wine_runpath wineserver_runpath runpath_accept_regex
   local -a strict_allowed_glibc_modules forensic_glibc_rows blocking_glibc_rows
+  local -a missing_gn_symbols
 
   [[ -n "${wcp_path}" ]] || { usage; fail "WCP path is required"; }
   shift || true
-  if [[ "${1:-}" == "--strict-bionic" ]]; then
-    strict_bionic=1
-  elif [[ -n "${1:-}" ]]; then
-    usage
-    fail "Unknown argument: ${1}"
-  fi
+  while [[ -n "${1:-}" ]]; do
+    case "${1}" in
+      --strict-bionic) strict_bionic=1 ;;
+      --strict-gamenative) strict_gamenative=1 ;;
+      *)
+        usage
+        fail "Unknown argument: ${1}"
+        ;;
+    esac
+    shift
+  done
   [[ -f "${wcp_path}" ]] || fail "WCP not found: ${wcp_path}"
+  runpath_contract_set="${WCP_STRICT_RUNPATH_CONTRACT+x}"
+  runpath_regex_set="${WCP_RUNPATH_ACCEPT_REGEX+x}"
+  : "${WCP_STRICT_RUNPATH_CONTRACT:=0}"
+  : "${WCP_RUNPATH_ACCEPT_REGEX:=^/data/data/(com\\.termux|com\\.winlator\\.cmod|by\\.aero\\.so\\.benchmark)/files/(usr/lib|imagefs/usr/lib)$}"
+  strict_runpath="${WCP_STRICT_RUNPATH_CONTRACT}"
+  runpath_accept_regex="${WCP_RUNPATH_ACCEPT_REGEX}"
+  if [[ "${strict_bionic}" == "1" && -z "${runpath_contract_set}" ]]; then
+    strict_runpath="1"
+  fi
+  if [[ "${strict_bionic}" == "1" && -z "${runpath_regex_set}" ]]; then
+    runpath_accept_regex='^/data/data/com\.termux/files/usr/lib$'
+  fi
+  [[ "${strict_runpath}" =~ ^[01]$ ]] || fail "WCP_STRICT_RUNPATH_CONTRACT must be 0 or 1"
 
   tmp_dir="$(mktemp -d)"
   trap 'rm -rf "${tmp_dir:-}"' EXIT
@@ -50,6 +88,28 @@ main() {
   log "unixAbi=$(winlator_detect_unix_module_abi "${wcp_root}")"
   log "wineLauncherAbi=$(winlator_detect_launcher_abi "${wcp_root}/bin/wine")"
   log "wineserverLauncherAbi=$(winlator_detect_launcher_abi "${wcp_root}/bin/wineserver")"
+  wine_runpath="$(extract_elf_runpath "${wcp_root}/bin/wine" || true)"
+  wineserver_runpath="$(extract_elf_runpath "${wcp_root}/bin/wineserver" || true)"
+  log "wineRunpath=${wine_runpath:-ABSENT}"
+  log "wineserverRunpath=${wineserver_runpath:-ABSENT}"
+  if [[ "${strict_runpath}" == "1" && -z "${wine_runpath}" ]]; then
+    fail "Runpath contract failed for bin/wine: RUNPATH is missing"
+  fi
+  if [[ -n "${wine_runpath}" && ! "${wine_runpath}" =~ ${runpath_accept_regex} ]]; then
+    if [[ "${strict_runpath}" == "1" ]]; then
+      fail "Runpath contract failed for bin/wine: ${wine_runpath}"
+    fi
+    log "runpath warn: bin/wine runpath outside accepted regex (${runpath_accept_regex})"
+  fi
+  if [[ "${strict_runpath}" == "1" && -z "${wineserver_runpath}" ]]; then
+    fail "Runpath contract failed for bin/wineserver: RUNPATH is missing"
+  fi
+  if [[ -n "${wineserver_runpath}" && ! "${wineserver_runpath}" =~ ${runpath_accept_regex} ]]; then
+    if [[ "${strict_runpath}" == "1" ]]; then
+      fail "Runpath contract failed for bin/wineserver: ${wineserver_runpath}"
+    fi
+    log "runpath warn: bin/wineserver runpath outside accepted regex (${runpath_accept_regex})"
+  fi
 
   unix_abi_file="${wcp_root}/share/wcp-forensics/unix-module-abi.tsv"
   if [[ -f "${unix_abi_file}" ]]; then
@@ -162,6 +222,48 @@ PY
     fi
   elif [[ "${strict_bionic}" == "1" ]]; then
     fail "Strict bionic check failed: bionic-source-entry.json is missing"
+  fi
+
+  if command -v llvm-readobj >/dev/null 2>&1; then
+    local ntdll_dll wow64_dll win32u_dll
+    ntdll_dll="${wcp_root}/lib/wine/aarch64-windows/ntdll.dll"
+    wow64_dll="${wcp_root}/lib/wine/aarch64-windows/wow64.dll"
+    win32u_dll="${wcp_root}/lib/wine/aarch64-windows/win32u.dll"
+    missing_gn_symbols=()
+
+    check_symbol() {
+      local dll="$1" symbol="$2" label="$3"
+      local dump
+      if [[ ! -f "${dll}" ]]; then
+        missing_gn_symbols+=("${label}:${symbol}:dll-missing")
+        log "gamenativeBaseline warn: ${label} missing (${dll})"
+        return
+      fi
+      dump="$(llvm-readobj --coff-exports "${dll}" 2>/dev/null || true)"
+      if grep -q "Name: ${symbol}" <<<"${dump}"; then
+        log "gamenativeBaseline ok: ${label} exports ${symbol}"
+      else
+        missing_gn_symbols+=("${label}:${symbol}:missing-export")
+        log "gamenativeBaseline warn: ${label} missing export ${symbol}"
+      fi
+    }
+
+    check_symbol "${ntdll_dll}" "NtCreateUserProcess" "ntdll.dll"
+    check_symbol "${ntdll_dll}" "RtlCreateUserThread" "ntdll.dll"
+    check_symbol "${ntdll_dll}" "RtlWow64GetThreadContext" "ntdll.dll"
+    check_symbol "${ntdll_dll}" "RtlWow64SetThreadContext" "ntdll.dll"
+    check_symbol "${wow64_dll}" "Wow64SuspendLocalThread" "wow64.dll"
+    check_symbol "${win32u_dll}" "NtUserSendInput" "win32u.dll"
+    check_symbol "${win32u_dll}" "NtUserGetRawInputData" "win32u.dll"
+
+    if [[ "${strict_gamenative}" == "1" && "${#missing_gn_symbols[@]}" -gt 0 ]]; then
+      fail "Strict gamenative check failed: missing baseline symbols: ${missing_gn_symbols[*]}"
+    fi
+  else
+    log "gamenativeBaseline skipped: llvm-readobj unavailable"
+    if [[ "${strict_gamenative}" == "1" ]]; then
+      fail "Strict gamenative check failed: llvm-readobj unavailable"
+    fi
   fi
 }
 

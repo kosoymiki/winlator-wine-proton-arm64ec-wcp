@@ -45,6 +45,8 @@ The package/runtime metadata must expose:
 3. Apply runtime env atomically.
 4. Abort only on fatal preflight violations; warn on non-fatal mismatch.
 5. CI must run strict artifact inspection (`inspect-wcp-runtime-contract.sh --strict-bionic`) before release upload.
+6. Mainline workflows enforce strict launcher runpath contract (`WCP_STRICT_RUNPATH_CONTRACT=1`) with accepted runpath `/data/data/com.termux/files/usr/lib`.
+7. Optional baseline compatibility check is available with `--strict-gamenative` (exports in `ntdll.dll`, `wow64.dll`, `win32u.dll`), used when comparing against GameNative Proton 10.4 reference behavior.
 
 ### Unix ABI forensic contract
 

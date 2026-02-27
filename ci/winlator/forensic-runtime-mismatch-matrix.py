@@ -34,6 +34,22 @@ def classify_row(row: dict[str, str], baseline: dict[str, str]) -> tuple[str, st
     if row["label"] == baseline["label"]:
         return ("baseline", "info", "reference-row", "-")
 
+    if row.get("fatal_unimplemented_ntuserpfn") == "1":
+        return (
+            "ntdll_export_mismatch",
+            "high",
+            "ntdll-spec-export-contract",
+            "ci/gamenative/patchsets/28c3a06/android/patches/dlls_ntdll_ntdll_spec_ntuserpfn.patch + ci/gamenative/apply-android-patchset.sh",
+        )
+
+    if row.get("fatal_unimplemented_shgetfolderpathw") == "1":
+        return (
+            "shell32_contract_mismatch",
+            "high",
+            "shell32-export-or-impl-contract",
+            "ci/validation/check-gamenative-patch-contract.sh + runtime package consistency checks",
+        )
+
     mismatch_reason = row.get("runtime_mismatch_reason", "-").strip().lower()
     if mismatch_reason not in {"", "-", "none", "null"}:
         return (
@@ -156,6 +172,12 @@ def parse_scenario(scenario_dir: Path) -> dict[str, str]:
     vulkan_markers = marker(merged, "vulkan")
     turnip_markers = marker(merged, "turnip")
     external_runtime = marker(merged, "external")
+    fatal_unimplemented_ntuserpfn = marker(
+        merged, "unimplemented function", "ntdll.dll.RtlInitializeNtUserPfn"
+    )
+    fatal_unimplemented_shgetfolderpathw = marker(
+        merged, "unimplemented function", "shell32.dll.SHGetFolderPathW"
+    )
 
     return {
         "label": meta.get("label", scenario_dir.name),
@@ -175,6 +197,8 @@ def parse_scenario(scenario_dir: Path) -> dict[str, str]:
         "vulkan_markers": bool01(vulkan_markers),
         "turnip_markers": bool01(turnip_markers),
         "external_runtime": bool01(external_runtime),
+        "fatal_unimplemented_ntuserpfn": bool01(fatal_unimplemented_ntuserpfn),
+        "fatal_unimplemented_shgetfolderpathw": bool01(fatal_unimplemented_shgetfolderpathw),
     }
 
 
@@ -191,10 +215,19 @@ def discover_scenarios(root: Path) -> list[Path]:
 
 
 def choose_baseline(rows: list[dict[str, str]], baseline_label: str) -> dict[str, str]:
+    alias_map = {
+        "steven104": "gamenative104",
+        "gamenative104": "steven104",
+    }
     if baseline_label:
         for row in rows:
             if row["label"] == baseline_label:
                 return row
+        alias = alias_map.get(baseline_label)
+        if alias:
+            for row in rows:
+                if row["label"] == alias:
+                    return row
     return rows[0]
 
 
@@ -283,7 +316,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", required=True, help="Directory produced by forensic-adb-complete-matrix.sh")
     parser.add_argument(
         "--baseline-label",
-        default="steven104",
+        default="gamenative104",
         help="Scenario label used as baseline. Falls back to the first scenario if missing.",
     )
     parser.add_argument(

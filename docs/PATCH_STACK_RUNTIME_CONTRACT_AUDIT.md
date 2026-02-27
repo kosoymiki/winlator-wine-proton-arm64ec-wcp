@@ -1,10 +1,10 @@
 # Winlator Patch Stack Runtime Contract Audit
 
-Generated: `2026-02-26T20:04:17Z`
+Generated: `2026-02-27T01:31:05Z`
 
 ## Scope
 
-- Patch files scanned: `62`
+- Patch files scanned: `64`
 - Target groups: `XServerDisplayActivity`, `GuestProgramLauncherComponent`, `RuntimeSignalContract`
 - Contract: forensic telemetry + reason markers + runtime guard markers
 

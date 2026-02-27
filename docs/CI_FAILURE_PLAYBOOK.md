@@ -67,6 +67,7 @@ Action:
 - Run `bash ci/gamenative/selftest-normalizers.sh` before expensive re-runs.
 - Check first real compile error (ignore cascading missing artifact errors).
 - Confirm `gamenative-patchset-*.tsv` report artifact is uploaded.
+- Check `out/*/logs/gamenative-baseline-reverse.md` (if present) for binary-level drift vs GameNative Proton 10.4 baseline.
 
 ## 7) Parse raw job logs quickly
 
@@ -76,6 +77,22 @@ When you have a raw GitHub Actions job log URL (or downloaded log file), extract
 - `bash ci/validation/extract-gh-job-failures.sh /path/to/job-logs.txt`
 
 Use this before deep diffing so you do not chase secondary cascade errors.
+
+## 7.1) Reverse-compare target artifact vs GameNative Proton 10.4 baseline
+
+When build succeeds but runtime behavior drifts, run:
+
+- `bash ci/validation/reverse-compare-gamenative-baseline.sh out/wine/wine-11-arm64ec.wcp out/wine/logs`
+- `bash ci/validation/reverse-compare-gamenative-baseline.sh out/proton-ge10/proton-ge10-arm64ec.wcp out/proton-ge10/logs`
+- `bash ci/validation/reverse-compare-gamenative-baseline.sh out/protonwine10/protonwine10-gamenative-arm64ec.wcp out/protonwine10/logs`
+
+Outputs:
+- `gamenative-baseline-reverse.md` - compact diff report (`runtimeClass`, launcher runpaths, key DLL symbol/export deltas).
+- `gamenative-baseline-reverse.json` - machine-readable diff for automation.
+
+If reverse diff shows launcher runpath drift (`/data/data/com.winlator.cmod/files/imagefs/usr/lib` etc.), run strict check locally:
+
+- `WCP_STRICT_RUNPATH_CONTRACT=1 WCP_RUNPATH_ACCEPT_REGEX='^/data/data/com\.termux/files/usr/lib$' bash ci/validation/inspect-wcp-runtime-contract.sh <artifact.wcp> --strict-bionic --strict-gamenative`
 
 ## 8) Pull latest failed runs automatically
 
@@ -118,7 +135,7 @@ Outputs include:
 
 ## 9) Runtime crash matrix (device-side)
 
-For runtime startup/crash triage across `wine11`, `protonwine10`, and `steven104`:
+For runtime startup/crash triage across `wine11`, `protonwine10`, and `gamenative104`:
 
 - `bash ci/winlator/forensic-adb-runtime-contract.sh`
 - `WLT_FAIL_ON_MISMATCH=1 bash ci/winlator/forensic-adb-runtime-contract.sh`

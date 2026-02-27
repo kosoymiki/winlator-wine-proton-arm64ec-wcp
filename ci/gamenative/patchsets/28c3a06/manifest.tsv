@@ -5,6 +5,7 @@ dlls_amd_ags_x64_unixlib_c.patch	skip	apply	protonge	clean apply only on proton-
 dlls_nsiproxy_sys_ip_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_ntdll_loader_c.patch	verify	skip	wine	covered by test-bylaws loader patch on proton-ge; verify-only on wine
 dlls_ntdll_ntdll_spec.patch	verify	verify	both	already present upstream; verify-only gate
+dlls_ntdll_ntdll_spec_ntuserpfn.patch	backport_ntdll_spec_ntuserpfn	backport_ntdll_spec_ntuserpfn	both	ensure ntdll.spec exports RtlInitializeNtUserPfn across Wine/ProtonGE trees
 dlls_ntdll_unix_esync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_ntdll_unix_fsync_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_ntdll_unix_loader_c.patch	apply	skip	wine	clean apply only on wine source tree
@@ -20,6 +21,7 @@ dlls_winepulse_drv_pulse_c.patch	skip	apply	protonge	clean apply only on proton-
 dlls_winex11_drv_bitblt_c.patch	apply	apply	both	clean apply on both source trees
 dlls_winex11_drv_desktop_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_winex11_drv_mouse_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
+dlls_winex11_drv_mouse_c_wm_input_fix.patch	backport_winex11_mouse_wm_input	backport_winex11_mouse_wm_input	both	ensure WM_INPUT generation in --without-xinput2 builds
 dlls_winex11_drv_opengl_c.patch	skip	apply	protonge	clean apply only on proton-ge source tree
 dlls_winex11_drv_window_c.patch	verify	backport_protonge_winex11	protonge	android class-hints/x11 integration for proton-ge
 dlls_winex11_drv_x11drv_h.patch	skip	apply	protonge	clean apply only on proton-ge source tree
