@@ -92,6 +92,19 @@ ci/reverse/online-intake.sh
 
 ---
 
+## Default GitHub Workflow / Дефолтный GitHub workflow
+
+- **RU:** Для комментариев PR/issue в текущей ветке по умолчанию используйте `gh-address-comments`.
+- **EN:** For PR/issue comments on the current branch, use `gh-address-comments` by default.
+- **RU:** Для упавших GitHub Actions проверок на PR по умолчанию используйте `gh-fix-ci` (сбор контекста, логов и план фикса).
+- **EN:** For failing GitHub Actions checks on a PR, use `gh-fix-ci` by default (collect context/logs and draft a fix plan).
+- **RU:** Вносить кодовые правки по `gh-fix-ci` только после явного подтверждения плана.
+- **EN:** Implement code changes from `gh-fix-ci` only after explicit approval of the fix plan.
+- **RU:** Для внешних CI-провайдеров (не GitHub Actions) давайте только ссылку на details URL; внутренняя диагностика провайдера вне области работы.
+- **EN:** For external CI providers (not GitHub Actions), report only the details URL; provider internals are out of scope.
+
+---
+
 ## Release Policy (Detailed) / Политика релизов (детально)
 
 ### Rolling releases

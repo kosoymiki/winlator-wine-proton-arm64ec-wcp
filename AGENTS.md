@@ -104,3 +104,12 @@ Run the narrowest relevant checks:
 - Mainline runtime policy is external-only unless explicitly changed.
 - GN patchset is the single source of truth for manifest-owned file patches.
 - Release artifacts must remain reproducible and traceable via logs + SHA256.
+
+---
+
+## 9) Default GitHub Agent Workflow
+
+- PR review comments/default issue feedback on current branch: use `gh-address-comments`.
+- Failing GitHub Actions checks on a PR: use `gh-fix-ci` first to inspect checks/logs and produce a fix plan.
+- For `gh-fix-ci`, implement code changes only after explicit user approval of the proposed fix plan.
+- If a failing check is from an external provider (not GitHub Actions), report the details URL and treat provider internals as out of scope.
