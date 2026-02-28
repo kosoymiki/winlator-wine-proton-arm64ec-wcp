@@ -23,8 +23,8 @@
 | Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |
 | --- | --- | ---: | ---: | --- | --- |
 | `Box64/FEX translator config` | `port_contract` | 213 | 1073 | Translator preset/profile contract + runtime-profile migration rules | `ci/winlator/patches/0030,0037,0039,0040,0043` |
-| `Launch pipeline orchestration` | `adapt_urc` | 630 | 1298 | URC launch preflight + deterministic env submit + forensic reasons | `XServerDisplayActivity + GuestProgramLauncherComponent (0044 queue)` |
-| `Graphics + driver decision tree` | `adapt_urc` | 366 | 1939 | Adrenotools/Vulkan decision telemetry and fallback reasons | `AdrenotoolsManager + driver probe path + vulkan fallback` |
+| `Launch pipeline orchestration` | `adapt_runtime_contract` | 630 | 1298 | Runtime Contract launch preflight + deterministic env submit + forensic reasons | `XServerDisplayActivity + GuestProgramLauncherComponent (0044 queue)` |
+| `Graphics + driver decision tree` | `adapt_runtime_contract` | 366 | 1939 | Adrenotools/Vulkan decision telemetry and fallback reasons | `AdrenotoolsManager + driver probe path + vulkan fallback` |
 | `Registry/runtime mutation layer` | `adapt_guarded` | 37 | 598 | Guarded compat deltas with forensic markers | `ContainerNormalizer + registry/compat path` |
 | `Content download/install app layers` | `reject_mainline` | 193 | 581 | Keep out of runtime mainline (research-only) | `Research lane only` |
 | `UI/compose/app-shell layers` | `reject_mainline` | 10114 | 2008 | No direct port into runtime core | `Optional UI lane only` |
@@ -59,7 +59,7 @@ Decision: `port_contract`
 
 ### Launch pipeline orchestration
 
-Decision: `adapt_urc`
+Decision: `adapt_runtime_contract`
 
 - `Lapp/gamenative/MainActivity$Companion;->consumePendingLaunchRequest()Lapp/gamenative/utils/IntentLaunchManager$LaunchRequest;`
 - `Lapp/gamenative/MainActivity$Companion;->setPendingLaunchRequest(Lapp/gamenative/utils/IntentLaunchManager$LaunchRequest;)V`
@@ -84,7 +84,7 @@ Decision: `adapt_urc`
 
 ### Graphics + driver decision tree
 
-Decision: `adapt_urc`
+Decision: `adapt_runtime_contract`
 
 - `Lapp/gamenative/PrefManager;->getAudioDriver()Ljava/lang/String;`
 - `Lapp/gamenative/PrefManager;->getGraphicsDriver()Ljava/lang/String;`
@@ -184,14 +184,14 @@ Decision: `reject_mainline`
 
 ## Anti-Conflict Rules (GN v0.7.2 vs GameHub)
 
-1. Shared runtime behavior is integrated only through URC + forensic fields.
+1. Shared runtime behavior is integrated only through Runtime Contract + forensic fields.
 2. Any path implying bundled runtime payload stays out of mainline.
 3. Launch/environment changes must preserve deterministic fallback reasons.
 4. If GN/GH diverge, choose lower-regression behavior with explicit telemetry.
 
 ## 0044 Queue (post-analysis)
 
-1. Integrate launch orchestration deltas into URC preflight path (`XServerDisplayActivity` + launcher).
+1. Integrate launch orchestration deltas into Runtime Contract preflight path (`XServerDisplayActivity` + launcher).
 2. Add reason-coded guardrails for runtime/profile mismatch decisions.
 3. Keep content/UI/install layers in research lane unless explicitly promoted.
 

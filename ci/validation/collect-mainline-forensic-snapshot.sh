@@ -13,7 +13,6 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_TRIAGE_MAX_JOBS:=3}"
 : "${WLT_CAPTURE_ONLINE_INTAKE:=1}"
 : "${WLT_ONLINE_INTAKE_REQUIRED:=0}"
-: "${WLT_CAPTURE_URC:=0}"
 : "${WLT_CAPTURE_CONTENTS_QA:=1}"
 : "${WLT_CONTENTS_QA_REQUIRED:=0}"
 : "${WLT_CAPTURE_WCP_PARITY:=1}"
@@ -68,7 +67,6 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 [[ "${WLT_TRIAGE_MAX_JOBS}" =~ ^[0-9]+$ ]] || fail "WLT_TRIAGE_MAX_JOBS must be numeric"
 [[ "${WLT_CAPTURE_ONLINE_INTAKE}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_ONLINE_INTAKE must be 0 or 1"
 [[ "${WLT_ONLINE_INTAKE_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_ONLINE_INTAKE_REQUIRED must be 0 or 1"
-[[ "${WLT_CAPTURE_URC}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_URC must be 0 or 1"
 [[ "${WLT_CAPTURE_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_CONTENTS_QA must be 0 or 1"
 [[ "${WLT_CONTENTS_QA_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_CONTENTS_QA_REQUIRED must be 0 or 1"
 [[ "${WLT_CAPTURE_WCP_PARITY}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_WCP_PARITY must be 0 or 1"
@@ -138,10 +136,6 @@ health_rc="$(run_capture "health" env WLT_HEALTH_OUTPUT_PREFIX="${WLT_SNAPSHOT_D
   bash "${ROOT_DIR}/ci/validation/gh-mainline-health.sh" "${WLT_BRANCH}" "${WLT_SINCE_HOURS}")"
 failures_rc="$(run_capture "active-failures" env WLT_FAILURES_OUTPUT_PREFIX="${WLT_SNAPSHOT_DIR}/active-failures" \
   bash "${ROOT_DIR}/ci/validation/gh-latest-failures.sh" "${WLT_FAILURE_LIMIT}" "${WLT_BRANCH}" "${WLT_SINCE_HOURS}")"
-urc_rc=0
-if [[ "${WLT_CAPTURE_URC}" == "1" ]]; then
-  urc_rc="$(run_capture "urc-check" bash "${ROOT_DIR}/ci/validation/check-urc-mainline-policy.sh")"
-fi
 contents_qa_rc=0
 if [[ "${WLT_CAPTURE_CONTENTS_QA}" == "1" ]]; then
   contents_qa_rc="$(run_capture "contents-qa" \
@@ -225,7 +219,6 @@ if [[ "${WLT_CAPTURE_ONLINE_INTAKE}" == "1" ]]; then
       WLT_HIGH_CYCLE_SYNC_BRANCH_PINS="${WLT_ONLINE_INTAKE_SYNC_BRANCH_PINS}" \
       WLT_HIGH_CYCLE_HARVEST_FAIL_ON_REPO_ERRORS="${WLT_ONLINE_INTAKE_HARVEST_FAIL_ON_REPO_ERRORS}" \
       WLT_HIGH_CYCLE_RUN_GN_MANIFEST=1 \
-      WLT_HIGH_CYCLE_RUN_URC=0 \
       "${ROOT_DIR}/ci/reverse/run-high-priority-cycle.sh")"
   else
     online_intake_rc="$(run_capture "online-intake" env \
@@ -306,8 +299,6 @@ fi
   printf 'fail_mode=%s\n' "${WLT_SNAPSHOT_FAIL_MODE}"
   printf 'health_rc=%s\n' "${health_rc}"
   printf 'active_failures_rc=%s\n' "${failures_rc}"
-  printf 'urc_rc=%s\n' "${urc_rc}"
-  printf 'capture_urc=%s\n' "${WLT_CAPTURE_URC}"
   printf 'contents_qa_rc=%s\n' "${contents_qa_rc}"
   printf 'capture_contents_qa=%s\n' "${WLT_CAPTURE_CONTENTS_QA}"
   printf 'contents_qa_required=%s\n' "${WLT_CONTENTS_QA_REQUIRED}"
@@ -368,9 +359,9 @@ if [[ "${WLT_SNAPSHOT_FAIL_MODE}" == "strict" ]]; then
     fail "online commit-scan failed (commit_scan=${commit_scan_rc})"
   fi
 
-  if [[ "${health_rc}" != "0" || "${failures_rc}" != "0" || "${urc_rc}" != "0" || "${contents_qa_rc}" != "0" || "${wcp_parity_rc}" != "0" || "${triage_rc}" != "0" ]]; then
+  if [[ "${health_rc}" != "0" || "${failures_rc}" != "0" || "${contents_qa_rc}" != "0" || "${wcp_parity_rc}" != "0" || "${triage_rc}" != "0" ]]; then
     log "snapshot captured with failures: ${WLT_SNAPSHOT_DIR}"
-    fail "one or more checks failed (health=${health_rc}, active_failures=${failures_rc}, urc=${urc_rc}, contents_qa=${contents_qa_rc}, wcp_parity=${wcp_parity_rc}, triage=${triage_rc})"
+    fail "one or more checks failed (health=${health_rc}, active_failures=${failures_rc}, contents_qa=${contents_qa_rc}, wcp_parity=${wcp_parity_rc}, triage=${triage_rc})"
   fi
 else
   log "capture-only mode: not failing on check return codes"

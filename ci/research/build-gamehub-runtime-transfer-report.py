@@ -62,8 +62,8 @@ MODULE_RULES = [
     {
         "id": "launch_pipeline",
         "label": "Launch pipeline orchestration",
-        "kind": "adapt_urc",
-        "target": "URC launch plan + preflight + telemetry",
+        "kind": "adapt_runtime_contract",
+        "target": "Runtime Contract launch plan + preflight + telemetry",
         "repo_target": "XServerDisplayActivity + GuestProgramLauncherComponent",
         "patterns": [
             r"Lcom/xj/winemu/service/WinEmuServiceImpl;",
@@ -95,7 +95,7 @@ MODULE_RULES = [
     {
         "id": "graphics_driver_probe",
         "label": "Graphics + driver decision tree",
-        "kind": "adapt_urc",
+        "kind": "adapt_runtime_contract",
         "target": "Adrenotools probe + Vulkan fallback telemetry",
         "repo_target": "AdrenotoolsManager + native vulkan.c",
         "patterns": [
@@ -143,7 +143,7 @@ MODULE_RULES = [
 
 KIND_ORDER = {
     "port_contract": 0,
-    "adapt_urc": 1,
+    "adapt_runtime_contract": 1,
     "adapt_guarded": 2,
     "reject_mainline": 3,
 }
@@ -302,7 +302,7 @@ def main() -> int:
     lines.append("## Implementation Queue")
     lines.append("")
     lines.append("1. Port translator config semantics (Box64/FEX) into existing preset/profile layers.")
-    lines.append("2. Adapt launch orchestration into URC (without importing app-specific asset/download flows).")
+    lines.append("2. Adapt launch orchestration into Runtime Contract (without importing app-specific asset/download flows).")
     lines.append("3. Add guarded registry compatibility deltas only with forensic trace points.")
     lines.append("4. Keep download/UI translation layers in research lane unless explicitly requested.")
     lines.append("")

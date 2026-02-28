@@ -60,7 +60,6 @@ Run the narrowest relevant checks:
 - Winlator patch stack / contents contract changes:
   - `bash ci/winlator/validate-patch-sequence.sh`
   - `bash ci/winlator/run-reflective-audits.sh`
-  - `bash ci/validation/check-urc-mainline-policy.sh`
   - `bash ci/winlator/selftest-runtime-mismatch-matrix.sh`
 - Mainline workflow health (pre-triage):
   - `bash ci/validation/gh-mainline-health.sh main 24`

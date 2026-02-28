@@ -7,8 +7,11 @@ This document defines the mainline patch pipeline contract for Wine/Proton build
 - Patch ownership lives in:
   - `ci/gamenative/patchsets/28c3a06/manifest.tsv`
   - `ci/gamenative/apply-android-patchset.sh`
-- Per-package scripts (`ci/ci-build.sh`, `ci/proton-ge10/*`, `ci/protonwine10/*`) only select mode and pass env.
+- Unified package entrypoint:
+  - `ci/lib/gamenative-patch-base.sh` (`wcp_apply_unified_gamenative_patch_base`)
+- Per-package scripts (`ci/ci-build.sh`, `ci/proton-ge10/*`, `ci/protonwine10/*`) call the same helper and only pass target/source.
 - Do not duplicate file-level hotfixes in package-local scripts.
+- ProtonWine legacy upstream cherry-pick flow is opt-in (`WCP_LEGACY_PATCH_BASE_ENABLE=1`).
 
 ## Modes
 

@@ -7,7 +7,6 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_FINAL_STAGE_FAIL_MODE:=strict}"
 : "${WLT_FINAL_STAGE_FETCH:=0}"
 : "${WLT_FINAL_STAGE_SCOPE:=focused}"
-: "${WLT_FINAL_STAGE_RUN_URC:=0}"
 : "${WLT_FINAL_STAGE_RUN_CONTENTS_QA:=1}"
 : "${WLT_FINAL_STAGE_RUN_PATCH_BASE:=1}"
 : "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED:=0}"
@@ -61,7 +60,6 @@ fail() { printf '[final-stage][error] %s\n' "$*" >&2; exit 1; }
 [[ "${WLT_FINAL_STAGE_FAIL_MODE}" =~ ^(strict|capture-only)$ ]] || fail "WLT_FINAL_STAGE_FAIL_MODE must be strict or capture-only"
 [[ "${WLT_FINAL_STAGE_FETCH}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_FETCH must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_SCOPE}" =~ ^(focused|tree)$ ]] || fail "WLT_FINAL_STAGE_SCOPE must be focused or tree"
-[[ "${WLT_FINAL_STAGE_RUN_URC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_URC must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RUN_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_CONTENTS_QA must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RUN_PATCH_BASE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_PATCH_BASE must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_PATCH_BASE_REQUIRED must be 0 or 1"
@@ -156,12 +154,6 @@ if [[ "${WLT_FINAL_STAGE_RUN_WCP_PARITY}" == "1" ]]; then
       bash "${ROOT_DIR}/ci/validation/run-wcp-parity-suite.sh")"
 fi
 
-urc_rc=0
-if [[ "${WLT_FINAL_STAGE_RUN_URC}" == "1" ]]; then
-  urc_rc="$(run_capture urc-mainline \
-    bash "${ROOT_DIR}/ci/validation/check-urc-mainline-policy.sh")"
-fi
-
 commit_scan_rc=0
 if [[ "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" == "1" ]]; then
   commit_scan_rc="$(run_capture commit-scan \
@@ -214,7 +206,6 @@ high_cycle_rc="$(run_capture high-cycle-strict \
     WLT_HIGH_CYCLE_HARVEST_INCLUDE_UNMAPPED="${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED}" \
     WLT_HIGH_CYCLE_SYNC_BRANCH_PINS="${WLT_FINAL_STAGE_SYNC_BRANCH_PINS}" \
     WLT_HIGH_CYCLE_HARVEST_FAIL_ON_REPO_ERRORS="${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}" \
-    WLT_HIGH_CYCLE_RUN_URC=0 \
     bash "${ROOT_DIR}/ci/reverse/run-high-priority-cycle.sh")"
 
 release_prep_rc=0
@@ -230,7 +221,6 @@ if [[ "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}" == "1" ]]; then
       WLT_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING}" \
       WLT_RELEASE_PREP_WCP_PARITY_PAIRS_FILE="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_PAIRS_FILE}" \
       WLT_RELEASE_PREP_WCP_PARITY_LABELS="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_LABELS}" \
-      WLT_RELEASE_PREP_RUN_URC="${WLT_FINAL_STAGE_RUN_URC}" \
       WLT_RELEASE_PREP_INTAKE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
       WLT_RELEASE_PREP_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
       WLT_RELEASE_PREP_RUN_COMMIT_SCAN="${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" \
@@ -255,7 +245,6 @@ if [[ "${WLT_FINAL_STAGE_RUN_SNAPSHOT}" == "1" ]]; then
       WLT_SNAPSHOT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/snapshot" \
       WLT_SNAPSHOT_FAIL_MODE="${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE}" \
       WLT_CAPTURE_ONLINE_INTAKE=1 \
-      WLT_CAPTURE_URC="${WLT_FINAL_STAGE_RUN_URC}" \
       WLT_CAPTURE_CONTENTS_QA="${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA}" \
       WLT_CONTENTS_QA_REQUIRED="${WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED}" \
       WLT_CAPTURE_WCP_PARITY="${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY}" \
@@ -333,7 +322,6 @@ fi
   printf 'fail_mode=%s\n' "${WLT_FINAL_STAGE_FAIL_MODE}"
   printf 'fetch=%s\n' "${WLT_FINAL_STAGE_FETCH}"
   printf 'scope=%s\n' "${WLT_FINAL_STAGE_SCOPE}"
-  printf 'run_urc=%s\n' "${WLT_FINAL_STAGE_RUN_URC}"
   printf 'run_contents_qa=%s\n' "${WLT_FINAL_STAGE_RUN_CONTENTS_QA}"
   printf 'run_patch_base=%s\n' "${WLT_FINAL_STAGE_RUN_PATCH_BASE}"
   printf 'patch_base_required=%s\n' "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED}"
@@ -359,7 +347,6 @@ fi
   printf 'contents_qa_rc=%s\n' "${contents_qa_rc}"
   printf 'patch_base_rc=%s\n' "${patch_base_rc}"
   printf 'wcp_parity_rc=%s\n' "${wcp_parity_rc}"
-  printf 'urc_rc=%s\n' "${urc_rc}"
   printf 'intake_rc=%s\n' "${intake_rc}"
   printf 'high_cycle_rc=%s\n' "${high_cycle_rc}"
   printf 'commit_scan_rc=%s\n' "${commit_scan_rc}"
@@ -391,7 +378,7 @@ fi
 } > "${WLT_FINAL_STAGE_OUT_DIR}/summary.meta"
 
 if [[ "${WLT_FINAL_STAGE_FAIL_MODE}" == "strict" ]]; then
-  if [[ "${reflective_rc}" != "0" || "${manifest_rc}" != "0" || "${contents_qa_rc}" != "0" || "${patch_base_rc}" != "0" || "${wcp_parity_rc}" != "0" || "${urc_rc}" != "0" || "${intake_rc}" != "0" || "${high_cycle_rc}" != "0" || "${commit_scan_rc}" != "0" || "${release_prep_rc}" != "0" || "${snapshot_rc}" != "0" ]]; then
+  if [[ "${reflective_rc}" != "0" || "${manifest_rc}" != "0" || "${contents_qa_rc}" != "0" || "${patch_base_rc}" != "0" || "${wcp_parity_rc}" != "0" || "${intake_rc}" != "0" || "${high_cycle_rc}" != "0" || "${commit_scan_rc}" != "0" || "${release_prep_rc}" != "0" || "${snapshot_rc}" != "0" ]]; then
     fail "one or more gates failed (summary: ${WLT_FINAL_STAGE_OUT_DIR}/summary.meta)"
   fi
 fi

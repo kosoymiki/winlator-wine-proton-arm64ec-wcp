@@ -275,5 +275,4 @@ consolidated in the patch stack to reduce maintenance overhead:
   - `validate-patch-sequence`,
   - `check-patch-stack (0001..0010)`,
   - `run-reflective-audits`,
-  - `check-urc-mainline-policy`,
   - `run-final-stage-gates` (strict/no-fetch paths).

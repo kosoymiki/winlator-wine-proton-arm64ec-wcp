@@ -19,8 +19,8 @@
 | Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |
 | --- | --- | ---: | ---: | --- | --- |
 | `Box64/FEX translator config` | `port_contract` | 474 | 1289 | Box64/FEX preset + runtime common profile layers | `ci/winlator/patches/0030,0039,0040` |
-| `Launch pipeline orchestration` | `adapt_urc` | 311 | 2378 | URC launch plan + preflight + telemetry | `XServerDisplayActivity + GuestProgramLauncherComponent` |
-| `Graphics + driver decision tree` | `adapt_urc` | 174 | 89 | Adrenotools probe + Vulkan fallback telemetry | `AdrenotoolsManager + native vulkan.c` |
+| `Launch pipeline orchestration` | `adapt_runtime_contract` | 311 | 2378 | Runtime Contract launch plan + preflight + telemetry | `XServerDisplayActivity + GuestProgramLauncherComponent` |
+| `Graphics + driver decision tree` | `adapt_runtime_contract` | 174 | 89 | Adrenotools probe + Vulkan fallback telemetry | `AdrenotoolsManager + native vulkan.c` |
 | `Registry/runtime mutation layer` | `adapt_guarded` | 380 | 1895 | Container/runtime compatibility rules with strict guardrails | `Container migration + compat registry layer` |
 | `Content download/install app layers` | `reject_mainline` | 2261 | 3663 | Do not port directly (asset-first behavior) | `Research-only, no mainline import` |
 | `UI and translation-specific features` | `reject_mainline` | 2891 | 2193 | Do not port into runtime core | `Optional UI lane only` |
@@ -55,7 +55,7 @@ Decision: `port_contract`
 
 ### Launch pipeline orchestration
 
-Decision: `adapt_urc`
+Decision: `adapt_runtime_contract`
 
 - `Lcom/winemu/core/controller/ContainerController;-><clinit>()V`
 - `Lcom/winemu/core/controller/ContainerController;-><init>(Lcom/winemu/core/BootData;Lcom/winemu/core/server/environment/ImageFs;Landroid/app/ActivityManager;Lcom/winemu/openapi/Config;Lcom/winemu/core/Container;)V`
@@ -80,7 +80,7 @@ Decision: `adapt_urc`
 
 ### Graphics + driver decision tree
 
-Decision: `adapt_urc`
+Decision: `adapt_runtime_contract`
 
 - `Lcom/winemu/core/DirectRendering$Companion;-><init>()V`
 - `Lcom/winemu/core/DirectRendering$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V`
@@ -188,7 +188,7 @@ Decision: `reject_mainline`
 ## Implementation Queue
 
 1. Port translator config semantics (Box64/FEX) into existing preset/profile layers.
-2. Adapt launch orchestration into URC (without importing app-specific asset/download flows).
+2. Adapt launch orchestration into Runtime Contract (without importing app-specific asset/download flows).
 3. Add guarded registry compatibility deltas only with forensic trace points.
 4. Keep download/UI translation layers in research lane unless explicitly requested.
 

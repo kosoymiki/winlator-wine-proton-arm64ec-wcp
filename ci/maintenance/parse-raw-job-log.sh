@@ -13,6 +13,7 @@ options:
   --pattern REGEX       Regex for important lines (default: common build failures)
   --matches N           Max matching lines to print (default: 120)
   --tail-lines N        Tail lines to print if no matches (default: 80)
+  --show-tail           Always print tail lines after match output
 EOF
 }
 
@@ -20,6 +21,7 @@ RAW_URL=""
 TAIL_BYTES=600000
 MATCH_LIMIT=120
 TAIL_LINES=80
+SHOW_TAIL=0
 PATTERN='error:|fatal:|FAILED|Process completed with exit code|##\[error\]|Traceback|No space left|out of memory|killed'
 
 while [[ $# -gt 0 ]]; do
@@ -43,6 +45,10 @@ while [[ $# -gt 0 ]]; do
     --tail-lines)
       TAIL_LINES="${2:-}"
       shift 2
+      ;;
+    --show-tail)
+      SHOW_TAIL=1
+      shift
       ;;
     -h|--help)
       usage
@@ -91,6 +97,7 @@ fi
 END=$(( CONTENT_LENGTH - 1 ))
 
 curl -sS --fail \
+  --retry 5 --retry-all-errors --retry-delay 2 \
   -H "Range: bytes=${START}-${END}" \
   "${RAW_URL}" \
   > "${TMP_FILE}"
@@ -107,6 +114,10 @@ fi
 if [[ -n "${MATCHES}" ]]; then
   echo "[raw-log] matched lines (tail ${MATCH_LIMIT}):"
   printf '%s\n' "${MATCHES}" | tail -n "${MATCH_LIMIT}"
+  if [[ "${SHOW_TAIL}" == "1" ]]; then
+    echo "[raw-log] full tail ${TAIL_LINES}:"
+    tail -n "${TAIL_LINES}" "${TMP_FILE}"
+  fi
 else
   echo "[raw-log] no matches for pattern; tail ${TAIL_LINES}:"
   tail -n "${TAIL_LINES}" "${TMP_FILE}"

@@ -61,7 +61,7 @@ BUILD_WINE_DIR="${ROOT_DIR}/build-wine"
 : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
 : "${WCP_MAINLINE_FEX_EXTERNAL_ONLY:=1}"
 : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
-: "${WCP_WRAPPER_POLICY_VERSION:=urc-v1}"
+: "${WCP_WRAPPER_POLICY_VERSION:=runtime-v1}"
 : "${WCP_POLICY_SOURCE:=aesolator-mainline}"
 : "${WCP_FALLBACK_SCOPE:=bionic-internal-only}"
 : "${WCP_BIONIC_SOURCE_MAP_FILE:=${ROOT_DIR}/ci/runtime-sources/bionic-source-map.json}"
@@ -655,21 +655,7 @@ main() {
 
   fetch_wine_sources
   mkdir -p "${OUT_DIR}/logs"
-  gn_patchset_mode="full"
-  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
-    gn_patchset_mode="normalize-only"
-    gn_contract_strict=0
-  fi
-  log "GameNative patchset mode for wine: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
-  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
-    WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
-  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
+  wcp_apply_unified_gamenative_patch_base wine "${WINE_SRC_DIR}"
   build_wine
   if [[ "${WCP_INCLUDE_FEX_DLLS}" == "1" ]]; then
     install_fex_dlls

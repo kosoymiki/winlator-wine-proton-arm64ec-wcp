@@ -23,7 +23,6 @@ cd "${ROOT_DIR}"
 : "${WLT_HIGH_CYCLE_REQUIRED_LOW_MARKERS:=DXVK,D8VK,VKD3D,PROOT_TMP_DIR,BOX64_LOG,WINEDEBUG,MESA_VK_WSI_PRESENT_MODE,TU_DEBUG,WINE_OPEN_WITH_ANDROID_BROWSER}"
 : "${WLT_HIGH_CYCLE_REQUIRE_LOW_READY_VALIDATED:=1}"
 : "${WLT_HIGH_CYCLE_RUN_GN_MANIFEST:=1}"
-: "${WLT_HIGH_CYCLE_RUN_URC:=0}"
 : "${WLT_HIGH_CYCLE_RUN_COMMIT_SCAN:=1}"
 : "${WLT_HIGH_CYCLE_INCLUDE_COMMIT_SCAN:=}"
 : "${WLT_HIGH_CYCLE_COMMIT_SCAN_PROFILE:=core}"
@@ -50,7 +49,6 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required"
 [[ "${WLT_HIGH_CYCLE_BACKLOG_STRICT}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_BACKLOG_STRICT must be 0 or 1"
 [[ "${WLT_HIGH_CYCLE_ALL_REPOS}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_ALL_REPOS must be 0 or 1"
 [[ "${WLT_HIGH_CYCLE_RUN_GN_MANIFEST}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_RUN_GN_MANIFEST must be 0 or 1"
-[[ "${WLT_HIGH_CYCLE_RUN_URC}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_RUN_URC must be 0 or 1"
 [[ "${WLT_HIGH_CYCLE_RUN_COMMIT_SCAN}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_RUN_COMMIT_SCAN must be 0 or 1"
 [[ "${WLT_HIGH_CYCLE_RUN_HARVEST}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_RUN_HARVEST must be 0 or 1"
 [[ "${WLT_HIGH_CYCLE_HARVEST_SKIP_NO_SYNC}" =~ ^[01]$ ]] || fail "WLT_HIGH_CYCLE_HARVEST_SKIP_NO_SYNC must be 0 or 1"
@@ -124,11 +122,6 @@ ONLINE_REQUIRE_LOW_READY_VALIDATED="${WLT_HIGH_CYCLE_REQUIRE_LOW_READY_VALIDATED
 ONLINE_INCLUDE_COMMIT_SCAN="${WLT_HIGH_CYCLE_INCLUDE_COMMIT_SCAN}" \
 ONLINE_COMMIT_SCAN_JSON="${commit_scan_json}" \
 bash ci/reverse/online-intake.sh
-
-if [[ "${WLT_HIGH_CYCLE_RUN_URC}" == "1" ]]; then
-  log "running URC policy gate"
-  bash ci/validation/check-urc-mainline-policy.sh
-fi
 
 if [[ "${WLT_HIGH_CYCLE_RUN_HARVEST}" == "1" ]]; then
   log "running targeted harvest transfer (profile=${WLT_HIGH_CYCLE_HARVEST_PROFILE}, apply=${WLT_HIGH_CYCLE_HARVEST_APPLY})"

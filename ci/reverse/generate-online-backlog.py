@@ -558,7 +558,7 @@ def write_markdown(
     lines.append("## Execution rule")
     lines.append("")
     lines.append("- Apply `high` rows first, then rerun `ci/reverse/online-intake.sh` and regenerate this backlog.")
-    lines.append("- Keep `medium` rows gated behind existing runtime contract and URC checks.")
+    lines.append("- Keep `medium` rows gated behind existing runtime contract and Runtime Contract checks.")
     lines.append("- Treat `low` rows as backlog candidates for patch-base expansion after `high/medium` are clean.")
     lines.append("")
 

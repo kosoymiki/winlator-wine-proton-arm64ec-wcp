@@ -37,8 +37,7 @@ Use this board for handoff between agents and for continuous backlog intake.
   - `RUNTIME_LIBRARY_CONFLICT_SNAPSHOT`
   - `RUNTIME_LIBRARY_CONFLICT_DETECTED`
 - Launch packet + runtime matrix enriched with conflict fingerprint (`count + sha`).
-- URC contract checks updated for new markers/events:
-  - `ci/validation/check-urc-mainline-policy.sh`
+- Runtime Contract contract checks updated for new markers/events:
   - `docs/UNIFIED_RUNTIME_CONTRACT.md`
 - ADB forensic orchestration now runs strict conflict contour analysis:
   - `ci/winlator/forensic-runtime-conflict-contour.py`
@@ -54,7 +53,6 @@ Use this board for handoff between agents and for continuous backlog intake.
 - `bash ci/winlator/validate-patch-sequence.sh ci/winlator/patches`
 - `WINLATOR_PATCH_FROM=0001 WINLATOR_PATCH_TO=0010 bash ci/winlator/check-patch-stack.sh <winlator-src>`
 - `bash ci/winlator/run-reflective-audits.sh`
-- `bash ci/validation/check-urc-mainline-policy.sh`
 
 ---
 
@@ -62,11 +60,10 @@ Use this board for handoff between agents and for continuous backlog intake.
 
 - [x] `RC-001` X11-first DX/upscaler matrix across `0004..0010`.
   - Result: deterministic DX requested/effective map and launch packet.
-  - Evidence: `check-patch-stack 0001..0010`, `run-reflective-audits`, `check-urc-mainline-policy`.
 
 - [x] `RC-002` DXVK capability envelope + Proton FSR gate + ARM64EC NVAPI gate.
   - Result: `AERO_DXVK_CAPS`, `AERO_DXVK_NVAPI_*`, `AERO_UPSCALE_PROTON_FSR_REASON`.
-  - Evidence: patch `0010`, URC contract checks.
+  - Evidence: patch `0010`, Runtime Contract contract checks.
 
 - [x] `RC-003` Runtime flavor/distribution markers.
   - Result: `AERO_RUNTIME_FLAVOR`, `AERO_RUNTIME_DISTRIBUTION=ae.solator`, `AERO_WINE_ARCH`.
@@ -75,27 +72,21 @@ Use this board for handoff between agents and for continuous backlog intake.
 - [x] `RC-004` Runtime library conflict snapshot contour (reproducible).
   - Result: `AERO_LIBRARY_CONFLICTS/COUNT/SHA256/REPRO_ID` + events:
     `RUNTIME_LIBRARY_CONFLICT_SNAPSHOT`, `RUNTIME_LIBRARY_CONFLICT_DETECTED`.
-  - Evidence: patch `0010`, URC check pass.
+  - Evidence: patch `0010`, Runtime Contract check pass.
 
 - [x] `RC-013` Multi-agent board wiring into required docs/policy checks.
-  - Result: board linked from `README.md` + `docs/README.md`, and enforced by `check-urc-mainline-policy.sh`; agent protocol pinned in `AGENTS.md`.
-  - Evidence: `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-014` Reproducible per-library self-log channel for loader conflicts.
   - Result: strict subsystem envelope + component stream markers (`AERO_RUNTIME_SUBSYSTEMS*`, `AERO_LIBRARY_COMPONENT_STREAM*`, `AERO_RUNTIME_LOGGING_*`) with conflict-grade events and launcher propagation.
-  - Evidence: `WINLATOR_PATCH_FROM=0001 WINLATOR_PATCH_TO=0010 bash ci/winlator/check-patch-stack.sh <winlator-src>`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-015` Cross-base subsystem logging parity audit.
-  - Result: strict logging markers/events enforced across patch-base window `0001..0010`, with URC + final-stage strict gates passing.
-  - Evidence: `WINLATOR_PATCH_FROM=0001 WINLATOR_PATCH_TO=0010 bash ci/winlator/check-patch-stack.sh <winlator-src>`, `bash ci/validation/check-urc-mainline-policy.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+  - Result: strict logging markers/events enforced across patch-base window `0001..0010`, with Runtime Contract + final-stage strict gates passing.
 
 - [x] `RC-016` ADB conflict-contour hard bind to runtime logging contract.
   - Result: adb matrix now emits `logcat-runtime-conflict-contour.txt` + `runtime-conflict-contour.summary.txt` per scenario, and suite-level `runtime-conflict-contour.{tsv,md,json,summary.txt}` with severity gate (`WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE`).
-  - Evidence: `python3 -m py_compile ci/winlator/forensic-runtime-conflict-contour.py`, `bash -n ci/winlator/forensic-adb-complete-matrix.sh ci/winlator/forensic-adb-runtime-contract.sh ci/winlator/forensic-adb-harvard-suite.sh`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-006` Add conflict severity level (`info|low|medium|high`) and gate option.
   - Result: conflict contour classifier emits severity + rank and supports threshold gate (`--fail-on-severity-at-or-above`), wired into runtime contract and Harvard suite via `WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE`.
-  - Evidence: `python3 -m py_compile ci/winlator/forensic-runtime-conflict-contour.py`, `bash -n ci/winlator/forensic-adb-runtime-contract.sh ci/winlator/forensic-adb-harvard-suite.sh`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-007` Add explicit conflict classes for missing wrapper artifacts (dxvk/vkd3d/ddraw payload mismatch).
   - Result: conflict contour now emits explicit statuses `wrapper_dxvk_missing`, `wrapper_vkd3d_missing`, `wrapper_ddraw_missing`, `wrapper_multi_missing` instead of generic coverage gap for wrapper payload classes.
@@ -115,11 +106,9 @@ Use this board for handoff between agents and for continuous backlog intake.
 
 - [x] `RC-011` NVAPI layout shim compatibility audit for arm64ec lanes.
   - Result: added strict audit `ci/validation/audit-nvapi-layout-shim.py` for override order, arm64ec artifact gate, `DXVK_ENABLE_NVAPI` toggle semantics, and builtin fallback paths; policy check now enforces this audit.
-  - Evidence: `python3 ci/validation/audit-nvapi-layout-shim.py --strict --output -`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-012` Turnip strict-bind conflict fallback audit.
   - Result: added strict audit `ci/validation/audit-turnip-strict-bind-fallback.py` for strict/relaxed bind semantics, mirror fallback reason propagation, and `turnip_bind_not_strict` conflict mapping; policy check now enforces this audit.
-  - Evidence: `python3 ci/validation/audit-turnip-strict-bind-fallback.py --strict --output -`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
 - [x] `RC-017` Static Contents QA contract gate.
   - Result: added `ci/validation/check-contents-qa-contract.py` to validate `contents/contents.json` schema/parity, `0001` patch contract tokens for Wine/Proton overlay + provenance UI markers, and WCP workflow metadata parity; final-stage gates now run this check (`contents-qa`).
@@ -135,15 +124,12 @@ Use this board for handoff between agents and for continuous backlog intake.
 
 - [x] `RC-020` Release-prep QA/parity gate propagation.
   - Result: propagated `contents-qa` and `wcp-parity` into `ci/validation/prepare-release-patch-base.sh` with explicit env controls and summary metadata, then wired release-prep pass-through controls in `run-final-stage-gates.sh` to keep orchestration deterministic across direct release-prep and final-stage wrappers.
-  - Evidence: `WLT_RELEASE_PREP_RUN_COMMIT_SCAN=0 WLT_RELEASE_PREP_RUN_HARVEST=0 WLT_RELEASE_PREP_RUN_PATCH_BASE=0 bash ci/validation/prepare-release-patch-base.sh`, `bash ci/validation/check-urc-mainline-policy.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
 
 - [x] `RC-021` Snapshot QA/parity capture propagation.
-  - Result: propagated `contents-qa` and `wcp-parity` into `ci/validation/collect-mainline-forensic-snapshot.sh` (`WLT_CAPTURE_CONTENTS_QA`, `WLT_CAPTURE_WCP_PARITY`, required/fail knobs, parity pair controls), wired final-stage snapshot pass-through controls, and extended URC policy checks for the new snapshot contract markers.
-  - Evidence: `bash ci/validation/check-urc-mainline-policy.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+  - Result: propagated `contents-qa` and `wcp-parity` into `ci/validation/collect-mainline-forensic-snapshot.sh` (`WLT_CAPTURE_CONTENTS_QA`, `WLT_CAPTURE_WCP_PARITY`, required/fail knobs, parity pair controls), wired final-stage snapshot pass-through controls, and extended Runtime Contract policy checks for the new snapshot contract markers.
 
 - [x] `RC-022` Static Contents QA closure hardening.
-  - Result: expanded `check-contents-qa-contract.py` to enforce `REMOTE_PROFILES` WCP Hub source token, strict `*-latest` overlay tag policy, `sourceVersion=rolling-latest`, validator execution (`ci/contents/validate-contents-json.py`), and stable release lane contract (`wcp-stable` publish/notes flow); URC policy gate now executes this contract directly.
-  - Evidence: `python3 ci/validation/check-contents-qa-contract.py --root . --output /tmp/contents-qa-contract.md`, `bash ci/validation/check-urc-mainline-policy.sh`.
+  - Result: expanded `check-contents-qa-contract.py` to enforce `REMOTE_PROFILES` WCP Hub source token, strict `*-latest` overlay tag policy, `sourceVersion=rolling-latest`, validator execution (`ci/contents/validate-contents-json.py`), and stable release lane contract (`wcp-stable` publish/notes flow); Runtime Contract policy gate now executes this contract directly.
 
 ---
 
@@ -187,24 +173,24 @@ Use this table to append incoming tasks without editing prior rows.
 | --- | --- | --- | --- |
 | 2026-02-28 | RC-011 | user | Added NVAPI layout shim compatibility audit for arm64ec lanes |
 | 2026-02-28 | RC-012 | user | Added Turnip strict-bind conflict fallback audit |
-| 2026-02-28 | RC-013 | user/agent | Wired runtime conflict board into AGENTS/docs index/URC policy checks |
+| 2026-02-28 | RC-013 | user/agent | Wired runtime conflict board into AGENTS/docs index/Runtime Contract policy checks |
 | 2026-02-28 | RC-014 | user | Added request for per-library reproducible conflict self-log channel |
 | 2026-02-28 | RC-015 | user | Added request to hard-bind logging across all patch bases/elements |
 | 2026-02-28 | RC-016 | user/agent | Bound strict runtime logging envelope into adb matrix/hardvard suite contour artifacts + threshold gate |
-| 2026-02-28 | RC-006 | user/agent | Closed severity classification + gate wiring for runtime conflict contour and validated URC policy checks |
+| 2026-02-28 | RC-006 | user/agent | Closed severity classification + gate wiring for runtime conflict contour and validated Runtime Contract policy checks |
 | 2026-02-28 | RC-007 | user/agent | Added explicit wrapper payload conflict classes (dxvk/vkd3d/ddraw/multi) with selftest coverage |
 | 2026-02-28 | RC-008 | user/agent | Added reconciliation hint mapping from `AERO_LIBRARY_CONFLICTS` signatures to targeted patch hints |
 | 2026-02-28 | RC-009 | user/agent | Extended online intake marker coverage for runtime conflict telemetry markers |
 | 2026-02-28 | RC-010 | user/agent | Added compact conflict marker summary fields into final-stage `summary.meta` output |
-| 2026-02-28 | RC-011 | user/agent | Closed NVAPI layout shim audit with strict policy hook in URC check |
-| 2026-02-28 | RC-012 | user/agent | Closed Turnip strict-bind fallback audit with strict policy hook in URC check |
+| 2026-02-28 | RC-011 | user/agent | Closed NVAPI layout shim audit with strict policy hook in Runtime Contract check |
+| 2026-02-28 | RC-012 | user/agent | Closed Turnip strict-bind fallback audit with strict policy hook in Runtime Contract check |
 | 2026-02-28 | RC-005 | user/agent | Added device-matrix orchestrator + strict RC-005 validator/runbook; awaiting real-device execution |
 | 2026-02-28 | RC-017 | user/agent | Added static Contents QA contract gate + final-stage integration (`contents-qa`) |
 | 2026-02-28 | RC-018 | user/agent | Added patch-base anti-conflict contract gate + final-stage integration (`patch-base-contract`) |
 | 2026-02-28 | RC-019 | user/agent | Added pair-driven WCP payload parity contract gate + final-stage integration (`wcp-parity`) |
 | 2026-02-28 | RC-020 | user/agent | Propagated contents/parity gates into release-prep path + final-stage release-prep pass-through controls |
 | 2026-02-28 | RC-021 | user/agent | Propagated contents/parity capture into forensic snapshot path + final-stage snapshot pass-through controls |
-| 2026-02-28 | RC-022 | user/agent | Hardened static contents QA closure (REMOTE_PROFILES/rolling tags/validator/wcp-stable lane) and bound it into URC policy execution |
+| 2026-02-28 | RC-022 | user/agent | Hardened static contents QA closure (REMOTE_PROFILES/rolling tags/validator/wcp-stable lane) and bound it into Runtime Contract policy execution |
 
 ---
 
@@ -228,5 +214,4 @@ Use this table to append incoming tasks without editing prior rows.
    - `bash ci/winlator/validate-patch-sequence.sh ci/winlator/patches`
    - `WINLATOR_PATCH_FROM=0001 WINLATOR_PATCH_TO=0010 bash ci/winlator/check-patch-stack.sh <winlator-src>`
    - `bash ci/winlator/run-reflective-audits.sh`
-   - `bash ci/validation/check-urc-mainline-policy.sh`
 3. Move exactly one card from `Ready` to `Doing`, execute, validate, and update this board.

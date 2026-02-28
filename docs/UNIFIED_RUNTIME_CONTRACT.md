@@ -1,4 +1,4 @@
-# Unified Runtime Contract (URC)
+# Unified Runtime Contract
 
 ## Scope
 

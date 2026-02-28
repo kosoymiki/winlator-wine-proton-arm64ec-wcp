@@ -9,7 +9,6 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_RELEASE_PREP_RUN_PATCH_BASE:=0}"
 : "${WLT_RELEASE_PREP_PATCH_BASE_PROFILE:=standard}"
 : "${WLT_RELEASE_PREP_PATCH_BASE_PHASE:=all}"
-: "${WLT_RELEASE_PREP_RUN_URC:=0}"
 : "${WLT_RELEASE_PREP_RUN_CONTENTS_QA:=1}"
 : "${WLT_RELEASE_PREP_RUN_WCP_PARITY:=1}"
 : "${WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY:=0}"
@@ -38,7 +37,6 @@ fail() { printf '[release-patch-base][error] %s\n' "$*" >&2; exit 1; }
 [[ "${WLT_RELEASE_PREP_REQUIRE_SOURCE}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_REQUIRE_SOURCE must be 0 or 1"
 [[ "${WLT_RELEASE_PREP_RUN_PATCH_BASE}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_RUN_PATCH_BASE must be 0 or 1"
 [[ "${WLT_RELEASE_PREP_PATCH_BASE_PROFILE}" =~ ^(standard|wide|single)$ ]] || fail "WLT_RELEASE_PREP_PATCH_BASE_PROFILE must be standard, wide or single"
-[[ "${WLT_RELEASE_PREP_RUN_URC}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_RUN_URC must be 0 or 1"
 [[ "${WLT_RELEASE_PREP_RUN_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_RUN_CONTENTS_QA must be 0 or 1"
 [[ "${WLT_RELEASE_PREP_RUN_WCP_PARITY}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_RUN_WCP_PARITY must be 0 or 1"
 [[ "${WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY}" =~ ^[01]$ ]] || fail "WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY must be 0 or 1"
@@ -107,13 +105,6 @@ main() {
     log "skip: wcp-parity (WLT_RELEASE_PREP_RUN_WCP_PARITY=0)"
   fi
 
-  if [[ "${WLT_RELEASE_PREP_RUN_URC}" == "1" ]]; then
-    run_capture urc-mainline \
-      bash "${ROOT_DIR}/ci/validation/check-urc-mainline-policy.sh"
-  else
-    log "skip: urc-mainline (WLT_RELEASE_PREP_RUN_URC=0)"
-  fi
-
   run_capture online-intake-strict \
     env \
       OUT_DIR="${WLT_RELEASE_PREP_OUT_DIR}/online-intake" \
@@ -159,7 +150,6 @@ main() {
       WLT_HIGH_CYCLE_HARVEST_INCLUDE_UNMAPPED="${WLT_RELEASE_PREP_HARVEST_INCLUDE_UNMAPPED}" \
       WLT_HIGH_CYCLE_SYNC_BRANCH_PINS="${WLT_RELEASE_PREP_SYNC_BRANCH_PINS}" \
       WLT_HIGH_CYCLE_HARVEST_FAIL_ON_REPO_ERRORS="${WLT_RELEASE_PREP_HARVEST_FAIL_ON_REPO_ERRORS}" \
-      WLT_HIGH_CYCLE_RUN_URC=0 \
       bash "${ROOT_DIR}/ci/reverse/run-high-priority-cycle.sh"
 
   if [[ "${WLT_RELEASE_PREP_RUN_PATCH_BASE}" == "1" ]]; then
@@ -188,7 +178,6 @@ main() {
     printf 'run_patch_base=%s\n' "${WLT_RELEASE_PREP_RUN_PATCH_BASE}"
     printf 'patch_base_profile=%s\n' "${WLT_RELEASE_PREP_PATCH_BASE_PROFILE}"
     printf 'patch_base_phase=%s\n' "${WLT_RELEASE_PREP_PATCH_BASE_PHASE}"
-    printf 'run_urc=%s\n' "${WLT_RELEASE_PREP_RUN_URC}"
     printf 'run_contents_qa=%s\n' "${WLT_RELEASE_PREP_RUN_CONTENTS_QA}"
     printf 'run_wcp_parity=%s\n' "${WLT_RELEASE_PREP_RUN_WCP_PARITY}"
     printf 'wcp_parity_require_any=%s\n' "${WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY}"

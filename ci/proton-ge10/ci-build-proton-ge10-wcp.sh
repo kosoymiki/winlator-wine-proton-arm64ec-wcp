@@ -230,7 +230,7 @@ build_wine() {
 }
 
 main() {
-  local artifact gn_patchset_mode gn_contract_strict
+  local artifact
 
   require_cmd bash
   require_cmd curl
@@ -253,21 +253,7 @@ main() {
   ensure_llvm_mingw
   run_arm64ec_flow
   apply_proton_ge_patches
-  gn_patchset_mode="full"
-  gn_contract_strict="${WCP_GN_PATCHSET_STRICT}"
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
-    gn_patchset_mode="normalize-only"
-    gn_contract_strict=0
-  fi
-  log "GameNative patchset mode for proton-ge: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
-  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
-    WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
-  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target protonge --source-dir "${WINE_SRC_DIR}"
+  wcp_apply_unified_gamenative_patch_base protonge "${WINE_SRC_DIR}"
   build_wine
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"

@@ -33,8 +33,8 @@ MODULE_RULES = [
     {
         "id": "launch_pipeline",
         "label": "Launch pipeline orchestration",
-        "kind": "adapt_urc",
-        "target": "URC launch preflight + deterministic env submit + forensic reasons",
+        "kind": "adapt_runtime_contract",
+        "target": "Runtime Contract launch preflight + deterministic env submit + forensic reasons",
         "repo_target": "XServerDisplayActivity + GuestProgramLauncherComponent (0044 queue)",
         "patterns": [
             r"WinEmuServiceImpl",
@@ -73,7 +73,7 @@ MODULE_RULES = [
     {
         "id": "graphics_driver_probe",
         "label": "Graphics + driver decision tree",
-        "kind": "adapt_urc",
+        "kind": "adapt_runtime_contract",
         "target": "Adrenotools/Vulkan decision telemetry and fallback reasons",
         "repo_target": "AdrenotoolsManager + driver probe path + vulkan fallback",
         "patterns": [
@@ -125,7 +125,7 @@ MODULE_RULES = [
 
 KIND_ORDER = {
     "port_contract": 0,
-    "adapt_urc": 1,
+    "adapt_runtime_contract": 1,
     "adapt_guarded": 2,
     "reject_mainline": 3,
 }
@@ -289,7 +289,7 @@ def main() -> int:
 
     lines.append("## Anti-Conflict Rules (GN v0.7.2 vs GameHub)")
     lines.append("")
-    lines.append("1. Shared runtime behavior is integrated only through URC + forensic fields.")
+    lines.append("1. Shared runtime behavior is integrated only through Runtime Contract + forensic fields.")
     lines.append("2. Any path implying bundled runtime payload stays out of mainline.")
     lines.append("3. Launch/environment changes must preserve deterministic fallback reasons.")
     lines.append("4. If GN/GH diverge, choose lower-regression behavior with explicit telemetry.")
@@ -297,7 +297,7 @@ def main() -> int:
 
     lines.append("## 0044 Queue (post-analysis)")
     lines.append("")
-    lines.append("1. Integrate launch orchestration deltas into URC preflight path (`XServerDisplayActivity` + launcher).")
+    lines.append("1. Integrate launch orchestration deltas into Runtime Contract preflight path (`XServerDisplayActivity` + launcher).")
     lines.append("2. Add reason-coded guardrails for runtime/profile mismatch decisions.")
     lines.append("3. Keep content/UI/install layers in research lane unless explicitly promoted.")
     lines.append("")

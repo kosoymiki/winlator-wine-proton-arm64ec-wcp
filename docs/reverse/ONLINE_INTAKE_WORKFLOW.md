@@ -29,7 +29,7 @@ Intake scope modes:
 ci/reverse/online-intake.sh
 ```
 
-Strict high-priority gate (intake + backlog strict + optional URC):
+Strict high-priority gate (intake + backlog strict + optional Runtime Contract):
 
 ```bash
 ci/reverse/run-high-priority-cycle.sh

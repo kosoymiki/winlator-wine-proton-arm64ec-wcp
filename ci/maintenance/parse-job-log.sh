@@ -14,6 +14,7 @@ options:
   --pattern REGEX       Forwarded to parse-raw-job-log.sh
   --matches N           Forwarded to parse-raw-job-log.sh (default: 120)
   --tail-lines N        Forwarded to parse-raw-job-log.sh (default: 80)
+  --show-tail           Forwarded to parse-raw-job-log.sh
   --print-url           Print resolved raw URL before parsing
 EOF
 }
@@ -24,6 +25,7 @@ TAIL_BYTES=600000
 MATCH_LIMIT=120
 TAIL_LINES=80
 PATTERN=""
+SHOW_TAIL=0
 PRINT_URL=0
 
 while [[ $# -gt 0 ]]; do
@@ -51,6 +53,10 @@ while [[ $# -gt 0 ]]; do
     --tail-lines)
       TAIL_LINES="${2:-}"
       shift 2
+      ;;
+    --show-tail)
+      SHOW_TAIL=1
+      shift
       ;;
     --print-url)
       PRINT_URL=1
@@ -93,33 +99,41 @@ fi
 TOKEN="$(gh auth token)"
 [[ -n "${TOKEN}" ]] || { echo "gh auth token is empty" >&2; exit 1; }
 
+curl_api() {
+  curl -sS --fail \
+    --retry 5 --retry-all-errors --retry-delay 2 \
+    -H "Authorization: Bearer ${TOKEN}" \
+    -H "Accept: application/vnd.github+json" \
+    "$@"
+}
+
 JOB_LOG_ENDPOINT="https://api.github.com/repos/${REPO}/actions/jobs/${JOB_ID}/logs"
 JOB_META_ENDPOINT="https://api.github.com/repos/${REPO}/actions/jobs/${JOB_ID}"
 RAW_URL="$(
-  curl -sSI \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H "Accept: application/vnd.github+json" \
-    "${JOB_LOG_ENDPOINT}" \
+  curl_api -I "${JOB_LOG_ENDPOINT}" \
     | tr -d '\r' \
     | awk 'tolower($1)=="location:"{print $2}' \
     | tail -n1
 )"
 
 [[ -n "${RAW_URL}" ]] || {
+  job_meta="$(
+    curl_api "${JOB_META_ENDPOINT}" 2>/dev/null || true
+  )"
+  if [[ -z "${job_meta}" ]]; then
+    echo "Failed to query job metadata for ${JOB_ID} (${REPO})" >&2
+    exit 1
+  fi
   job_status="$(
-    curl -sS \
-      -H "Authorization: Bearer ${TOKEN}" \
-      -H "Accept: application/vnd.github+json" \
-      "${JOB_META_ENDPOINT}" \
-      | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))'
+    printf '%s' "${job_meta}" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))'
   )"
   job_conclusion="$(
-    curl -sS \
-      -H "Authorization: Bearer ${TOKEN}" \
-      -H "Accept: application/vnd.github+json" \
-      "${JOB_META_ENDPOINT}" \
-      | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("conclusion",""))'
+    printf '%s' "${job_meta}" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("conclusion",""))'
   )"
+  if [[ "${job_status}" == "404" ]]; then
+    echo "Job ${JOB_ID} not found in ${REPO}" >&2
+    exit 1
+  fi
   if [[ "${job_status}" != "completed" ]]; then
     echo "[job-log] repo=${REPO} job=${JOB_ID} status=${job_status} conclusion=${job_conclusion:-<none>} raw-log-not-ready"
     exit 0
@@ -140,5 +154,8 @@ RAW_PARSER="${SCRIPT_DIR}/parse-raw-job-log.sh"
 cmd=("${RAW_PARSER}" --url "${RAW_URL}" --tail-bytes "${TAIL_BYTES}" --matches "${MATCH_LIMIT}" --tail-lines "${TAIL_LINES}")
 if [[ -n "${PATTERN}" ]]; then
   cmd+=(--pattern "${PATTERN}")
+fi
+if [[ "${SHOW_TAIL}" == "1" ]]; then
+  cmd+=(--show-tail)
 fi
 "${cmd[@]}"

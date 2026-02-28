@@ -107,7 +107,7 @@
 
 ## Merge Queue
 
-1. `0044` (`done`): launch pipeline merge (GN+GH) under URC with reason-coded forensics.
+1. `0044` (`done`): launch pipeline merge (GN+GH) under Runtime Contract with reason-coded forensics.
 2. `0045` (`next`): graphics/driver decision merge with deterministic fallback chain.
 3. `0046` (`next`): registry/runtime guarded deltas only (no asset-first side effects).
 4. Keep content/download/UI modules in research-only lane until explicit promote decision.

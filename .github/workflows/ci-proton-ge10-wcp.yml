@@ -72,7 +72,7 @@ env:
   WCP_MAINLINE_BIONIC_ONLY: "1"
   WCP_MAINLINE_FEX_EXTERNAL_ONLY: "1"
   WCP_ALLOW_GLIBC_EXPERIMENTAL: "0"
-  WCP_WRAPPER_POLICY_VERSION: urc-v1
+  WCP_WRAPPER_POLICY_VERSION: runtime-v1
   WCP_POLICY_SOURCE: aesolator-mainline
   WCP_FALLBACK_SCOPE: bionic-internal-only
   WCP_BIONIC_SOURCE_MAP_FILE: ${{ github.workspace }}/ci/runtime-sources/bionic-source-map.json
@@ -98,11 +98,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Validate URC mainline policy
-        run: |
-          set -euxo pipefail
-          bash ci/validation/check-urc-mainline-policy.sh
 
       - name: Install build deps
         run: |

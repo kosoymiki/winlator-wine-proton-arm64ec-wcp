@@ -41,7 +41,7 @@
 - Зачем добавлялись: Жесткий preflight донор-архивов (SHA/ABI), кэш доноров в workflows, строгая проверка runtime-контракта на каждом WCP артефакте, расширение forensic-индексов (`unix-module-abi.tsv`, `bionic-source-entry.json`) и закрепление этих инвариантов в валидации/документации.
 
 ### `6i+` — Harvard patch-base expansion (`0001..0010`, без промежуточного push)
-- Зачем добавлялись: переход к X11-first графическому контуру в слайсах `0002..0010`, интеграция AeTurnip/Adrenotools control-plane, DX route + upscaler матрица (все DirectX пути), commit-scan/harvest intake orchestration и усиление URC-контрактов.
+- Зачем добавлялись: переход к X11-first графическому контуру в слайсах `0002..0010`, интеграция AeTurnip/Adrenotools control-plane, DX route + upscaler матрица (все DirectX пути), commit-scan/harvest intake orchestration и усиление Runtime Contract-контрактов.
 
 ## Полная карта commit -> версия
 

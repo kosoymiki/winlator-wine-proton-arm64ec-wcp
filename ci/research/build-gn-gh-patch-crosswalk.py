@@ -34,7 +34,7 @@ MODULE_RULES = [
     {
         "id": "launch_pipeline",
         "label": "Launch pipeline",
-        "kind": "adapt_urc",
+        "kind": "adapt_runtime_contract",
         "lane": "0044",
         "patterns": [
             r"launchapp",
@@ -54,7 +54,7 @@ MODULE_RULES = [
     {
         "id": "graphics_driver_probe",
         "label": "Graphics/driver",
-        "kind": "adapt_urc",
+        "kind": "adapt_runtime_contract",
         "lane": "0045",
         "patterns": [
             r"vulkan",
@@ -382,7 +382,7 @@ def main() -> int:
 
     lines.append("## Merge Queue")
     lines.append("")
-    lines.append("1. `0044`: launch pipeline merge (GN+GH) under URC with reason-coded forensics.")
+    lines.append("1. `0044`: launch pipeline merge (GN+GH) under Runtime Contract with reason-coded forensics.")
     lines.append("2. `0045`: graphics/driver decision merge with deterministic fallback chain.")
     lines.append("3. `0046`: registry/runtime guarded deltas only (no asset-first side effects).")
     lines.append("4. Keep content/download/UI modules in research-only lane until explicit promote decision.")

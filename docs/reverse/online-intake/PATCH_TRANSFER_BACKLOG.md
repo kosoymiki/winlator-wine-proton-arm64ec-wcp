@@ -87,6 +87,6 @@ Generated from `docs/reverse/online-intake/combined-matrix.json`.
 ## Execution rule
 
 - Apply `high` rows first, then rerun `ci/reverse/online-intake.sh` and regenerate this backlog.
-- Keep `medium` rows gated behind existing runtime contract and URC checks.
+- Keep `medium` rows gated behind existing runtime contract and Runtime Contract checks.
 - Treat `low` rows as backlog candidates for patch-base expansion after `high/medium` are clean.
 

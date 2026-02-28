@@ -1,8 +1,15 @@
 # Online Commit Scan
 
 - source: GitHub API (`gh api`) only
-- repos scanned: **9**
-- errors: **0**
+- repos scanned: **5**
+- errors: **4**
+
+## Errors
+
+- `coffin_wine`: gh api failed: repos/coffincolors/wine/commits/9bdf2d7795baf3a1c0e3c39bf15d509522e2e22a: Get "https://api.github.com/repos/coffincolors/wine/commits/9bdf2d7795baf3a1c0e3c39bf15d509522e2e22a": read tcp 192.168.0.199:34978->134.0.118.88:443: read: connection reset by peer
+- `froggingfamily_wine_tkg_git`: gh api failed: repos/Frogging-Family/wine-tkg-git/commits/97f2231bffbfab385046f08897df50663b571a2f: Get "https://api.github.com/repos/Frogging-Family/wine-tkg-git/commits/97f2231bffbfab385046f08897df50663b571a2f": read tcp 192.168.0.199:45750->134.0.118.88:443: read: connection reset by peer
+- `termux_x11`: gh api failed: repos/termux/termux-x11/commits/6d627520b4717cdea1ed1530e6d063be7537cc8b: Get "https://api.github.com/repos/termux/termux-x11/commits/6d627520b4717cdea1ed1530e6d063be7537cc8b": read tcp 192.168.0.199:55266->89.108.98.20:443: read: connection reset by peer
+- `utkarsh_gamenative`: gh api failed: repos/utkarshdalal/GameNative/commits/f3051a300984b4d31c16cf17eda7ebdee6b774cf: Get "https://api.github.com/repos/utkarshdalal/GameNative/commits/f3051a300984b4d31c16cf17eda7ebdee6b774cf": read tcp 192.168.0.199:54322->89.108.98.20:443: read: connection reset by peer
 
 ## Repo Summaries
 
@@ -27,27 +34,6 @@
 | `6b2aa898be61` | `2024-07-15T18:13:23Z` | 1 | 1 |  | Update update-darkos.py |
 | `bc04fcf2f96c` | `2024-07-15T18:12:51Z` | 1 | 1 |  | Update darkos.py |
 
-### coffin_wine
-
-- repo: `coffincolors/wine`
-- branch: `arm64ec`
-- marker totals: none
-
-| SHA | Date | Files | Paths | Markers | Message |
-| --- | --- | ---: | ---: | --- | --- |
-| `51c64ec8733d` | `2024-12-08T14:33:15Z` | 2 | 2 |  | Revert "configure: Properly test clang for dwarf support." |
-| `343daae0d64a` | `2024-11-24T18:35:40Z` | 1 | 1 |  | Partially revert f1d4dd7cc83d971c6e69c3f2bdffe85dbcd81c0a |
-| `9bdf2d7795ba` | `2024-10-22T09:27:06Z` | 3 | 3 |  | Revert "winecrt0: Use version 2 of CHPE metadata." |
-| `26abd3e04f23` | `2024-10-20T13:11:14Z` | 1 | 1 |  | ntdll: Default to libarm64ecfex for amd64 emulation |
-| `caac07018711` | `2024-10-20T11:24:39Z` | 1 | 1 |  | HACK: Link box64cpu differently |
-| `7e490e5002af` | `2024-10-19T17:03:48Z` | 2 | 2 |  | HACK: Don't build box64 library for ARM64EC |
-| `8bc3a81619c9` | `2024-04-12T20:04:31Z` | 1 | 1 |  | HACK: ntdll: Rudimentary ARM64EC suspend support. |
-| `ca5cafeef84b` | `2024-09-27T11:29:21Z` | 2 | 2 |  | HACK: define some extra arm64ec symbols to workaround llvm bugs |
-| `bfd241c687b9` | `2024-10-13T09:57:12Z` | 1 | 1 |  | ntdll: Refuse to run on page sizes other than 4k |
-| `1fa51459dc26` | `2024-03-24T13:28:19Z` | 1 | 1 |  | Revert "wow64: Use setjmp/longjmp from ntdll." |
-| `6d374c30766b` | `2024-03-01T19:53:21Z` | 1 | 1 |  | ntdll: Enable the Hack for some internal applications |
-| `5994cb936241` | `2023-09-04T17:53:14Z` | 1 | 1 |  | ntdll: Improve the locale hack by applying a hack |
-
 ### coffin_winlator
 
 - repo: `coffincolors/winlator`
@@ -68,27 +54,6 @@
 | `b4367b71cc54` | `2025-08-03T22:23:41Z` | 2 | 2 |  | set build name to Cmod-v13.1-hotfix-beta, adjusted update warning language for clarity in imageFsInstaller |
 | `1ebc14117dd6` | `2025-08-03T21:53:47Z` | 3 | 3 |  | added extractx86_64InputDlls and new tzst to assets just in case, left unused for now. |
 | `05a4ce2911cd` | `2025-08-03T21:32:15Z` | 16 | 16 | DXVK | merge final changes from last dev apk, update arrays, update EnvVars with print, update FEXCoreManager with changes from apk, update ImageFSInstaller version, add Wine PEB logging from apk, make GStreamerWorkaround a tog |
-
-### froggingfamily_wine_tkg_git
-
-- repo: `Frogging-Family/wine-tkg-git`
-- branch: `master`
-- marker totals: none
-
-| SHA | Date | Files | Paths | Markers | Message |
-| --- | --- | ---: | ---: | --- | --- |
-| `97f2231bffbf` | `2026-02-25T06:38:13Z` | 1 | 1 |  | proton: container: Bring our usual userpatches support to proton container builds |
-| `2d624ba32f04` | `2026-02-04T21:50:37Z` | 1 | 1 |  | CI: fixup for unescaped chars on proton-arch-ntsync-nopackage |
-| `ec2fe1375e4c` | `2026-01-31T13:35:39Z` | 2 | 2 |  | Hotfixes: Valve: Update de-steamify-10.0-be patchset for current Bleeding Edge |
-| `0160d96ad5ed` | `2026-01-31T13:26:40Z` | 1 | 1 |  | container fixes: Pass the correct flag to configure.sh if SELinux is enabled (#1686) |
-| `4ea7a331a4c6` | `2026-01-31T13:24:10Z` | 1 | 1 |  | readme fixups |
-| `a1352a3b0840` | `2026-01-31T13:18:52Z` | 7 | 7 |  | proton: Time to break everyone's setup |
-| `65ea535d2bcd` | `2026-01-28T23:54:53Z` | 1 | 1 |  | makepkg: Get rid of outdated package replace |
-| `36ffb9fc77a5` | `2026-01-27T18:00:23Z` | 7 | 7 |  | Update proton-tkg patchsets for 19294e0a and move previous versions to legacy |
-| `64ca71f0704e` | `2026-01-20T15:25:10Z` | 2 | 2 |  | Valve: Hotfixes: Add a secondary atiadlxx-ADL2 revert patch, and enable for BE |
-| `2dd6c9363f46` | `2026-01-20T15:24:09Z` | 1 | 1 |  | Valve: Update de-steamify-10.0-be patch for current BE |
-| `e291444b5f46` | `2026-01-09T19:11:51Z` | 1 | 1 |  | fix: pin Fedora CI to version 42 to prevent breakage due to fedora image changes (#1685) |
-| `8c54250246d1` | `2026-01-03T14:42:32Z` | 1 | 1 |  | prepare: Don't choke one multiple cached vk.xml and video.xml files, and use the latest one available for each instead |
 
 ### gamenative_protonwine
 
@@ -152,46 +117,4 @@
 | `cbca83402da9` | `2024-03-03T18:12:37Z` | 1 | 1 |  | change default wine for wow64 to 9.3 |
 | `77a1d3dc51ae` | `2024-02-26T06:18:51Z` | 1 | 1 |  | revert, xz was fixed |
 | `1a0cdb5ed18a` | `2024-02-25T20:21:39Z` | 1 | 1 |  | xz workaround try 2 |
-
-### termux_x11
-
-- repo: `termux/termux-x11`
-- branch: `master`
-- marker totals: none
-
-| SHA | Date | Files | Paths | Markers | Message |
-| --- | --- | ---: | ---: | --- | --- |
-| `3376f0ed5f5c` | `2026-02-18T21:09:24Z` | 2 | 2 |  | fix(shell-loader): keep Loader in debug build |
-| `451ebe5de412` | `2026-02-18T20:31:46Z` | 1 | 1 |  | Fix shell-loader binary size regression after Gradle upgrade |
-| `658adf0c44cb` | `2026-02-18T20:11:39Z` | 6 | 6 |  | Fix resource shrinker removing runtime-resolved strings |
-| `61f4fb541504` | `2026-02-18T19:33:21Z` | 2 | 2 |  | Fix R8 shrink breakage (JNI + reflection) |
-| `702f2a1b64e6` | `2026-02-18T11:29:30Z` | 1 | 1 |  | Remove `android.enableJetifier=true` due to gradle warning. |
-| `72f0fa95d3c8` | `2026-02-18T11:27:50Z` | 3 | 3 |  | Fix build after Gradle 9 upgrade |
-| `f7e9ae7e5360` | `2026-02-16T00:53:11Z` | 1 | 1 |  | build(deps): bump com.android.tools.build:gradle from 8.13.1 to 9.0.1 |
-| `5c21322de87b` | `2026-02-06T00:54:43Z` | 1 | 1 |  | build(deps): bump org.jetbrains.kotlin:kotlin-stdlib-jdk8 |
-| `8725cd1abfae` | `2026-02-18T10:44:47Z` | 2 | 2 |  | build(deps): bump gradle-wrapper from 9.2.1 to 9.3.1 (#966) |
-| `33f486970622` | `2026-02-18T10:43:35Z` | 1 | 1 |  | build(deps): bump actions/upload-artifact from 5 to 6 (#956) |
-| `bbde9f3d0802` | `2026-02-18T10:43:26Z` | 1 | 1 |  | build(deps): bump actions/cache from 4 to 5 (#952) |
-| `6d627520b471` | `2025-11-30T18:39:22Z` | 1 | 1 |  | Update Gradle Wrapper from 9.2.0 to 9.2.1 (#945) |
-
-### utkarsh_gamenative
-
-- repo: `utkarshdalal/GameNative`
-- branch: `master`
-- marker totals: none
-
-| SHA | Date | Files | Paths | Markers | Message |
-| --- | --- | ---: | ---: | --- | --- |
-| `fa629bb70ed7` | `2026-02-28T05:44:33Z` | 1 | 1 |  | Revert "fix: remain connected to SteamService and solve for login page game s…" (#678) |
-| `1bbebf6cfe25` | `2026-02-28T05:38:44Z` | 1 | 1 |  | fix: remain connected to SteamService and solve for login page game smother (#677) |
-| `959b5cbe6c45` | `2026-02-28T04:24:59Z` | 4 | 4 |  | Adds Wine request component for external interactions (#676) |
-| `48d10aafbaa5` | `2026-02-28T04:24:50Z` | 31 | 31 |  | Control editor improvements, touchpad gestures, and new default presets (#599) |
-| `ba06986bccd0` | `2026-02-27T23:05:29Z` | 68 | 68 |  | Feat/UI ux overhaul final (#667) |
-| `761d93b86cbf` | `2026-02-25T07:45:39Z` | 1 | 1 |  | fix: serve cached images when device has no internet (#635) |
-| `08cc7a5c8feb` | `2026-02-25T07:41:57Z` | 7 | 7 |  | Use container language for GOG downloads (#627) |
-| `b75b002530d9` | `2026-02-25T07:19:32Z` | 1 | 1 |  | fix: capture external mouse pointer on first event (#626) |
-| `e27bff9f65ac` | `2026-02-25T05:01:32Z` | 1 | 1 |  | Fix L2/R2 being triggered as buttons instead of axis (#646) |
-| `f3051a300984` | `2026-02-25T02:34:22Z` | 22 | 22 |  | Added steam offline mode for games like N++ (#645) |
-| `cb3ee6efbe87` | `2026-02-25T00:00:05Z` | 1 | 1 |  | fix: retry cloud sync on AsyncJobFailedException (#643) |
-| `af92a5e0dd05` | `2026-02-24T23:38:21Z` | 2 | 2 |  | sqlite queries can't use true and false as identifiers (either 1 and 0 or the strings 'True' and 'False' [since 3.23.0]) (#629) |
 

@@ -11,7 +11,7 @@ Before touching runtime fixes for a release line, run:
 
 This produces one local bundle with:
 - reflective audits,
-- URC mainline checks,
+- Runtime Contract mainline checks,
 - strict no-fetch online intake,
 - strict no-fetch high-priority cycle,
 - optional online commit-scan (GitHub API, no clone),
@@ -208,7 +208,7 @@ Outputs:
 
 ## 10) One-shot forensic snapshot (mainline)
 
-To collect a single consolidated snapshot (`health + active failures + urc check + git state`):
+To collect a single consolidated snapshot (`health + active failures + runtime contract checks + git state`):
 
 - `bash ci/validation/collect-mainline-forensic-snapshot.sh`
 - `WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
@@ -232,7 +232,7 @@ To collect a single consolidated snapshot (`health + active failures + urc check
 Generated in snapshot dir:
 - `mainline-health.tsv/.json`
 - `active-failures.tsv/.meta`
-- `health.log`, `active-failures.log`, `urc-check.log`
+- `health.log`, `active-failures.log`
 - `snapshot.meta`, `status.meta`, `git-head.txt`, `git-status.txt`
 - If `WLT_TRIAGE_ACTIVE_RUNS=1`: `run-triage/run-<id>/` artifacts + `run-triage/run-<id>.log`
 - If `WLT_CAPTURE_ONLINE_INTAKE=1`: `online-intake/combined-matrix.{md,json}` + per-repo online reports.
@@ -253,7 +253,6 @@ Generated in snapshot dir:
 - `WLT_COMMIT_SCAN_REQUIRED=1` upgrades commit-scan from best-effort to required gate.
 - `WLT_COMMIT_SCAN_PROFILE=core|all|custom` controls repo selection for commit scan.
 - `WLT_COMMIT_SCAN_COMMITS_PER_REPO` controls commit window depth per repo.
-- `WLT_CAPTURE_URC=0` (default) keeps snapshot path focused on intake/triage speed; set `1` only when policy drift is suspected.
 - When commit scan is available, backlog rows now include `Focus/Commits` hit split and source-tagged evidence (`focus` vs `commit_scan`).
 - `PATCH_TRANSFER_BACKLOG.json` exports `commit_scan_used` and `commit_scan_errors` for strict gating/reporting.
 - `WLT_ONLINE_BACKLOG_STRICT=1` makes intake fail if high rows stay in `needs_review`, high/medium rows are not `ready_validated`, or intake reports contain errors.
@@ -263,7 +262,6 @@ Generated in snapshot dir:
 - `WLT_ONLINE_REQUIRE_LOW_READY_VALIDATED=1` enforces `ready_validated` status for low-priority rows.
 - With commit-scan merged (`ONLINE_INCLUDE_COMMIT_SCAN=1`), strict mode also fails on `commit_scan_errors > 0`.
 - `status.meta` now includes `online_high_rows`, `online_high_not_ready_validated`, `online_medium_rows`, `online_medium_not_ready_validated`, `online_low_rows`, and `online_low_not_ready_validated` for quick strict-gate visibility.
-- `check-urc-mainline-policy.sh` runs a no-fetch smoke of `run-high-priority-cycle.sh` (`profile=all`) to keep intake gate wiring healthy.
 - `WLT_SNAPSHOT_FAIL_MODE=strict|capture-only` controls whether snapshot command exits non-zero on failed checks.
 
 ### Targeted integration harvest (commit-driven transfer)

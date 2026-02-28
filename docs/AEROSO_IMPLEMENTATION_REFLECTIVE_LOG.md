@@ -443,7 +443,7 @@
   - X11-first графический контур,
   - Adrenotools global control plane (Turnip + Upscaler + DX policy),
   - intake/harvest/commit-scan операционный контур,
-  - URC/reflective контракты под режим `0001 + 0002..0010`.
+  - Runtime Contract/reflective контракты под режим `0001 + 0002..0010`.
 
 ### During
 
@@ -473,6 +473,5 @@
   - `validate-patch-sequence`,
   - `check-patch-stack (0001..0010)`,
   - `run-reflective-audits`,
-  - `check-urc-mainline-policy`,
   - `run-final-stage-gates` (strict/no-fetch).
 - Эта запись фиксирует переход от исторического 0.2b-лога к актуальной operational модели Ae.solator (`X11-first + aeturnip + dxvk/upscaler matrix`).

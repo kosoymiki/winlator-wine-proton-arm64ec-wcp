@@ -215,6 +215,8 @@ wcp_require_enum() {
   wcp_fail "${flag_name} must be one of: $* (got: ${flag_value})"
 }
 
+source "${WCP_COMMON_DIR}/gamenative-patch-base.sh"
+
 wcp_enforce_mainline_bionic_policy() {
   : "${WCP_MAINLINE_BIONIC_ONLY:=1}"
   : "${WCP_ALLOW_GLIBC_EXPERIMENTAL:=0}"
@@ -703,7 +705,7 @@ compose_wcp_tree_from_stage() {
   : "${WCP_ARTIFACT_NAME:=${WCP_NAME}.wcp}"
   : "${WCP_SHA256_ARTIFACT_NAME:=SHA256SUMS-${WCP_NAME}.txt}"
   : "${WCP_SHA256_URL:=https://github.com/${WCP_SOURCE_REPO}/releases/download/${WCP_RELEASE_TAG}/${WCP_SHA256_ARTIFACT_NAME}}"
-  : "${WCP_WRAPPER_POLICY_VERSION:=urc-v1}"
+  : "${WCP_WRAPPER_POLICY_VERSION:=runtime-v1}"
   : "${WCP_POLICY_SOURCE:=aesolator-mainline}"
   : "${WCP_FALLBACK_SCOPE:=bionic-internal-only}"
   if [[ -z "${WCP_GLIBC_SOURCE_MODE+x}" ]]; then
@@ -926,7 +928,7 @@ wcp_write_forensic_manifest() {
     echo "WCP_RELEASE_TAG=${WCP_RELEASE_TAG:-}"
     echo "WCP_ARTIFACT_NAME=${WCP_ARTIFACT_NAME:-}"
     echo "WCP_SHA256_URL=${WCP_SHA256_URL:-}"
-    echo "WCP_WRAPPER_POLICY_VERSION=${WCP_WRAPPER_POLICY_VERSION:-urc-v1}"
+    echo "WCP_WRAPPER_POLICY_VERSION=${WCP_WRAPPER_POLICY_VERSION:-runtime-v1}"
     echo "WCP_POLICY_SOURCE=${WCP_POLICY_SOURCE:-aesolator-mainline}"
     echo "WCP_FALLBACK_SCOPE=${WCP_FALLBACK_SCOPE:-bionic-internal-only}"
     echo "WCP_TARGET_RUNTIME=${WCP_TARGET_RUNTIME:-}"
@@ -1026,7 +1028,7 @@ wcp_write_forensic_manifest() {
     "WCP_RELEASE_TAG": "$(wcp_json_escape "${WCP_RELEASE_TAG:-}")",
     "WCP_ARTIFACT_NAME": "$(wcp_json_escape "${WCP_ARTIFACT_NAME:-}")",
     "WCP_SHA256_URL": "$(wcp_json_escape "${WCP_SHA256_URL:-}")",
-    "WCP_WRAPPER_POLICY_VERSION": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-urc-v1}")",
+    "WCP_WRAPPER_POLICY_VERSION": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-runtime-v1}")",
     "WCP_POLICY_SOURCE": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aesolator-mainline}")",
     "WCP_FALLBACK_SCOPE": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
     "WCP_RUNTIME_CLASS_TARGET": "$(wcp_json_escape "${WCP_RUNTIME_CLASS_TARGET:-}")",
@@ -1191,7 +1193,7 @@ EOF_BIONIC_SOURCE
     "allowGlibcExperimental": "$(wcp_json_escape "${WCP_ALLOW_GLIBC_EXPERIMENTAL:-0}")",
     "mainlineBionicOnly": "$(wcp_json_escape "${WCP_MAINLINE_BIONIC_ONLY:-1}")",
     "emulationPolicy": "$(wcp_json_escape "${emulation_policy}")",
-    "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-urc-v1}")",
+    "wrapperPolicyVersion": "$(wcp_json_escape "${WCP_WRAPPER_POLICY_VERSION:-runtime-v1}")",
     "policySource": "$(wcp_json_escape "${WCP_POLICY_SOURCE:-aesolator-mainline}")",
     "fallbackScope": "$(wcp_json_escape "${WCP_FALLBACK_SCOPE:-bionic-internal-only}")",
     "bionicSourceMapApplied": "$(wcp_json_escape "${WCP_BIONIC_SOURCE_MAP_APPLIED:-0}")",

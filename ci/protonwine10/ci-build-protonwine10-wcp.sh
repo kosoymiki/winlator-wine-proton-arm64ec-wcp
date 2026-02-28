@@ -17,6 +17,7 @@ WINE_SRC_DIR="${WORK_DIR}/wine-src"
 : "${ANDROID_SUPPORT_REF:=47e79a66652afae9fd0e521b03736d1e6536ac5a}"
 : "${PROTONWINE_ANDROID_SUPPORT_ROOT:=}"
 : "${PROTONWINE_UPSTREAM_FIX_COMMITS:=}"
+: "${WCP_LEGACY_PATCH_BASE_ENABLE:=0}"
 : "${LLVM_MINGW_TAG:=${LLVM_MINGW_VER:-20260210}}"
 : "${TARGET_HOST:=aarch64-linux-gnu}"
 : "${WCP_NAME:=protonwine10-gamenative-arm64ec}"
@@ -93,6 +94,7 @@ preflight_runtime_profile() {
   wcp_require_bool WCP_GN_PATCHSET_ENABLE "${WCP_GN_PATCHSET_ENABLE}"
   wcp_require_bool WCP_GN_PATCHSET_STRICT "${WCP_GN_PATCHSET_STRICT}"
   wcp_require_bool WCP_GN_PATCHSET_VERIFY_AUTOFIX "${WCP_GN_PATCHSET_VERIFY_AUTOFIX}"
+  wcp_require_bool WCP_LEGACY_PATCH_BASE_ENABLE "${WCP_LEGACY_PATCH_BASE_ENABLE}"
   wcp_require_enum WCP_RUNTIME_CLASS_TARGET "${WCP_RUNTIME_CLASS_TARGET}" bionic-native glibc-wrapped
   wcp_require_enum WCP_FEX_EXPECTATION_MODE "${WCP_FEX_EXPECTATION_MODE}" external bundled
   wcp_require_enum WCP_RUNTIME_BUNDLE_LOCK_MODE "${WCP_RUNTIME_BUNDLE_LOCK_MODE}" audit enforce relaxed-enforce
@@ -152,7 +154,12 @@ run_upstream_analysis_and_fixes() {
 
   bash "${ROOT_DIR}/ci/protonwine10/inspect-upstreams.sh"
   bash "${ROOT_DIR}/ci/protonwine10/android-support-review.sh"
-  bash "${ROOT_DIR}/ci/protonwine10/apply-upstream-fixes.sh"
+  if [[ "${WCP_LEGACY_PATCH_BASE_ENABLE}" == "1" ]]; then
+    log "Legacy upstream patch-base flow is enabled for protonwine10"
+    bash "${ROOT_DIR}/ci/protonwine10/apply-upstream-fixes.sh"
+  else
+    log "Skipping legacy upstream patch-base flow (WCP_LEGACY_PATCH_BASE_ENABLE=0); using unified GameNative patch base only"
+  fi
 }
 
 build_wine() {
@@ -181,7 +188,7 @@ build_wine() {
 }
 
 main() {
-  local artifact gn_patchset_mode gn_contract_strict
+  local artifact
 
   require_cmd bash
   require_cmd curl
@@ -205,22 +212,9 @@ main() {
   ensure_llvm_mingw
   clone_protonwine_source
   run_upstream_analysis_and_fixes
-  gn_patchset_mode="full"
   # ProtonWine source layout intentionally diverges on one wow64 marker;
   # keep contract in warn-only mode and rely on build/runtime checks.
-  gn_contract_strict=0
-  if [[ "${WCP_GN_PATCHSET_ENABLE}" != "1" ]]; then
-    gn_patchset_mode="normalize-only"
-  fi
-  log "GameNative patchset mode for protonwine10: ${gn_patchset_mode} (enable=${WCP_GN_PATCHSET_ENABLE}, strict=${gn_contract_strict})"
-  WCP_GN_PATCHSET_MODE="${gn_patchset_mode}" \
-    WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    WCP_GN_PATCHSET_VERIFY_AUTOFIX="${WCP_GN_PATCHSET_VERIFY_AUTOFIX}" \
-    WCP_GN_PATCHSET_REF="${WCP_GN_PATCHSET_REF}" \
-    WCP_GN_PATCHSET_REPORT="${WCP_GN_PATCHSET_REPORT}" \
-    bash "${ROOT_DIR}/ci/gamenative/apply-android-patchset.sh" --target wine --source-dir "${WINE_SRC_DIR}"
-  WCP_GN_PATCHSET_STRICT="${gn_contract_strict}" \
-    bash "${ROOT_DIR}/ci/validation/check-gamenative-patch-contract.sh" --target wine --source-dir "${WINE_SRC_DIR}"
+  wcp_apply_unified_gamenative_patch_base protonwine "${WINE_SRC_DIR}" 0
   build_wine
 
   compose_wcp_tree_from_stage "${STAGE_DIR}" "${WCP_ROOT}"
