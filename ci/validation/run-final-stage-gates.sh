@@ -1,0 +1,283 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+: "${WLT_FINAL_STAGE_OUT_DIR:=/tmp/final-stage-gates-$(date +%Y%m%d_%H%M%S)}"
+: "${WLT_FINAL_STAGE_FAIL_MODE:=strict}"
+: "${WLT_FINAL_STAGE_FETCH:=0}"
+: "${WLT_FINAL_STAGE_SCOPE:=focused}"
+: "${WLT_FINAL_STAGE_RUN_URC:=0}"
+: "${WLT_FINAL_STAGE_RUN_HARVEST:=1}"
+: "${WLT_FINAL_STAGE_HARVEST_PROFILE:=core}"
+: "${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO:=24}"
+: "${WLT_FINAL_STAGE_HARVEST_APPLY:=1}"
+: "${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC:=1}"
+: "${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC:=1}"
+: "${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED:=1}"
+: "${WLT_FINAL_STAGE_SYNC_BRANCH_PINS:=1}"
+: "${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS:=0}"
+: "${WLT_FINAL_STAGE_RUN_RELEASE_PREP:=1}"
+: "${WLT_FINAL_STAGE_RUN_SNAPSHOT:=1}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE:=0}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE:=0}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE:=capture-only}"
+: "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN:=1}"
+: "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE:=core}"
+: "${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO:=12}"
+
+: "${WLT_FINAL_STAGE_REQUIRED_HIGH_MARKERS:=x11drv_xinput2_enable,NtUserSendHardwareInput,SEND_HWMSG_NO_RAW,WRAPPER_VK_VERSION}"
+: "${WLT_FINAL_STAGE_REQUIRED_MEDIUM_MARKERS:=ContentProfile,REMOTE_PROFILES}"
+: "${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS:=DXVK,D8VK,VKD3D,PROOT_TMP_DIR,BOX64_LOG,WINEDEBUG,MESA_VK_WSI_PRESENT_MODE,TU_DEBUG,WINE_OPEN_WITH_ANDROID_BROWSER}"
+
+log() { printf '[final-stage] %s\n' "$*" >&2; }
+fail() { printf '[final-stage][error] %s\n' "$*" >&2; exit 1; }
+
+[[ "${WLT_FINAL_STAGE_FAIL_MODE}" =~ ^(strict|capture-only)$ ]] || fail "WLT_FINAL_STAGE_FAIL_MODE must be strict or capture-only"
+[[ "${WLT_FINAL_STAGE_FETCH}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_FETCH must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SCOPE}" =~ ^(focused|tree)$ ]] || fail "WLT_FINAL_STAGE_SCOPE must be focused or tree"
+[[ "${WLT_FINAL_STAGE_RUN_URC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_URC must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RUN_HARVEST}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_HARVEST must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SYNC_BRANCH_PINS}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SYNC_BRANCH_PINS must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_RELEASE_PREP must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RUN_SNAPSHOT}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_SNAPSHOT must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE}" =~ ^(strict|capture-only)$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE must be strict or capture-only"
+[[ "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_COMMIT_SCAN must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" =~ ^(core|all|custom)$ ]] || fail "WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE must be core, all or custom"
+[[ "${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" =~ ^[0-9]+$ ]] || fail "WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO must be numeric"
+
+mkdir -p "${WLT_FINAL_STAGE_OUT_DIR}"
+commit_scan_json="${ROOT_DIR}/docs/reverse/online-intake/commit-scan.json"
+combined_matrix_json="${ROOT_DIR}/docs/reverse/online-intake/combined-matrix.json"
+
+conflict_marker_repo_total=0
+conflict_marker_repos=0
+conflict_marker_total_hits=0
+conflict_marker_hits=-
+
+run_capture() {
+  local name="$1"; shift
+  local out="${WLT_FINAL_STAGE_OUT_DIR}/${name}.log"
+  log "running ${name}"
+  if "$@" >"${out}" 2>&1; then
+    log "ok: ${name}"
+    printf '0\n'
+  else
+    local rc=$?
+    tail -n 120 "${out}" >&2 || true
+    log "failed: ${name} (rc=${rc})"
+    printf '%s\n' "${rc}"
+  fi
+}
+
+reflective_rc="$(run_capture reflective-audits \
+  bash "${ROOT_DIR}/ci/winlator/run-reflective-audits.sh")"
+
+manifest_rc="$(run_capture gn-manifest \
+  python3 "${ROOT_DIR}/ci/gamenative/check-manifest-contract.py")"
+
+urc_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_URC}" == "1" ]]; then
+  urc_rc="$(run_capture urc-mainline \
+    bash "${ROOT_DIR}/ci/validation/check-urc-mainline-policy.sh")"
+fi
+
+commit_scan_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" == "1" ]]; then
+  commit_scan_rc="$(run_capture commit-scan \
+    env \
+      ONLINE_COMMIT_SCAN_OUT_DIR="${ROOT_DIR}/docs/reverse/online-intake" \
+      ONLINE_COMMIT_SCAN_PROFILE="${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" \
+      ONLINE_COMMIT_SCAN_COMMITS_PER_REPO="${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" \
+      bash "${ROOT_DIR}/ci/reverse/online-commit-scan.sh")"
+fi
+
+intake_rc="$(run_capture online-intake-strict \
+  env \
+    OUT_DIR="${ROOT_DIR}/docs/reverse/online-intake" \
+    ONLINE_INTAKE_FETCH="${WLT_FINAL_STAGE_FETCH}" \
+    ONLINE_INTAKE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
+    ONLINE_BACKLOG_STRICT=1 \
+    ONLINE_REQUIRED_HIGH_MARKERS="${WLT_FINAL_STAGE_REQUIRED_HIGH_MARKERS}" \
+    ONLINE_REQUIRED_MEDIUM_MARKERS="${WLT_FINAL_STAGE_REQUIRED_MEDIUM_MARKERS}" \
+    ONLINE_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
+    ONLINE_REQUIRE_LOW_READY_VALIDATED=1 \
+    ONLINE_INCLUDE_COMMIT_SCAN="${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" \
+    ONLINE_COMMIT_SCAN_AUTO=0 \
+    ONLINE_COMMIT_SCAN_PROFILE="${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" \
+    ONLINE_COMMIT_SCAN_COMMITS_PER_REPO="${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" \
+    ONLINE_COMMIT_SCAN_JSON="${commit_scan_json}" \
+    ONLINE_RUN_HARVEST=0 \
+    bash "${ROOT_DIR}/ci/reverse/online-intake.sh")"
+
+high_cycle_rc="$(run_capture high-cycle-strict \
+  env \
+    WLT_HIGH_CYCLE_OUT_DIR="${ROOT_DIR}/docs/reverse/online-intake" \
+    WLT_HIGH_CYCLE_FETCH="${WLT_FINAL_STAGE_FETCH}" \
+    WLT_HIGH_CYCLE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
+    WLT_HIGH_CYCLE_BACKLOG_STRICT=1 \
+    WLT_HIGH_CYCLE_REQUIRED_HIGH_MARKERS="${WLT_FINAL_STAGE_REQUIRED_HIGH_MARKERS}" \
+    WLT_HIGH_CYCLE_REQUIRED_MEDIUM_MARKERS="${WLT_FINAL_STAGE_REQUIRED_MEDIUM_MARKERS}" \
+    WLT_HIGH_CYCLE_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
+    WLT_HIGH_CYCLE_REQUIRE_LOW_READY_VALIDATED=1 \
+    WLT_HIGH_CYCLE_RUN_COMMIT_SCAN=0 \
+    WLT_HIGH_CYCLE_INCLUDE_COMMIT_SCAN="${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" \
+    WLT_HIGH_CYCLE_COMMIT_SCAN_JSON="${commit_scan_json}" \
+    WLT_HIGH_CYCLE_COMMIT_SCAN_PROFILE="${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" \
+    WLT_HIGH_CYCLE_COMMIT_SCAN_COMMITS_PER_REPO="${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" \
+    WLT_HIGH_CYCLE_RUN_HARVEST="${WLT_FINAL_STAGE_RUN_HARVEST}" \
+    WLT_HIGH_CYCLE_HARVEST_PROFILE="${WLT_FINAL_STAGE_HARVEST_PROFILE}" \
+    WLT_HIGH_CYCLE_HARVEST_MAX_COMMITS_PER_REPO="${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO}" \
+    WLT_HIGH_CYCLE_HARVEST_APPLY="${WLT_FINAL_STAGE_HARVEST_APPLY}" \
+    WLT_HIGH_CYCLE_HARVEST_SKIP_NO_SYNC="${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC}" \
+    WLT_HIGH_CYCLE_HARVEST_AUTO_FOCUS_SYNC="${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC}" \
+    WLT_HIGH_CYCLE_HARVEST_INCLUDE_UNMAPPED="${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED}" \
+    WLT_HIGH_CYCLE_SYNC_BRANCH_PINS="${WLT_FINAL_STAGE_SYNC_BRANCH_PINS}" \
+    WLT_HIGH_CYCLE_HARVEST_FAIL_ON_REPO_ERRORS="${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}" \
+    WLT_HIGH_CYCLE_RUN_URC=0 \
+    bash "${ROOT_DIR}/ci/reverse/run-high-priority-cycle.sh")"
+
+release_prep_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}" == "1" ]]; then
+  release_prep_rc="$(run_capture release-prep \
+    env \
+      WLT_RELEASE_PREP_OUT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/release-prep" \
+      WLT_RELEASE_PREP_REQUIRE_SOURCE="${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE}" \
+      WLT_RELEASE_PREP_RUN_PATCH_BASE="${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE}" \
+      WLT_RELEASE_PREP_RUN_URC="${WLT_FINAL_STAGE_RUN_URC}" \
+      WLT_RELEASE_PREP_INTAKE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
+      WLT_RELEASE_PREP_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
+      WLT_RELEASE_PREP_RUN_COMMIT_SCAN="${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" \
+      WLT_RELEASE_PREP_COMMIT_SCAN_PROFILE="${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" \
+      WLT_RELEASE_PREP_COMMIT_SCAN_COMMITS_PER_REPO="${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" \
+      WLT_RELEASE_PREP_RUN_HARVEST="${WLT_FINAL_STAGE_RUN_HARVEST}" \
+      WLT_RELEASE_PREP_HARVEST_PROFILE="${WLT_FINAL_STAGE_HARVEST_PROFILE}" \
+      WLT_RELEASE_PREP_HARVEST_MAX_COMMITS_PER_REPO="${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO}" \
+      WLT_RELEASE_PREP_HARVEST_APPLY="${WLT_FINAL_STAGE_HARVEST_APPLY}" \
+      WLT_RELEASE_PREP_HARVEST_SKIP_NO_SYNC="${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC}" \
+      WLT_RELEASE_PREP_HARVEST_AUTO_FOCUS_SYNC="${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC}" \
+      WLT_RELEASE_PREP_HARVEST_INCLUDE_UNMAPPED="${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED}" \
+      WLT_RELEASE_PREP_SYNC_BRANCH_PINS="${WLT_FINAL_STAGE_SYNC_BRANCH_PINS}" \
+      WLT_RELEASE_PREP_HARVEST_FAIL_ON_REPO_ERRORS="${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}" \
+      bash "${ROOT_DIR}/ci/validation/prepare-release-patch-base.sh")"
+fi
+
+snapshot_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_SNAPSHOT}" == "1" ]]; then
+  snapshot_rc="$(run_capture snapshot \
+    env \
+      WLT_SNAPSHOT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/snapshot" \
+      WLT_SNAPSHOT_FAIL_MODE="${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE}" \
+      WLT_CAPTURE_ONLINE_INTAKE=1 \
+      WLT_CAPTURE_URC="${WLT_FINAL_STAGE_RUN_URC}" \
+      WLT_ONLINE_INTAKE_REQUIRED=0 \
+      WLT_ONLINE_INTAKE_USE_HIGH_CYCLE=1 \
+      WLT_ONLINE_INTAKE_FETCH="${WLT_FINAL_STAGE_FETCH}" \
+      WLT_ONLINE_INTAKE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
+      WLT_ONLINE_BACKLOG_STRICT=1 \
+      WLT_ONLINE_REQUIRED_HIGH_MARKERS="${WLT_FINAL_STAGE_REQUIRED_HIGH_MARKERS}" \
+      WLT_ONLINE_REQUIRED_MEDIUM_MARKERS="${WLT_FINAL_STAGE_REQUIRED_MEDIUM_MARKERS}" \
+      WLT_ONLINE_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
+      WLT_ONLINE_REQUIRE_LOW_READY_VALIDATED=1 \
+      WLT_CAPTURE_COMMIT_SCAN="${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" \
+      WLT_COMMIT_SCAN_REQUIRED=0 \
+      WLT_COMMIT_SCAN_PROFILE="${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" \
+      WLT_COMMIT_SCAN_COMMITS_PER_REPO="${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" \
+      WLT_CAPTURE_RELEASE_PREP=0 \
+      bash "${ROOT_DIR}/ci/validation/collect-mainline-forensic-snapshot.sh")"
+fi
+
+if [[ -f "${combined_matrix_json}" ]]; then
+  while IFS= read -r line; do
+    key="${line%%=*}"
+    value="${line#*=}"
+    case "${key}" in
+      conflict_marker_repo_total) conflict_marker_repo_total="${value}" ;;
+      conflict_marker_repos) conflict_marker_repos="${value}" ;;
+      conflict_marker_total_hits) conflict_marker_total_hits="${value}" ;;
+      conflict_marker_hits) conflict_marker_hits="${value}" ;;
+    esac
+  done < <(python3 - "${combined_matrix_json}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+reports = payload.get("reports", {}) if isinstance(payload, dict) else {}
+markers = [
+    "AERO_LIBRARY_CONFLICTS",
+    "AERO_LIBRARY_CONFLICT_COUNT",
+    "AERO_LIBRARY_CONFLICT_SHA256",
+    "AERO_LIBRARY_REPRO_ID",
+    "RUNTIME_LIBRARY_CONFLICT_SNAPSHOT",
+    "RUNTIME_LIBRARY_CONFLICT_DETECTED",
+]
+hits = {m: 0 for m in markers}
+repos_with_hits = 0
+
+for report in reports.values():
+    repo_seen = False
+    for row in report.get("focus_files", []):
+        for marker in row.get("markers") or []:
+            if marker in hits:
+                hits[marker] += 1
+                repo_seen = True
+    if repo_seen:
+        repos_with_hits += 1
+
+print(f"conflict_marker_repo_total={len(reports)}")
+print(f"conflict_marker_repos={repos_with_hits}")
+print(f"conflict_marker_total_hits={sum(hits.values())}")
+print("conflict_marker_hits=" + ",".join(f"{m}:{hits[m]}" for m in markers))
+PY
+)
+fi
+
+{
+  printf 'time_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  printf 'fail_mode=%s\n' "${WLT_FINAL_STAGE_FAIL_MODE}"
+  printf 'fetch=%s\n' "${WLT_FINAL_STAGE_FETCH}"
+  printf 'scope=%s\n' "${WLT_FINAL_STAGE_SCOPE}"
+  printf 'run_urc=%s\n' "${WLT_FINAL_STAGE_RUN_URC}"
+  printf 'run_harvest=%s\n' "${WLT_FINAL_STAGE_RUN_HARVEST}"
+  printf 'harvest_profile=%s\n' "${WLT_FINAL_STAGE_HARVEST_PROFILE}"
+  printf 'harvest_commits_per_repo=%s\n' "${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO}"
+  printf 'harvest_apply=%s\n' "${WLT_FINAL_STAGE_HARVEST_APPLY}"
+  printf 'harvest_skip_no_sync=%s\n' "${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC}"
+  printf 'harvest_auto_focus_sync=%s\n' "${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC}"
+  printf 'harvest_include_unmapped=%s\n' "${WLT_FINAL_STAGE_HARVEST_INCLUDE_UNMAPPED}"
+  printf 'sync_branch_pins=%s\n' "${WLT_FINAL_STAGE_SYNC_BRANCH_PINS}"
+  printf 'harvest_fail_on_repo_errors=%s\n' "${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}"
+  printf 'reflective_rc=%s\n' "${reflective_rc}"
+  printf 'manifest_rc=%s\n' "${manifest_rc}"
+  printf 'urc_rc=%s\n' "${urc_rc}"
+  printf 'intake_rc=%s\n' "${intake_rc}"
+  printf 'high_cycle_rc=%s\n' "${high_cycle_rc}"
+  printf 'commit_scan_rc=%s\n' "${commit_scan_rc}"
+  printf 'release_prep_rc=%s\n' "${release_prep_rc}"
+  printf 'snapshot_rc=%s\n' "${snapshot_rc}"
+  printf 'run_release_prep=%s\n' "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}"
+  printf 'run_snapshot=%s\n' "${WLT_FINAL_STAGE_RUN_SNAPSHOT}"
+  printf 'run_commit_scan=%s\n' "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}"
+  printf 'commit_scan_profile=%s\n' "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}"
+  printf 'commit_scan_commits_per_repo=%s\n' "${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}"
+  printf 'conflict_marker_repo_total=%s\n' "${conflict_marker_repo_total}"
+  printf 'conflict_marker_repos=%s\n' "${conflict_marker_repos}"
+  printf 'conflict_marker_total_hits=%s\n' "${conflict_marker_total_hits}"
+  printf 'conflict_marker_hits=%s\n' "${conflict_marker_hits}"
+} > "${WLT_FINAL_STAGE_OUT_DIR}/summary.meta"
+
+if [[ "${WLT_FINAL_STAGE_FAIL_MODE}" == "strict" ]]; then
+  if [[ "${reflective_rc}" != "0" || "${manifest_rc}" != "0" || "${urc_rc}" != "0" || "${intake_rc}" != "0" || "${high_cycle_rc}" != "0" || "${commit_scan_rc}" != "0" || "${release_prep_rc}" != "0" || "${snapshot_rc}" != "0" ]]; then
+    fail "one or more gates failed (summary: ${WLT_FINAL_STAGE_OUT_DIR}/summary.meta)"
+  fi
+fi
+
+log "final stage gates captured: ${WLT_FINAL_STAGE_OUT_DIR}"
