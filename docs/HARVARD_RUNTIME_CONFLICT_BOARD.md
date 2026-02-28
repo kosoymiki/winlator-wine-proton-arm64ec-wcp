@@ -134,6 +134,12 @@ Use this board for handoff between agents and for continuous backlog intake.
     - Proton FSR modes (`quality/balanced/performance/ultra`)
   - Done when:
     - per-scenario bundle contains conflict markers and stable repro SHA.
+  - Execution path prepared:
+    - `ci/winlator/forensic-adb-rc005-matrix.sh` (matrix orchestrator for VPN/NVAPI/FSR axes + bundle export)
+    - `ci/winlator/validate-rc005-device-matrix.py` (strict coverage + marker + stable SHA audit)
+    - `docs/RC005_DEVICE_MATRIX_RUNBOOK.md` (operator runbook)
+  - Pending blocker:
+    - no active ADB device in current session (cannot close card without real-device artifacts).
 
 ---
 
@@ -168,6 +174,7 @@ Use this table to append incoming tasks without editing prior rows.
 | 2026-02-28 | RC-010 | user/agent | Added compact conflict marker summary fields into final-stage `summary.meta` output |
 | 2026-02-28 | RC-011 | user/agent | Closed NVAPI layout shim audit with strict policy hook in URC check |
 | 2026-02-28 | RC-012 | user/agent | Closed Turnip strict-bind fallback audit with strict policy hook in URC check |
+| 2026-02-28 | RC-005 | user/agent | Added device-matrix orchestrator + strict RC-005 validator/runbook; awaiting real-device execution |
 
 ---
 
