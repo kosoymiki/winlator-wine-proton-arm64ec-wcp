@@ -137,8 +137,17 @@ verify_patch_contract_markers() {
       file_has_fixed "${SOURCE_DIR}/dlls/wow64/syscall.c" 'L"HODLL"'
       ;;
     dlls_winex11_drv_mouse_c_wm_input_fix.patch)
-      file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'get_send_mouse_flags' \
-        && file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), input, 0 );'
+      (
+        file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'get_send_mouse_flags' \
+          && file_has_regex "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'NtUserSendHardwareInput\(\s*hwnd\s*,\s*get_send_mouse_flags\(\)\s*,\s*[^,]+\s*,\s*0\s*\);' \
+          && ( file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'x11drv_xinput2_enable' \
+            || file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'xinput2_available' )
+      ) || (
+        ! file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'SEND_HWMSG_NO_RAW' \
+          && file_has_regex "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'NtUserSendHardwareInput\(\s*hwnd\s*,\s*0\s*,\s*[^,]+\s*,\s*0\s*\);' \
+          && ( file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'x11drv_xinput2_enable' \
+            || file_has_fixed "${SOURCE_DIR}/dlls/winex11.drv/mouse.c" 'xinput2_available' )
+      )
       ;;
     programs_wineboot_wineboot_c.patch)
       file_has_fixed "${SOURCE_DIR}/programs/wineboot/wineboot.c" 'initialize_xstate_features(struct _KUSER_SHARED_DATA *data)'
@@ -790,12 +799,25 @@ import sys
 path = pathlib.Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 updated = text
-needs_fix = "SEND_HWMSG_NO_RAW" in updated or "NtUserSendHardwareInput" in updated
+has_send_flag = "SEND_HWMSG_NO_RAW" in updated
+has_helper = "get_send_mouse_flags" in updated
+has_dispatch_call = "NtUserSendHardwareInput(" in updated
+has_zero_dispatch = re.search(
+    r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*0\s*,\s*[^,]+\s*,\s*0\s*\);',
+    updated,
+) is not None
 
-if not needs_fix and "get_send_mouse_flags" not in updated:
+# Upstream variants that already send with zero flags are valid for our
+# --without-xinput2 contract and don't need helper injection.
+if not has_send_flag and not has_helper and has_zero_dispatch:
     raise SystemExit(0)
 
-if "get_send_mouse_flags" not in updated:
+if not has_send_flag and not has_helper:
+    if has_dispatch_call:
+        raise SystemExit("mouse.c WM_INPUT path missing both SEND_HWMSG_NO_RAW and zero-flag dispatch markers")
+    raise SystemExit(0)
+
+if not has_helper:
     helper = (
         "/* When XInput2 is available, explorer.exe centralises WM_INPUT generation via\n"
         " * SEND_HWMSG_NO_MSG raw events, so game processes must suppress their own raw\n"
@@ -827,7 +849,28 @@ updated = re.sub(
     updated,
 )
 
-if needs_fix and "NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), input, 0 );" not in updated:
+updated = re.sub(
+    r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*SEND_HWMSG_NO_RAW\s*,\s*([^,]+)\s*,\s*0\s*\);',
+    r'NtUserSendHardwareInput( hwnd, get_send_mouse_flags(), \1, 0 );',
+    updated,
+)
+
+if re.search(
+    r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*SEND_HWMSG_NO_RAW\s*,\s*[^,]+\s*,\s*0\s*\);',
+    updated,
+):
+    raise SystemExit("mouse.c WM_INPUT fix not applied")
+
+if not (
+    re.search(
+        r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*get_send_mouse_flags\(\)\s*,\s*[^,]+\s*,\s*0\s*\);',
+        updated,
+    )
+    or re.search(
+        r'NtUserSendHardwareInput\(\s*hwnd\s*,\s*0\s*,\s*[^,]+\s*,\s*0\s*\);',
+        updated,
+    )
+):
     raise SystemExit("mouse.c WM_INPUT fix not applied")
 
 path.write_text(updated, encoding="utf-8")

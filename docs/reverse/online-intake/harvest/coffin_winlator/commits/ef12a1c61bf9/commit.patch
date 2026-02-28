@@ -1,0 +1,76 @@
+commit ef12a1c61bf9f092b8eb6a1f66b839086e14feb6
+Author: coffincolors <coffincolors@gmail.com>
+Date:   Wed Aug 6 03:50:42 2025 -0500
+
+    improve alsa client safety fixes reduce overhead, update arrays with box 3.2, update BionicProgramLauncherComponent with new evshim lib location, replace box64 with unpatched version, fix PEB log in WineRequestHandler, add screenSize to PEB log, add testing comment for apply evshim winebus.so to user-installed wine, add override for TarCompressorUtils, fix frontend support in XServerDisplayActivity and container_id handling in ShortcutsFragment and update instructions and overwrite previous instructions and fixes xractivity launch with intent (needs Ivonasek imrovements controller fixes still), improve gyro zeroing, replace proton packs with updated winebus, evshim full rewrite remove mmap (native class in project can be removed...)
+
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index bf5f2bd..e155323 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -293,6 +293,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         AppUtils.keepScreenOn(this);
+         setContentView(R.layout.xserver_display_activity);
+ 
++        ControllerManager.getInstance().init(this);
++
+         setupAudioDeviceListener();
+ 
+ 
+@@ -716,8 +718,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             try (BufferedReader reader = new BufferedReader(new FileReader(desktopFile))) {
+                 String line;
+                 while ((line = reader.readLine()) != null) {
+-                    if (line.startsWith("container_id:")) {
+-                        containerId = Integer.parseInt(line.split(":")[1].trim());
++                    if (line.startsWith("container_id=")) {
++                        containerId = Integer.parseInt(line.split("=")[1].trim());
+                         break;
+                     }
+                 }
+@@ -1758,7 +1760,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         // Start the WinHandler
+         winHandler.start();
+ 
+-        if (wineRequestHandler != null) wineRequestHandler.start();
++        // Properly initialize the WineRequestHandler with all necessary context before starting it
++        if (wineRequestHandler != null) {
++            wineRequestHandler.setContainer(this.container);
++            wineRequestHandler.setShortcut(this.shortcut);
++            wineRequestHandler.setEnvVars(this.envVars);
++            wineRequestHandler.setWineInfo(this.wineInfo);
++            wineRequestHandler.start();
++        }
+ 
+         // Clear envVars if needed
+         // envVars.clear();
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index b6aff77..5017a33 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -7,6 +7,7 @@ import android.util.Log;
+ 
+ import androidx.annotation.NonNull;
+ 
++import com.winlator.cmod.core.EvshimPatcher;
+ import com.winlator.cmod.core.FileUtils;
+ import com.winlator.cmod.core.TarCompressorUtils;
+ 
+@@ -429,7 +430,16 @@ public class ContentsManager {
+             }
+         }
+         else {
+-            // TODO: do nothing?
++            // If we end up needing to inject winebus.so into user-installed contents
++//            File installDir = getInstallDir(context, profile);
++//            boolean arm64ec = profile.verName.contains("arm64ec");
++//            File wineRoot = new File(installDir,        // root of the .wcp
++//                    profile.type == ContentProfile.ContentType.CONTENT_TYPE_PROTON
++//                            ? profile.protonLibPath     // “proton-…”
++//                            : profile.wineLibPath       // “wine-…”
++//            ).getParentFile().getParentFile().getParentFile(); // climb back to top
++//
++//            EvshimPatcher.patchWineTree(context, wineRoot, arm64ec);
+         }
+         return true;
+     }

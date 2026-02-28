@@ -1,0 +1,2689 @@
+
+/tmp/elf_ide_sgwesap0/tar_extract/lib/wine/i386-windows/msacm32.dll:     file format pei-i386
+/tmp/elf_ide_sgwesap0/tar_extract/lib/wine/i386-windows/msacm32.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x1000dee0
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Sat Feb 21 22:07:53 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		0000e000
+SizeOfInitializedData	00033000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	0000dee0
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		00042000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00011074 000004d0 Export Directory [.edata (or where ever we found it)]
+Entry 1 00011544 0000008c Import Directory [parts of .idata]
+Entry 2 00015000 0000024a Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00016000 00000e00 Base Relocation Directory [.reloc]
+Entry 6 0001103c 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 000140d8 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 00011714 00000144 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x10011544
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 00011544	000115d0 00000000 00000000 00011cd8 00011714
+
+	DLL Name: winmm.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	11858	    5  CloseDriver
+	11866	    6  DefDriverProc
+	11876	   16  OpenDriver
+	11884	   21  SendDriverMessage
+
+ 00011558	000115e4 00000000 00000000 00011ce2 00011728
+
+	DLL Name: user32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	11898	 1548  CharLowerW
+	118a6	 1669  DialogBoxIndirectParamW
+	118c0	 1671  DialogBoxParamW
+	118d2	 1713  EndDialog
+	118de	 1795  GetDlgItem
+	118ec	 1871  GetPropW
+	118f8	 2025  MessageBoxA
+	11906	 2104  RegisterWindowMessageW
+	11920	 2120  SendDlgItemMessageW
+	11936	 2129  SendMessageW
+	11946	 2180  SetPropW
+	11952	 2223  ShowWindow
+	11960	 2296  wsprintfW
+
+ 0001156c	0001161c 00000000 00000000 00011ced 00011760
+
+	DLL Name: advapi32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	1196c	  394  RegCloseKey
+	1197a	  404  RegCreateKeyW
+	1198a	  410  RegDeleteKeyW
+	1199a	  420  RegEnumKeyExW
+	119aa	  423  RegEnumValueW
+	119ba	  438  RegOpenKeyExW
+	119ca	  439  RegOpenKeyW
+	119d8	  443  RegQueryInfoKeyW
+	119ec	  448  RegQueryValueExA
+	11a00	  449  RegQueryValueExW
+	11a14	  465  RegSetValueExA
+	11a26	  466  RegSetValueExW
+
+ 00011580	00011650 00000000 00000000 00011cfa 00011794
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	11a38	   74  __acrt_iob_func
+	11a4a	  158  __stdio_common_vsprintf
+	11a64	  162  __stdio_common_vswprintf
+	11a80	  191  _assert
+	11a8a	 1894  _strdup
+	11a94	 1988  _wcsicmp
+	11aa0	 1992  _wcslwr
+	11aaa	 1998  _wcsnicmp
+	11ab6	 2284  free
+	11abe	 2291  fwrite
+	11ac8	 2294  getenv
+	11ad2	 2379  memcmp
+	11adc	 2380  memcpy
+	11ae6	 2382  memmove
+	11af0	 2384  memset
+	11afa	 2449  strchr
+	11b04	 2450  strcmp
+	11b0e	 2452  strcpy
+	11b18	 2454  strcspn
+	11b22	 2458  strlen
+	11b2c	 2507  wcschr
+	11b36	 2514  wcslen
+	11b40	 2526  wcsstr
+
+ 00011594	000116b0 00000000 00000000 00011d07 000117f4
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	11b4a	  323  DisableThreadLibraryCalls
+	11b66	  644  GetModuleHandleW
+	11b7a	  689  GetPrivateProfileSectionW
+	11b96	  694  GetProcAddress
+	11ba8	  781  GetTickCount
+	11bb8	  795  GetVersionExA
+	11bc8	  837  HeapAlloc
+	11bd4	  839  HeapCreate
+	11be2	  841  HeapDestroy
+	11bf0	  843  HeapFree
+	11bfc	  847  HeapReAlloc
+	11c0a	  890  IsBadReadPtr
+	11c1a	  892  IsBadStringPtrW
+	11c2c	 1009  MultiByteToWideChar
+	11c42	 1074  QueryPerformanceCounter
+	11c5c	 1075  QueryPerformanceFrequency
+	11c78	 1083  RaiseException
+	11c8a	 1455  WideCharToMultiByte
+	11ca0	 1506  lstrcmpW
+
+ 000115a8	00011700 00000000 00000000 00011d14 00011844
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	11cac	 1236  _alldiv
+	11cb6	 1240  _allrem
+	11cc0	 1248  _chkstk
+	11cca	 1296  _vsnprintf
+
+ 000115bc	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10011074
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		e7893f3
+Major/Minor 			0/0
+Name 				0001125c msacm32.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		0000002c
+	[Name Pointer/Ordinal] Table	0000002c
+Table Addresses
+	Export Address Table 		0001109c
+	Name Pointer Table 		0001114c
+	Ordinal Table 			000111fc
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 1590 Export RVA
+	[   1] +base[   2] 17a0 Export RVA
+	[   2] +base[   3] 1980 Export RVA
+	[   3] +base[   4] 1ab0 Export RVA
+	[   4] +base[   5] 1c80 Export RVA
+	[   5] +base[   6] 2270 Export RVA
+	[   6] +base[   7] 2350 Export RVA
+	[   7] +base[   8] 2430 Export RVA
+	[   8] +base[   9] 1db0 Export RVA
+	[   9] +base[  10] 2780 Export RVA
+	[  10] +base[  11] 2a20 Export RVA
+	[  11] +base[  12] 2b50 Export RVA
+	[  12] +base[  13] 2c30 Export RVA
+	[  13] +base[  14] 2c90 Export RVA
+	[  14] +base[  15] 2d40 Export RVA
+	[  15] +base[  16] 2ea0 Export RVA
+	[  16] +base[  17] 2f30 Export RVA
+	[  17] +base[  18] 3310 Export RVA
+	[  18] +base[  19] 33a0 Export RVA
+	[  19] +base[  20] 3640 Export RVA
+	[  20] +base[  21] 36d0 Export RVA
+	[  21] +base[  22] 3910 Export RVA
+	[  22] +base[  23] 3c50 Export RVA
+	[  23] +base[  24] 40a0 Export RVA
+	[  24] +base[  25] 41b0 Export RVA
+	[  25] +base[  26] 4750 Export RVA
+	[  26] +base[  27] 4850 Export RVA
+	[  27] +base[  28] 4d60 Export RVA
+	[  28] +base[  29] 4fd0 Export RVA
+	[  29] +base[  30] 4440 Export RVA
+	[  30] +base[  31] 5060 Export RVA
+	[  31] +base[  32] 5100 Export RVA
+	[  32] +base[  33] 7a40 Export RVA
+	[  33] +base[  34] 1000 Export RVA
+	[  34] +base[  35] 7ad0 Export RVA
+	[  35] +base[  36] c410 Export RVA
+	[  36] +base[  37] c5d0 Export RVA
+	[  37] +base[  38] c740 Export RVA
+	[  38] +base[  39] c7b0 Export RVA
+	[  39] +base[  40] ced0 Export RVA
+	[  40] +base[  41] d0d0 Export RVA
+	[  41] +base[  42] d200 Export RVA
+	[  42] +base[  43] d370 Export RVA
+	[  43] +base[  44] 8120 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[  43] DriverProc
+	[   0] acmDriverAddA
+	[   1] acmDriverAddW
+	[   2] acmDriverClose
+	[   3] acmDriverDetailsA
+	[   4] acmDriverDetailsW
+	[   5] acmDriverEnum
+	[   6] acmDriverID
+	[   7] acmDriverMessage
+	[   8] acmDriverOpen
+	[   9] acmDriverPriority
+	[  10] acmDriverRemove
+	[  11] acmFilterChooseA
+	[  12] acmFilterChooseW
+	[  13] acmFilterDetailsA
+	[  14] acmFilterDetailsW
+	[  15] acmFilterEnumA
+	[  16] acmFilterEnumW
+	[  17] acmFilterTagDetailsA
+	[  18] acmFilterTagDetailsW
+	[  19] acmFilterTagEnumA
+	[  20] acmFilterTagEnumW
+	[  21] acmFormatChooseA
+	[  22] acmFormatChooseW
+	[  23] acmFormatDetailsA
+	[  24] acmFormatDetailsW
+	[  25] acmFormatEnumA
+	[  26] acmFormatEnumW
+	[  27] acmFormatSuggest
+	[  28] acmFormatTagDetailsA
+	[  29] acmFormatTagDetailsW
+	[  30] acmFormatTagEnumA
+	[  31] acmFormatTagEnumW
+	[  32] acmGetVersion
+	[  33] acmMessage32
+	[  34] acmMetrics
+	[  35] acmStreamClose
+	[  36] acmStreamConvert
+	[  37] acmStreamMessage
+	[  38] acmStreamOpen
+	[  39] acmStreamPrepareHeader
+	[  40] acmStreamReset
+	[  41] acmStreamSize
+	[  42] acmStreamUnprepareHeader
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 252 (0xfc) Number of fixups 122
+	reloc    0 offset   10 [1010] HIGHLOW
+	reloc    1 offset   17 [1017] HIGHLOW
+	reloc    2 offset   38 [1038] HIGHLOW
+	reloc    3 offset   58 [1058] HIGHLOW
+	reloc    4 offset   78 [1078] HIGHLOW
+	reloc    5 offset   98 [1098] HIGHLOW
+	reloc    6 offset   b8 [10b8] HIGHLOW
+	reloc    7 offset   d8 [10d8] HIGHLOW
+	reloc    8 offset   f8 [10f8] HIGHLOW
+	reloc    9 offset  118 [1118] HIGHLOW
+	reloc   10 offset  138 [1138] HIGHLOW
+	reloc   11 offset  158 [1158] HIGHLOW
+	reloc   12 offset  178 [1178] HIGHLOW
+	reloc   13 offset  198 [1198] HIGHLOW
+	reloc   14 offset  1b8 [11b8] HIGHLOW
+	reloc   15 offset  1d8 [11d8] HIGHLOW
+	reloc   16 offset  1f8 [11f8] HIGHLOW
+	reloc   17 offset  218 [1218] HIGHLOW
+	reloc   18 offset  238 [1238] HIGHLOW
+	reloc   19 offset  258 [1258] HIGHLOW
+	reloc   20 offset  278 [1278] HIGHLOW
+	reloc   21 offset  298 [1298] HIGHLOW
+	reloc   22 offset  2b8 [12b8] HIGHLOW
+	reloc   23 offset  2d8 [12d8] HIGHLOW
+	reloc   24 offset  2f8 [12f8] HIGHLOW
+	reloc   25 offset  318 [1318] HIGHLOW
+	reloc   26 offset  338 [1338] HIGHLOW
+	reloc   27 offset  358 [1358] HIGHLOW
+	reloc   28 offset  378 [1378] HIGHLOW
+	reloc   29 offset  398 [1398] HIGHLOW
+	reloc   30 offset  3b8 [13b8] HIGHLOW
+	reloc   31 offset  3d8 [13d8] HIGHLOW
+	reloc   32 offset  3f8 [13f8] HIGHLOW
+	reloc   33 offset  418 [1418] HIGHLOW
+	reloc   34 offset  438 [1438] HIGHLOW
+	reloc   35 offset  458 [1458] HIGHLOW
+	reloc   36 offset  478 [1478] HIGHLOW
+	reloc   37 offset  498 [1498] HIGHLOW
+	reloc   38 offset  4b8 [14b8] HIGHLOW
+	reloc   39 offset  4d5 [14d5] HIGHLOW
+	reloc   40 offset  4f4 [14f4] HIGHLOW
+	reloc   41 offset  514 [1514] HIGHLOW
+	reloc   42 offset  534 [1534] HIGHLOW
+	reloc   43 offset  554 [1554] HIGHLOW
+	reloc   44 offset  574 [1574] HIGHLOW
+	reloc   45 offset  5aa [15aa] HIGHLOW
+	reloc   46 offset  5cc [15cc] HIGHLOW
+	reloc   47 offset  5d4 [15d4] HIGHLOW
+	reloc   48 offset  63b [163b] HIGHLOW
+	reloc   49 offset  648 [1648] HIGHLOW
+	reloc   50 offset  64e [164e] HIGHLOW
+	reloc   51 offset  669 [1669] HIGHLOW
+	reloc   52 offset  681 [1681] HIGHLOW
+	reloc   53 offset  68f [168f] HIGHLOW
+	reloc   54 offset  69c [169c] HIGHLOW
+	reloc   55 offset  6ae [16ae] HIGHLOW
+	reloc   56 offset  6b6 [16b6] HIGHLOW
+	reloc   57 offset  6ea [16ea] HIGHLOW
+	reloc   58 offset  6f0 [16f0] HIGHLOW
+	reloc   59 offset  749 [1749] HIGHLOW
+	reloc   60 offset  77b [177b] HIGHLOW
+	reloc   61 offset  7bc [17bc] HIGHLOW
+	reloc   62 offset  7db [17db] HIGHLOW
+	reloc   63 offset  7e3 [17e3] HIGHLOW
+	reloc   64 offset  854 [1854] HIGHLOW
+	reloc   65 offset  85f [185f] HIGHLOW
+	reloc   66 offset  86f [186f] HIGHLOW
+	reloc   67 offset  87a [187a] HIGHLOW
+	reloc   68 offset  887 [1887] HIGHLOW
+	reloc   69 offset  892 [1892] HIGHLOW
+	reloc   70 offset  89a [189a] HIGHLOW
+	reloc   71 offset  90b [190b] HIGHLOW
+	reloc   72 offset  91a [191a] HIGHLOW
+	reloc   73 offset  92d [192d] HIGHLOW
+	reloc   74 offset  93c [193c] HIGHLOW
+	reloc   75 offset  949 [1949] HIGHLOW
+	reloc   76 offset  958 [1958] HIGHLOW
+	reloc   77 offset  960 [1960] HIGHLOW
+	reloc   78 offset  992 [1992] HIGHLOW
+	reloc   79 offset  9a5 [19a5] HIGHLOW
+	reloc   80 offset  9ad [19ad] HIGHLOW
+	reloc   81 offset  9c8 [19c8] HIGHLOW
+	reloc   82 offset  9d7 [19d7] HIGHLOW
+	reloc   83 offset  9df [19df] HIGHLOW
+	reloc   84 offset  a29 [1a29] HIGHLOW
+	reloc   85 offset  a34 [1a34] HIGHLOW
+	reloc   86 offset  a65 [1a65] HIGHLOW
+	reloc   87 offset  a81 [1a81] HIGHLOW
+	reloc   88 offset  a96 [1a96] HIGHLOW
+	reloc   89 offset  ac9 [1ac9] HIGHLOW
+	reloc   90 offset  ae3 [1ae3] HIGHLOW
+	reloc   91 offset  aeb [1aeb] HIGHLOW
+	reloc   92 offset  b0e [1b0e] HIGHLOW
+	reloc   93 offset  b20 [1b20] HIGHLOW
+	reloc   94 offset  b28 [1b28] HIGHLOW
+	reloc   95 offset  bb5 [1bb5] HIGHLOW
+	reloc   96 offset  c99 [1c99] HIGHLOW
+	reloc   97 offset  cb3 [1cb3] HIGHLOW
+	reloc   98 offset  cbb [1cbb] HIGHLOW
+	reloc   99 offset  cde [1cde] HIGHLOW
+	reloc  100 offset  cec [1cec] HIGHLOW
+	reloc  101 offset  cfd [1cfd] HIGHLOW
+	reloc  102 offset  d0b [1d0b] HIGHLOW
+	reloc  103 offset  d13 [1d13] HIGHLOW
+	reloc  104 offset  dc9 [1dc9] HIGHLOW
+	reloc  105 offset  de3 [1de3] HIGHLOW
+	reloc  106 offset  deb [1deb] HIGHLOW
+	reloc  107 offset  e0d [1e0d] HIGHLOW
+	reloc  108 offset  e1b [1e1b] HIGHLOW
+	reloc  109 offset  e28 [1e28] HIGHLOW
+	reloc  110 offset  e36 [1e36] HIGHLOW
+	reloc  111 offset  e3e [1e3e] HIGHLOW
+	reloc  112 offset  e79 [1e79] HIGHLOW
+	reloc  113 offset  e7f [1e7f] HIGHLOW
+	reloc  114 offset  f31 [1f31] HIGHLOW
+	reloc  115 offset  f43 [1f43] HIGHLOW
+	reloc  116 offset  f53 [1f53] HIGHLOW
+	reloc  117 offset  f65 [1f65] HIGHLOW
+	reloc  118 offset  fbb [1fbb] HIGHLOW
+	reloc  119 offset  fc1 [1fc1] HIGHLOW
+	reloc  120 offset  fcd [1fcd] HIGHLOW
+	reloc  121 offset  fd7 [1fd7] HIGHLOW
+
+Virtual Address: 00002000 Chunk size 256 (0x100) Number of fixups 124
+	reloc    0 offset    0 [2000] HIGHLOW
+	reloc    1 offset    f [200f] HIGHLOW
+	reloc    2 offset   15 [2015] HIGHLOW
+	reloc    3 offset   31 [2031] HIGHLOW
+	reloc    4 offset   6a [206a] HIGHLOW
+	reloc    5 offset   85 [2085] HIGHLOW
+	reloc    6 offset   97 [2097] HIGHLOW
+	reloc    7 offset   9f [209f] HIGHLOW
+	reloc    8 offset   ba [20ba] HIGHLOW
+	reloc    9 offset   c0 [20c0] HIGHLOW
+	reloc   10 offset   ce [20ce] HIGHLOW
+	reloc   11 offset   d5 [20d5] HIGHLOW
+	reloc   12 offset  119 [2119] HIGHLOW
+	reloc   13 offset  159 [2159] HIGHLOW
+	reloc   14 offset  16e [216e] HIGHLOW
+	reloc   15 offset  187 [2187] HIGHLOW
+	reloc   16 offset  19b [219b] HIGHLOW
+	reloc   17 offset  243 [2243] HIGHLOW
+	reloc   18 offset  24b [224b] HIGHLOW
+	reloc   19 offset  283 [2283] HIGHLOW
+	reloc   20 offset  29d [229d] HIGHLOW
+	reloc   21 offset  2a5 [22a5] HIGHLOW
+	reloc   22 offset  2c2 [22c2] HIGHLOW
+	reloc   23 offset  2cd [22cd] HIGHLOW
+	reloc   24 offset  2d7 [22d7] HIGHLOW
+	reloc   25 offset  2e2 [22e2] HIGHLOW
+	reloc   26 offset  2f1 [22f1] HIGHLOW
+	reloc   27 offset  305 [2305] HIGHLOW
+	reloc   28 offset  366 [2366] HIGHLOW
+	reloc   29 offset  37d [237d] HIGHLOW
+	reloc   30 offset  385 [2385] HIGHLOW
+	reloc   31 offset  3a0 [23a0] HIGHLOW
+	reloc   32 offset  3ab [23ab] HIGHLOW
+	reloc   33 offset  3b3 [23b3] HIGHLOW
+	reloc   34 offset  3ed [23ed] HIGHLOW
+	reloc   35 offset  3f8 [23f8] HIGHLOW
+	reloc   36 offset  405 [2405] HIGHLOW
+	reloc   37 offset  41c [241c] HIGHLOW
+	reloc   38 offset  449 [2449] HIGHLOW
+	reloc   39 offset  467 [2467] HIGHLOW
+	reloc   40 offset  46f [246f] HIGHLOW
+	reloc   41 offset  4e3 [24e3] HIGHLOW
+	reloc   42 offset  4e9 [24e9] HIGHLOW
+	reloc   43 offset  503 [2503] HIGHLOW
+	reloc   44 offset  509 [2509] HIGHLOW
+	reloc   45 offset  514 [2514] HIGHLOW
+	reloc   46 offset  53f [253f] HIGHLOW
+	reloc   47 offset  545 [2545] HIGHLOW
+	reloc   48 offset  58d [258d] HIGHLOW
+	reloc   49 offset  59f [259f] HIGHLOW
+	reloc   50 offset  5a7 [25a7] HIGHLOW
+	reloc   51 offset  5bb [25bb] HIGHLOW
+	reloc   52 offset  5cd [25cd] HIGHLOW
+	reloc   53 offset  5d5 [25d5] HIGHLOW
+	reloc   54 offset  5f1 [25f1] HIGHLOW
+	reloc   55 offset  5ff [25ff] HIGHLOW
+	reloc   56 offset  607 [2607] HIGHLOW
+	reloc   57 offset  62b [262b] HIGHLOW
+	reloc   58 offset  639 [2639] HIGHLOW
+	reloc   59 offset  641 [2641] HIGHLOW
+	reloc   60 offset  671 [2671] HIGHLOW
+	reloc   61 offset  67a [267a] HIGHLOW
+	reloc   62 offset  687 [2687] HIGHLOW
+	reloc   63 offset  692 [2692] HIGHLOW
+	reloc   64 offset  69c [269c] HIGHLOW
+	reloc   65 offset  6aa [26aa] HIGHLOW
+	reloc   66 offset  6b2 [26b2] HIGHLOW
+	reloc   67 offset  706 [2706] HIGHLOW
+	reloc   68 offset  711 [2711] HIGHLOW
+	reloc   69 offset  71e [271e] HIGHLOW
+	reloc   70 offset  729 [2729] HIGHLOW
+	reloc   71 offset  796 [2796] HIGHLOW
+	reloc   72 offset  7ad [27ad] HIGHLOW
+	reloc   73 offset  7b5 [27b5] HIGHLOW
+	reloc   74 offset  85a [285a] HIGHLOW
+	reloc   75 offset  869 [2869] HIGHLOW
+	reloc   76 offset  871 [2871] HIGHLOW
+	reloc   77 offset  8b0 [28b0] HIGHLOW
+	reloc   78 offset  8bb [28bb] HIGHLOW
+	reloc   79 offset  8c3 [28c3] HIGHLOW
+	reloc   80 offset  8ea [28ea] HIGHLOW
+	reloc   81 offset  8f5 [28f5] HIGHLOW
+	reloc   82 offset  902 [2902] HIGHLOW
+	reloc   83 offset  90d [290d] HIGHLOW
+	reloc   84 offset  91e [291e] HIGHLOW
+	reloc   85 offset  929 [2929] HIGHLOW
+	reloc   86 offset  93a [293a] HIGHLOW
+	reloc   87 offset  945 [2945] HIGHLOW
+	reloc   88 offset  a33 [2a33] HIGHLOW
+	reloc   89 offset  a46 [2a46] HIGHLOW
+	reloc   90 offset  a4e [2a4e] HIGHLOW
+	reloc   91 offset  a81 [2a81] HIGHLOW
+	reloc   92 offset  a8c [2a8c] HIGHLOW
+	reloc   93 offset  a99 [2a99] HIGHLOW
+	reloc   94 offset  aa4 [2aa4] HIGHLOW
+	reloc   95 offset  aac [2aac] HIGHLOW
+	reloc   96 offset  b1c [2b1c] HIGHLOW
+	reloc   97 offset  b2c [2b2c] HIGHLOW
+	reloc   98 offset  b5a [2b5a] HIGHLOW
+	reloc   99 offset  b6c [2b6c] HIGHLOW
+	reloc  100 offset  b74 [2b74] HIGHLOW
+	reloc  101 offset  bd9 [2bd9] HIGHLOW
+	reloc  102 offset  c0b [2c0b] HIGHLOW
+	reloc  103 offset  c3a [2c3a] HIGHLOW
+	reloc  104 offset  c4c [2c4c] HIGHLOW
+	reloc  105 offset  c54 [2c54] HIGHLOW
+	reloc  106 offset  d23 [2d23] HIGHLOW
+	reloc  107 offset  d53 [2d53] HIGHLOW
+	reloc  108 offset  d6d [2d6d] HIGHLOW
+	reloc  109 offset  d75 [2d75] HIGHLOW
+	reloc  110 offset  ddc [2ddc] HIGHLOW
+	reloc  111 offset  dee [2dee] HIGHLOW
+	reloc  112 offset  df6 [2df6] HIGHLOW
+	reloc  113 offset  e0b [2e0b] HIGHLOW
+	reloc  114 offset  e1d [2e1d] HIGHLOW
+	reloc  115 offset  e25 [2e25] HIGHLOW
+	reloc  116 offset  e43 [2e43] HIGHLOW
+	reloc  117 offset  f0d [2f0d] HIGHLOW
+	reloc  118 offset  f44 [2f44] HIGHLOW
+	reloc  119 offset  f6c [2f6c] HIGHLOW
+	reloc  120 offset  f74 [2f74] HIGHLOW
+	reloc  121 offset  f9f [2f9f] HIGHLOW
+	reloc  122 offset  fad [2fad] HIGHLOW
+	reloc  123 offset  fb5 [2fb5] HIGHLOW
+
+Virtual Address: 00003000 Chunk size 188 (0xbc) Number of fixups 90
+	reloc    0 offset   10 [3010] HIGHLOW
+	reloc    1 offset   c7 [30c7] HIGHLOW
+	reloc    2 offset  185 [3185] HIGHLOW
+	reloc    3 offset  1a9 [31a9] HIGHLOW
+	reloc    4 offset  1b1 [31b1] HIGHLOW
+	reloc    5 offset  1e9 [31e9] HIGHLOW
+	reloc    6 offset  1f3 [31f3] HIGHLOW
+	reloc    7 offset  245 [3245] HIGHLOW
+	reloc    8 offset  263 [3263] HIGHLOW
+	reloc    9 offset  26b [326b] HIGHLOW
+	reloc   10 offset  29d [329d] HIGHLOW
+	reloc   11 offset  2b3 [32b3] HIGHLOW
+	reloc   12 offset  2bb [32bb] HIGHLOW
+	reloc   13 offset  387 [3387] HIGHLOW
+	reloc   14 offset  3b6 [33b6] HIGHLOW
+	reloc   15 offset  3d0 [33d0] HIGHLOW
+	reloc   16 offset  3d8 [33d8] HIGHLOW
+	reloc   17 offset  463 [3463] HIGHLOW
+	reloc   18 offset  46d [346d] HIGHLOW
+	reloc   19 offset  47d [347d] HIGHLOW
+	reloc   20 offset  493 [3493] HIGHLOW
+	reloc   21 offset  49b [349b] HIGHLOW
+	reloc   22 offset  4b5 [34b5] HIGHLOW
+	reloc   23 offset  5b3 [35b3] HIGHLOW
+	reloc   24 offset  6a7 [36a7] HIGHLOW
+	reloc   25 offset  6e1 [36e1] HIGHLOW
+	reloc   26 offset  70c [370c] HIGHLOW
+	reloc   27 offset  714 [3714] HIGHLOW
+	reloc   28 offset  73e [373e] HIGHLOW
+	reloc   29 offset  74c [374c] HIGHLOW
+	reloc   30 offset  754 [3754] HIGHLOW
+	reloc   31 offset  76c [376c] HIGHLOW
+	reloc   32 offset  7f0 [37f0] HIGHLOW
+	reloc   33 offset  80e [380e] HIGHLOW
+	reloc   34 offset  816 [3816] HIGHLOW
+	reloc   35 offset  85f [385f] HIGHLOW
+	reloc   36 offset  869 [3869] HIGHLOW
+	reloc   37 offset  8e4 [38e4] HIGHLOW
+	reloc   38 offset  976 [3976] HIGHLOW
+	reloc   39 offset  990 [3990] HIGHLOW
+	reloc   40 offset  9ab [39ab] HIGHLOW
+	reloc   41 offset  9d1 [39d1] HIGHLOW
+	reloc   42 offset  9eb [39eb] HIGHLOW
+	reloc   43 offset  a09 [3a09] HIGHLOW
+	reloc   44 offset  a44 [3a44] HIGHLOW
+	reloc   45 offset  a5e [3a5e] HIGHLOW
+	reloc   46 offset  a7c [3a7c] HIGHLOW
+	reloc   47 offset  ab6 [3ab6] HIGHLOW
+	reloc   48 offset  ac8 [3ac8] HIGHLOW
+	reloc   49 offset  ad0 [3ad0] HIGHLOW
+	reloc   50 offset  b2d [3b2d] HIGHLOW
+	reloc   51 offset  b7f [3b7f] HIGHLOW
+	reloc   52 offset  b92 [3b92] HIGHLOW
+	reloc   53 offset  bf9 [3bf9] HIGHLOW
+	reloc   54 offset  c2b [3c2b] HIGHLOW
+	reloc   55 offset  c78 [3c78] HIGHLOW
+	reloc   56 offset  c81 [3c81] HIGHLOW
+	reloc   57 offset  c92 [3c92] HIGHLOW
+	reloc   58 offset  ca1 [3ca1] HIGHLOW
+	reloc   59 offset  ca7 [3ca7] HIGHLOW
+	reloc   60 offset  cb1 [3cb1] HIGHLOW
+	reloc   61 offset  cc4 [3cc4] HIGHLOW
+	reloc   62 offset  cf5 [3cf5] HIGHLOW
+	reloc   63 offset  cfe [3cfe] HIGHLOW
+	reloc   64 offset  d06 [3d06] HIGHLOW
+	reloc   65 offset  d2a [3d2a] HIGHLOW
+	reloc   66 offset  d32 [3d32] HIGHLOW
+	reloc   67 offset  d6b [3d6b] HIGHLOW
+	reloc   68 offset  d75 [3d75] HIGHLOW
+	reloc   69 offset  dcf [3dcf] HIGHLOW
+	reloc   70 offset  de2 [3de2] HIGHLOW
+	reloc   71 offset  df0 [3df0] HIGHLOW
+	reloc   72 offset  e00 [3e00] HIGHLOW
+	reloc   73 offset  e0e [3e0e] HIGHLOW
+	reloc   74 offset  e27 [3e27] HIGHLOW
+	reloc   75 offset  e39 [3e39] HIGHLOW
+	reloc   76 offset  e41 [3e41] HIGHLOW
+	reloc   77 offset  e69 [3e69] HIGHLOW
+	reloc   78 offset  e72 [3e72] HIGHLOW
+	reloc   79 offset  eb3 [3eb3] HIGHLOW
+	reloc   80 offset  eb9 [3eb9] HIGHLOW
+	reloc   81 offset  ec7 [3ec7] HIGHLOW
+	reloc   82 offset  ed2 [3ed2] HIGHLOW
+	reloc   83 offset  ef6 [3ef6] HIGHLOW
+	reloc   84 offset  efe [3efe] HIGHLOW
+	reloc   85 offset  f42 [3f42] HIGHLOW
+	reloc   86 offset  f66 [3f66] HIGHLOW
+	reloc   87 offset  f6e [3f6e] HIGHLOW
+	reloc   88 offset  fe6 [3fe6] HIGHLOW
+	reloc   89 offset  ff4 [3ff4] HIGHLOW
+
+Virtual Address: 00004000 Chunk size 108 (0x6c) Number of fixups 50
+	reloc    0 offset   16 [4016] HIGHLOW
+	reloc    1 offset   2b [402b] HIGHLOW
+	reloc    2 offset   4c [404c] HIGHLOW
+	reloc    3 offset   52 [4052] HIGHLOW
+	reloc    4 offset   63 [4063] HIGHLOW
+	reloc    5 offset   7c [407c] HIGHLOW
+	reloc    6 offset   84 [4084] HIGHLOW
+	reloc    7 offset  188 [4188] HIGHLOW
+	reloc    8 offset  1f0 [41f0] HIGHLOW
+	reloc    9 offset  20a [420a] HIGHLOW
+	reloc   10 offset  212 [4212] HIGHLOW
+	reloc   11 offset  2e3 [42e3] HIGHLOW
+	reloc   12 offset  2ea [42ea] HIGHLOW
+	reloc   13 offset  30c [430c] HIGHLOW
+	reloc   14 offset  313 [4313] HIGHLOW
+	reloc   15 offset  33b [433b] HIGHLOW
+	reloc   16 offset  340 [4340] HIGHLOW
+	reloc   17 offset  352 [4352] HIGHLOW
+	reloc   18 offset  361 [4361] HIGHLOW
+	reloc   19 offset  373 [4373] HIGHLOW
+	reloc   20 offset  37b [437b] HIGHLOW
+	reloc   21 offset  395 [4395] HIGHLOW
+	reloc   22 offset  3ab [43ab] HIGHLOW
+	reloc   23 offset  3b3 [43b3] HIGHLOW
+	reloc   24 offset  3d1 [43d1] HIGHLOW
+	reloc   25 offset  456 [4456] HIGHLOW
+	reloc   26 offset  470 [4470] HIGHLOW
+	reloc   27 offset  478 [4478] HIGHLOW
+	reloc   28 offset  568 [4568] HIGHLOW
+	reloc   29 offset  572 [4572] HIGHLOW
+	reloc   30 offset  582 [4582] HIGHLOW
+	reloc   31 offset  598 [4598] HIGHLOW
+	reloc   32 offset  5a0 [45a0] HIGHLOW
+	reloc   33 offset  5ba [45ba] HIGHLOW
+	reloc   34 offset  6b8 [46b8] HIGHLOW
+	reloc   35 offset  833 [4833] HIGHLOW
+	reloc   36 offset  86c [486c] HIGHLOW
+	reloc   37 offset  88e [488e] HIGHLOW
+	reloc   38 offset  896 [4896] HIGHLOW
+	reloc   39 offset  92b [492b] HIGHLOW
+	reloc   40 offset  940 [4940] HIGHLOW
+	reloc   41 offset  948 [4948] HIGHLOW
+	reloc   42 offset  9cb [49cb] HIGHLOW
+	reloc   43 offset  a77 [4a77] HIGHLOW
+	reloc   44 offset  cf6 [4cf6] HIGHLOW
+	reloc   45 offset  d09 [4d09] HIGHLOW
+	reloc   46 offset  da3 [4da3] HIGHLOW
+	reloc   47 offset  dcb [4dcb] HIGHLOW
+	reloc   48 offset  dd3 [4dd3] HIGHLOW
+	reloc   49 offset  f58 [4f58] HIGHLOW
+
+Virtual Address: 00005000 Chunk size 208 (0xd0) Number of fixups 100
+	reloc    0 offset   47 [5047] HIGHLOW
+	reloc    1 offset   dd [50dd] HIGHLOW
+	reloc    2 offset  11c [511c] HIGHLOW
+	reloc    3 offset  13e [513e] HIGHLOW
+	reloc    4 offset  146 [5146] HIGHLOW
+	reloc    5 offset  210 [5210] HIGHLOW
+	reloc    6 offset  21a [521a] HIGHLOW
+	reloc    7 offset  232 [5232] HIGHLOW
+	reloc    8 offset  2e7 [52e7] HIGHLOW
+	reloc    9 offset  2f1 [52f1] HIGHLOW
+	reloc   10 offset  394 [5394] HIGHLOW
+	reloc   11 offset  3c9 [53c9] HIGHLOW
+	reloc   12 offset  3d7 [53d7] HIGHLOW
+	reloc   13 offset  430 [5430] HIGHLOW
+	reloc   14 offset  45a [545a] HIGHLOW
+	reloc   15 offset  46d [546d] HIGHLOW
+	reloc   16 offset  487 [5487] HIGHLOW
+	reloc   17 offset  495 [5495] HIGHLOW
+	reloc   18 offset  500 [5500] HIGHLOW
+	reloc   19 offset  51b [551b] HIGHLOW
+	reloc   20 offset  54a [554a] HIGHLOW
+	reloc   21 offset  5a2 [55a2] HIGHLOW
+	reloc   22 offset  5a8 [55a8] HIGHLOW
+	reloc   23 offset  702 [5702] HIGHLOW
+	reloc   24 offset  741 [5741] HIGHLOW
+	reloc   25 offset  795 [5795] HIGHLOW
+	reloc   26 offset  7a2 [57a2] HIGHLOW
+	reloc   27 offset  7bd [57bd] HIGHLOW
+	reloc   28 offset  7eb [57eb] HIGHLOW
+	reloc   29 offset  80d [580d] HIGHLOW
+	reloc   30 offset  820 [5820] HIGHLOW
+	reloc   31 offset  892 [5892] HIGHLOW
+	reloc   32 offset  8a0 [58a0] HIGHLOW
+	reloc   33 offset  8d2 [58d2] HIGHLOW
+	reloc   34 offset  8e4 [58e4] HIGHLOW
+	reloc   35 offset  8ec [58ec] HIGHLOW
+	reloc   36 offset  926 [5926] HIGHLOW
+	reloc   37 offset  940 [5940] HIGHLOW
+	reloc   38 offset  946 [5946] HIGHLOW
+	reloc   39 offset  977 [5977] HIGHLOW
+	reloc   40 offset  97e [597e] HIGHLOW
+	reloc   41 offset  99e [599e] HIGHLOW
+	reloc   42 offset  9a9 [59a9] HIGHLOW
+	reloc   43 offset  9b3 [59b3] HIGHLOW
+	reloc   44 offset  9c5 [59c5] HIGHLOW
+	reloc   45 offset  9cd [59cd] HIGHLOW
+	reloc   46 offset  9fe [59fe] HIGHLOW
+	reloc   47 offset  a08 [5a08] HIGHLOW
+	reloc   48 offset  a27 [5a27] HIGHLOW
+	reloc   49 offset  a2f [5a2f] HIGHLOW
+	reloc   50 offset  a55 [5a55] HIGHLOW
+	reloc   51 offset  a99 [5a99] HIGHLOW
+	reloc   52 offset  acb [5acb] HIGHLOW
+	reloc   53 offset  b1c [5b1c] HIGHLOW
+	reloc   54 offset  b34 [5b34] HIGHLOW
+	reloc   55 offset  b3e [5b3e] HIGHLOW
+	reloc   56 offset  b7e [5b7e] HIGHLOW
+	reloc   57 offset  bb9 [5bb9] HIGHLOW
+	reloc   58 offset  bcb [5bcb] HIGHLOW
+	reloc   59 offset  be4 [5be4] HIGHLOW
+	reloc   60 offset  bf8 [5bf8] HIGHLOW
+	reloc   61 offset  cb6 [5cb6] HIGHLOW
+	reloc   62 offset  ce3 [5ce3] HIGHLOW
+	reloc   63 offset  ceb [5ceb] HIGHLOW
+	reloc   64 offset  d04 [5d04] HIGHLOW
+	reloc   65 offset  d0a [5d0a] HIGHLOW
+	reloc   66 offset  d43 [5d43] HIGHLOW
+	reloc   67 offset  d49 [5d49] HIGHLOW
+	reloc   68 offset  d90 [5d90] HIGHLOW
+	reloc   69 offset  d96 [5d96] HIGHLOW
+	reloc   70 offset  dd9 [5dd9] HIGHLOW
+	reloc   71 offset  de9 [5de9] HIGHLOW
+	reloc   72 offset  def [5def] HIGHLOW
+	reloc   73 offset  df7 [5df7] HIGHLOW
+	reloc   74 offset  e02 [5e02] HIGHLOW
+	reloc   75 offset  e08 [5e08] HIGHLOW
+	reloc   76 offset  e19 [5e19] HIGHLOW
+	reloc   77 offset  e29 [5e29] HIGHLOW
+	reloc   78 offset  e2f [5e2f] HIGHLOW
+	reloc   79 offset  e37 [5e37] HIGHLOW
+	reloc   80 offset  e6e [5e6e] HIGHLOW
+	reloc   81 offset  e96 [5e96] HIGHLOW
+	reloc   82 offset  ea2 [5ea2] HIGHLOW
+	reloc   83 offset  ec3 [5ec3] HIGHLOW
+	reloc   84 offset  ecf [5ecf] HIGHLOW
+	reloc   85 offset  ef2 [5ef2] HIGHLOW
+	reloc   86 offset  efe [5efe] HIGHLOW
+	reloc   87 offset  f0e [5f0e] HIGHLOW
+	reloc   88 offset  f17 [5f17] HIGHLOW
+	reloc   89 offset  f24 [5f24] HIGHLOW
+	reloc   90 offset  f39 [5f39] HIGHLOW
+	reloc   91 offset  f56 [5f56] HIGHLOW
+	reloc   92 offset  f6f [5f6f] HIGHLOW
+	reloc   93 offset  f77 [5f77] HIGHLOW
+	reloc   94 offset  fb6 [5fb6] HIGHLOW
+	reloc   95 offset  fde [5fde] HIGHLOW
+	reloc   96 offset  fe6 [5fe6] HIGHLOW
+	reloc   97 offset  ff1 [5ff1] HIGHLOW
+	reloc   98 offset  ffc [5ffc] HIGHLOW
+	reloc   99 offset    0 [5000] ABSOLUTE
+
+Virtual Address: 00006000 Chunk size 336 (0x150) Number of fixups 164
+	reloc    0 offset   47 [6047] HIGHLOW
+	reloc    1 offset   4d [604d] HIGHLOW
+	reloc    2 offset   5a [605a] HIGHLOW
+	reloc    3 offset   80 [6080] HIGHLOW
+	reloc    4 offset   86 [6086] HIGHLOW
+	reloc    5 offset   ad [60ad] HIGHLOW
+	reloc    6 offset   b3 [60b3] HIGHLOW
+	reloc    7 offset   d1 [60d1] HIGHLOW
+	reloc    8 offset   dd [60dd] HIGHLOW
+	reloc    9 offset   ee [60ee] HIGHLOW
+	reloc   10 offset   f4 [60f4] HIGHLOW
+	reloc   11 offset  141 [6141] HIGHLOW
+	reloc   12 offset  171 [6171] HIGHLOW
+	reloc   13 offset  1dc [61dc] HIGHLOW
+	reloc   14 offset  1fa [61fa] HIGHLOW
+	reloc   15 offset  202 [6202] HIGHLOW
+	reloc   16 offset  293 [6293] HIGHLOW
+	reloc   17 offset  29e [629e] HIGHLOW
+	reloc   18 offset  2ab [62ab] HIGHLOW
+	reloc   19 offset  2b8 [62b8] HIGHLOW
+	reloc   20 offset  2c0 [62c0] HIGHLOW
+	reloc   21 offset  2ca [62ca] HIGHLOW
+	reloc   22 offset  2d3 [62d3] HIGHLOW
+	reloc   23 offset  2da [62da] HIGHLOW
+	reloc   24 offset  308 [6308] HIGHLOW
+	reloc   25 offset  316 [6316] HIGHLOW
+	reloc   26 offset  31e [631e] HIGHLOW
+	reloc   27 offset  33b [633b] HIGHLOW
+	reloc   28 offset  346 [6346] HIGHLOW
+	reloc   29 offset  34f [634f] HIGHLOW
+	reloc   30 offset  357 [6357] HIGHLOW
+	reloc   31 offset  374 [6374] HIGHLOW
+	reloc   32 offset  37a [637a] HIGHLOW
+	reloc   33 offset  383 [6383] HIGHLOW
+	reloc   34 offset  389 [6389] HIGHLOW
+	reloc   35 offset  3a2 [63a2] HIGHLOW
+	reloc   36 offset  3c3 [63c3] HIGHLOW
+	reloc   37 offset  3ce [63ce] HIGHLOW
+	reloc   38 offset  424 [6424] HIGHLOW
+	reloc   39 offset  438 [6438] HIGHLOW
+	reloc   40 offset  469 [6469] HIGHLOW
+	reloc   41 offset  470 [6470] HIGHLOW
+	reloc   42 offset  480 [6480] HIGHLOW
+	reloc   43 offset  4d2 [64d2] HIGHLOW
+	reloc   44 offset  4e3 [64e3] HIGHLOW
+	reloc   45 offset  4ee [64ee] HIGHLOW
+	reloc   46 offset  4f9 [64f9] HIGHLOW
+	reloc   47 offset  4ff [64ff] HIGHLOW
+	reloc   48 offset  513 [6513] HIGHLOW
+	reloc   49 offset  538 [6538] HIGHLOW
+	reloc   50 offset  54b [654b] HIGHLOW
+	reloc   51 offset  57e [657e] HIGHLOW
+	reloc   52 offset  58c [658c] HIGHLOW
+	reloc   53 offset  594 [6594] HIGHLOW
+	reloc   54 offset  5a8 [65a8] HIGHLOW
+	reloc   55 offset  5dc [65dc] HIGHLOW
+	reloc   56 offset  5e2 [65e2] HIGHLOW
+	reloc   57 offset  5f5 [65f5] HIGHLOW
+	reloc   58 offset  600 [6600] HIGHLOW
+	reloc   59 offset  60e [660e] HIGHLOW
+	reloc   60 offset  61c [661c] HIGHLOW
+	reloc   61 offset  624 [6624] HIGHLOW
+	reloc   62 offset  647 [6647] HIGHLOW
+	reloc   63 offset  64d [664d] HIGHLOW
+	reloc   64 offset  654 [6654] HIGHLOW
+	reloc   65 offset  659 [6659] HIGHLOW
+	reloc   66 offset  696 [6696] HIGHLOW
+	reloc   67 offset  6a6 [66a6] HIGHLOW
+	reloc   68 offset  6ad [66ad] HIGHLOW
+	reloc   69 offset  6c8 [66c8] HIGHLOW
+	reloc   70 offset  6da [66da] HIGHLOW
+	reloc   71 offset  6e2 [66e2] HIGHLOW
+	reloc   72 offset  6fb [66fb] HIGHLOW
+	reloc   73 offset  758 [6758] HIGHLOW
+	reloc   74 offset  786 [6786] HIGHLOW
+	reloc   75 offset  78f [678f] HIGHLOW
+	reloc   76 offset  79c [679c] HIGHLOW
+	reloc   77 offset  7be [67be] HIGHLOW
+	reloc   78 offset  8e4 [68e4] HIGHLOW
+	reloc   79 offset  8ed [68ed] HIGHLOW
+	reloc   80 offset  8ff [68ff] HIGHLOW
+	reloc   81 offset  91f [691f] HIGHLOW
+	reloc   82 offset  935 [6935] HIGHLOW
+	reloc   83 offset  93d [693d] HIGHLOW
+	reloc   84 offset  956 [6956] HIGHLOW
+	reloc   85 offset  95c [695c] HIGHLOW
+	reloc   86 offset  983 [6983] HIGHLOW
+	reloc   87 offset  992 [6992] HIGHLOW
+	reloc   88 offset  998 [6998] HIGHLOW
+	reloc   89 offset  9a0 [69a0] HIGHLOW
+	reloc   90 offset  9b2 [69b2] HIGHLOW
+	reloc   91 offset  9bb [69bb] HIGHLOW
+	reloc   92 offset  9c8 [69c8] HIGHLOW
+	reloc   93 offset  9d2 [69d2] HIGHLOW
+	reloc   94 offset  a17 [6a17] HIGHLOW
+	reloc   95 offset  a31 [6a31] HIGHLOW
+	reloc   96 offset  a3b [6a3b] HIGHLOW
+	reloc   97 offset  a43 [6a43] HIGHLOW
+	reloc   98 offset  a51 [6a51] HIGHLOW
+	reloc   99 offset  a58 [6a58] HIGHLOW
+	reloc  100 offset  a62 [6a62] HIGHLOW
+	reloc  101 offset  aa2 [6aa2] HIGHLOW
+	reloc  102 offset  af3 [6af3] HIGHLOW
+	reloc  103 offset  afe [6afe] HIGHLOW
+	reloc  104 offset  b04 [6b04] HIGHLOW
+	reloc  105 offset  b14 [6b14] HIGHLOW
+	reloc  106 offset  b1a [6b1a] HIGHLOW
+	reloc  107 offset  b25 [6b25] HIGHLOW
+	reloc  108 offset  b3b [6b3b] HIGHLOW
+	reloc  109 offset  b46 [6b46] HIGHLOW
+	reloc  110 offset  b4f [6b4f] HIGHLOW
+	reloc  111 offset  b57 [6b57] HIGHLOW
+	reloc  112 offset  bc1 [6bc1] HIGHLOW
+	reloc  113 offset  bce [6bce] HIGHLOW
+	reloc  114 offset  bef [6bef] HIGHLOW
+	reloc  115 offset  bfa [6bfa] HIGHLOW
+	reloc  116 offset  c07 [6c07] HIGHLOW
+	reloc  117 offset  c13 [6c13] HIGHLOW
+	reloc  118 offset  c2d [6c2d] HIGHLOW
+	reloc  119 offset  c35 [6c35] HIGHLOW
+	reloc  120 offset  c55 [6c55] HIGHLOW
+	reloc  121 offset  c60 [6c60] HIGHLOW
+	reloc  122 offset  c6a [6c6a] HIGHLOW
+	reloc  123 offset  c76 [6c76] HIGHLOW
+	reloc  124 offset  c90 [6c90] HIGHLOW
+	reloc  125 offset  c98 [6c98] HIGHLOW
+	reloc  126 offset  cb2 [6cb2] HIGHLOW
+	reloc  127 offset  cf0 [6cf0] HIGHLOW
+	reloc  128 offset  d12 [6d12] HIGHLOW
+	reloc  129 offset  d2d [6d2d] HIGHLOW
+	reloc  130 offset  d50 [6d50] HIGHLOW
+	reloc  131 offset  d5e [6d5e] HIGHLOW
+	reloc  132 offset  d6a [6d6a] HIGHLOW
+	reloc  133 offset  d92 [6d92] HIGHLOW
+	reloc  134 offset  d9a [6d9a] HIGHLOW
+	reloc  135 offset  dbf [6dbf] HIGHLOW
+	reloc  136 offset  dd5 [6dd5] HIGHLOW
+	reloc  137 offset  ddc [6ddc] HIGHLOW
+	reloc  138 offset  e0a [6e0a] HIGHLOW
+	reloc  139 offset  e14 [6e14] HIGHLOW
+	reloc  140 offset  e1c [6e1c] HIGHLOW
+	reloc  141 offset  e36 [6e36] HIGHLOW
+	reloc  142 offset  e3e [6e3e] HIGHLOW
+	reloc  143 offset  e56 [6e56] HIGHLOW
+	reloc  144 offset  e92 [6e92] HIGHLOW
+	reloc  145 offset  ebb [6ebb] HIGHLOW
+	reloc  146 offset  ec1 [6ec1] HIGHLOW
+	reloc  147 offset  ed3 [6ed3] HIGHLOW
+	reloc  148 offset  f12 [6f12] HIGHLOW
+	reloc  149 offset  f18 [6f18] HIGHLOW
+	reloc  150 offset  f1e [6f1e] HIGHLOW
+	reloc  151 offset  f29 [6f29] HIGHLOW
+	reloc  152 offset  f32 [6f32] HIGHLOW
+	reloc  153 offset  f55 [6f55] HIGHLOW
+	reloc  154 offset  f5b [6f5b] HIGHLOW
+	reloc  155 offset  f8b [6f8b] HIGHLOW
+	reloc  156 offset  f9e [6f9e] HIGHLOW
+	reloc  157 offset  fa7 [6fa7] HIGHLOW
+	reloc  158 offset  fba [6fba] HIGHLOW
+	reloc  159 offset  fc3 [6fc3] HIGHLOW
+	reloc  160 offset  fd6 [6fd6] HIGHLOW
+	reloc  161 offset  fdf [6fdf] HIGHLOW
+	reloc  162 offset  ffa [6ffa] HIGHLOW
+	reloc  163 offset    0 [6000] ABSOLUTE
+
+Virtual Address: 00007000 Chunk size 220 (0xdc) Number of fixups 106
+	reloc    0 offset    3 [7003] HIGHLOW
+	reloc    1 offset   35 [7035] HIGHLOW
+	reloc    2 offset   75 [7075] HIGHLOW
+	reloc    3 offset   b5 [70b5] HIGHLOW
+	reloc    4 offset   f5 [70f5] HIGHLOW
+	reloc    5 offset  133 [7133] HIGHLOW
+	reloc    6 offset  159 [7159] HIGHLOW
+	reloc    7 offset  19f [719f] HIGHLOW
+	reloc    8 offset  1b5 [71b5] HIGHLOW
+	reloc    9 offset  1bd [71bd] HIGHLOW
+	reloc   10 offset  1e5 [71e5] HIGHLOW
+	reloc   11 offset  20d [720d] HIGHLOW
+	reloc   12 offset  213 [7213] HIGHLOW
+	reloc   13 offset  241 [7241] HIGHLOW
+	reloc   14 offset  250 [7250] HIGHLOW
+	reloc   15 offset  256 [7256] HIGHLOW
+	reloc   16 offset  25e [725e] HIGHLOW
+	reloc   17 offset  27c [727c] HIGHLOW
+	reloc   18 offset  295 [7295] HIGHLOW
+	reloc   19 offset  2c6 [72c6] HIGHLOW
+	reloc   20 offset  35d [735d] HIGHLOW
+	reloc   21 offset  372 [7372] HIGHLOW
+	reloc   22 offset  37a [737a] HIGHLOW
+	reloc   23 offset  38f [738f] HIGHLOW
+	reloc   24 offset  395 [7395] HIGHLOW
+	reloc   25 offset  39f [739f] HIGHLOW
+	reloc   26 offset  3b0 [73b0] HIGHLOW
+	reloc   27 offset  3c1 [73c1] HIGHLOW
+	reloc   28 offset  3d6 [73d6] HIGHLOW
+	reloc   29 offset  3e9 [73e9] HIGHLOW
+	reloc   30 offset  3f4 [73f4] HIGHLOW
+	reloc   31 offset  3fc [73fc] HIGHLOW
+	reloc   32 offset  446 [7446] HIGHLOW
+	reloc   33 offset  4e2 [74e2] HIGHLOW
+	reloc   34 offset  4f8 [74f8] HIGHLOW
+	reloc   35 offset  500 [7500] HIGHLOW
+	reloc   36 offset  538 [7538] HIGHLOW
+	reloc   37 offset  54a [754a] HIGHLOW
+	reloc   38 offset  552 [7552] HIGHLOW
+	reloc   39 offset  5b8 [75b8] HIGHLOW
+	reloc   40 offset  5ca [75ca] HIGHLOW
+	reloc   41 offset  5d2 [75d2] HIGHLOW
+	reloc   42 offset  5e6 [75e6] HIGHLOW
+	reloc   43 offset  65f [765f] HIGHLOW
+	reloc   44 offset  665 [7665] HIGHLOW
+	reloc   45 offset  66e [766e] HIGHLOW
+	reloc   46 offset  674 [7674] HIGHLOW
+	reloc   47 offset  683 [7683] HIGHLOW
+	reloc   48 offset  691 [7691] HIGHLOW
+	reloc   49 offset  699 [7699] HIGHLOW
+	reloc   50 offset  6cf [76cf] HIGHLOW
+	reloc   51 offset  77c [777c] HIGHLOW
+	reloc   52 offset  792 [7792] HIGHLOW
+	reloc   53 offset  79a [779a] HIGHLOW
+	reloc   54 offset  7dc [77dc] HIGHLOW
+	reloc   55 offset  7ec [77ec] HIGHLOW
+	reloc   56 offset  839 [7839] HIGHLOW
+	reloc   57 offset  83f [783f] HIGHLOW
+	reloc   58 offset  84e [784e] HIGHLOW
+	reloc   59 offset  858 [7858] HIGHLOW
+	reloc   60 offset  863 [7863] HIGHLOW
+	reloc   61 offset  86e [786e] HIGHLOW
+	reloc   62 offset  879 [7879] HIGHLOW
+	reloc   63 offset  884 [7884] HIGHLOW
+	reloc   64 offset  88f [788f] HIGHLOW
+	reloc   65 offset  8c6 [78c6] HIGHLOW
+	reloc   66 offset  8d2 [78d2] HIGHLOW
+	reloc   67 offset  8e0 [78e0] HIGHLOW
+	reloc   68 offset  8e8 [78e8] HIGHLOW
+	reloc   69 offset  933 [7933] HIGHLOW
+	reloc   70 offset  94d [794d] HIGHLOW
+	reloc   71 offset  955 [7955] HIGHLOW
+	reloc   72 offset  974 [7974] HIGHLOW
+	reloc   73 offset  983 [7983] HIGHLOW
+	reloc   74 offset  988 [7988] HIGHLOW
+	reloc   75 offset  98e [798e] HIGHLOW
+	reloc   76 offset  9a4 [79a4] HIGHLOW
+	reloc   77 offset  9aa [79aa] HIGHLOW
+	reloc   78 offset  9e9 [79e9] HIGHLOW
+	reloc   79 offset  a1b [7a1b] HIGHLOW
+	reloc   80 offset  a60 [7a60] HIGHLOW
+	reloc   81 offset  a80 [7a80] HIGHLOW
+	reloc   82 offset  a88 [7a88] HIGHLOW
+	reloc   83 offset  a97 [7a97] HIGHLOW
+	reloc   84 offset  a9f [7a9f] HIGHLOW
+	reloc   85 offset  af5 [7af5] HIGHLOW
+	reloc   86 offset  b0f [7b0f] HIGHLOW
+	reloc   87 offset  b17 [7b17] HIGHLOW
+	reloc   88 offset  b38 [7b38] HIGHLOW
+	reloc   89 offset  b57 [7b57] HIGHLOW
+	reloc   90 offset  b9d [7b9d] HIGHLOW
+	reloc   91 offset  bf7 [7bf7] HIGHLOW
+	reloc   92 offset  c06 [7c06] HIGHLOW
+	reloc   93 offset  c0e [7c0e] HIGHLOW
+	reloc   94 offset  c2c [7c2c] HIGHLOW
+	reloc   95 offset  c7f [7c7f] HIGHLOW
+	reloc   96 offset  d3a [7d3a] HIGHLOW
+	reloc   97 offset  e25 [7e25] HIGHLOW
+	reloc   98 offset  e87 [7e87] HIGHLOW
+	reloc   99 offset  eef [7eef] HIGHLOW
+	reloc  100 offset  f34 [7f34] HIGHLOW
+	reloc  101 offset  f52 [7f52] HIGHLOW
+	reloc  102 offset  f5a [7f5a] HIGHLOW
+	reloc  103 offset  f7f [7f7f] HIGHLOW
+	reloc  104 offset  f91 [7f91] HIGHLOW
+	reloc  105 offset    0 [7000] ABSOLUTE
+
+Virtual Address: 00008000 Chunk size 296 (0x128) Number of fixups 144
+	reloc    0 offset  139 [8139] HIGHLOW
+	reloc    1 offset  15b [815b] HIGHLOW
+	reloc    2 offset  163 [8163] HIGHLOW
+	reloc    3 offset  18b [818b] HIGHLOW
+	reloc    4 offset  1a7 [81a7] HIGHLOW
+	reloc    5 offset  1be [81be] HIGHLOW
+	reloc    6 offset  1d2 [81d2] HIGHLOW
+	reloc    7 offset  1e5 [81e5] HIGHLOW
+	reloc    8 offset  1ed [81ed] HIGHLOW
+	reloc    9 offset  23f [823f] HIGHLOW
+	reloc   10 offset  270 [8270] HIGHLOW
+	reloc   11 offset  282 [8282] HIGHLOW
+	reloc   12 offset  29f [829f] HIGHLOW
+	reloc   13 offset  2b2 [82b2] HIGHLOW
+	reloc   14 offset  2ba [82ba] HIGHLOW
+	reloc   15 offset  2f9 [82f9] HIGHLOW
+	reloc   16 offset  308 [8308] HIGHLOW
+	reloc   17 offset  310 [8310] HIGHLOW
+	reloc   18 offset  31b [831b] HIGHLOW
+	reloc   19 offset  32e [832e] HIGHLOW
+	reloc   20 offset  336 [8336] HIGHLOW
+	reloc   21 offset  362 [8362] HIGHLOW
+	reloc   22 offset  371 [8371] HIGHLOW
+	reloc   23 offset  379 [8379] HIGHLOW
+	reloc   24 offset  3ab [83ab] HIGHLOW
+	reloc   25 offset  3b6 [83b6] HIGHLOW
+	reloc   26 offset  3c2 [83c2] HIGHLOW
+	reloc   27 offset  3ce [83ce] HIGHLOW
+	reloc   28 offset  3d9 [83d9] HIGHLOW
+	reloc   29 offset  3e5 [83e5] HIGHLOW
+	reloc   30 offset  423 [8423] HIGHLOW
+	reloc   31 offset  43a [843a] HIGHLOW
+	reloc   32 offset  442 [8442] HIGHLOW
+	reloc   33 offset  454 [8454] HIGHLOW
+	reloc   34 offset  471 [8471] HIGHLOW
+	reloc   35 offset  479 [8479] HIGHLOW
+	reloc   36 offset  48b [848b] HIGHLOW
+	reloc   37 offset  4a5 [84a5] HIGHLOW
+	reloc   38 offset  4ad [84ad] HIGHLOW
+	reloc   39 offset  4bf [84bf] HIGHLOW
+	reloc   40 offset  524 [8524] HIGHLOW
+	reloc   41 offset  52c [852c] HIGHLOW
+	reloc   42 offset  53e [853e] HIGHLOW
+	reloc   43 offset  59c [859c] HIGHLOW
+	reloc   44 offset  5a4 [85a4] HIGHLOW
+	reloc   45 offset  5c0 [85c0] HIGHLOW
+	reloc   46 offset  5cf [85cf] HIGHLOW
+	reloc   47 offset  5d7 [85d7] HIGHLOW
+	reloc   48 offset  618 [8618] HIGHLOW
+	reloc   49 offset  627 [8627] HIGHLOW
+	reloc   50 offset  62f [862f] HIGHLOW
+	reloc   51 offset  661 [8661] HIGHLOW
+	reloc   52 offset  693 [8693] HIGHLOW
+	reloc   53 offset  6a8 [86a8] HIGHLOW
+	reloc   54 offset  6ce [86ce] HIGHLOW
+	reloc   55 offset  704 [8704] HIGHLOW
+	reloc   56 offset  73a [873a] HIGHLOW
+	reloc   57 offset  764 [8764] HIGHLOW
+	reloc   58 offset  773 [8773] HIGHLOW
+	reloc   59 offset  77b [877b] HIGHLOW
+	reloc   60 offset  7b0 [87b0] HIGHLOW
+	reloc   61 offset  7c0 [87c0] HIGHLOW
+	reloc   62 offset  7cf [87cf] HIGHLOW
+	reloc   63 offset  7d7 [87d7] HIGHLOW
+	reloc   64 offset  804 [8804] HIGHLOW
+	reloc   65 offset  813 [8813] HIGHLOW
+	reloc   66 offset  81b [881b] HIGHLOW
+	reloc   67 offset  837 [8837] HIGHLOW
+	reloc   68 offset  846 [8846] HIGHLOW
+	reloc   69 offset  84e [884e] HIGHLOW
+	reloc   70 offset  89a [889a] HIGHLOW
+	reloc   71 offset  8ad [88ad] HIGHLOW
+	reloc   72 offset  8b5 [88b5] HIGHLOW
+	reloc   73 offset  8fb [88fb] HIGHLOW
+	reloc   74 offset  903 [8903] HIGHLOW
+	reloc   75 offset  910 [8910] HIGHLOW
+	reloc   76 offset  91b [891b] HIGHLOW
+	reloc   77 offset  92e [892e] HIGHLOW
+	reloc   78 offset  936 [8936] HIGHLOW
+	reloc   79 offset  9d1 [89d1] HIGHLOW
+	reloc   80 offset  a02 [8a02] HIGHLOW
+	reloc   81 offset  a14 [8a14] HIGHLOW
+	reloc   82 offset  a4e [8a4e] HIGHLOW
+	reloc   83 offset  a62 [8a62] HIGHLOW
+	reloc   84 offset  a76 [8a76] HIGHLOW
+	reloc   85 offset  ace [8ace] HIGHLOW
+	reloc   86 offset  ae1 [8ae1] HIGHLOW
+	reloc   87 offset  ae9 [8ae9] HIGHLOW
+	reloc   88 offset  af9 [8af9] HIGHLOW
+	reloc   89 offset  b0c [8b0c] HIGHLOW
+	reloc   90 offset  b14 [8b14] HIGHLOW
+	reloc   91 offset  b28 [8b28] HIGHLOW
+	reloc   92 offset  b58 [8b58] HIGHLOW
+	reloc   93 offset  b6b [8b6b] HIGHLOW
+	reloc   94 offset  b73 [8b73] HIGHLOW
+	reloc   95 offset  b88 [8b88] HIGHLOW
+	reloc   96 offset  b97 [8b97] HIGHLOW
+	reloc   97 offset  b9f [8b9f] HIGHLOW
+	reloc   98 offset  bc5 [8bc5] HIGHLOW
+	reloc   99 offset  bd0 [8bd0] HIGHLOW
+	reloc  100 offset  bdc [8bdc] HIGHLOW
+	reloc  101 offset  be4 [8be4] HIGHLOW
+	reloc  102 offset  bef [8bef] HIGHLOW
+	reloc  103 offset  bfb [8bfb] HIGHLOW
+	reloc  104 offset  c5d [8c5d] HIGHLOW
+	reloc  105 offset  c80 [8c80] HIGHLOW
+	reloc  106 offset  ca8 [8ca8] HIGHLOW
+	reloc  107 offset  cb7 [8cb7] HIGHLOW
+	reloc  108 offset  ceb [8ceb] HIGHLOW
+	reloc  109 offset  cfe [8cfe] HIGHLOW
+	reloc  110 offset  d0e [8d0e] HIGHLOW
+	reloc  111 offset  d1d [8d1d] HIGHLOW
+	reloc  112 offset  d25 [8d25] HIGHLOW
+	reloc  113 offset  d70 [8d70] HIGHLOW
+	reloc  114 offset  da5 [8da5] HIGHLOW
+	reloc  115 offset  daa [8daa] HIGHLOW
+	reloc  116 offset  ddb [8ddb] HIGHLOW
+	reloc  117 offset  dee [8dee] HIGHLOW
+	reloc  118 offset  e03 [8e03] HIGHLOW
+	reloc  119 offset  e27 [8e27] HIGHLOW
+	reloc  120 offset  e2f [8e2f] HIGHLOW
+	reloc  121 offset  e5c [8e5c] HIGHLOW
+	reloc  122 offset  eb5 [8eb5] HIGHLOW
+	reloc  123 offset  ec6 [8ec6] HIGHLOW
+	reloc  124 offset  ece [8ece] HIGHLOW
+	reloc  125 offset  ef4 [8ef4] HIGHLOW
+	reloc  126 offset  eff [8eff] HIGHLOW
+	reloc  127 offset  f0b [8f0b] HIGHLOW
+	reloc  128 offset  f13 [8f13] HIGHLOW
+	reloc  129 offset  f1e [8f1e] HIGHLOW
+	reloc  130 offset  f2a [8f2a] HIGHLOW
+	reloc  131 offset  f5e [8f5e] HIGHLOW
+	reloc  132 offset  f69 [8f69] HIGHLOW
+	reloc  133 offset  f71 [8f71] HIGHLOW
+	reloc  134 offset  f8d [8f8d] HIGHLOW
+	reloc  135 offset  fa6 [8fa6] HIGHLOW
+	reloc  136 offset  fbb [8fbb] HIGHLOW
+	reloc  137 offset  fc2 [8fc2] HIGHLOW
+	reloc  138 offset  fc8 [8fc8] HIGHLOW
+	reloc  139 offset  fd8 [8fd8] HIGHLOW
+	reloc  140 offset  fdf [8fdf] HIGHLOW
+	reloc  141 offset  fe5 [8fe5] HIGHLOW
+	reloc  142 offset  ff5 [8ff5] HIGHLOW
+	reloc  143 offset  ffc [8ffc] HIGHLOW
+
+Virtual Address: 00009000 Chunk size 100 (0x64) Number of fixups 46
+	reloc    0 offset    2 [9002] HIGHLOW
+	reloc    1 offset   39 [9039] HIGHLOW
+	reloc    2 offset   6b [906b] HIGHLOW
+	reloc    3 offset   a3 [90a3] HIGHLOW
+	reloc    4 offset   bd [90bd] HIGHLOW
+	reloc    5 offset   c5 [90c5] HIGHLOW
+	reloc    6 offset  106 [9106] HIGHLOW
+	reloc    7 offset  11d [911d] HIGHLOW
+	reloc    8 offset  125 [9125] HIGHLOW
+	reloc    9 offset  265 [9265] HIGHLOW
+	reloc   10 offset  26d [926d] HIGHLOW
+	reloc   11 offset  275 [9275] HIGHLOW
+	reloc   12 offset  397 [9397] HIGHLOW
+	reloc   13 offset  576 [9576] HIGHLOW
+	reloc   14 offset  5aa [95aa] HIGHLOW
+	reloc   15 offset  5fe [95fe] HIGHLOW
+	reloc   16 offset  622 [9622] HIGHLOW
+	reloc   17 offset  686 [9686] HIGHLOW
+	reloc   18 offset  69d [969d] HIGHLOW
+	reloc   19 offset  6a5 [96a5] HIGHLOW
+	reloc   20 offset  823 [9823] HIGHLOW
+	reloc   21 offset  83d [983d] HIGHLOW
+	reloc   22 offset  845 [9845] HIGHLOW
+	reloc   23 offset  886 [9886] HIGHLOW
+	reloc   24 offset  89d [989d] HIGHLOW
+	reloc   25 offset  8a5 [98a5] HIGHLOW
+	reloc   26 offset  976 [9976] HIGHLOW
+	reloc   27 offset  98d [998d] HIGHLOW
+	reloc   28 offset  995 [9995] HIGHLOW
+	reloc   29 offset  a3a [9a3a] HIGHLOW
+	reloc   30 offset  b46 [9b46] HIGHLOW
+	reloc   31 offset  b5d [9b5d] HIGHLOW
+	reloc   32 offset  b65 [9b65] HIGHLOW
+	reloc   33 offset  c16 [9c16] HIGHLOW
+	reloc   34 offset  c2d [9c2d] HIGHLOW
+	reloc   35 offset  c35 [9c35] HIGHLOW
+	reloc   36 offset  d23 [9d23] HIGHLOW
+	reloc   37 offset  d83 [9d83] HIGHLOW
+	reloc   38 offset  df6 [9df6] HIGHLOW
+	reloc   39 offset  e0d [9e0d] HIGHLOW
+	reloc   40 offset  e15 [9e15] HIGHLOW
+	reloc   41 offset  edf [9edf] HIGHLOW
+	reloc   42 offset  f46 [9f46] HIGHLOW
+	reloc   43 offset  f5d [9f5d] HIGHLOW
+	reloc   44 offset  f65 [9f65] HIGHLOW
+	reloc   45 offset    0 [9000] ABSOLUTE
+
+Virtual Address: 0000a000 Chunk size 96 (0x60) Number of fixups 44
+	reloc    0 offset   64 [a064] HIGHLOW
+	reloc    1 offset  136 [a136] HIGHLOW
+	reloc    2 offset  14d [a14d] HIGHLOW
+	reloc    3 offset  155 [a155] HIGHLOW
+	reloc    4 offset  244 [a244] HIGHLOW
+	reloc    5 offset  2e5 [a2e5] HIGHLOW
+	reloc    6 offset  356 [a356] HIGHLOW
+	reloc    7 offset  36d [a36d] HIGHLOW
+	reloc    8 offset  375 [a375] HIGHLOW
+	reloc    9 offset  450 [a450] HIGHLOW
+	reloc   10 offset  4ab [a4ab] HIGHLOW
+	reloc   11 offset  513 [a513] HIGHLOW
+	reloc   12 offset  52d [a52d] HIGHLOW
+	reloc   13 offset  535 [a535] HIGHLOW
+	reloc   14 offset  576 [a576] HIGHLOW
+	reloc   15 offset  58d [a58d] HIGHLOW
+	reloc   16 offset  595 [a595] HIGHLOW
+	reloc   17 offset  706 [a706] HIGHLOW
+	reloc   18 offset  71d [a71d] HIGHLOW
+	reloc   19 offset  725 [a725] HIGHLOW
+	reloc   20 offset  7c3 [a7c3] HIGHLOW
+	reloc   21 offset  7dd [a7dd] HIGHLOW
+	reloc   22 offset  7e5 [a7e5] HIGHLOW
+	reloc   23 offset  826 [a826] HIGHLOW
+	reloc   24 offset  83d [a83d] HIGHLOW
+	reloc   25 offset  845 [a845] HIGHLOW
+	reloc   26 offset  8ab [a8ab] HIGHLOW
+	reloc   27 offset  a26 [aa26] HIGHLOW
+	reloc   28 offset  a3d [aa3d] HIGHLOW
+	reloc   29 offset  a45 [aa45] HIGHLOW
+	reloc   30 offset  b6a [ab6a] HIGHLOW
+	reloc   31 offset  b9a [ab9a] HIGHLOW
+	reloc   32 offset  bc8 [abc8] HIGHLOW
+	reloc   33 offset  c06 [ac06] HIGHLOW
+	reloc   34 offset  c66 [ac66] HIGHLOW
+	reloc   35 offset  ca4 [aca4] HIGHLOW
+	reloc   36 offset  d46 [ad46] HIGHLOW
+	reloc   37 offset  d5d [ad5d] HIGHLOW
+	reloc   38 offset  d65 [ad65] HIGHLOW
+	reloc   39 offset  dcc [adcc] HIGHLOW
+	reloc   40 offset  f06 [af06] HIGHLOW
+	reloc   41 offset  f1d [af1d] HIGHLOW
+	reloc   42 offset  f25 [af25] HIGHLOW
+	reloc   43 offset  f8b [af8b] HIGHLOW
+
+Virtual Address: 0000b000 Chunk size 44 (0x2c) Number of fixups 18
+	reloc    0 offset   a5 [b0a5] HIGHLOW
+	reloc    1 offset  196 [b196] HIGHLOW
+	reloc    2 offset  1ad [b1ad] HIGHLOW
+	reloc    3 offset  1b5 [b1b5] HIGHLOW
+	reloc    4 offset  256 [b256] HIGHLOW
+	reloc    5 offset  26d [b26d] HIGHLOW
+	reloc    6 offset  275 [b275] HIGHLOW
+	reloc    7 offset  39a [b39a] HIGHLOW
+	reloc    8 offset  3ca [b3ca] HIGHLOW
+	reloc    9 offset  3f8 [b3f8] HIGHLOW
+	reloc   10 offset  48e [b48e] HIGHLOW
+	reloc   11 offset  4ee [b4ee] HIGHLOW
+	reloc   12 offset  5b6 [b5b6] HIGHLOW
+	reloc   13 offset  5cd [b5cd] HIGHLOW
+	reloc   14 offset  5d5 [b5d5] HIGHLOW
+	reloc   15 offset  686 [b686] HIGHLOW
+	reloc   16 offset  69d [b69d] HIGHLOW
+	reloc   17 offset  6a5 [b6a5] HIGHLOW
+
+Virtual Address: 0000c000 Chunk size 180 (0xb4) Number of fixups 86
+	reloc    0 offset  41f [c41f] HIGHLOW
+	reloc    1 offset  435 [c435] HIGHLOW
+	reloc    2 offset  43d [c43d] HIGHLOW
+	reloc    3 offset  44f [c44f] HIGHLOW
+	reloc    4 offset  45e [c45e] HIGHLOW
+	reloc    5 offset  466 [c466] HIGHLOW
+	reloc    6 offset  4a4 [c4a4] HIGHLOW
+	reloc    7 offset  4b7 [c4b7] HIGHLOW
+	reloc    8 offset  4c2 [c4c2] HIGHLOW
+	reloc    9 offset  4ca [c4ca] HIGHLOW
+	reloc   10 offset  4f2 [c4f2] HIGHLOW
+	reloc   11 offset  507 [c507] HIGHLOW
+	reloc   12 offset  510 [c510] HIGHLOW
+	reloc   13 offset  51f [c51f] HIGHLOW
+	reloc   14 offset  527 [c527] HIGHLOW
+	reloc   15 offset  579 [c579] HIGHLOW
+	reloc   16 offset  5ab [c5ab] HIGHLOW
+	reloc   17 offset  5e6 [c5e6] HIGHLOW
+	reloc   18 offset  5fd [c5fd] HIGHLOW
+	reloc   19 offset  605 [c605] HIGHLOW
+	reloc   20 offset  617 [c617] HIGHLOW
+	reloc   21 offset  626 [c626] HIGHLOW
+	reloc   22 offset  62e [c62e] HIGHLOW
+	reloc   23 offset  658 [c658] HIGHLOW
+	reloc   24 offset  663 [c663] HIGHLOW
+	reloc   25 offset  670 [c670] HIGHLOW
+	reloc   26 offset  67b [c67b] HIGHLOW
+	reloc   27 offset  6b6 [c6b6] HIGHLOW
+	reloc   28 offset  6c1 [c6c1] HIGHLOW
+	reloc   29 offset  6c9 [c6c9] HIGHLOW
+	reloc   30 offset  712 [c712] HIGHLOW
+	reloc   31 offset  721 [c721] HIGHLOW
+	reloc   32 offset  729 [c729] HIGHLOW
+	reloc   33 offset  74b [c74b] HIGHLOW
+	reloc   34 offset  772 [c772] HIGHLOW
+	reloc   35 offset  77a [c77a] HIGHLOW
+	reloc   36 offset  7cc [c7cc] HIGHLOW
+	reloc   37 offset  810 [c810] HIGHLOW
+	reloc   38 offset  86d [c86d] HIGHLOW
+	reloc   39 offset  875 [c875] HIGHLOW
+	reloc   40 offset  88a [c88a] HIGHLOW
+	reloc   41 offset  8ea [c8ea] HIGHLOW
+	reloc   42 offset  8f2 [c8f2] HIGHLOW
+	reloc   43 offset  95e [c95e] HIGHLOW
+	reloc   44 offset  964 [c964] HIGHLOW
+	reloc   45 offset  a04 [ca04] HIGHLOW
+	reloc   46 offset  a0c [ca0c] HIGHLOW
+	reloc   47 offset  a63 [ca63] HIGHLOW
+	reloc   48 offset  a75 [ca75] HIGHLOW
+	reloc   49 offset  a82 [ca82] HIGHLOW
+	reloc   50 offset  a94 [ca94] HIGHLOW
+	reloc   51 offset  a9c [ca9c] HIGHLOW
+	reloc   52 offset  b3d [cb3d] HIGHLOW
+	reloc   53 offset  b67 [cb67] HIGHLOW
+	reloc   54 offset  b7a [cb7a] HIGHLOW
+	reloc   55 offset  b82 [cb82] HIGHLOW
+	reloc   56 offset  c3d [cc3d] HIGHLOW
+	reloc   57 offset  c81 [cc81] HIGHLOW
+	reloc   58 offset  c88 [cc88] HIGHLOW
+	reloc   59 offset  cd1 [ccd1] HIGHLOW
+	reloc   60 offset  d06 [cd06] HIGHLOW
+	reloc   61 offset  d18 [cd18] HIGHLOW
+	reloc   62 offset  d34 [cd34] HIGHLOW
+	reloc   63 offset  d48 [cd48] HIGHLOW
+	reloc   64 offset  e22 [ce22] HIGHLOW
+	reloc   65 offset  e28 [ce28] HIGHLOW
+	reloc   66 offset  e2e [ce2e] HIGHLOW
+	reloc   67 offset  e40 [ce40] HIGHLOW
+	reloc   68 offset  e48 [ce48] HIGHLOW
+	reloc   69 offset  eaf [ceaf] HIGHLOW
+	reloc   70 offset  ee6 [cee6] HIGHLOW
+	reloc   71 offset  efd [cefd] HIGHLOW
+	reloc   72 offset  f05 [cf05] HIGHLOW
+	reloc   73 offset  f17 [cf17] HIGHLOW
+	reloc   74 offset  f26 [cf26] HIGHLOW
+	reloc   75 offset  f2e [cf2e] HIGHLOW
+	reloc   76 offset  f52 [cf52] HIGHLOW
+	reloc   77 offset  f5d [cf5d] HIGHLOW
+	reloc   78 offset  f6a [cf6a] HIGHLOW
+	reloc   79 offset  f75 [cf75] HIGHLOW
+	reloc   80 offset  f86 [cf86] HIGHLOW
+	reloc   81 offset  f91 [cf91] HIGHLOW
+	reloc   82 offset  f99 [cf99] HIGHLOW
+	reloc   83 offset  fcf [cfcf] HIGHLOW
+	reloc   84 offset  fe2 [cfe2] HIGHLOW
+	reloc   85 offset  fea [cfea] HIGHLOW
+
+Virtual Address: 0000d000 Chunk size 424 (0x1a8) Number of fixups 208
+	reloc    0 offset   95 [d095] HIGHLOW
+	reloc    1 offset   a8 [d0a8] HIGHLOW
+	reloc    2 offset   b0 [d0b0] HIGHLOW
+	reloc    3 offset   e2 [d0e2] HIGHLOW
+	reloc    4 offset   f5 [d0f5] HIGHLOW
+	reloc    5 offset   fd [d0fd] HIGHLOW
+	reloc    6 offset  110 [d110] HIGHLOW
+	reloc    7 offset  125 [d125] HIGHLOW
+	reloc    8 offset  12d [d12d] HIGHLOW
+	reloc    9 offset  14b [d14b] HIGHLOW
+	reloc   10 offset  153 [d153] HIGHLOW
+	reloc   11 offset  195 [d195] HIGHLOW
+	reloc   12 offset  1a4 [d1a4] HIGHLOW
+	reloc   13 offset  1ac [d1ac] HIGHLOW
+	reloc   14 offset  1ce [d1ce] HIGHLOW
+	reloc   15 offset  1d9 [d1d9] HIGHLOW
+	reloc   16 offset  1e1 [d1e1] HIGHLOW
+	reloc   17 offset  216 [d216] HIGHLOW
+	reloc   18 offset  234 [d234] HIGHLOW
+	reloc   19 offset  23c [d23c] HIGHLOW
+	reloc   20 offset  24e [d24e] HIGHLOW
+	reloc   21 offset  25d [d25d] HIGHLOW
+	reloc   22 offset  265 [d265] HIGHLOW
+	reloc   23 offset  29d [d29d] HIGHLOW
+	reloc   24 offset  2ac [d2ac] HIGHLOW
+	reloc   25 offset  2b9 [d2b9] HIGHLOW
+	reloc   26 offset  2c8 [d2c8] HIGHLOW
+	reloc   27 offset  2d0 [d2d0] HIGHLOW
+	reloc   28 offset  32f [d32f] HIGHLOW
+	reloc   29 offset  347 [d347] HIGHLOW
+	reloc   30 offset  34f [d34f] HIGHLOW
+	reloc   31 offset  386 [d386] HIGHLOW
+	reloc   32 offset  39d [d39d] HIGHLOW
+	reloc   33 offset  3a5 [d3a5] HIGHLOW
+	reloc   34 offset  3b7 [d3b7] HIGHLOW
+	reloc   35 offset  3c6 [d3c6] HIGHLOW
+	reloc   36 offset  3ce [d3ce] HIGHLOW
+	reloc   37 offset  3f8 [d3f8] HIGHLOW
+	reloc   38 offset  403 [d403] HIGHLOW
+	reloc   39 offset  410 [d410] HIGHLOW
+	reloc   40 offset  41b [d41b] HIGHLOW
+	reloc   41 offset  448 [d448] HIGHLOW
+	reloc   42 offset  453 [d453] HIGHLOW
+	reloc   43 offset  45b [d45b] HIGHLOW
+	reloc   44 offset  4a9 [d4a9] HIGHLOW
+	reloc   45 offset  4b8 [d4b8] HIGHLOW
+	reloc   46 offset  4c0 [d4c0] HIGHLOW
+	reloc   47 offset  4fc [d4fc] HIGHLOW
+	reloc   48 offset  50c [d50c] HIGHLOW
+	reloc   49 offset  531 [d531] HIGHLOW
+	reloc   50 offset  54b [d54b] HIGHLOW
+	reloc   51 offset  551 [d551] HIGHLOW
+	reloc   52 offset  556 [d556] HIGHLOW
+	reloc   53 offset  55d [d55d] HIGHLOW
+	reloc   54 offset  564 [d564] HIGHLOW
+	reloc   55 offset  56d [d56d] HIGHLOW
+	reloc   56 offset  575 [d575] HIGHLOW
+	reloc   57 offset  59b [d59b] HIGHLOW
+	reloc   58 offset  5ab [d5ab] HIGHLOW
+	reloc   59 offset  5b8 [d5b8] HIGHLOW
+	reloc   60 offset  5bf [d5bf] HIGHLOW
+	reloc   61 offset  5d1 [d5d1] HIGHLOW
+	reloc   62 offset  5eb [d5eb] HIGHLOW
+	reloc   63 offset  5f1 [d5f1] HIGHLOW
+	reloc   64 offset  5f6 [d5f6] HIGHLOW
+	reloc   65 offset  5fd [d5fd] HIGHLOW
+	reloc   66 offset  604 [d604] HIGHLOW
+	reloc   67 offset  60d [d60d] HIGHLOW
+	reloc   68 offset  615 [d615] HIGHLOW
+	reloc   69 offset  63d [d63d] HIGHLOW
+	reloc   70 offset  65e [d65e] HIGHLOW
+	reloc   71 offset  666 [d666] HIGHLOW
+	reloc   72 offset  674 [d674] HIGHLOW
+	reloc   73 offset  691 [d691] HIGHLOW
+	reloc   74 offset  6ab [d6ab] HIGHLOW
+	reloc   75 offset  6b1 [d6b1] HIGHLOW
+	reloc   76 offset  6b6 [d6b6] HIGHLOW
+	reloc   77 offset  6bd [d6bd] HIGHLOW
+	reloc   78 offset  6c4 [d6c4] HIGHLOW
+	reloc   79 offset  6cd [d6cd] HIGHLOW
+	reloc   80 offset  6d5 [d6d5] HIGHLOW
+	reloc   81 offset  6fd [d6fd] HIGHLOW
+	reloc   82 offset  714 [d714] HIGHLOW
+	reloc   83 offset  71a [d71a] HIGHLOW
+	reloc   84 offset  723 [d723] HIGHLOW
+	reloc   85 offset  736 [d736] HIGHLOW
+	reloc   86 offset  747 [d747] HIGHLOW
+	reloc   87 offset  759 [d759] HIGHLOW
+	reloc   88 offset  761 [d761] HIGHLOW
+	reloc   89 offset  796 [d796] HIGHLOW
+	reloc   90 offset  79d [d79d] HIGHLOW
+	reloc   91 offset  88c [d88c] HIGHLOW
+	reloc   92 offset  895 [d895] HIGHLOW
+	reloc   93 offset  8a6 [d8a6] HIGHLOW
+	reloc   94 offset  8ad [d8ad] HIGHLOW
+	reloc   95 offset  8c0 [d8c0] HIGHLOW
+	reloc   96 offset  8f9 [d8f9] HIGHLOW
+	reloc   97 offset  921 [d921] HIGHLOW
+	reloc   98 offset  931 [d931] HIGHLOW
+	reloc   99 offset  94c [d94c] HIGHLOW
+	reloc  100 offset  967 [d967] HIGHLOW
+	reloc  101 offset  974 [d974] HIGHLOW
+	reloc  102 offset  98d [d98d] HIGHLOW
+	reloc  103 offset  99c [d99c] HIGHLOW
+	reloc  104 offset  9a3 [d9a3] HIGHLOW
+	reloc  105 offset  9a8 [d9a8] HIGHLOW
+	reloc  106 offset  9e5 [d9e5] HIGHLOW
+	reloc  107 offset  9f3 [d9f3] HIGHLOW
+	reloc  108 offset  a02 [da02] HIGHLOW
+	reloc  109 offset  a10 [da10] HIGHLOW
+	reloc  110 offset  a19 [da19] HIGHLOW
+	reloc  111 offset  a23 [da23] HIGHLOW
+	reloc  112 offset  a59 [da59] HIGHLOW
+	reloc  113 offset  a7c [da7c] HIGHLOW
+	reloc  114 offset  a8b [da8b] HIGHLOW
+	reloc  115 offset  ab1 [dab1] HIGHLOW
+	reloc  116 offset  acb [dacb] HIGHLOW
+	reloc  117 offset  ad1 [dad1] HIGHLOW
+	reloc  118 offset  ad6 [dad6] HIGHLOW
+	reloc  119 offset  add [dadd] HIGHLOW
+	reloc  120 offset  ae4 [dae4] HIGHLOW
+	reloc  121 offset  aed [daed] HIGHLOW
+	reloc  122 offset  af5 [daf5] HIGHLOW
+	reloc  123 offset  b28 [db28] HIGHLOW
+	reloc  124 offset  b3b [db3b] HIGHLOW
+	reloc  125 offset  b41 [db41] HIGHLOW
+	reloc  126 offset  b46 [db46] HIGHLOW
+	reloc  127 offset  b4d [db4d] HIGHLOW
+	reloc  128 offset  b54 [db54] HIGHLOW
+	reloc  129 offset  b5d [db5d] HIGHLOW
+	reloc  130 offset  b68 [db68] HIGHLOW
+	reloc  131 offset  b80 [db80] HIGHLOW
+	reloc  132 offset  b98 [db98] HIGHLOW
+	reloc  133 offset  ba0 [dba0] HIGHLOW
+	reloc  134 offset  bac [dbac] HIGHLOW
+	reloc  135 offset  bb2 [dbb2] HIGHLOW
+	reloc  136 offset  bb7 [dbb7] HIGHLOW
+	reloc  137 offset  bbe [dbbe] HIGHLOW
+	reloc  138 offset  bc5 [dbc5] HIGHLOW
+	reloc  139 offset  bce [dbce] HIGHLOW
+	reloc  140 offset  bd6 [dbd6] HIGHLOW
+	reloc  141 offset  bdb [dbdb] HIGHLOW
+	reloc  142 offset  bf2 [dbf2] HIGHLOW
+	reloc  143 offset  bfe [dbfe] HIGHLOW
+	reloc  144 offset  c0a [dc0a] HIGHLOW
+	reloc  145 offset  c10 [dc10] HIGHLOW
+	reloc  146 offset  c15 [dc15] HIGHLOW
+	reloc  147 offset  c1c [dc1c] HIGHLOW
+	reloc  148 offset  c23 [dc23] HIGHLOW
+	reloc  149 offset  c2c [dc2c] HIGHLOW
+	reloc  150 offset  c34 [dc34] HIGHLOW
+	reloc  151 offset  c39 [dc39] HIGHLOW
+	reloc  152 offset  c4c [dc4c] HIGHLOW
+	reloc  153 offset  c6b [dc6b] HIGHLOW
+	reloc  154 offset  c80 [dc80] HIGHLOW
+	reloc  155 offset  c86 [dc86] HIGHLOW
+	reloc  156 offset  c8d [dc8d] HIGHLOW
+	reloc  157 offset  c93 [dc93] HIGHLOW
+	reloc  158 offset  c9e [dc9e] HIGHLOW
+	reloc  159 offset  cc3 [dcc3] HIGHLOW
+	reloc  160 offset  cc9 [dcc9] HIGHLOW
+	reloc  161 offset  d01 [dd01] HIGHLOW
+	reloc  162 offset  d19 [dd19] HIGHLOW
+	reloc  163 offset  d21 [dd21] HIGHLOW
+	reloc  164 offset  d31 [dd31] HIGHLOW
+	reloc  165 offset  d37 [dd37] HIGHLOW
+	reloc  166 offset  d3c [dd3c] HIGHLOW
+	reloc  167 offset  d43 [dd43] HIGHLOW
+	reloc  168 offset  d4a [dd4a] HIGHLOW
+	reloc  169 offset  d53 [dd53] HIGHLOW
+	reloc  170 offset  d5f [dd5f] HIGHLOW
+	reloc  171 offset  d64 [dd64] HIGHLOW
+	reloc  172 offset  d75 [dd75] HIGHLOW
+	reloc  173 offset  d88 [dd88] HIGHLOW
+	reloc  174 offset  db2 [ddb2] HIGHLOW
+	reloc  175 offset  de4 [dde4] HIGHLOW
+	reloc  176 offset  df4 [ddf4] HIGHLOW
+	reloc  177 offset  e02 [de02] HIGHLOW
+	reloc  178 offset  e3c [de3c] HIGHLOW
+	reloc  179 offset  e64 [de64] HIGHLOW
+	reloc  180 offset  e6c [de6c] HIGHLOW
+	reloc  181 offset  eab [deab] HIGHLOW
+	reloc  182 offset  ef2 [def2] HIGHLOW
+	reloc  183 offset  efd [defd] HIGHLOW
+	reloc  184 offset  f08 [df08] HIGHLOW
+	reloc  185 offset  f13 [df13] HIGHLOW
+	reloc  186 offset  f1e [df1e] HIGHLOW
+	reloc  187 offset  f29 [df29] HIGHLOW
+	reloc  188 offset  f34 [df34] HIGHLOW
+	reloc  189 offset  f3f [df3f] HIGHLOW
+	reloc  190 offset  f4a [df4a] HIGHLOW
+	reloc  191 offset  f55 [df55] HIGHLOW
+	reloc  192 offset  f60 [df60] HIGHLOW
+	reloc  193 offset  f6b [df6b] HIGHLOW
+	reloc  194 offset  f76 [df76] HIGHLOW
+	reloc  195 offset  f81 [df81] HIGHLOW
+	reloc  196 offset  f8c [df8c] HIGHLOW
+	reloc  197 offset  f97 [df97] HIGHLOW
+	reloc  198 offset  fa2 [dfa2] HIGHLOW
+	reloc  199 offset  fad [dfad] HIGHLOW
+	reloc  200 offset  fb8 [dfb8] HIGHLOW
+	reloc  201 offset  fc3 [dfc3] HIGHLOW
+	reloc  202 offset  fce [dfce] HIGHLOW
+	reloc  203 offset  fd9 [dfd9] HIGHLOW
+	reloc  204 offset  fe4 [dfe4] HIGHLOW
+	reloc  205 offset  fef [dfef] HIGHLOW
+	reloc  206 offset  ffa [dffa] HIGHLOW
+	reloc  207 offset    0 [d000] ABSOLUTE
+
+Virtual Address: 0000e000 Chunk size 108 (0x6c) Number of fixups 50
+	reloc    0 offset    5 [e005] HIGHLOW
+	reloc    1 offset   10 [e010] HIGHLOW
+	reloc    2 offset   1b [e01b] HIGHLOW
+	reloc    3 offset   26 [e026] HIGHLOW
+	reloc    4 offset   31 [e031] HIGHLOW
+	reloc    5 offset   3c [e03c] HIGHLOW
+	reloc    6 offset   47 [e047] HIGHLOW
+	reloc    7 offset   52 [e052] HIGHLOW
+	reloc    8 offset   5d [e05d] HIGHLOW
+	reloc    9 offset   68 [e068] HIGHLOW
+	reloc   10 offset   73 [e073] HIGHLOW
+	reloc   11 offset   7e [e07e] HIGHLOW
+	reloc   12 offset   89 [e089] HIGHLOW
+	reloc   13 offset   94 [e094] HIGHLOW
+	reloc   14 offset   9f [e09f] HIGHLOW
+	reloc   15 offset   aa [e0aa] HIGHLOW
+	reloc   16 offset   b5 [e0b5] HIGHLOW
+	reloc   17 offset   c0 [e0c0] HIGHLOW
+	reloc   18 offset   cb [e0cb] HIGHLOW
+	reloc   19 offset   d6 [e0d6] HIGHLOW
+	reloc   20 offset   e1 [e0e1] HIGHLOW
+	reloc   21 offset   ec [e0ec] HIGHLOW
+	reloc   22 offset   f7 [e0f7] HIGHLOW
+	reloc   23 offset  102 [e102] HIGHLOW
+	reloc   24 offset  10d [e10d] HIGHLOW
+	reloc   25 offset  118 [e118] HIGHLOW
+	reloc   26 offset  123 [e123] HIGHLOW
+	reloc   27 offset  12e [e12e] HIGHLOW
+	reloc   28 offset  139 [e139] HIGHLOW
+	reloc   29 offset  144 [e144] HIGHLOW
+	reloc   30 offset  14f [e14f] HIGHLOW
+	reloc   31 offset  15a [e15a] HIGHLOW
+	reloc   32 offset  165 [e165] HIGHLOW
+	reloc   33 offset  170 [e170] HIGHLOW
+	reloc   34 offset  17b [e17b] HIGHLOW
+	reloc   35 offset  186 [e186] HIGHLOW
+	reloc   36 offset  191 [e191] HIGHLOW
+	reloc   37 offset  19c [e19c] HIGHLOW
+	reloc   38 offset  1a7 [e1a7] HIGHLOW
+	reloc   39 offset  1b2 [e1b2] HIGHLOW
+	reloc   40 offset  1bd [e1bd] HIGHLOW
+	reloc   41 offset  1c8 [e1c8] HIGHLOW
+	reloc   42 offset  1d3 [e1d3] HIGHLOW
+	reloc   43 offset  1de [e1de] HIGHLOW
+	reloc   44 offset  1e9 [e1e9] HIGHLOW
+	reloc   45 offset  1f4 [e1f4] HIGHLOW
+	reloc   46 offset  1ff [e1ff] HIGHLOW
+	reloc   47 offset  20a [e20a] HIGHLOW
+	reloc   48 offset  215 [e215] HIGHLOW
+	reloc   49 offset  220 [e220] HIGHLOW
+
+Virtual Address: 0000f000 Chunk size 60 (0x3c) Number of fixups 26
+	reloc    0 offset  494 [f494] HIGHLOW
+	reloc    1 offset  498 [f498] HIGHLOW
+	reloc    2 offset  49c [f49c] HIGHLOW
+	reloc    3 offset  4a0 [f4a0] HIGHLOW
+	reloc    4 offset  4a4 [f4a4] HIGHLOW
+	reloc    5 offset  4a8 [f4a8] HIGHLOW
+	reloc    6 offset  4ac [f4ac] HIGHLOW
+	reloc    7 offset  4b0 [f4b0] HIGHLOW
+	reloc    8 offset  4b4 [f4b4] HIGHLOW
+	reloc    9 offset  4b8 [f4b8] HIGHLOW
+	reloc   10 offset  4bc [f4bc] HIGHLOW
+	reloc   11 offset  4c0 [f4c0] HIGHLOW
+	reloc   12 offset  4c4 [f4c4] HIGHLOW
+	reloc   13 offset  4c8 [f4c8] HIGHLOW
+	reloc   14 offset  4cc [f4cc] HIGHLOW
+	reloc   15 offset  4d0 [f4d0] HIGHLOW
+	reloc   16 offset  4d4 [f4d4] HIGHLOW
+	reloc   17 offset  4d8 [f4d8] HIGHLOW
+	reloc   18 offset  4dc [f4dc] HIGHLOW
+	reloc   19 offset  4e0 [f4e0] HIGHLOW
+	reloc   20 offset  4e4 [f4e4] HIGHLOW
+	reloc   21 offset  4e8 [f4e8] HIGHLOW
+	reloc   22 offset  4ec [f4ec] HIGHLOW
+	reloc   23 offset  4f0 [f4f0] HIGHLOW
+	reloc   24 offset  4f4 [f4f4] HIGHLOW
+	reloc   25 offset  4f8 [f4f8] HIGHLOW
+
+Virtual Address: 00010000 Chunk size 596 (0x254) Number of fixups 294
+	reloc    0 offset   24 [10024] HIGHLOW
+	reloc    1 offset   28 [10028] HIGHLOW
+	reloc    2 offset   2c [1002c] HIGHLOW
+	reloc    3 offset   30 [10030] HIGHLOW
+	reloc    4 offset   34 [10034] HIGHLOW
+	reloc    5 offset   38 [10038] HIGHLOW
+	reloc    6 offset   3c [1003c] HIGHLOW
+	reloc    7 offset   40 [10040] HIGHLOW
+	reloc    8 offset   44 [10044] HIGHLOW
+	reloc    9 offset   48 [10048] HIGHLOW
+	reloc   10 offset   4c [1004c] HIGHLOW
+	reloc   11 offset   50 [10050] HIGHLOW
+	reloc   12 offset   54 [10054] HIGHLOW
+	reloc   13 offset   58 [10058] HIGHLOW
+	reloc   14 offset   5c [1005c] HIGHLOW
+	reloc   15 offset   60 [10060] HIGHLOW
+	reloc   16 offset   64 [10064] HIGHLOW
+	reloc   17 offset   68 [10068] HIGHLOW
+	reloc   18 offset   6c [1006c] HIGHLOW
+	reloc   19 offset   70 [10070] HIGHLOW
+	reloc   20 offset   74 [10074] HIGHLOW
+	reloc   21 offset   78 [10078] HIGHLOW
+	reloc   22 offset   7c [1007c] HIGHLOW
+	reloc   23 offset   80 [10080] HIGHLOW
+	reloc   24 offset   84 [10084] HIGHLOW
+	reloc   25 offset   88 [10088] HIGHLOW
+	reloc   26 offset  140 [10140] HIGHLOW
+	reloc   27 offset  144 [10144] HIGHLOW
+	reloc   28 offset  148 [10148] HIGHLOW
+	reloc   29 offset  14c [1014c] HIGHLOW
+	reloc   30 offset  150 [10150] HIGHLOW
+	reloc   31 offset  154 [10154] HIGHLOW
+	reloc   32 offset  158 [10158] HIGHLOW
+	reloc   33 offset  15c [1015c] HIGHLOW
+	reloc   34 offset  160 [10160] HIGHLOW
+	reloc   35 offset  164 [10164] HIGHLOW
+	reloc   36 offset  168 [10168] HIGHLOW
+	reloc   37 offset  16c [1016c] HIGHLOW
+	reloc   38 offset  170 [10170] HIGHLOW
+	reloc   39 offset  174 [10174] HIGHLOW
+	reloc   40 offset  178 [10178] HIGHLOW
+	reloc   41 offset  17c [1017c] HIGHLOW
+	reloc   42 offset  180 [10180] HIGHLOW
+	reloc   43 offset  184 [10184] HIGHLOW
+	reloc   44 offset  188 [10188] HIGHLOW
+	reloc   45 offset  18c [1018c] HIGHLOW
+	reloc   46 offset  190 [10190] HIGHLOW
+	reloc   47 offset  194 [10194] HIGHLOW
+	reloc   48 offset  198 [10198] HIGHLOW
+	reloc   49 offset  19c [1019c] HIGHLOW
+	reloc   50 offset  1a0 [101a0] HIGHLOW
+	reloc   51 offset  1a4 [101a4] HIGHLOW
+	reloc   52 offset  1a8 [101a8] HIGHLOW
+	reloc   53 offset  1ac [101ac] HIGHLOW
+	reloc   54 offset  1b0 [101b0] HIGHLOW
+	reloc   55 offset  1b4 [101b4] HIGHLOW
+	reloc   56 offset  1b8 [101b8] HIGHLOW
+	reloc   57 offset  1bc [101bc] HIGHLOW
+	reloc   58 offset  1c0 [101c0] HIGHLOW
+	reloc   59 offset  1c4 [101c4] HIGHLOW
+	reloc   60 offset  1c8 [101c8] HIGHLOW
+	reloc   61 offset  1cc [101cc] HIGHLOW
+	reloc   62 offset  1d0 [101d0] HIGHLOW
+	reloc   63 offset  1d4 [101d4] HIGHLOW
+	reloc   64 offset  1d8 [101d8] HIGHLOW
+	reloc   65 offset  1dc [101dc] HIGHLOW
+	reloc   66 offset  1e0 [101e0] HIGHLOW
+	reloc   67 offset  1e4 [101e4] HIGHLOW
+	reloc   68 offset  1e8 [101e8] HIGHLOW
+	reloc   69 offset  1ec [101ec] HIGHLOW
+	reloc   70 offset  1f0 [101f0] HIGHLOW
+	reloc   71 offset  1f4 [101f4] HIGHLOW
+	reloc   72 offset  1f8 [101f8] HIGHLOW
+	reloc   73 offset  1fc [101fc] HIGHLOW
+	reloc   74 offset  200 [10200] HIGHLOW
+	reloc   75 offset  204 [10204] HIGHLOW
+	reloc   76 offset  208 [10208] HIGHLOW
+	reloc   77 offset  20c [1020c] HIGHLOW
+	reloc   78 offset  210 [10210] HIGHLOW
+	reloc   79 offset  214 [10214] HIGHLOW
+	reloc   80 offset  218 [10218] HIGHLOW
+	reloc   81 offset  21c [1021c] HIGHLOW
+	reloc   82 offset  220 [10220] HIGHLOW
+	reloc   83 offset  224 [10224] HIGHLOW
+	reloc   84 offset  228 [10228] HIGHLOW
+	reloc   85 offset  22c [1022c] HIGHLOW
+	reloc   86 offset  230 [10230] HIGHLOW
+	reloc   87 offset  234 [10234] HIGHLOW
+	reloc   88 offset  238 [10238] HIGHLOW
+	reloc   89 offset  23c [1023c] HIGHLOW
+	reloc   90 offset  240 [10240] HIGHLOW
+	reloc   91 offset  244 [10244] HIGHLOW
+	reloc   92 offset  248 [10248] HIGHLOW
+	reloc   93 offset  24c [1024c] HIGHLOW
+	reloc   94 offset  250 [10250] HIGHLOW
+	reloc   95 offset  254 [10254] HIGHLOW
+	reloc   96 offset  258 [10258] HIGHLOW
+	reloc   97 offset  25c [1025c] HIGHLOW
+	reloc   98 offset  260 [10260] HIGHLOW
+	reloc   99 offset  264 [10264] HIGHLOW
+	reloc  100 offset  268 [10268] HIGHLOW
+	reloc  101 offset  26c [1026c] HIGHLOW
+	reloc  102 offset  270 [10270] HIGHLOW
+	reloc  103 offset  274 [10274] HIGHLOW
+	reloc  104 offset  278 [10278] HIGHLOW
+	reloc  105 offset  27c [1027c] HIGHLOW
+	reloc  106 offset  280 [10280] HIGHLOW
+	reloc  107 offset  284 [10284] HIGHLOW
+	reloc  108 offset  288 [10288] HIGHLOW
+	reloc  109 offset  28c [1028c] HIGHLOW
+	reloc  110 offset  290 [10290] HIGHLOW
+	reloc  111 offset  294 [10294] HIGHLOW
+	reloc  112 offset  298 [10298] HIGHLOW
+	reloc  113 offset  29c [1029c] HIGHLOW
+	reloc  114 offset  2a0 [102a0] HIGHLOW
+	reloc  115 offset  2a4 [102a4] HIGHLOW
+	reloc  116 offset  2a8 [102a8] HIGHLOW
+	reloc  117 offset  2ac [102ac] HIGHLOW
+	reloc  118 offset  2b0 [102b0] HIGHLOW
+	reloc  119 offset  2b4 [102b4] HIGHLOW
+	reloc  120 offset  2b8 [102b8] HIGHLOW
+	reloc  121 offset  2bc [102bc] HIGHLOW
+	reloc  122 offset  2c0 [102c0] HIGHLOW
+	reloc  123 offset  2c4 [102c4] HIGHLOW
+	reloc  124 offset  2c8 [102c8] HIGHLOW
+	reloc  125 offset  2cc [102cc] HIGHLOW
+	reloc  126 offset  2d0 [102d0] HIGHLOW
+	reloc  127 offset  484 [10484] HIGHLOW
+	reloc  128 offset  488 [10488] HIGHLOW
+	reloc  129 offset  48c [1048c] HIGHLOW
+	reloc  130 offset  490 [10490] HIGHLOW
+	reloc  131 offset  494 [10494] HIGHLOW
+	reloc  132 offset  498 [10498] HIGHLOW
+	reloc  133 offset  49c [1049c] HIGHLOW
+	reloc  134 offset  4a0 [104a0] HIGHLOW
+	reloc  135 offset  4b4 [104b4] HIGHLOW
+	reloc  136 offset  4b8 [104b8] HIGHLOW
+	reloc  137 offset  4bc [104bc] HIGHLOW
+	reloc  138 offset  4c0 [104c0] HIGHLOW
+	reloc  139 offset  4c4 [104c4] HIGHLOW
+	reloc  140 offset  4c8 [104c8] HIGHLOW
+	reloc  141 offset  4cc [104cc] HIGHLOW
+	reloc  142 offset  4d0 [104d0] HIGHLOW
+	reloc  143 offset  4e4 [104e4] HIGHLOW
+	reloc  144 offset  4e8 [104e8] HIGHLOW
+	reloc  145 offset  4ec [104ec] HIGHLOW
+	reloc  146 offset  4f0 [104f0] HIGHLOW
+	reloc  147 offset  4f4 [104f4] HIGHLOW
+	reloc  148 offset  4f8 [104f8] HIGHLOW
+	reloc  149 offset  4fc [104fc] HIGHLOW
+	reloc  150 offset  500 [10500] HIGHLOW
+	reloc  151 offset  514 [10514] HIGHLOW
+	reloc  152 offset  518 [10518] HIGHLOW
+	reloc  153 offset  51c [1051c] HIGHLOW
+	reloc  154 offset  520 [10520] HIGHLOW
+	reloc  155 offset  524 [10524] HIGHLOW
+	reloc  156 offset  528 [10528] HIGHLOW
+	reloc  157 offset  52c [1052c] HIGHLOW
+	reloc  158 offset  530 [10530] HIGHLOW
+	reloc  159 offset  544 [10544] HIGHLOW
+	reloc  160 offset  548 [10548] HIGHLOW
+	reloc  161 offset  54c [1054c] HIGHLOW
+	reloc  162 offset  550 [10550] HIGHLOW
+	reloc  163 offset  554 [10554] HIGHLOW
+	reloc  164 offset  558 [10558] HIGHLOW
+	reloc  165 offset  55c [1055c] HIGHLOW
+	reloc  166 offset  560 [10560] HIGHLOW
+	reloc  167 offset  594 [10594] HIGHLOW
+	reloc  168 offset  598 [10598] HIGHLOW
+	reloc  169 offset  59c [1059c] HIGHLOW
+	reloc  170 offset  5a0 [105a0] HIGHLOW
+	reloc  171 offset  c10 [10c10] HIGHLOW
+	reloc  172 offset  c14 [10c14] HIGHLOW
+	reloc  173 offset  c18 [10c18] HIGHLOW
+	reloc  174 offset  c1c [10c1c] HIGHLOW
+	reloc  175 offset  c20 [10c20] HIGHLOW
+	reloc  176 offset  c24 [10c24] HIGHLOW
+	reloc  177 offset  c28 [10c28] HIGHLOW
+	reloc  178 offset  c2c [10c2c] HIGHLOW
+	reloc  179 offset  c30 [10c30] HIGHLOW
+	reloc  180 offset  c34 [10c34] HIGHLOW
+	reloc  181 offset  c38 [10c38] HIGHLOW
+	reloc  182 offset  c3c [10c3c] HIGHLOW
+	reloc  183 offset  c40 [10c40] HIGHLOW
+	reloc  184 offset  c44 [10c44] HIGHLOW
+	reloc  185 offset  c48 [10c48] HIGHLOW
+	reloc  186 offset  c4c [10c4c] HIGHLOW
+	reloc  187 offset  c50 [10c50] HIGHLOW
+	reloc  188 offset  c54 [10c54] HIGHLOW
+	reloc  189 offset  c58 [10c58] HIGHLOW
+	reloc  190 offset  c5c [10c5c] HIGHLOW
+	reloc  191 offset  c60 [10c60] HIGHLOW
+	reloc  192 offset  c64 [10c64] HIGHLOW
+	reloc  193 offset  c68 [10c68] HIGHLOW
+	reloc  194 offset  c6c [10c6c] HIGHLOW
+	reloc  195 offset  c70 [10c70] HIGHLOW
+	reloc  196 offset  c74 [10c74] HIGHLOW
+	reloc  197 offset  c78 [10c78] HIGHLOW
+	reloc  198 offset  c7c [10c7c] HIGHLOW
+	reloc  199 offset  c80 [10c80] HIGHLOW
+	reloc  200 offset  c84 [10c84] HIGHLOW
+	reloc  201 offset  c88 [10c88] HIGHLOW
+	reloc  202 offset  c8c [10c8c] HIGHLOW
+	reloc  203 offset  c90 [10c90] HIGHLOW
+	reloc  204 offset  c94 [10c94] HIGHLOW
+	reloc  205 offset  c98 [10c98] HIGHLOW
+	reloc  206 offset  c9c [10c9c] HIGHLOW
+	reloc  207 offset  ca0 [10ca0] HIGHLOW
+	reloc  208 offset  ca4 [10ca4] HIGHLOW
+	reloc  209 offset  ca8 [10ca8] HIGHLOW
+	reloc  210 offset  cac [10cac] HIGHLOW
+	reloc  211 offset  cb0 [10cb0] HIGHLOW
+	reloc  212 offset  cb4 [10cb4] HIGHLOW
+	reloc  213 offset  cb8 [10cb8] HIGHLOW
+	reloc  214 offset  cbc [10cbc] HIGHLOW
+	reloc  215 offset  cc0 [10cc0] HIGHLOW
+	reloc  216 offset  cc4 [10cc4] HIGHLOW
+	reloc  217 offset  cc8 [10cc8] HIGHLOW
+	reloc  218 offset  ccc [10ccc] HIGHLOW
+	reloc  219 offset  cd0 [10cd0] HIGHLOW
+	reloc  220 offset  cd4 [10cd4] HIGHLOW
+	reloc  221 offset  cd8 [10cd8] HIGHLOW
+	reloc  222 offset  cdc [10cdc] HIGHLOW
+	reloc  223 offset  ce0 [10ce0] HIGHLOW
+	reloc  224 offset  ce4 [10ce4] HIGHLOW
+	reloc  225 offset  ce8 [10ce8] HIGHLOW
+	reloc  226 offset  cec [10cec] HIGHLOW
+	reloc  227 offset  cf0 [10cf0] HIGHLOW
+	reloc  228 offset  cf4 [10cf4] HIGHLOW
+	reloc  229 offset  cf8 [10cf8] HIGHLOW
+	reloc  230 offset  cfc [10cfc] HIGHLOW
+	reloc  231 offset  d00 [10d00] HIGHLOW
+	reloc  232 offset  d04 [10d04] HIGHLOW
+	reloc  233 offset  d08 [10d08] HIGHLOW
+	reloc  234 offset  d0c [10d0c] HIGHLOW
+	reloc  235 offset  d10 [10d10] HIGHLOW
+	reloc  236 offset  d14 [10d14] HIGHLOW
+	reloc  237 offset  d18 [10d18] HIGHLOW
+	reloc  238 offset  d1c [10d1c] HIGHLOW
+	reloc  239 offset  d20 [10d20] HIGHLOW
+	reloc  240 offset  d24 [10d24] HIGHLOW
+	reloc  241 offset  d28 [10d28] HIGHLOW
+	reloc  242 offset  d2c [10d2c] HIGHLOW
+	reloc  243 offset  d30 [10d30] HIGHLOW
+	reloc  244 offset  d34 [10d34] HIGHLOW
+	reloc  245 offset  d38 [10d38] HIGHLOW
+	reloc  246 offset  d3c [10d3c] HIGHLOW
+	reloc  247 offset  d40 [10d40] HIGHLOW
+	reloc  248 offset  d44 [10d44] HIGHLOW
+	reloc  249 offset  d48 [10d48] HIGHLOW
+	reloc  250 offset  d4c [10d4c] HIGHLOW
+	reloc  251 offset  d50 [10d50] HIGHLOW
+	reloc  252 offset  d54 [10d54] HIGHLOW
+	reloc  253 offset  d58 [10d58] HIGHLOW
+	reloc  254 offset  d5c [10d5c] HIGHLOW
+	reloc  255 offset  d60 [10d60] HIGHLOW
+	reloc  256 offset  d64 [10d64] HIGHLOW
+	reloc  257 offset  d68 [10d68] HIGHLOW
+	reloc  258 offset  d6c [10d6c] HIGHLOW
+	reloc  259 offset  d70 [10d70] HIGHLOW
+	reloc  260 offset  d74 [10d74] HIGHLOW
+	reloc  261 offset  d78 [10d78] HIGHLOW
+	reloc  262 offset  d7c [10d7c] HIGHLOW
+	reloc  263 offset  f10 [10f10] HIGHLOW
+	reloc  264 offset  f14 [10f14] HIGHLOW
+	reloc  265 offset  f18 [10f18] HIGHLOW
+	reloc  266 offset  f1c [10f1c] HIGHLOW
+	reloc  267 offset  f20 [10f20] HIGHLOW
+	reloc  268 offset  f24 [10f24] HIGHLOW
+	reloc  269 offset  f28 [10f28] HIGHLOW
+	reloc  270 offset  f2c [10f2c] HIGHLOW
+	reloc  271 offset  f30 [10f30] HIGHLOW
+	reloc  272 offset  f34 [10f34] HIGHLOW
+	reloc  273 offset  f38 [10f38] HIGHLOW
+	reloc  274 offset  f3c [10f3c] HIGHLOW
+	reloc  275 offset  f40 [10f40] HIGHLOW
+	reloc  276 offset  f44 [10f44] HIGHLOW
+	reloc  277 offset  f48 [10f48] HIGHLOW
+	reloc  278 offset  f4c [10f4c] HIGHLOW
+	reloc  279 offset  f50 [10f50] HIGHLOW
+	reloc  280 offset  f54 [10f54] HIGHLOW
+	reloc  281 offset  f58 [10f58] HIGHLOW
+	reloc  282 offset  f5c [10f5c] HIGHLOW
+	reloc  283 offset  f60 [10f60] HIGHLOW
+	reloc  284 offset  f64 [10f64] HIGHLOW
+	reloc  285 offset  f68 [10f68] HIGHLOW
+	reloc  286 offset  f6c [10f6c] HIGHLOW
+	reloc  287 offset  f70 [10f70] HIGHLOW
+	reloc  288 offset  f74 [10f74] HIGHLOW
+	reloc  289 offset  f78 [10f78] HIGHLOW
+	reloc  290 offset  f7c [10f7c] HIGHLOW
+	reloc  291 offset  f80 [10f80] HIGHLOW
+	reloc  292 offset  f84 [10f84] HIGHLOW
+	reloc  293 offset    0 [10000] ABSOLUTE
+
+Virtual Address: 00012000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [1200c] HIGHLOW
+	reloc    1 offset   10 [12010] HIGHLOW
+	reloc    2 offset   14 [12014] HIGHLOW
+	reloc    3 offset    0 [12000] ABSOLUTE
+
+Virtual Address: 00013000 Chunk size 96 (0x60) Number of fixups 44
+	reloc    0 offset   20 [13020] HIGHLOW
+	reloc    1 offset   34 [13034] HIGHLOW
+	reloc    2 offset   50 [13050] HIGHLOW
+	reloc    3 offset   6c [1306c] HIGHLOW
+	reloc    4 offset   88 [13088] HIGHLOW
+	reloc    5 offset   a4 [130a4] HIGHLOW
+	reloc    6 offset   c0 [130c0] HIGHLOW
+	reloc    7 offset   dc [130dc] HIGHLOW
+	reloc    8 offset   f8 [130f8] HIGHLOW
+	reloc    9 offset  114 [13114] HIGHLOW
+	reloc   10 offset  130 [13130] HIGHLOW
+	reloc   11 offset  14c [1314c] HIGHLOW
+	reloc   12 offset  168 [13168] HIGHLOW
+	reloc   13 offset  184 [13184] HIGHLOW
+	reloc   14 offset  1a0 [131a0] HIGHLOW
+	reloc   15 offset  1bc [131bc] HIGHLOW
+	reloc   16 offset  1d8 [131d8] HIGHLOW
+	reloc   17 offset  1f4 [131f4] HIGHLOW
+	reloc   18 offset  210 [13210] HIGHLOW
+	reloc   19 offset  22c [1322c] HIGHLOW
+	reloc   20 offset  248 [13248] HIGHLOW
+	reloc   21 offset  264 [13264] HIGHLOW
+	reloc   22 offset  280 [13280] HIGHLOW
+	reloc   23 offset  29c [1329c] HIGHLOW
+	reloc   24 offset  2b8 [132b8] HIGHLOW
+	reloc   25 offset  2d4 [132d4] HIGHLOW
+	reloc   26 offset  2f0 [132f0] HIGHLOW
+	reloc   27 offset  30c [1330c] HIGHLOW
+	reloc   28 offset  328 [13328] HIGHLOW
+	reloc   29 offset  344 [13344] HIGHLOW
+	reloc   30 offset  360 [13360] HIGHLOW
+	reloc   31 offset  37c [1337c] HIGHLOW
+	reloc   32 offset  398 [13398] HIGHLOW
+	reloc   33 offset  3b4 [133b4] HIGHLOW
+	reloc   34 offset  3d0 [133d0] HIGHLOW
+	reloc   35 offset  3ec [133ec] HIGHLOW
+	reloc   36 offset  408 [13408] HIGHLOW
+	reloc   37 offset  424 [13424] HIGHLOW
+	reloc   38 offset  440 [13440] HIGHLOW
+	reloc   39 offset  45c [1345c] HIGHLOW
+	reloc   40 offset  478 [13478] HIGHLOW
+	reloc   41 offset  494 [13494] HIGHLOW
+	reloc   42 offset  4b0 [134b0] HIGHLOW
+	reloc   43 offset  4cc [134cc] HIGHLOW
+
+There is a debug directory in .rdata at 0x1001103c
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 00011058 00011058
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+010   Entry: ID: 0x000005, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+028     Entry: ID: 0x000046, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 0x000409, Value: 0x000048
+048        Leaf: Addr: 0x015058, Size: 0x0001f2, Codepage: 0
+ Resources start at offset: 0x58
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0000d224  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        00002d1e  1000f000  1000f000  0000f000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000194  10012000  10012000  00012000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      000004e0  10013000  10013000  00013000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata       00000198  10014000  10014000  00014000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .rsrc         0000024a  10015000  10015000  00015000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .reloc        00000e00  10016000  10016000  00016000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 .debug_abbrev 00001cfe  10017000  10017000  00017000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_info   0000e865  10019000  10019000  00019000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   00007562  10028000  10028000  00028000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    00009e35  10030000  10030000  00030000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 000013b8  1003a000  1003a000  0003a000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_str    00005757  1003c000  1003c000  0003c000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000000 ___wine_stub_acmMessage32
+[  1](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c .L__wine_stub_acmMessage32_string
+[  2](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_file_name
+[  3](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000ce90 ___wine_spec_unimplemented_stub
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002074 .L__wine_spec_exports
+[  5](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000225c .L__wine_spec_exp_names
+[  6](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000209c .L__wine_spec_exports_funcs
+[  7](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000214c .L__wine_spec_exp_name_ptrs
+[  8](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000021fc .L__wine_spec_exp_ordinals
+[  9](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000590 _acmDriverAddA@20
+[ 10](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000007a0 _acmDriverAddW@20
+[ 11](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000980 _acmDriverClose@8
+[ 12](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000ab0 _acmDriverDetailsA@12
+[ 13](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000c80 _acmDriverDetailsW@12
+[ 14](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001270 _acmDriverEnum@12
+[ 15](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001350 _acmDriverID@12
+[ 16](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001430 _acmDriverMessage@16
+[ 17](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000db0 _acmDriverOpen@12
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001780 _acmDriverPriority@12
+[ 19](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001a20 _acmDriverRemove@8
+[ 20](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001b50 _acmFilterChooseA@4
+[ 21](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001c30 _acmFilterChooseW@4
+[ 22](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001c90 _acmFilterDetailsA@12
+[ 23](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001d40 _acmFilterDetailsW@12
+[ 24](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001ea0 _acmFilterEnumA@20
+[ 25](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001f30 _acmFilterEnumW@20
+[ 26](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002310 _acmFilterTagDetailsA@12
+[ 27](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000023a0 _acmFilterTagDetailsW@12
+[ 28](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002640 _acmFilterTagEnumA@20
+[ 29](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000026d0 _acmFilterTagEnumW@20
+[ 30](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002910 _acmFormatChooseA@4
+[ 31](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002c50 _acmFormatChooseW@4
+[ 32](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000030a0 _acmFormatDetailsA@12
+[ 33](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000031b0 _acmFormatDetailsW@12
+[ 34](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003750 _acmFormatEnumA@20
+[ 35](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003850 _acmFormatEnumW@20
+[ 36](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003d60 _acmFormatSuggest@20
+[ 37](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003fd0 _acmFormatTagDetailsA@12
+[ 38](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003440 _acmFormatTagDetailsW@12
+[ 39](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004060 _acmFormatTagEnumA@20
+[ 40](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004100 _acmFormatTagEnumW@20
+[ 41](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006a40 _acmGetVersion@0
+[ 42](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006ad0 _acmMetrics@12
+[ 43](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000b410 _acmStreamClose@8
+[ 44](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000b5d0 _acmStreamConvert@12
+[ 45](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000b740 _acmStreamMessage@16
+[ 46](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000b7b0 _acmStreamOpen@32
+[ 47](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000bed0 _acmStreamPrepareHeader@12
+[ 48](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c0d0 _acmStreamReset@8
+[ 49](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c200 _acmStreamSize@16
+[ 50](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c370 _acmStreamUnprepareHeader@12
+[ 51](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00007120 _PCM_DriverProc@20
+[ 52](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[ 53](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000020 __wine_spec_relay_entry_points
+[ 54](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000001c .L__wine_spec_relay_entry_point_offsets
+[ 55](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000cc .L__wine_spec_relay_args_string
+[ 56](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002c __wine_spec_relay_entry_point_1
+[ 57](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004c __wine_spec_relay_entry_point_2
+[ 58](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c __wine_spec_relay_entry_point_3
+[ 59](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000008c __wine_spec_relay_entry_point_4
+[ 60](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ac __wine_spec_relay_entry_point_5
+[ 61](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000cc __wine_spec_relay_entry_point_6
+[ 62](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ec __wine_spec_relay_entry_point_7
+[ 63](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000010c __wine_spec_relay_entry_point_8
+[ 64](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000012c __wine_spec_relay_entry_point_9
+[ 65](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000014c __wine_spec_relay_entry_point_10
+[ 66](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000016c __wine_spec_relay_entry_point_11
+[ 67](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000018c __wine_spec_relay_entry_point_12
+[ 68](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001ac __wine_spec_relay_entry_point_13
+[ 69](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001cc __wine_spec_relay_entry_point_14
+[ 70](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001ec __wine_spec_relay_entry_point_15
+[ 71](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000020c __wine_spec_relay_entry_point_16
+[ 72](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000022c __wine_spec_relay_entry_point_17
+[ 73](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000024c __wine_spec_relay_entry_point_18
+[ 74](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000026c __wine_spec_relay_entry_point_19
+[ 75](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000028c __wine_spec_relay_entry_point_20
+[ 76](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000002ac __wine_spec_relay_entry_point_21
+[ 77](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000002cc __wine_spec_relay_entry_point_22
+[ 78](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000002ec __wine_spec_relay_entry_point_23
+[ 79](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000030c __wine_spec_relay_entry_point_24
+[ 80](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000032c __wine_spec_relay_entry_point_25
+[ 81](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000034c __wine_spec_relay_entry_point_26
+[ 82](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000036c __wine_spec_relay_entry_point_27
+[ 83](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000038c __wine_spec_relay_entry_point_28
+[ 84](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000003ac __wine_spec_relay_entry_point_29
+[ 85](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000003cc __wine_spec_relay_entry_point_30
+[ 86](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000003ec __wine_spec_relay_entry_point_31
+[ 87](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000040c __wine_spec_relay_entry_point_32
+[ 88](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000042c __wine_spec_relay_entry_point_33
+[ 89](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000044c __wine_spec_relay_entry_point_35
+[ 90](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000046c __wine_spec_relay_entry_point_36
+[ 91](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000048c __wine_spec_relay_entry_point_37
+[ 92](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000004ac __wine_spec_relay_entry_point_38
+[ 93](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000004cc __wine_spec_relay_entry_point_39
+[ 94](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000004e8 __wine_spec_relay_entry_point_40
+[ 95](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000508 __wine_spec_relay_entry_point_41
+[ 96](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000528 __wine_spec_relay_entry_point_42
+[ 97](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000548 __wine_spec_relay_entry_point_43
+[ 98](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000568 __wine_spec_relay_entry_point_44
+[ 99](sec  5)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000d8 __load_config_used
+[100](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[101](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_res_0
+[102](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000720 _wine_dbg_log
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000010 __xmm@00330073007200650076006900720044
+[104](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001b00 _wine_dbg_sprintf
+[105](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000020 ??_C@_0BP@JPLFKNKC@?$CI?$CFp?0?5?$CFp?0?5?$CF08Ix?0?5?$CF08lx?0?5?$CF08lx?$CJ?6?$AA@
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000003f ??_C@_0O@NMIPGAKM@acmDriverAddA?$AA@
+[107](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000004d ??_C@_0BD@NEDHKJBG@invalid?5parameter?6?$AA@
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000060 ??_C@_0O@LEHCNKMN@invalid?5flag?6?$AA@
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000006e ??_C@_0O@MABHNFHL@acmDriverAddW?$AA@
+[110](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000007c ??_C@_0DD@OKGLPJEO@Unable?5to?5register?5driver?5via?5AC@
+[111](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000af ??_C@_0DH@CIFHOMJP@Unable?5to?5register?5driver?5via?5AC@
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000e6 ??_C@_0DJ@CNAMPA@Unable?5to?5register?5driver?5via?5AC@
+[113](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000011f ??_C@_0CH@JKFHGJMA@invalid?5flag?5value?50x?$CF08lx?5for?5f@
+[114](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000146 ??_C@_0N@HODAHFHJ@?$CI?$CFp?0?5?$CF08lx?$CJ?6?$AA@
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000153 ??_C@_0P@EKGAKDHE@acmDriverClose?$AA@
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000162 ??_C@_0BA@HAEHNENC@invalid?5handle?6?$AA@
+[117](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000172 ??_C@_0BB@KGLAPJHN@?$CI?$CFp?0?5?$CFp?0?5?$CF08lx?$CJ?6?$AA@
+[118](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000183 ??_C@_0BC@MAFMFOAF@acmDriverDetailsA?$AA@
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000195 ??_C@_0BC@NMMEOLNC@acmDriverDetailsW?$AA@
+[120](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001a7 ??_C@_0BE@LHFMMCEI@?$CI?$CFp?0?5?$CF08Ix?0?5?$CF08lx?$CJ?6?$AA@
+[121](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001bb ??_C@_0O@GCGHIEOB@acmDriverEnum?$AA@
+[122](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001c9 ??_C@_0M@PBGOJGG@acmDriverID?$AA@
+[123](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001d5 ??_C@_0BJ@GBIFDPIH@?$CI?$CFp?0?5?$CF04x?0?5?$CF08Ix?0?5?$CF08Ix?6?$AA@
+[124](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001ee ??_C@_0BB@CKPKEENB@acmDriverMessage?$AA@
+[125](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001ff ??_C@_0ED@NICNEGDL@DRV_CONFIGURE?3?5no?5alias?5for?5this@
+[126](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000242 ??_C@_0EK@LPDJFJCP@DRV_CONFIGURE?3?5reverse?5lookup?5HA@
+[127](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000028c ??_C@_0ED@EGBECNOI@OOM?5while?5supplying?5DRVCONFIGINF@
+[128](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002cf ??_C@_0EB@GFKOMHLM@OOM?5while?5supplying?5DRVCONFIGINF@
+[129](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000310 ??_C@_0BB@FENKCBKA@?$CI?$CFp?0?5?$CFp?0?5?$CF08lu?$CJ?6?$AA@
+[130](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000321 ??_C@_0O@KPBKEMFP@acmDriverOpen?$AA@
+[131](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000032f ??_C@_0L@GJFGNHAB@no?5memory?6?$AA@
+[132](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000033a ??_C@_09HMJBKIAN@Drivers32?$AA@
+[133](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000344 ??_C@_09IKKOJAMG@?$CFs?5?$DN?$DO?5?$CFp?6?$AA@
+[134](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000034e ??_C@_0BE@HJJFIJLI@failed?3?5ret?5?$DN?5?$CF08x?6?$AA@
+[135](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000362 ??_C@_0BE@DHMOGOKA@?$CI?$CFp?0?5?$CF08lx?0?5?$CF08lx?$CJ?6?$AA@
+[136](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000376 ??_C@_0BC@EJDDBFOL@acmDriverPriority?$AA@
+[137](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000388 ??_C@_0EF@HCPHMAOB@ACM_DRIVERPRIORITYF_?$FLBEGIN?$HMEND?$FN?5@
+[138](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003cd ??_C@_0DH@EJLJGDOJ@priority?5invalid?5with?5ACM_DRIVER@
+[139](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000404 ??_C@_0DN@OLJHHFBG@non?9null?5hadid?5invalid?5with?5ACM_@
+[140](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000441 ??_C@_0CK@MEPPONAE@unexpected?5priority?5?$CFld?0?5using?5s@
+[141](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000046b ??_C@_0BA@NHGBCKLI@acmDriverRemove?$AA@
+[142](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000047b ??_C@_06OJHGLDPL@?$CInull?$CJ?$AA@
+[143](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000482 ??_C@_05PCILMPKD@?$CD?$CF04x?$AA@
+[144](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000488 ??_C@_09CIDKLGOH@?$CIinvalid?$CJ?$AA@
+[145](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 ___wine_dbch_msacm
+[146](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002828 __imp__MultiByteToWideChar@24
+[147](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000c0 _MSACM_hHeap
+[148](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000280c __imp__HeapAlloc@12
+[149](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002818 __imp__HeapFree@12
+[150](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000cab0 ___wine_dbg_header
+[151](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002798 __imp____stdio_common_vsprintf
+[152](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c5d0 ___wine_dbg_output
+[153](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004960 _MSACM_RegisterDriverFromRegistry
+[154](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006190 _MSACM_RegisterLocalDriver
+[155](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004ca0 _MSACM_RegisterDriver
+[156](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005910 _MSACM_RegisterNotificationWindow
+[157](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000059b0 _MSACM_BroadcastNotification
+[158](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000060a0 _MSACM_GetDriver
+[159](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002714 __imp__CloseDriver@12
+[160](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006580 _MSACM_CloseLocalDriver
+[161](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002838 __imp__WideCharToMultiByte@32
+[162](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d092 _memcpy
+[163](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027c4 
+[164](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006120 _MSACM_Message
+[165](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006060 _MSACM_GetDriverID
+[166](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006270 _MSACM_OpenLocalDriver
+[167](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000271c __imp__OpenDriver@12
+[168](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002824 __imp__IsBadStringPtrW@8
+[169](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d0a8 _wcslen
+[170](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027e8 
+[171](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 _wine_dbgstr_wn.hex
+[172](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c530 ___wine_dbg_strdup
+[173](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000c4 _MSACM_pFirstACMDriverID
+[174](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006020 _MSACM_GetObj
+[175](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000060e0 _MSACM_GetNotifyWnd
+[176](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005a30 _MSACM_EnableNotifications
+[177](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005b30 _MSACM_RePositionDriver
+[178](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005be0 _MSACM_WriteCurrentPriorities
+[179](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005a10 _MSACM_DisableNotifications
+[180](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005270 _MSACM_UnregisterDriver
+[181](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005aa0 _MSACM_UnRegisterNotificationWindow
+[182](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001bb0 _wine_dbg_log
+[183](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002080 _MSACM_FilterEnumCallbackWtoA@16
+[184](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000020f0 _MSACM_FilterEnumHelper
+[185](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002890 _MSACM_FilterTagEnumCallbackWtoA@16
+[186](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004fc ??_C@_0M@CMOOOEA@?$CI?$CFp?$CJ?3?5stub?6?$AA@
+[187](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000508 ??_C@_0BB@PFLADGJJ@acmFilterChooseA?$AA@
+[188](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000519 ??_C@_0BB@OJCIIDEO@acmFilterChooseW?$AA@
+[189](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000052a ??_C@_0P@ENNDMDCC@?$CI?$CFp?0?5?$CFp?0?5?$CFld?$CJ?6?$AA@
+[190](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000539 ??_C@_0BC@KMNMHAEO@acmFilterDetailsW?$AA@
+[191](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000054b ??_C@_0BK@ILFCGGKL@Unknown?5fdwDetails?5?$CF08lx?6?$AA@
+[192](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000565 ??_C@_06HGELHJLA@?$DN?$DO?5?$CFd?6?$AA@
+[193](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000056c ??_C@_0BI@CCBHANKD@?$CI?$CFp?0?5?$CFp?0?5?$CFp?0?5?$CFId?0?5?$CFld?$CJ?6?$AA@
+[194](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000584 ??_C@_0P@ILKGEACL@acmFilterEnumW?$AA@
+[195](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000593 ??_C@_0BM@FJNFGNGA@Unsupported?5fdwEnum?5values?6?$AA@
+[196](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005af ??_C@_0BF@ODEMBDKG@acmFilterTagDetailsW?$AA@
+[197](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005c4 ??_C@_0BO@BAGHJEGE@Unsupported?5fdwDetails?$DN?$CF08lx?6?$AA@
+[198](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005e2 ??_C@_03CCLNCNJA@PCM?$AA@
+[199](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005e6 ??_C@_0BC@MHNELHMJ@acmFilterTagEnumW?$AA@
+[200](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005f8 ??_C@_0BM@CLPBHBID@had?5?$CB?$DN?5NULL?0?5not?5supported?6?$AA@
+[201](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 ___wine_dbch_msacm
+[202](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d09d _memset
+[203](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027cc 
+[204](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002bd0 _wine_dbg_log
+[205](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000620 __xmm@00000000000000000000014700000065
+[206](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000630 __xmm@00000000000000000000014e00000065
+[207](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002ce0 _FormatChooseDlgProc@16
+[208](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003a30 _MSACM_FormatEnumCallbackWtoA@16
+[209](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003aa0 _MSACM_FormatEnumHelper
+[210](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00004340 _MSACM_FormatTagEnumCallbackWtoA@16
+[211](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000640 __xmm@00000000000000000000014b00000066
+[212](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000650 __xmm@00000000000000000000014700000066
+[213](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000660 __xmm@00000000000000000000014e00000066
+[214](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000043b0 _MSACM_FillFormat
+[215](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000670 __xmm@00200020002000200020002000200020
+[216](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000680 __xmm@00000000000000000020002000200020
+[217](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000044b0 _MSACM_FillFormatTagsCB@16
+[218](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000690 ??_C@_0BI@OEGCODEE@Unsupported?5hook?5procs?6?$AA@
+[219](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006a8 ??_C@_0BB@BPDGPEBI@acmFormatChooseA?$AA@
+[220](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006b9 ??_C@_0BC@DGIJEFDK@acmFormatDetailsW?$AA@
+[221](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006cc ??_C@_1M@MCELJLNN@?$AA?$CF?$AAd?$AA?5?$AAH?$AAz?$AA?$AA@
+[222](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006d8 ??_C@_1BE@HGINOOMN@?$AA?$DL?$AA?5?$AA?$CF?$AAd?$AA?5?$AAb?$AAi?$AAt?$AAs?$AA?$AA@
+[223](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006ec ??_C@_06KMFBDOPA@?$DL?5Mono?$AA@
+[224](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006f3 ??_C@_08PCPHIFHM@?$DL?5Stereo?$AA@
+[225](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006fc ??_C@_0P@LNINPENJ@acmFormatEnumW?$AA@
+[226](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000070b ??_C@_0CC@KKFEOFKE@Unsupported?5fdwEnum?5values?5?$CF08lx@
+[227](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000072d ??_C@_0BI@ILGDMFDH@?$CI?$CFp?0?5?$CFp?0?5?$CFp?0?5?$CFld?0?5?$CFld?$CJ?6?$AA@
+[228](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000745 ??_C@_0BB@HGEPOEKG@acmFormatSuggest?$AA@
+[229](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000756 ??_C@_0BF@JIELEHN@acmFormatTagDetailsW?$AA@
+[230](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000076b ??_C@_0BC@FNIBICLN@acmFormatTagEnumW?$AA@
+[231](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000077e ??_C@_1BA@EIINGBMO@?$AAa?$AAc?$AAm?$AAp?$AAr?$AAo?$AAp?$AA?$AA@
+[232](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000078e ??_C@_0CA@IHLBGIFM@hwnd?$DN?$CFp?5msg?$DN?$CFi?50x?$CF08Ix?50x?$CF08Ix?6?$AA@
+[233](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007ae ??_C@_0BE@CEAKILGC@FormatChooseDlgProc?$AA@
+[234](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007c2 ??_C@_0BJ@MLCEJHCC@Unsupported?5style?5?$CF08lx?6?$AA@
+[235](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007db ??_C@_0CL@KNAGJIIJ@Dropped?5dlgNotif?5?$CIfmtTag?$CJ?3?50x?$CF08@
+[236](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000806 ??_C@_1BO@HHJHPFHM@?$AAa?$AAc?$AAm?$AAc?$AAh?$AAo?$AAo?$AAs?$AAe?$AA_?$AAh?$AAe?$AAl?$AAp?$AA?$AA@
+[237](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000824 ??_C@_0CL@LHHMBFPA@Dropped?5dlgCmd?3?5ctl?$DN?$CFd?5ntf?$DN0x?$CF04@
+[238](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000850 ??_C@_1CM@LLHMGHGF@?$AAa?$AAc?$AAm?$AAc?$AAh?$AAo?$AAo?$AAs?$AAe?$AA_?$AAc?$AAo?$AAn?$AAt?$AAe?$AAx?$AAt?$AAm?$AAe?$AAn?$AAu?$AA?$AA@
+[239](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000087c ??_C@_0DA@GCOPHKLG@Dropped?5dlgMsg?3?5hwnd?$DN?$CFp?5msg?$DN?$CFi?50@
+[240](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008ac ??_C@_1BA@BDIDDPNK@?$AA?$CF?$AAd?$AA?5?$AAK?$AAo?$AA?1?$AAs?$AA?$AA@
+[241](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008bc ??_C@_0BD@GHDBANLD@Unknown?5mode?5?$CI?$CFd?$CJ?6?$AA@
+[242](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008cf ??_C@_0BH@EPLDACCE@MSACM_FillFormatTagsCB?$AA@
+[243](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000038 ___wine_dbch_msacm
+[244](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000e4 _MSACM_hInstance32
+[245](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000272c __imp__DialogBoxIndirectParamW@20
+[246](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002730 __imp__DialogBoxParamW@20
+[247](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000273c __imp__GetPropW@8
+[248](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002750 __imp__SetPropW@12
+[249](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002748 __imp__SendDlgItemMessageW@20
+[250](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002738 __imp__GetDlgItem@8
+[251](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002754 __imp__ShowWindow@8
+[252](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002744 __imp__RegisterWindowMessageW@4
+[253](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000274c __imp__SendMessageW@16
+[254](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002734 __imp__EndDialog@8
+[255](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002758 __imp__wsprintfW
+[256](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005220 _MSACM_FindFormatTagInCache
+[257](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002720 __imp__SendDriverMessage@16
+[258](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000283c __imp__lstrcmpW@8
+[259](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027c0 __imp__memcmp
+[260](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00004a70 _wine_dbg_log
+[261](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00004af0 _debugstr_w
+[262](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000053a0 _MSACM_RegisterAllDrivers
+[263](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005e70 _swprintf
+[264](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005eb0 _MSACM_UnregisterAllDrivers
+[265](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00006430 _MSACM_AddToList
+[266](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000066c0 _MSACM_RemoveFromList
+[267](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000067c0 _wine_dbg_sprintf
+[268](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a10 __xmm@006500720061007700740066006f0053
+[269](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a20 __xmm@006f0073006f007200630069004d005c
+[270](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a30 __xmm@006f0069006400750041005c00740066
+[271](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a40 __xmm@00730073006500720070006d006f0043
+[272](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a50 __xmm@00670061006e0061004d006e006f0069
+[273](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a60 __xmm@00650076006900720044005c00720065
+[274](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a70 __xmm@0000005c006500680063006100430072
+[275](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00006810 _MSACM_GetRegistryKey
+[276](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a80 ??_C@_0CH@DKFGKENF@unable?5to?5open?5registry?5key?5?9?50x@
+[277](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000aa7 ??_C@_0CB@JHKBDMCM@MSACM_RegisterDriverFromRegistry@
+[278](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ac8 ??_C@_0CP@CPDENLLM@unable?5to?5query?5requested?5subkey@
+[279](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000af7 ??_C@_0O@KEECMHLI@?$CI?$CFs?0?5?$CFs?0?5?$CFp?$CJ?6?$AA@
+[280](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b05 ??_C@_0BF@KMMCGPOI@MSACM_RegisterDriver?$AA@
+[281](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b1a ??_C@_0CJ@JKEDCFIJ@Couldn?8t?5load?5cache?5for?5ACM?5driv@
+[282](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b44 ??_C@_1BG@MOCMMKJA@?$AAs?$AAy?$AAs?$AAt?$AAe?$AAm?$AA?4?$AAi?$AAn?$AAi?$AA?$AA@
+[283](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b5a ??_C@_1BE@BDLGGGLA@?$AAd?$AAr?$AAi?$AAv?$AAe?$AAr?$AAs?$AA3?$AA2?$AA?$AA@
+[284](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b6e ??_C@_1BI@DPDHGCCI@?$AAm?$AAs?$AAa?$AAc?$AAm?$AA3?$AA2?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[285](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b86 ??_C@_0O@DLIKKMFL@?$CI?$CFp?00x?$CF08lx?$CJ?6?$AA@
+[286](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b94 ??_C@_0CB@FLOBBJAH@MSACM_RegisterNotificationWindow@
+[287](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bb5 ??_C@_0GC@JECAAKB@unable?5to?5remove?5current?5key?5?$CFs?5@
+[288](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c17 ??_C@_0BN@JFEDENLA@MSACM_WriteCurrentPriorities?$AA@
+[289](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c34 ??_C@_0FK@IFHABEPA@unable?5to?5create?5key?5?$CFs?5?$CI0x?$CF08lx@
+[290](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c8e ??_C@_1BI@CLEKMCMO@?$AAP?$AAr?$AAi?$AAo?$AAr?$AAi?$AAt?$AAy?$AA?$CF?$AAl?$AAd?$AA?$AA@
+[291](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ca6 ??_C@_1O@LKLDDEIK@?$AA?$CF?$AAc?$AA?0?$AA?5?$AA?$CF?$AAs?$AA?$AA@
+[292](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cb4 ??_C@_0DF@GNCENJAB@unable?5to?5write?5value?5for?5?$CFs?5und@
+[293](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cea ??_C@_1CO@GNJOBMPA@?$AAI?$AAn?$AAt?$AAe?$AAr?$AAn?$AAa?$AAl?$AA?5?$AAP?$AAC?$AAM?$AA?5?$AAC?$AAo?$AAn?$AAv?$AAe?$AAr?$AAt?$AAe?$AAr?$AA?$AA@
+[294](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d18 ??_C@_0EJ@GMGEKOAG@unable?5to?5write?5value?5for?5Intern@
+[295](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d61 ??_C@_09IEBFEBAC@?$CI?$CFp?0?5?$CFp?$CJ?6?$AA@
+[296](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d6b ??_C@_0BK@EMOAEFIJ@MSACM_RegisterLocalDriver?$AA@
+[297](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d85 ??_C@_0O@OJKCPEOF@load0?5failed?6?$AA@
+[298](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d93 ??_C@_0BG@PFJMJOKK@MSACM_OpenLocalDriver?$AA@
+[299](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000da9 ??_C@_0O@GGAJPNL@load1?5failed?6?$AA@
+[300](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000db7 ??_C@_0N@EBGOAAE@load?5failed?6?$AA@
+[301](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dc4 ??_C@_06GNGEHCBM@?$DN?$DO?5?$CFp?6?$AA@
+[302](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dcb ??_C@_0DB@MBDKHIFN@should?5not?5directly?5close?5sessio@
+[303](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dfc ??_C@_0BH@NMAFMCIG@MSACM_CloseLocalDriver?$AA@
+[304](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e13 ??_C@_0CB@EGOFMPEF@unable?5to?5close?5driver?5instance?6@
+[305](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e34 ??_C@_0M@OKLNFDHL@cFormatTags?$AA@
+[306](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e40 ??_C@_0M@MCEDFHNB@cFilterTags?$AA@
+[307](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e4c ??_C@_0L@IILNBJEA@fdwSupport?$AA@
+[308](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e57 ??_C@_0BA@JDCFENED@aFormatTagCache?$AA@
+[309](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e67 ??_C@_0CE@EHMBHEEG@No?5alias?5needed?5for?5registry?5ent@
+[310](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e8b ??_C@_0BF@DOCDBKLM@MSACM_GetRegistryKey?$AA@
+[311](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ea0 ??_C@_0L@OBLMJLJC@IIOs?5?$CI?$CFs?$CJ?6?$AA@
+[312](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eab ??_C@_0BA@MAJKFCIJ@MSACM_FillCache?$AA@
+[313](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ebb ??_C@_01EEMJAFIK@?6?$AA@
+[314](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ebd ??_C@_0BP@FIGNFAND@MSACM_ReorderDriversByPriority?$AA@
+[315](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000edc ??_C@_0P@PCJPAHLM@out?5of?5memory?6?$AA@
+[316](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eeb ??_C@_0DF@EPHKBBPA@RegOpenKeyW?5failed?0?5possibly?5key@
+[317](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f20 ??_C@_1O@NCHBCGNB@?$AAm?$AAs?$AAa?$AAc?$AAm?$AA?4?$AA?$AA@
+[318](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f2e ??_C@_0EO@LKNJHJJK@local?5driver?5instances?5still?5pre@
+[319](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f7c ??_C@_0BM@JPAFNFOE@MSACM_UnregisterLocalDriver?$AA@
+[320](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f98 ??_C@_0BO@NNDCGNAJ@DRV_LOAD?5failed?5on?5driver?5?$CFp?6?$AA@
+[321](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fb6 ??_C@_0BA@POEIPPDK@MSACM_AddToList?$AA@
+[322](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fc6 ??_C@_0BO@BBAAMGBA@DRV_OPEN?5failed?5on?5driver?5?$CFp?6?$AA@
+[323](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fe4 ??_C@_0CJ@FNAOMACE@requested?5to?5remove?5invalid?5inst@
+[324](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000100d ??_C@_0BF@LHHBGAN@MSACM_RemoveFromList?$AA@
+[325](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d137 __chkstk
+[326](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000284c 
+[327](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000008e6 _MSACM_RegisterDriverFromRegistry.msacmW
+[328](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027b0 __imp___wcsnicmp
+[329](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000008f2 _drvkey
+[330](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002774 __imp__RegOpenKeyExW@20
+[331](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000048 ___wine_dbch_msacm
+[332](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002784 __imp__RegQueryValueExW@24
+[333](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002760 __imp__RegCloseKey@4
+[334](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000009fa _wine_dbgstr_wn.hex
+[335](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000c8 _MSACM_pLastACMDriverID
+[336](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002764 __imp__RegCreateKeyW@12
+[337](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002780 __imp__RegQueryValueExA@24
+[338](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002820 __imp__IsBadReadPtr@8
+[339](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000dc _MSACM_pFirstACMLocalDriver
+[340](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000e0 _MSACM_pLastACMLocalDriver
+[341](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000277c __imp__RegQueryInfoKeyW@48
+[342](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000276c __imp__RegEnumKeyExW@32
+[343](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000960 _MSACM_RegisterAllDrivers.msacmW
+[344](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027e4 __imp__wcschr
+[345](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002770 __imp__RegEnumValueW@32
+[346](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027fc __imp__GetPrivateProfileSectionW@16
+[347](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000096c _basePriorityKey
+[348](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002778 __imp__RegOpenKeyW@12
+[349](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027ec __imp__wcsstr
+[350](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027a8 __imp___wcsicmp
+[351](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000cc _MSACM_pLastACMNotifyWnd
+[352](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000d0 _MSACM_pFirstACMNotifyWnd
+[353](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000d4 _MSACM_suspendBroadcastCount
+[354](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000d8 _MSACM_pendingBroadcast
+[355](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002768 __imp__RegDeleteKeyW@8
+[356](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027ac __imp___wcslwr
+[357](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000278c __imp__RegSetValueExW@24
+[358](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000279c __imp____stdio_common_vswprintf
+[359](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002788 __imp__RegSetValueExA@24
+[360](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002728 __imp__CharLowerW@4
+[361](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006920 _DllMain@12
+[362](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000069c0 _wine_dbg_log
+[363](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010a0 __xmm@80000000800000008000000080000000
+[364](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010b0 ??_C@_0N@DNEGJJJA@?$CFp?50x?$CFlx?5?$CFp?6?$AA@
+[365](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010bd ??_C@_07JLKLLPCJ@DllMain?$AA@
+[366](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010c5 ??_C@_0BD@OBPEFPLC@?$CFlx?5not?5supported?6?$AA@
+[367](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010d8 ??_C@_0O@BDCELPPL@acmGetVersion?$AA@
+[368](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010e6 ??_C@_0P@GPDDFNCC@?$CI?$CFp?0?5?$CFd?0?5?$CFp?$CJ?$DL?6?$AA@
+[369](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010f5 ??_C@_0L@OCMEHBKI@acmMetrics?$AA@
+[370](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001100 ??_C@_0CL@BDEGFOIJ@ACM_METRIC_COUNT_HARDWARE?5not?5im@
+[371](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000112b ??_C@_0BE@INPAHPPM@?$CI?$CFp?0?5?$CFd?0?5?$CFp?$CJ?3?5stub?6?$AA@
+[372](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 ___wine_dbch_msacm
+[373](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027f4 __imp__DisableThreadLibraryCalls@4
+[374](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002810 __imp__HeapCreate@12
+[375](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002814 __imp__HeapDestroy@4
+[376](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002808 __imp__GetVersionExA@4
+[377](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015a8 __real@4330000000000000
+[378](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b0 __real@bff0000000000000
+[379](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b8 __real@41e0000000000000
+[380](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015c0 __xmm@00000002000000100000000100000000
+[381](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015d0 __xmm@00000001000000020100000001000000
+[382](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008010 _wine_dbg_log
+[383](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008090 _cvtSS88K
+[384](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015e0 __xmm@0000017f0000017f0000017f0000017f
+[385](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015f0 __xmm@00000080000000800000008000000080
+[386](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001600 __xmm@000000ff000000ff000000ff000000ff
+[387](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001610 __xmm@80808080808080808080808080808080
+[388](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001620 __xmm@00000000000000008080808080808080
+[389](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000080f0 _cvtSM88K
+[390](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008670 _cvtMS88K
+[391](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008810 _cvtMM88K
+[392](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008870 _cvtSS816K
+[393](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001630 __xmm@80008000800080008000800080008000
+[394](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008960 _cvtSM816K
+[395](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008b30 _cvtMS816K
+[396](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001640 __xmm@00000000000000000000000080808080
+[397](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008c00 _cvtMM816K
+[398](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008de0 _cvtSS168K
+[399](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00008f30 _cvtSM168K
+[400](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009120 _cvtMS168K
+[401](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009340 _cvtMM168K
+[402](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009500 _cvtSS1616K
+[403](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009560 _cvtSM1616K
+[404](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000096f0 _cvtMS1616K
+[405](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000097b0 _cvtMM1616K
+[406](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009810 _cvtSS248K
+[407](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001650 __xmm@ffffffffffffffffffffffff0000ffff
+[408](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001660 __xmm@ffffffffffffffffffffffffffff00ff
+[409](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001670 __xmm@ffffffffffffffffffffffffff00ffff
+[410](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001680 __xmm@000000000000000000000000ff000000
+[411](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001690 __xmm@80000100800001008000010080000100
+[412](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009a10 _cvtSM248K
+[413](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009d30 _cvtMS248K
+[414](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00009ef0 _cvtMM248K
+[415](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a180 _cvtSS2416K
+[416](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a240 _cvtSM2416K
+[417](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a5a0 _cvtMS2416K
+[418](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a670 _cvtMM2416K
+[419](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a740 _cvtSS88C
+[420](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a7d0 _cvtSM88C
+[421](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a890 _cvtMS88C
+[422](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a920 _cvtMM88C
+[423](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000a9b0 _cvtSS816C
+[424](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000aa50 _cvtSM816C
+[425](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ab20 _cvtMS816C
+[426](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000abc0 _cvtMM816C
+[427](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ac50 _cvtSS168C
+[428](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000acf0 _cvtSM168C
+[429](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ada0 _cvtMS168C
+[430](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ae40 _cvtMM168C
+[431](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000aed0 _cvtSS1616C
+[432](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000af60 _cvtSM1616C
+[433](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b010 _cvtMS1616C
+[434](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b0a0 _cvtMM1616C
+[435](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b130 _cvtSS2424C
+[436](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b1e0 _cvtSM2424C
+[437](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b2c0 _cvtMS2424C
+[438](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b370 _cvtMM2424C
+[439](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016a0 ??_C@_0BM@PDBEFADA@?$CI?$CF08Ix?5?$CFp?5?$CFu?5?$CF08Ix?5?$CF08Ix?$CJ?$DL?6?$AA@
+[440](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016bc ??_C@_0P@EKOLLCKF@PCM_DriverProc?$AA@
+[441](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016cb ??_C@_0M@LIDBLFLD@Wine?5Driver?$AA@
+[442](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d7 ??_C@_0BD@DADMKBD@MSACM?5PCM?5filter?5?$CB?$AA@
+[443](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016ea ??_C@_0M@MHIHLPLM@PCM_drvOpen?$AA@
+[444](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016f6 ??_C@_06OMFFKMAC@?$CI?$CFld?$CJ?6?$AA@
+[445](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016fd ??_C@_0N@HDALINEF@PCM_drvClose?$AA@
+[446](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000170a ??_C@_05KKPEMAK@?$CI?$CFp?$CJ?6?$AA@
+[447](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001710 ??_C@_0BC@HEDAPEFK@PCM_DriverDetails?$AA@
+[448](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001722 ??_C@_06IACKIKH@MS?9PCM?$AA@
+[449](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001729 ??_C@_0BD@EHPLNKEO@Wine?5PCM?5converter?$AA@
+[450](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000173c ??_C@_0CD@IAKAKMCL@Brought?5to?5you?5by?5the?5Wine?5team?4@
+[451](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000175f ??_C@_0BG@FADHEFPD@Refer?5to?5LICENSE?5file?$AA@
+[452](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001775 ??_C@_0BF@CCNJFKOO@PCM_FormatTagDetails?$AA@
+[453](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000178a ??_C@_0O@GCJHCCML@not?5possible?6?$AA@
+[454](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001798 ??_C@_0BJ@OHKCDIDE@Unsupported?5query?5?$CF08lx?6?$AA@
+[455](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017b1 ??_C@_0BC@OMNJCFNO@PCM_FormatDetails?$AA@
+[456](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017c3 ??_C@_0BM@KDBPHHAB@dlls?1msacm32?1pcmconverter?4c?$AA@
+[457](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017df ??_C@_0CN@EMGMNBOA@afd?9?$DOdwFormatIndex?5?$DM?5ARRAY_SIZE?$CI@
+[458](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000180c ??_C@_0BD@FFFLLJHF@PCM_GetFormatIndex?$AA@
+[459](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000181f ??_C@_0BC@OFJGMJIF@PCM_FormatSuggest?$AA@
+[460](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001831 ??_C@_0CC@KELKJLAJ@source?5format?50x?$CFx?5not?5supported@
+[461](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001853 ??_C@_0CH@NNLOLPNC@destination?5format?50x?$CFx?5not?5supp@
+[462](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000187a ??_C@_0P@OKNGFONA@PCM_StreamOpen?$AA@
+[463](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001889 ??_C@_0CJ@NELNJLJL@?$CB?$CIadsi?9?$DOfdwOpen?5?$CG?5ACM_STREAMOPEN@
+[464](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018b2 ??_C@_0CH@MJJHBFAL@Source?3?524?9bit?5samples?5must?5be?5p@
+[465](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018d9 ??_C@_0CC@BDKOJJBI@Unsupported?5source?5bit?5depth?3?5?$CFu@
+[466](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018fb ??_C@_0CM@MDCLEIOC@Destination?3?524?9bit?5samples?5must@
+[467](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001927 ??_C@_0CH@OGOIGFHN@Unsupported?5destination?5bit?5dept@
+[468](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000194e ??_C@_0CM@CGMLHLPL@Unimplemented?5conversion?5from?5?$CFu@
+[469](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000197a ??_C@_0O@KFKCCNHK@?$CI?$CFp?0?5?$CFd?0?5?$CFp?$CJ?6?$AA@
+[470](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001988 ??_C@_08PHMDAHPF@cvtSS88K?$AA@
+[471](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001991 ??_C@_08CIBDCOBG@cvtSM88K?$AA@
+[472](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000199a ??_C@_08MOBPGEBO@cvtMS88K?$AA@
+[473](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019a3 ??_C@_08BBMPENPN@cvtMM88K?$AA@
+[474](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019ac ??_C@_09PPIMOHND@cvtSS816K?$AA@
+[475](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019b6 ??_C@_09MGFAIEDI@cvtSM816K?$AA@
+[476](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019c0 ??_C@_09MIGNAAEA@cvtMS816K?$AA@
+[477](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019ca ??_C@_09PBLBGDKL@cvtMM816K?$AA@
+[478](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019d4 ??_C@_09GFNFJABB@cvtSS168K?$AA@
+[479](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019de ??_C@_09FMAJPDPK@cvtSM168K?$AA@
+[480](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019e8 ??_C@_09FCDEHHIC@cvtMS168K?$AA@
+[481](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019f2 ??_C@_09GLOIBEGJ@cvtMM168K?$AA@
+[482](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019fc ??_C@_0L@FIHJNHCF@cvtSS1616K?$AA@
+[483](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a07 ??_C@_0L@GPJIDALG@cvtSM1616K?$AA@
+[484](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a12 ??_C@_0L@DBEIPEDM@cvtMS1616K?$AA@
+[485](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a1d ??_C@_0L@GKJBDKP@cvtMM1616K?$AA@
+[486](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a28 ??_C@_09IIHMCCEK@cvtSS248K?$AA@
+[487](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a32 ??_C@_09LBKAEBKB@cvtSM248K?$AA@
+[488](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a3c ??_C@_09LPJNMFNJ@cvtMS248K?$AA@
+[489](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a46 ??_C@_09IGEBKGDC@cvtMM248K?$AA@
+[490](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a50 ??_C@_0L@KECNPGOL@cvtSS2416K?$AA@
+[491](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a5b ??_C@_0L@JDMMBBHI@cvtSM2416K?$AA@
+[492](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a66 ??_C@_0L@MNBMNFPC@cvtMS2416K?$AA@
+[493](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a71 ??_C@_0L@PKPNDCGB@cvtMM2416K?$AA@
+[494](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a7c ??_C@_0BA@DHCCPBNH@PCM_StreamClose?$AA@
+[495](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a8c ??_C@_0P@JGFJABMA@PCM_StreamSize?$AA@
+[496](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a9b ??_C@_01PAPGNFGE@c?$AA@
+[497](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a9d ??_C@_0BC@CKLBOAPE@PCM_StreamConvert?$AA@
+[498](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001aaf ??_C@_0CA@LAIKFCGL@nsrc?$DN?$CFld?0adsh?9?$DOcbSrcLength?$DN?$CFld?6?$AA@
+[499](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001acf ??_C@_0CA@LFJFPDFN@ndst?$DN?$CFld?0adsh?9?$DOcbDstLength?$DN?$CFld?6?$AA@
+[500](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001aef ??_C@_0HK@LMABLCKC@src?5?$FLwFormatTag?$DN?$CFu?0?5nChannels?$DN?$CFu@
+[501](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b69 ??_C@_0HK@ILEIEKH@dst?5?$FLwFormatTag?$DN?$CFu?0?5nChannels?$DN?$CFu@
+[502](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001be3 ??_C@_0CN@IDAODAJL@Unsupported?5fdwConvert?5?$CI?$CF08lx?$CJ?0?5@
+[503](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 ___wine_dbch_msacm
+[504](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002718 __imp__DefDriverProc@20
+[505](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000012d4 _PCM_Formats
+[506](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002740 __imp__MessageBoxA@16
+[507](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001484 _PCM_ConvertKeepRate
+[508](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001514 _PCM_ConvertChangeRate
+[509](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027a0 __imp___assert
+[510](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000190 __fltused
+[511](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000b550 _wine_dbg_log
+[512](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000c4e0 _wine_dbg_sprintf
+[513](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d90 ??_C@_0L@OCAAJODN@?$CI?$CFp?0?5?$CFld?$CJ?6?$AA@
+[514](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d9b ??_C@_0P@IFIKILDC@acmStreamClose?$AA@
+[515](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001daa ??_C@_08CJLGGJJ@?$DN?$DO?5?$CI?$CFd?$CJ?6?$AA@
+[516](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001db3 ??_C@_0BB@LJGIMNNH@acmStreamConvert?$AA@
+[517](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dc4 ??_C@_0BD@IOGDFGDJ@unprepared?5header?6?$AA@
+[518](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dd7 ??_C@_0BK@PFMEOPON@?$CI?$CFp?0?5?$CFu?0?5?$CFId?0?5?$CFId?$CJ?3?5stub?6?$AA@
+[519](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001df1 ??_C@_0BB@LJGMMLEC@acmStreamMessage?$AA@
+[520](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e02 ??_C@_0CF@KAPNBDDF@?$CI?$CFp?0?5?$CFp?0?5?$CFp?0?5?$CFp?0?5?$CFp?0?5?$CFId?0?5?$CFId?0?5?$CF@
+[521](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e27 ??_C@_0O@PPKHJDGJ@acmStreamOpen?$AA@
+[522](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e35 ??_C@_0M@MPHDNACD@?$CFs?5?$DN?$DO?5?$CF08x?6?$AA@
+[523](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e41 ??_C@_0BH@IPFILDPO@acmStreamPrepareHeader?$AA@
+[524](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e58 ??_C@_0CD@LHNFBPB@invalid?5use?5of?5reserved?5paramete@
+[525](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e7b ??_C@_0CM@KCKNIECM@source?5smaller?5than?5block?5align?5@
+[526](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ea7 ??_C@_0P@BBKNCMII@acmStreamReset?$AA@
+[527](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001eb6 ??_C@_0BE@IEPCFDA@?$CI?$CFp?0?5?$CFld?0?5?$CFp?0?5?$CFld?$CJ?6?$AA@
+[528](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001eca ??_C@_0O@IDCIMMHJ@acmStreamSize?$AA@
+[529](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ed8 ??_C@_0P@MFHDLPHA@?$DN?$DO?5?$CI?$CFd?$CJ?5?$FL?$CFlu?$FN?6?$AA@
+[530](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ee7 ??_C@_0BJ@IKNENGPE@acmStreamUnprepareHeader?$AA@
+[531](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f00 ??_C@_0O@GBJFAJOA@ACM_GetStream?$AA@
+[532](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000078 ___wine_dbch_msacm
+[533](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001d80 _wine_dbgstr_wn.hex
+[534](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000c590 _fallback__wine_dbg_strdup
+[535](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000c630 _fallback__wine_dbg_output
+[536](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000c690 ___wine_dbg_get_channel_flags
+[537](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000c6f0 _fallback__wine_dbg_get_channel_flags
+[538](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000cb10 _fallback__wine_dbg_header
+[539](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ce20 _sprintf
+[540](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x0000ce50 _snprintf
+[541](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f88 ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[542](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f9a ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[543](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fac ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[544](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fc9 ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[545](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fdc ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[546](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ff0 ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[547](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ffa ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[548](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ffd ??_C@_03NFKEKGGK@all?$AA@
+[549](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002001 ??_C@_05PCLMOIMF@fixme?$AA@
+[550](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002007 ??_C@_03JIDPIAJI@err?$AA@
+[551](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000200b ??_C@_04FNLOFOEM@warn?$AA@
+[552](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002010 ??_C@_05IMBNNINJ@trace?$AA@
+[553](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002016 ??_C@_09INBMIBID@?$CF3u?4?$CF06u?3?$AA@
+[554](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002020 ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[555](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000202a ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[556](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002030 ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[557](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000e8 _p__wine_dbg_strdup
+[558](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027f8 __imp__GetModuleHandleW@4
+[559](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002800 __imp__GetProcAddress@8
+[560](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027a4 __imp___strdup
+[561](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000178 _fallback__wine_dbg_strdup.pos
+[562](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 _fallback__wine_dbg_strdup.list
+[563](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027b4 __imp__free
+[564](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ec _p__wine_dbg_output
+[565](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027e0 __imp__strlen
+[566](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000017c _partial_line_tid
+[567](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002794 __imp____acrt_iob_func
+[568](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027b8 __imp__fwrite
+[569](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f0 _p__wine_dbg_get_channel_flags
+[570](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000088 _nb_debug_options
+[571](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027bc __imp__getenv
+[572](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027d0 __imp__strchr
+[573](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000008c _default_flags
+[574](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027dc __imp__strcspn
+[575](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027d4 __imp__strcmp
+[576](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000180 _debug_options
+[577](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000184 _options_size
+[578](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000281c __imp__HeapReAlloc@16
+[579](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d1c6 _memmove
+[580](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027c8 
+[581](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027d8 __imp__strcpy
+[582](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f4 _p__wine_dbg_header
+[583](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000008d ___wine_dbch_microsecs
+[584](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000009d ___wine_dbch_timestamp
+[585](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002804 __imp__GetTickCount@0
+[586](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000188 _fallback__wine_dbg_header.frequency
+[587](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002830 __imp__QueryPerformanceFrequency@4
+[588](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000282c __imp__QueryPerformanceCounter@4
+[589](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d1fd __alldiv
+[590](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002844 
+[591](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000d208 __allrem
+[592](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002848 
+[593](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ad ___wine_dbch_pid
+[594](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001f78 _debug_classes
+[595](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002850 __imp___vsnprintf
+[596](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002834 __imp__RaiseException@16
+[597](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000cee0 _DllMainCRTStartup@12
+
+

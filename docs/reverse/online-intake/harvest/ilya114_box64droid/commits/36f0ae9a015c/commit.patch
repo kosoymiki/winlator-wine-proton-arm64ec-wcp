@@ -1,0 +1,29 @@
+commit 36f0ae9a015c02753d4ad4095c700c7a838b9e8f
+Author: Ilya114 <93242944+Ilya114@users.noreply.github.com>
+Date:   Tue Dec 31 14:53:02 2024 +0200
+
+    Update native.py
+---
+ installers/native.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/installers/native.py b/installers/native.py
+index 2fc714d..7a9832e 100644
+--- a/installers/native.py
++++ b/installers/native.py
+@@ -1,5 +1,5 @@
+ import os, shutil, time
+-def create_scripts_to_widget():
++def download_widget_scripts():
+     os.system("mkdir -p /data/data/com.termux/files/home/.shortcuts && chmod 700 -R /data/data/com.termux/files/home/.shortcuts")
+     os.system(r"wget https://raw.githubusercontent.com/Ilya114/Box64Droid/main/scripts/nativewd/1\)\ Start\ Box64Droid -q -P /data/data/com.termux/files/home/.shortcuts")
+     os.system(r"wget https://raw.githubusercontent.com/Ilya114/Box64Droid/main/scripts/nativewd/2\)\ Change\ Wine\ version -q -P /data/data/com.termux/files/home/.shortcuts")
+@@ -61,7 +61,7 @@ print(" Downloading starting scripts...")
+ print("")
+ scripts()
+ print("Creating scripts to launch via widget...")
+-create_scripts_to_widget()
++download_widget_scripts()
+ print(" Removing the installation waste...")
+ clear_waste()
+ print(" Installation finished. To start Box64Droid run 'box64droid --start', to see more arguments run 'box64droid --help'")

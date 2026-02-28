@@ -31,14 +31,17 @@
 ### `2i-2p` — Стабилизация CI pinned glibc lane и аналитика источников
 - Зачем добавлялись: Build deps/parallelism для WCP, ScaleForce binding gate, forensic sink fallback, Hangover/source audits, UI fixes Adrenotools.
 
-### `2q-2x` — Стабилизация Winlator патчей, FEX separation, bionic-native mainline и релизная линия (Winlator 0.9b / WCP stable)
-- Зачем добавлялись: Compile-fix патчей Adrenotools, разделение FEX/WCP, Steven reverse analysis, bionic-native mainline policy и обновление stable line (Winlator 0.9b, WCP stable без номера).
+### `2q-2x` — Стабилизация Winlator патчей, FEX separation, bionic-native mainline и релизная линия (Winlator 0.9c+ / WCP stable)
+- Зачем добавлялись: Compile-fix патчей Adrenotools, разделение FEX/WCP, Steven reverse analysis, bionic-native mainline policy и обновление stable line (Winlator 0.9c+, WCP stable без номера).
 
 ### `2y-2z` — Полный импорт Box/WoWBox параметров и runtime-common профили
 - Зачем добавлялись: Расширение Box/WoWBox env surface и device-tier пресетов, плюс внедрение унифицированной runtime-common профильной модели в container/settings/launcher path.
 
 ### `3a-6h` — Mainline bionic donor contract hardening + forensic lock
 - Зачем добавлялись: Жесткий preflight донор-архивов (SHA/ABI), кэш доноров в workflows, строгая проверка runtime-контракта на каждом WCP артефакте, расширение forensic-индексов (`unix-module-abi.tsv`, `bionic-source-entry.json`) и закрепление этих инвариантов в валидации/документации.
+
+### `6i+` — Harvard patch-base expansion (`0001..0010`, без промежуточного push)
+- Зачем добавлялись: переход к X11-first графическому контуру в слайсах `0002..0010`, интеграция AeTurnip/Adrenotools control-plane, DX route + upscaler матрица (все DirectX пути), commit-scan/harvest intake orchestration и усиление URC-контрактов.
 
 ## Полная карта commit -> версия
 
@@ -54,7 +57,7 @@
 | `0h` | `2c7d5e2` | winlator: add forensic diagnostics and contents/turnip patch series |
 | `0i` | `8db3baf` | ci: add repo-backed contents metadata and validation for WCP packages |
 | `0j` | `66ed052` | ci: clean legacy workflows and add 0.2b release tooling |
-| `0k` | `9e9ed93` | docs: refresh Aero.so contributor and content package documentation |
+| `0k` | `9e9ed93` | docs: refresh Ae.solator contributor and content package documentation |
 | `0l` | `1a7fefe` | ci: fix gh cleanup scripts pagination and stdin parsing |
 | `0m` | `821a4db` | ci: fix workflow cleanup script python quoting |
 | `0n` | `361b763` | ci: trim repo slug in gh cleanup scripts |
@@ -127,8 +130,21 @@
 
 - Исторические журналы (`docs/AEROSO_IMPLEMENTATION_REFLECTIVE_LOG.md` и др.) сохраняют исходные метки `0.2b`; они не переписывались как архивные артефакты.
 - Эта карта отражает инженерную последовательность commit-ов в `main`, а не маркетинговые релизные версии.
+- Для текущего рабочего состояния patch-base (`0001..0010`) источником истины является `ci/winlator/patches/README.md` + `ci/winlator/patch-batch-plan.tsv`.
 
-## Карта patch-stack (`0001..0048`) по этапам
+## Актуальная карта patch-base (`0001..0010`)
+
+- `0001-mainline-full-stack-consolidated.patch`: консолидированный канон mainline.
+- `0002-turnip-lane-global-adrenotools-restructure.patch`: глобальная перестройка Adrenotools + turnip lane orchestration.
+- `0003-aeturnip-runtime-bind-and-forensics.patch`: жесткий runtime bind на `aeturnip` + forensic markers.
+- `0004-0010`: X11-first upscaler/DX policy stack:
+  - Adrenotools policy plane для всех апскейлеров,
+  - DX requested/effective map по всем DirectX путям,
+  - Proton FSR hack gate по `dxvk_stack`,
+  - NVAPI requested/effective + ARM64EC capability gating,
+  - launch graphics packet с пробросом в launcher forensic.
+
+## Архивная карта patch-stack (`0001..0048`) по этапам
 
 ### `0001-0004` — Базовый форк, runtime/FEX и тема
 - `0001`: базовый ARM64EC runtime/FEX patch-stack поверх `winlator_bionic`
@@ -136,10 +152,10 @@
 - `0003`: ранняя WCPHub/turnip логика
 - `0004`: dark emerald theme baseline
 
-### `0005-0009` — Aero.so линия, contents/turnip, контейнеры и релизный baseline
+### `0005-0009` — Ae.solator линия, contents/turnip, контейнеры и релизный baseline
 - `0005`: branding + turnip/nightly + cleanup (большой интеграционный слой)
 - `0006`: forensic/diagnostics/contents/turnip/repo-contents (ранняя интеграция)
-- `0007`: версия Aero.so (`0.9b`)
+- `0007`: версия Ae.solator (`0.9c+`)
 - `0008`: WCPHub overlay для `Wine/Proton`, single-track policy
 - `0009`: container create hardening + content download fixes
 

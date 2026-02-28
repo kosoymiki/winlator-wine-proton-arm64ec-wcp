@@ -1,0 +1,1053 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index e8bb7b6a4a21140f5b8137d7f8e8582cf65d18e8..edd7be13aa17b80310243f2fd49148d1d62611f0 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -133,7 +133,9 @@ import java.io.InputStream;
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.Iterator;
++import java.util.LinkedHashMap;
+ import java.util.Locale;
++import java.util.Map;
+ import java.util.concurrent.Executors;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+@@ -1921,7 +1923,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_UPSCALE_VKBASALT_REQUESTED", upscalerVkbasaltEnabled ? "1" : "0");
+         envVars.put("AERO_UPSCALE_SCREENFX_REQUESTED", UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline) ? "0" : "1");
+         envVars.put("AERO_UPSCALE_SCALEFORCE_REQUESTED", UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset) ? "0" : "1");
+-        envVars.put("AERO_UPSCALE_PROTON_FSR_REQUESTED", UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode) ? "0" : "1");
+         envVars.put("AERO_UPSCALE_DX8_ASSIST_REQUESTED", isDx8AssistRequested() ? "1" : "0");
+         envVars.put("AERO_UPSCALE_VKBASALT_EFFECTIVE", upscalerVkbasaltEnabled ? "1" : "0");
+         envVars.put("AERO_UPSCALE_SCREENFX_EFFECTIVE", UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline) ? "0" : "1");
+@@ -1938,19 +1939,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             renderStack = "x11+system_vulkan";
+         }
+         envVars.put("AERO_X11_GRAPHICS_STACK", renderStack);
++        envVars.put("AERO_RUNTIME_DISTRIBUTION", "ae.solator");
++        envVars.put("AERO_RUNTIME_FLAVOR", resolveRuntimeFlavor());
++        envVars.put("AERO_WINE_ARCH", wineInfo != null && wineInfo.isArm64EC() ? "arm64ec" : "x86_64");
+ 
+         applyUpscalerMemoryPolicyEnv();
+         applyDxWrapperMatrixEnv();
+-
+-        if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) {
+-            envVars.put("WINE_FULLSCREEN_FSR", "1");
+-            envVars.put("WINE_FULLSCREEN_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
+-            envVars.put("WINE_FULLSCREEN_FSR_MODE", upscalerProtonFsrMode);
+-            envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "1");
+-        } else {
+-            envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "0");
+-        }
++        applyProtonFsrHackEnv();
++        applyUpscalerLibraryLayoutEnv();
++        traceRuntimeSubsystemEnvelope();
++        resolveRuntimeLibraryConflicts();
+         traceUpscalerModuleStates();
++        populateUpscalerRuntimeMatrixEnv();
+         populateLaunchGraphicsPacketEnv();
+ 
+         ForensicLogger.logEvent(this, "info", "UPSCALE_PROFILE_RESOLVED",
+@@ -1969,6 +1969,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "vkbasalt_denoise", upscalerVkbasaltDenoise,
+                         "shortcut_override", upscalerShortcutOverride ? "1" : "0",
+                         "active_modules", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                        "distribution", envVars.get("AERO_RUNTIME_DISTRIBUTION"),
++                        "runtime_flavor", envVars.get("AERO_RUNTIME_FLAVOR"),
++                        "wine_arch", envVars.get("AERO_WINE_ARCH"),
+                         "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK")
+                 ));
+     }
+@@ -2156,6 +2159,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         packet.append(";dx_map_eff=").append(packetValue("AERO_DX_DIRECT_MAP_EXTENDED"));
+         packet.append(";dxvk_req=").append(packetValue("AERO_DXVK_VERSION_REQUESTED"));
+         packet.append(";dxvk_sel=").append(packetValue("AERO_DXVK_VERSION_SELECTED"));
++        packet.append(";dxvk_caps=").append(packetValue("AERO_DXVK_CAPS"));
++        packet.append(";dxvk_nvapi=").append(packetValue("AERO_DXVK_NVAPI_EFFECTIVE"));
++        packet.append(";dxvk_nvapi_gate=").append(packetValue("AERO_DXVK_NVAPI_ARCH_GATE"));
+         packet.append(";vkd3d_req=").append(packetValue("AERO_VKD3D_VERSION_REQUESTED"));
+         packet.append(";vkd3d_sel=").append(packetValue("AERO_VKD3D_VERSION_SELECTED"));
+         packet.append(";d8vk_eff=").append(packetValue("AERO_D8VK_VERSION_EFFECTIVE"));
+@@ -2164,7 +2170,21 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         packet.append(";mem_policy=").append(packetValue("AERO_UPSCALE_MEM_POLICY_EFFECTIVE"));
+         packet.append(";proton_fsr_mode=").append(packetValue("AERO_UPSCALE_PROTON_FSR_MODE"));
+         packet.append(";proton_fsr_effective=").append(packetValue("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
++        packet.append(";proton_fsr_reason=").append(packetValue("AERO_UPSCALE_PROTON_FSR_REASON"));
+         packet.append(";proton_fsr_strength=").append(packetValue("AERO_UPSCALE_PROTON_FSR_STRENGTH"));
++        packet.append(";layout_mode=").append(packetValue("AERO_UPSCALE_LAYOUT_MODE"));
++        packet.append(";layout_nvapi=").append(packetValue("AERO_UPSCALE_LAYOUT_NVAPI"));
++        packet.append(";distribution=").append(packetValue("AERO_RUNTIME_DISTRIBUTION"));
++        packet.append(";runtime_flavor=").append(packetValue("AERO_RUNTIME_FLAVOR"));
++        packet.append(";wine_arch=").append(packetValue("AERO_WINE_ARCH"));
++        packet.append(";upscale_matrix=").append(packetValue("AERO_UPSCALE_RUNTIME_MATRIX"));
++        packet.append(";lib_conflicts=").append(packetValue("AERO_LIBRARY_CONFLICT_COUNT"));
++        packet.append(";lib_conflicts_sha=").append(packetValue("AERO_LIBRARY_CONFLICT_SHA256"));
++        packet.append(";subsystems_sha=").append(packetValue("AERO_RUNTIME_SUBSYSTEMS_SHA256"));
++        packet.append(";component_stream_sha=").append(packetValue("AERO_LIBRARY_COMPONENT_STREAM_SHA256"));
++        packet.append(";fastpath=").append(packetValue("AERO_LIBRARY_FASTPATH"));
++        packet.append(";logging_mode=").append(packetValue("AERO_RUNTIME_LOGGING_MODE"));
++        packet.append(";logging_cov_sha=").append(packetValue("AERO_RUNTIME_LOGGING_COVERAGE_SHA256"));
+         String payload = packet.toString();
+         envVars.put("AERO_LAUNCH_GRAPHICS_PACKET", payload);
+         envVars.put("AERO_LAUNCH_GRAPHICS_PACKET_SHA256", ForensicLogger.sha256Hex(payload));
+@@ -2179,8 +2199,25 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "dx_policy_stack", envVars.get("AERO_DX_POLICY_STACK"),
+                         "dx_map_requested", envVars.get("AERO_DX_DIRECT_MAP_REQUESTED"),
+                         "dx_map_effective", envVars.get("AERO_DX_DIRECT_MAP_EXTENDED"),
++                        "dxvk_caps", envVars.get("AERO_DXVK_CAPS"),
++                        "dxvk_nvapi_gate", envVars.get("AERO_DXVK_NVAPI_ARCH_GATE"),
++                        "dxvk_nvapi_effective", envVars.get("AERO_DXVK_NVAPI_EFFECTIVE"),
++                        "proton_fsr_reason", envVars.get("AERO_UPSCALE_PROTON_FSR_REASON"),
++                        "upscale_layout_mode", envVars.get("AERO_UPSCALE_LAYOUT_MODE"),
++                        "upscale_layout_nvapi", envVars.get("AERO_UPSCALE_LAYOUT_NVAPI"),
++                        "distribution", envVars.get("AERO_RUNTIME_DISTRIBUTION"),
++                        "runtime_flavor", envVars.get("AERO_RUNTIME_FLAVOR"),
++                        "wine_arch", envVars.get("AERO_WINE_ARCH"),
+                         "upscale_modules_requested", envVars.get("AERO_UPSCALE_MODULES_REQUESTED"),
+                         "upscale_modules_active", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                        "upscale_runtime_matrix", envVars.get("AERO_UPSCALE_RUNTIME_MATRIX"),
++                        "library_conflict_count", envVars.get("AERO_LIBRARY_CONFLICT_COUNT"),
++                        "library_conflict_sha256", envVars.get("AERO_LIBRARY_CONFLICT_SHA256"),
++                        "runtime_subsystems_sha256", envVars.get("AERO_RUNTIME_SUBSYSTEMS_SHA256"),
++                        "component_stream_sha256", envVars.get("AERO_LIBRARY_COMPONENT_STREAM_SHA256"),
++                        "library_fastpath", envVars.get("AERO_LIBRARY_FASTPATH"),
++                        "runtime_logging_mode", envVars.get("AERO_RUNTIME_LOGGING_MODE"),
++                        "runtime_logging_coverage_sha256", envVars.get("AERO_RUNTIME_LOGGING_COVERAGE_SHA256"),
+                         "packet_sha256", envVars.get("AERO_LAUNCH_GRAPHICS_PACKET_SHA256")
+                 ));
+     }
+@@ -2208,13 +2245,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         boolean protonFsrRequested = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_REQUESTED"));
+         boolean protonFsrEffective = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
+-        String protonFsrReason;
+-        if (!protonFsrRequested) {
+-            protonFsrReason = "policy_off";
+-        } else if (protonFsrEffective) {
+-            protonFsrReason = "enabled";
+-        } else {
+-            protonFsrReason = "disabled";
++        String protonFsrReason = envVars.get("AERO_UPSCALE_PROTON_FSR_REASON");
++        if (protonFsrReason == null || protonFsrReason.isEmpty()) {
++            if (!protonFsrRequested) {
++                protonFsrReason = "policy_off";
++            } else if (protonFsrEffective) {
++                protonFsrReason = "enabled";
++            } else {
++                protonFsrReason = "disabled";
++            }
+         }
+         envVars.put("AERO_UPSCALE_PROTON_FSR_REASON", protonFsrReason);
+         logUpscalerModuleState("proton_fsr", protonFsrEffective, protonFsrReason,
+@@ -2234,6 +2273,503 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         logUpscalerModuleState("dx8assist", dx8AssistEffective, dx8AssistReason, envVars.get("AERO_DX_ROUTE_DX8"));
+     }
+ 
++    private void populateUpscalerRuntimeMatrixEnv() {
++        String matrix = "vkbasalt=" + envVars.get("AERO_UPSCALE_VKBASALT_EFFECTIVE") + ":" + packetValue("AERO_UPSCALE_VKBASALT_REASON") +
++                ";screenfx=" + envVars.get("AERO_UPSCALE_SCREENFX_EFFECTIVE") + ":" + packetValue("AERO_UPSCALE_SCREENFX_REASON") +
++                ";scaleforce=" + envVars.get("AERO_UPSCALE_SCALEFORCE_EFFECTIVE") + ":" + packetValue("AERO_UPSCALE_SCALEFORCE_REASON") +
++                ";proton_fsr=" + envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE") + ":" + packetValue("AERO_UPSCALE_PROTON_FSR_REASON") +
++                ";dx8assist=" + envVars.get("AERO_DX8_ASSIST_EFFECTIVE") + ":" + packetValue("AERO_UPSCALE_DX8_ASSIST_REASON") +
++                ";layout=" + packetValue("AERO_UPSCALE_LAYOUT_MODE") + ":" + packetValue("AERO_UPSCALE_LAYOUT_NVAPI") +
++                ";lib_conflicts=" + packetValue("AERO_LIBRARY_CONFLICT_COUNT") + ":" + packetValue("AERO_LIBRARY_CONFLICT_SHA256") +
++                ";fastpath=" + packetValue("AERO_LIBRARY_FASTPATH") +
++                ";subsystems=" + packetValue("AERO_RUNTIME_SUBSYSTEMS_SHA256");
++        envVars.put("AERO_UPSCALE_RUNTIME_MATRIX", matrix);
++        ForensicLogger.logEvent(this, "info", "UPSCALE_RUNTIME_MATRIX_READY",
++                forensicTraceId, "graphics_driver",
++                "upscaler runtime matrix prepared",
++                ForensicLogger.fields(
++                        "matrix", matrix,
++                        "profile", upscalerProfileMode,
++                        "memory_policy_effective", envVars.get("AERO_UPSCALE_MEM_POLICY_EFFECTIVE"),
++                        "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK")
++                ));
++    }
++
++    private void traceRuntimeSubsystemEnvelope() {
++        String x11Stack = packetValue("AERO_X11_GRAPHICS_STACK");
++        String runtimeFlavor = packetValue("AERO_RUNTIME_FLAVOR");
++        String runtimeArch = packetValue("AERO_WINE_ARCH");
++        String emulatorValue = emulator == null ? "" : emulator.trim().toLowerCase(Locale.ROOT);
++        String runtimeEmulator = emulatorValue.isEmpty() ? "unknown" : emulatorValue;
++        String hodll = envVars.get("HODLL");
++        String runtimeHodll = (hodll == null || hodll.trim().isEmpty()) ? "none" : hodll.trim().toLowerCase(Locale.ROOT);
++        String dxPolicyStack = packetValue("AERO_DX_POLICY_STACK");
++        String dxvkVersion = packetValue("AERO_DXVK_VERSION_SELECTED");
++        String vkd3dVersion = packetValue("AERO_VKD3D_VERSION_SELECTED");
++        String turnipProvider = packetValue("AERO_TURNIP_PROVIDER");
++        String turnipBindVerdict = packetValue("AERO_TURNIP_BIND_VERDICT");
++        String upscalerProfile = packetValue("AERO_UPSCALE_PROFILE");
++        String layoutMode = packetValue("AERO_UPSCALE_LAYOUT_MODE");
++        String layoutLibs = packetValue("AERO_UPSCALE_LAYOUT_LIBS");
++        String modulesActive = packetValue("AERO_UPSCALE_MODULES_ACTIVE");
++        boolean fexActive = runtimeEmulator.contains("fex") || runtimeHodll.contains("wow64fex");
++        boolean boxActive = runtimeEmulator.contains("box") || runtimeHodll.contains("wowbox64");
++        boolean arm64ec = "arm64ec".equals(runtimeArch);
++        String translatorChain = fexActive ? "fexcore" : (boxActive ? "box64" : "none");
++        String fastpath = "generic";
++        if (x11Stack.startsWith("x11") && "dxvk_stack".equals(dxPolicyStack)) {
++            fastpath = turnipBindVerdict.contains("integrated") ? "x11_turnip_dxvk" : "x11_dxvk";
++        } else if (x11Stack.startsWith("x11")) {
++            fastpath = "x11_wined3d";
++        }
++
++        String subsystemSnapshot = "x11=" + x11Stack +
++                ";emulator=" + runtimeEmulator +
++                ";translator=" + translatorChain +
++                ";hodll=" + runtimeHodll +
++                ";runtime_flavor=" + runtimeFlavor +
++                ";wine_arch=" + runtimeArch +
++                ";turnip_provider=" + turnipProvider +
++                ";turnip_bind=" + turnipBindVerdict +
++                ";dx_policy=" + dxPolicyStack +
++                ";dxvk=" + dxvkVersion +
++                ";vkd3d=" + vkd3dVersion +
++                ";layout_mode=" + layoutMode +
++                ";upscaler_profile=" + upscalerProfile +
++                ";modules=" + modulesActive +
++                ";fastpath=" + fastpath;
++
++        String componentStream = "x11_route:" + x11Stack + ":libx11,libxcb,libxfixes" +
++                ";turnip:" + turnipProvider + ":" + turnipBindVerdict +
++                ";dxvk:" + dxvkVersion + ":dxgi,d3d11,d3d9,d3d8" +
++                ";vkd3d:" + vkd3dVersion + ":d3d12,d3d12core,vkd3d-proton" +
++                ";layout:" + layoutMode + ":" + layoutLibs +
++                ";nvapi:" + packetValue("AERO_UPSCALE_LAYOUT_NVAPI") + ":nvapi,nvapi64" +
++                ";adrenotools:" + upscalerProfile + ":" + modulesActive +
++                ";translator:" + translatorChain + ":" + runtimeHodll;
++
++        String subsystemSha = ForensicLogger.sha256Hex(subsystemSnapshot);
++        String componentSha = ForensicLogger.sha256Hex(componentStream);
++        String loggingMode = "strict";
++        String loggingRequired = "x11,turnip,dxvk,vkd3d,layout,translator,loader,adrenotools,fex,box";
++        String loggingCoverage = "x11=1" +
++                ";turnip=" + (turnipProvider.isEmpty() || "none".equals(turnipProvider) ? "0" : "1") +
++                ";dxvk=" + ("none".equals(dxvkVersion) ? "0" : "1") +
++                ";vkd3d=" + ("none".equals(vkd3dVersion) ? "0" : "1") +
++                ";layout=" + ("none".equals(layoutMode) ? "0" : "1") +
++                ";translator=" + ("none".equals(translatorChain) ? "0" : "1") +
++                ";loader=" + ("none".equals(runtimeHodll) ? "0" : "1") +
++                ";adrenotools=" + ("off".equals(upscalerProfile) || "none".equals(upscalerProfile) ? "0" : "1") +
++                ";fex=" + (fexActive ? "1" : "0") +
++                ";box=" + (boxActive ? "1" : "0");
++        String loggingCoverageSha = ForensicLogger.sha256Hex(loggingCoverage);
++        envVars.put("AERO_RUNTIME_EMULATOR", runtimeEmulator);
++        envVars.put("AERO_RUNTIME_TRANSLATOR_CHAIN", translatorChain);
++        envVars.put("AERO_RUNTIME_HODLL", runtimeHodll);
++        envVars.put("AERO_RUNTIME_SUBSYSTEMS", subsystemSnapshot);
++        envVars.put("AERO_RUNTIME_SUBSYSTEMS_SHA256", subsystemSha);
++        envVars.put("AERO_LIBRARY_COMPONENT_STREAM", componentStream);
++        envVars.put("AERO_LIBRARY_COMPONENT_STREAM_SHA256", componentSha);
++        envVars.put("AERO_LIBRARY_FASTPATH", fastpath);
++        envVars.put("AERO_RUNTIME_LOGGING_MODE", loggingMode);
++        envVars.put("AERO_RUNTIME_LOGGING_REQUIRED", loggingRequired);
++        envVars.put("AERO_RUNTIME_LOGGING_COVERAGE", loggingCoverage);
++        envVars.put("AERO_RUNTIME_LOGGING_COVERAGE_SHA256", loggingCoverageSha);
++
++        ForensicLogger.logEvent(this, "info", "RUNTIME_SUBSYSTEM_SNAPSHOT",
++                forensicTraceId, "graphics_driver",
++                "runtime subsystem snapshot prepared",
++                ForensicLogger.fields(
++                        "snapshot", subsystemSnapshot,
++                        "snapshot_sha256", subsystemSha,
++                        "component_stream_sha256", componentSha,
++                        "runtime_flavor", runtimeFlavor,
++                        "runtime_distribution", packetValue("AERO_RUNTIME_DISTRIBUTION"),
++                        "x11_graphics_stack", x11Stack,
++                        "emulator", runtimeEmulator,
++                        "translator_chain", translatorChain,
++                        "wine_arch", runtimeArch,
++                        "fastpath", fastpath,
++                        "logging_mode", loggingMode,
++                        "logging_required", loggingRequired,
++                        "logging_coverage", loggingCoverage,
++                        "logging_coverage_sha256", loggingCoverageSha
++                ));
++
++        ForensicLogger.logEvent(this, "info", "RUNTIME_LOGGING_CONTRACT_SNAPSHOT",
++                forensicTraceId, "graphics_driver",
++                "runtime logging contract snapshot prepared",
++                ForensicLogger.fields(
++                        "logging_mode", loggingMode,
++                        "logging_required", loggingRequired,
++                        "logging_coverage", loggingCoverage,
++                        "logging_coverage_sha256", loggingCoverageSha,
++                        "snapshot_sha256", subsystemSha,
++                        "component_stream_sha256", componentSha
++                ));
++
++        emitRuntimeLibraryComponentSignal("x11_route", x11Stack, "libx11,libxcb,libxfixes", "required");
++        emitRuntimeLibraryComponentSignal("turnip_bind", turnipBindVerdict, turnipProvider, "required");
++        emitRuntimeLibraryComponentSignal("dxvk_stack", dxvkVersion, "dxgi,d3d11,d3d9,d3d8", "required");
++        emitRuntimeLibraryComponentSignal("vkd3d_stack", vkd3dVersion, "d3d12,d3d12core,vkd3d-proton", "required");
++        emitRuntimeLibraryComponentSignal("upscale_layout", layoutMode, layoutLibs, "required");
++        emitRuntimeLibraryComponentSignal("translator", translatorChain, runtimeHodll, arm64ec ? "arm64ec" : "generic");
++
++        if ("unknown".equals(runtimeEmulator)) {
++            emitRuntimeLibraryComponentConflict("emulator_unknown", runtimeEmulator, runtimeFlavor, runtimeArch);
++        }
++        if (arm64ec && "fexcore".equals(translatorChain) && !runtimeHodll.contains("libwow64fex.dll")) {
++            emitRuntimeLibraryComponentConflict("fex_hodll_mismatch", runtimeHodll, "libwow64fex.dll", runtimeArch);
++        }
++        if (arm64ec && "box64".equals(translatorChain) && "none".equals(runtimeHodll)) {
++            emitRuntimeLibraryComponentConflict("box_hodll_missing", runtimeHodll, "wowbox64.dll", runtimeArch);
++        }
++    }
++
++    private void emitRuntimeLibraryComponentSignal(String component, String state, String libs, String mode) {
++        ForensicLogger.logEvent(this, "info", "RUNTIME_LIBRARY_COMPONENT_SIGNAL",
++                forensicTraceId, "graphics_driver",
++                "runtime library component signal",
++                ForensicLogger.fields(
++                        "component", component,
++                        "state", state == null ? "" : state,
++                        "libs", libs == null ? "" : libs,
++                        "mode", mode == null ? "" : mode,
++                        "snapshot_sha256", envVars.get("AERO_RUNTIME_SUBSYSTEMS_SHA256"),
++                        "component_stream_sha256", envVars.get("AERO_LIBRARY_COMPONENT_STREAM_SHA256")
++                ));
++    }
++
++    private void emitRuntimeLibraryComponentConflict(String component, String state, String expected, String runtimeArch) {
++        ForensicLogger.logEvent(this, "warn", "RUNTIME_LIBRARY_COMPONENT_CONFLICT",
++                forensicTraceId, "graphics_driver",
++                "runtime library component conflict",
++                ForensicLogger.fields(
++                        "component", component,
++                        "state", state == null ? "" : state,
++                        "expected", expected == null ? "" : expected,
++                        "wine_arch", runtimeArch == null ? "" : runtimeArch,
++                        "snapshot_sha256", envVars.get("AERO_RUNTIME_SUBSYSTEMS_SHA256"),
++                        "component_stream_sha256", envVars.get("AERO_LIBRARY_COMPONENT_STREAM_SHA256")
++                ));
++    }
++
++    private void resolveRuntimeLibraryConflicts() {
++        ArrayList<String> conflicts = new ArrayList<>();
++        boolean dxvkStack = "dxvk_stack".equals(envVars.get("AERO_DX_POLICY_STACK"));
++        boolean nvapiRequested = "1".equals(envVars.get("AERO_DXVK_NVAPI_REQUESTED"));
++        boolean nvapiEffective = "1".equals(envVars.get("AERO_DXVK_NVAPI_EFFECTIVE"));
++        boolean nvapiArchGate = "1".equals(envVars.get("AERO_DXVK_NVAPI_ARCH_GATE"));
++        boolean protonFsrRequested = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_REQUESTED"));
++        boolean protonFsrEffective = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
++        String protonFsrReason = packetValue("AERO_UPSCALE_PROTON_FSR_REASON");
++        String dx8Policy = packetValue("AERO_DX8_ASSIST_POLICY");
++        String dx8Route = packetValue("AERO_DX_ROUTE_DX8");
++        String layoutMode = packetValue("AERO_UPSCALE_LAYOUT_MODE");
++        String overrides = envVars.get("WINEDLLOVERRIDES");
++        String runtimeFlavor = packetValue("AERO_RUNTIME_FLAVOR");
++        String runtimeDistribution = packetValue("AERO_RUNTIME_DISTRIBUTION");
++        String turnipProvider = packetValue("AERO_TURNIP_PROVIDER");
++        String turnipBindVerdict = packetValue("AERO_TURNIP_BIND_VERDICT");
++        String vkd3dRequested = packetValue("AERO_VKD3D_VERSION_REQUESTED");
++        String vkd3dEffective = packetValue("AERO_VKD3D_VERSION_EFFECTIVE");
++        String dxvkRequested = packetValue("AERO_DXVK_VERSION_REQUESTED");
++        String dxvkSelected = packetValue("AERO_DXVK_VERSION_SELECTED");
++        String dxvkArtifactSource = packetValue("AERO_DXVK_ARTIFACT_SOURCE");
++        String vkd3dArtifactSource = packetValue("AERO_VKD3D_ARTIFACT_SOURCE");
++        String ddrawArtifactSource = packetValue("AERO_DDRAW_ARTIFACT_SOURCE");
++        String upscalerProfile = packetValue("AERO_UPSCALE_PROFILE");
++        String layoutRuntimeFlavor = packetValue("AERO_UPSCALE_LAYOUT_RUNTIME_FLAVOR");
++        String x11Stack = packetValue("AERO_X11_GRAPHICS_STACK");
++        String layoutLibs = packetValue("AERO_UPSCALE_LAYOUT_LIBS");
++        String runtimeSubsystems = packetValue("AERO_RUNTIME_SUBSYSTEMS");
++        String runtimeSubsystemsSha = packetValue("AERO_RUNTIME_SUBSYSTEMS_SHA256");
++        String componentStream = packetValue("AERO_LIBRARY_COMPONENT_STREAM");
++        String componentStreamSha = packetValue("AERO_LIBRARY_COMPONENT_STREAM_SHA256");
++        String fastpath = packetValue("AERO_LIBRARY_FASTPATH");
++        String runtimeEmulator = packetValue("AERO_RUNTIME_EMULATOR");
++        String translatorChain = packetValue("AERO_RUNTIME_TRANSLATOR_CHAIN");
++        String runtimeHodll = packetValue("AERO_RUNTIME_HODLL");
++        String runtimeArch = packetValue("AERO_WINE_ARCH");
++        String loggingMode = packetValue("AERO_RUNTIME_LOGGING_MODE");
++        String loggingCoverage = packetValue("AERO_RUNTIME_LOGGING_COVERAGE");
++        String loggingCoverageSha = packetValue("AERO_RUNTIME_LOGGING_COVERAGE_SHA256");
++
++        if (nvapiRequested && !dxvkStack) conflicts.add("nvapi_without_dxvk_stack");
++        if (nvapiRequested && !nvapiArchGate) conflicts.add("nvapi_arch_gate_blocked");
++        if (nvapiRequested && !nvapiEffective) conflicts.add("nvapi_not_effective");
++        if (protonFsrRequested && !dxvkStack) conflicts.add("proton_fsr_without_dxvk_stack");
++        if (protonFsrRequested && !protonFsrEffective) conflicts.add("proton_fsr_not_effective_" + protonFsrReason);
++        if ("force_d8vk".equals(dx8Policy) && !"d8vk".equals(dx8Route)) conflicts.add("dx8_force_d8vk_missed");
++        if (("dxvk_upscale_layout".equals(layoutMode) || "fsr_dxvk_layout".equals(layoutMode)) &&
++                (overrides == null || overrides.trim().isEmpty())) {
++            conflicts.add("layout_without_winedlloverrides");
++        }
++        if ("unknown".equals(runtimeFlavor) || runtimeFlavor.isEmpty()) conflicts.add("runtime_flavor_unknown");
++        if (!"ae.solator".equals(runtimeDistribution)) conflicts.add("runtime_distribution_mismatch");
++        if (turnipProvider.isEmpty()) conflicts.add("turnip_provider_missing");
++        if (turnipBindVerdict.isEmpty() || "unknown".equals(turnipBindVerdict)) conflicts.add("turnip_bind_verdict_missing");
++        if (turnipBindVerdict.contains("fallback") || turnipBindVerdict.contains("mismatch")) conflicts.add("turnip_bind_not_strict");
++        if (upscalerProfile.isEmpty() || "off".equals(upscalerProfile)) conflicts.add("adrenotools_upscaler_profile_inactive");
++        if (!layoutRuntimeFlavor.equals(runtimeFlavor)) conflicts.add("layout_runtime_flavor_mismatch");
++        if (!vkd3dRequested.equals("none") && !vkd3dRequested.equals(vkd3dEffective)) conflicts.add("vkd3d_version_mismatch");
++        if (!dxvkRequested.equals("none") && !dxvkRequested.equals(dxvkSelected)) conflicts.add("dxvk_version_drift");
++        if ("unset".equals(dxvkArtifactSource) || "none".equals(dxvkArtifactSource)) conflicts.add("dxvk_artifact_source_unset");
++        if ("unset".equals(vkd3dArtifactSource) || "none".equals(vkd3dArtifactSource)) conflicts.add("vkd3d_artifact_source_unset");
++        if ("unset".equals(ddrawArtifactSource) || "none".equals(ddrawArtifactSource)) conflicts.add("ddraw_artifact_source_unset");
++        if (!x11Stack.startsWith("x11")) conflicts.add("x11_stack_missing");
++        if (dxvkStack && ("none".equals(layoutLibs) || layoutLibs.isEmpty())) conflicts.add("layout_libs_missing_for_dxvk");
++        if ("none".equals(runtimeSubsystemsSha) || runtimeSubsystemsSha.length() < 16) conflicts.add("runtime_subsystems_sha_missing");
++        if ("none".equals(componentStreamSha) || componentStreamSha.length() < 16) conflicts.add("component_stream_sha_missing");
++        if ("none".equals(runtimeSubsystems) || runtimeSubsystems.isEmpty()) conflicts.add("runtime_subsystems_missing");
++        if ("none".equals(componentStream) || componentStream.isEmpty()) conflicts.add("component_stream_missing");
++        if ("none".equals(fastpath) || fastpath.isEmpty()) conflicts.add("library_fastpath_missing");
++        if ("unknown".equals(runtimeEmulator)) conflicts.add("runtime_emulator_unknown");
++        if ("none".equals(translatorChain)) conflicts.add("translator_chain_missing");
++        if ("arm64ec".equals(runtimeArch) && "fexcore".equals(translatorChain) && !runtimeHodll.contains("libwow64fex.dll")) conflicts.add("fex_hodll_mismatch");
++        if ("arm64ec".equals(runtimeArch) && "box64".equals(translatorChain) && "none".equals(runtimeHodll)) conflicts.add("box_hodll_missing");
++        if (!"strict".equals(loggingMode)) conflicts.add("runtime_logging_mode_not_strict");
++        if ("none".equals(loggingCoverage) || loggingCoverage.isEmpty()) conflicts.add("runtime_logging_coverage_missing");
++        if ("none".equals(loggingCoverageSha) || loggingCoverageSha.length() < 16) conflicts.add("runtime_logging_coverage_sha_missing");
++        if (!loggingCoverage.contains("x11=1")) conflicts.add("runtime_logging_x11_not_covered");
++        if (!loggingCoverage.contains("turnip=1")) conflicts.add("runtime_logging_turnip_not_covered");
++        if (!loggingCoverage.contains("layout=1")) conflicts.add("runtime_logging_layout_not_covered");
++        if (!loggingCoverage.contains("adrenotools=1")) conflicts.add("runtime_logging_adrenotools_not_covered");
++        if (!loggingCoverage.contains("translator=1")) conflicts.add("runtime_logging_translator_not_covered");
++
++        StringBuilder conflictBuilder = new StringBuilder();
++        for (int i = 0; i < conflicts.size(); i++) {
++            if (i > 0) conflictBuilder.append('|');
++            conflictBuilder.append(conflicts.get(i));
++        }
++        String conflictList = conflicts.isEmpty() ? "none" : conflictBuilder.toString();
++        String conflictCount = String.valueOf(conflicts.size());
++        String conflictSha = ForensicLogger.sha256Hex(conflictList);
++        envVars.put("AERO_LIBRARY_CONFLICTS", conflictList);
++        envVars.put("AERO_LIBRARY_CONFLICT_COUNT", conflictCount);
++        envVars.put("AERO_LIBRARY_CONFLICT_SHA256", conflictSha);
++        envVars.put("AERO_LIBRARY_REPRO_ID", conflictSha);
++
++        ForensicLogger.logEvent(this, conflicts.isEmpty() ? "info" : "warn", "RUNTIME_LIBRARY_CONFLICT_SNAPSHOT",
++                forensicTraceId, "graphics_driver",
++                conflicts.isEmpty() ? "runtime library conflict snapshot is clean" : "runtime library conflict snapshot has conflicts",
++                ForensicLogger.fields(
++                        "count", conflictCount,
++                        "conflicts", conflictList,
++                        "sha256", conflictSha,
++                        "layout_mode", layoutMode,
++                        "layout_reason", packetValue("AERO_UPSCALE_LAYOUT_REASON"),
++                        "dx_policy_stack", packetValue("AERO_DX_POLICY_STACK"),
++                        "runtime_flavor", runtimeFlavor,
++                        "runtime_distribution", runtimeDistribution,
++                        "wine_arch", packetValue("AERO_WINE_ARCH"),
++                        "turnip_provider", turnipProvider,
++                        "turnip_bind_verdict", turnipBindVerdict,
++                        "upscaler_profile", upscalerProfile,
++                        "x11_graphics_stack", x11Stack,
++                        "layout_libs", layoutLibs,
++                        "runtime_emulator", runtimeEmulator,
++                        "translator_chain", translatorChain,
++                        "runtime_hodll", runtimeHodll,
++                        "runtime_subsystems_sha256", runtimeSubsystemsSha,
++                        "component_stream_sha256", componentStreamSha,
++                        "library_fastpath", fastpath,
++                        "runtime_logging_mode", loggingMode,
++                        "runtime_logging_coverage", loggingCoverage,
++                        "runtime_logging_coverage_sha256", loggingCoverageSha,
++                        "dxvk_version_requested", dxvkRequested,
++                        "dxvk_version_selected", dxvkSelected,
++                        "vkd3d_version_requested", vkd3dRequested,
++                        "vkd3d_version_effective", vkd3dEffective,
++                        "dxvk_artifact_source", dxvkArtifactSource,
++                        "vkd3d_artifact_source", vkd3dArtifactSource,
++                        "ddraw_artifact_source", ddrawArtifactSource
++                ));
++        for (String conflict : conflicts) {
++            ForensicLogger.logEvent(this, "warn", "RUNTIME_LIBRARY_CONFLICT_DETECTED",
++                    forensicTraceId, "graphics_driver",
++                    "runtime library conflict detected: " + conflict,
++                    ForensicLogger.fields(
++                            "conflict", conflict,
++                            "all_conflicts", conflictList,
++                            "sha256", conflictSha,
++                            "layout_mode", layoutMode,
++                            "dx_policy_stack", packetValue("AERO_DX_POLICY_STACK"),
++                            "runtime_flavor", runtimeFlavor,
++                            "runtime_distribution", runtimeDistribution,
++                            "turnip_provider", turnipProvider,
++                            "turnip_bind_verdict", turnipBindVerdict,
++                            "upscaler_profile", upscalerProfile,
++                            "wine_arch", packetValue("AERO_WINE_ARCH"),
++                            "runtime_emulator", runtimeEmulator,
++                            "translator_chain", translatorChain,
++                            "runtime_hodll", runtimeHodll,
++                            "runtime_subsystems_sha256", runtimeSubsystemsSha,
++                            "component_stream_sha256", componentStreamSha,
++                            "library_fastpath", fastpath,
++                            "runtime_logging_mode", loggingMode,
++                            "runtime_logging_coverage_sha256", loggingCoverageSha
++                    ));
++        }
++    }
++
++    private void applyProtonFsrHackEnv() {
++        boolean requested = !UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode);
++        boolean dxvkStack = "dxvk_stack".equals(envVars.get("AERO_DX_POLICY_STACK"));
++        String runtimeFlavor = envVars.get("AERO_RUNTIME_FLAVOR");
++        if (runtimeFlavor == null || runtimeFlavor.isEmpty()) {
++            runtimeFlavor = resolveRuntimeFlavor();
++        }
++        boolean runtimeSupported = "wine".equals(runtimeFlavor) || "proton".equals(runtimeFlavor);
++        boolean effective = requested && dxvkStack && runtimeSupported;
++        String reason;
++        if (!requested) {
++            reason = "policy_off";
++            envVars.remove("WINE_FULLSCREEN_FSR");
++            envVars.remove("WINE_FULLSCREEN_FSR_MODE");
++            envVars.remove("WINE_FULLSCREEN_FSR_STRENGTH");
++        } else if (!runtimeSupported) {
++            reason = "runtime_unsupported";
++            envVars.remove("WINE_FULLSCREEN_FSR");
++            envVars.remove("WINE_FULLSCREEN_FSR_MODE");
++            envVars.remove("WINE_FULLSCREEN_FSR_STRENGTH");
++        } else if (!dxvkStack) {
++            reason = "requires_dxvk_stack";
++            envVars.remove("WINE_FULLSCREEN_FSR");
++            envVars.remove("WINE_FULLSCREEN_FSR_MODE");
++            envVars.remove("WINE_FULLSCREEN_FSR_STRENGTH");
++        } else {
++            reason = "enabled";
++            envVars.put("WINE_FULLSCREEN_FSR", "1");
++            envVars.put("WINE_FULLSCREEN_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
++            envVars.put("WINE_FULLSCREEN_FSR_MODE", upscalerProtonFsrMode);
++        }
++        envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", effective ? "1" : "0");
++        envVars.put("AERO_UPSCALE_PROTON_FSR_REASON", reason);
++
++        ForensicLogger.logEvent(this, effective ? "info" : "warn", "PROTON_FSR_HACK_RESOLVED",
++                forensicTraceId, "graphics_driver",
++                effective ? "proton fsr hack enabled" : "proton fsr hack not enabled",
++                ForensicLogger.fields(
++                        "requested", requested ? "1" : "0",
++                        "effective", effective ? "1" : "0",
++                        "runtime_supported", runtimeSupported ? "1" : "0",
++                        "runtime_flavor", runtimeFlavor,
++                        "reason", reason,
++                        "dx_policy_stack", envVars.get("AERO_DX_POLICY_STACK"),
++                        "mode", upscalerProtonFsrMode,
++                        "strength", upscalerProtonFsrStrength
++                ));
++    }
++
++    private String resolveRuntimeFlavor() {
++        String flavor = "unknown";
++        if (wineInfo != null && wineInfo.type != null) {
++            String normalized = wineInfo.type.trim().toLowerCase(Locale.ROOT);
++            if ("wine".equals(normalized) || "proton".equals(normalized)) {
++                flavor = normalized;
++            }
++        }
++        envVars.put("AERO_RUNTIME_FLAVOR", flavor);
++        envVars.put("AERO_UPSCALE_RUNTIME_FLAVOR", flavor);
++        return flavor;
++    }
++
++    private void applyUpscalerLibraryLayoutEnv() {
++        boolean dxvkStack = "dxvk_stack".equals(envVars.get("AERO_DX_POLICY_STACK"));
++        boolean protonFsrRequested = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_REQUESTED"));
++        boolean protonFsrEffective = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
++        boolean nvapiRequested = "1".equals(envVars.get("AERO_DXVK_NVAPI_REQUESTED"));
++        boolean nvapiEffective = "1".equals(envVars.get("AERO_DXVK_NVAPI_EFFECTIVE"));
++        String runtimeFlavor = envVars.get("AERO_RUNTIME_FLAVOR");
++        if (runtimeFlavor == null || runtimeFlavor.isEmpty()) {
++            runtimeFlavor = resolveRuntimeFlavor();
++        }
++        boolean runtimeSupported = "wine".equals(runtimeFlavor) || "proton".equals(runtimeFlavor);
++        String runtimeArch = envVars.get("AERO_WINE_ARCH");
++        if (runtimeArch == null || runtimeArch.isEmpty()) {
++            runtimeArch = wineInfo != null && wineInfo.isArm64EC() ? "arm64ec" : "x86_64";
++            envVars.put("AERO_WINE_ARCH", runtimeArch);
++        }
++
++        String layoutMode = "none";
++        String layoutReason = "wined3d_stack";
++        String layoutLibs = "none";
++        String layoutNvapi = "off";
++        String fsrCompat = "off";
++        String overrides = envVars.get("WINEDLLOVERRIDES");
++
++        if (dxvkStack) {
++            overrides = mergeDllOverrides(
++                    overrides,
++                    "dxgi=native,builtin",
++                    "d3d11=native,builtin",
++                    "d3d12=native,builtin",
++                    "d3d12core=native,builtin",
++                    "d3d9=native,builtin",
++                    "d3d8=native,builtin"
++            );
++            layoutLibs = "dxgi,d3d11,d3d12,d3d12core,d3d9,d3d8";
++            if (protonFsrEffective) {
++                layoutMode = "fsr_dxvk_layout";
++                layoutReason = "proton_fsr_enabled";
++                fsrCompat = "native";
++            } else if (protonFsrRequested && runtimeSupported) {
++                layoutMode = "dxvk_upscale_layout";
++                layoutReason = "proton_fsr_gated";
++                fsrCompat = "gated";
++            } else if (protonFsrRequested) {
++                layoutMode = "dxvk_upscale_layout";
++                layoutReason = "proton_fsr_runtime_unsupported";
++                fsrCompat = "unsupported_runtime";
++            } else {
++                layoutMode = "dxvk_upscale_layout";
++                layoutReason = "dxvk_stack";
++            }
++
++            if (nvapiRequested) {
++                if (nvapiEffective) {
++                    overrides = mergeDllOverrides(overrides, "nvapi=native,builtin", "nvapi64=native,builtin");
++                    layoutNvapi = "native";
++                } else {
++                    overrides = mergeDllOverrides(overrides, "nvapi=builtin,native", "nvapi64=builtin,native");
++                    layoutNvapi = "builtin_fallback";
++                }
++            }
++        } else if (nvapiRequested) {
++            overrides = mergeDllOverrides(overrides, "nvapi=builtin,native", "nvapi64=builtin,native");
++            layoutNvapi = "builtin_fallback";
++            layoutReason = "nvapi_requested_without_dxvk";
++        }
++
++        if (overrides != null && !overrides.trim().isEmpty()) {
++            envVars.put("WINEDLLOVERRIDES", overrides);
++        }
++        envVars.put("AERO_UPSCALE_LAYOUT_MODE", layoutMode);
++        envVars.put("AERO_UPSCALE_LAYOUT_REASON", layoutReason);
++        envVars.put("AERO_UPSCALE_LAYOUT_LIBS", layoutLibs);
++        envVars.put("AERO_UPSCALE_LAYOUT_NVAPI", layoutNvapi);
++        envVars.put("AERO_UPSCALE_LAYOUT_FSR_COMPAT", fsrCompat);
++        envVars.put("AERO_UPSCALE_LAYOUT_RUNTIME_FLAVOR", runtimeFlavor);
++        envVars.put("AERO_UPSCALE_LAYOUT_WINEDLLOVERRIDES_SHA256",
++                ForensicLogger.sha256Hex(overrides == null ? "" : overrides));
++
++        ForensicLogger.logEvent(this, "info", "UPSCALE_LIBRARY_LAYOUT_APPLIED",
++                forensicTraceId, "graphics_driver",
++                "upscaler library layout applied",
++                ForensicLogger.fields(
++                        "mode", layoutMode,
++                        "reason", layoutReason,
++                        "libs", layoutLibs,
++                        "nvapi", layoutNvapi,
++                        "fsr_compat", fsrCompat,
++                        "runtime_flavor", runtimeFlavor,
++                        "wine_arch", runtimeArch,
++                        "dx_policy_stack", envVars.get("AERO_DX_POLICY_STACK"),
++                        "winedlloverrides_sha256", envVars.get("AERO_UPSCALE_LAYOUT_WINEDLLOVERRIDES_SHA256")
++                ));
++    }
++
+     private void logUpscalerModuleState(String module, boolean applied, String reason, String value) {
+         ForensicLogger.logEvent(this, "info",
+                 applied ? "UPSCALE_MODULE_APPLIED" : "UPSCALE_MODULE_SKIPPED",
+@@ -2362,6 +2898,39 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 ";dx12=" + requestedDx12Route;
+         String policyOrder = "ddraw->dx8assist->dxvk->vkd3d";
+         String d8vkVersionEffective = dx8AssistEffective ? DefaultVersion.D8VK : "none";
++        boolean dxvkCapDx8Native = dxvkWrapperSelected && compareVersion(dxvkVersion, "2.4") >= 0;
++        boolean dxvkCapNvapi = dxvkWrapperSelected && compareVersion(dxvkVersion, "2.1") >= 0;
++        String runtimeFlavor = envVars.get("AERO_RUNTIME_FLAVOR");
++        if (runtimeFlavor == null || runtimeFlavor.isEmpty()) {
++            runtimeFlavor = resolveRuntimeFlavor();
++        }
++        boolean runtimeArm64ec = wineInfo != null && wineInfo.isArm64EC();
++        String runtimeArch = runtimeArm64ec ? "arm64ec" : "x86_64";
++        boolean dxvkArtifactArm64ec = dxvkVersion.contains("arm64ec");
++        boolean dxvkNvapiArchGate = !runtimeArm64ec || dxvkArtifactArm64ec;
++        String dxvkNvapiArchReason = runtimeArm64ec
++                ? (dxvkArtifactArm64ec ? "arm64ec_dxvk_matched" : "arm64ec_dxvk_missing")
++                : "non_arm64ec_runtime";
++        String dxvkNvapiConfig = dxwrapperConfig.get("nvapi");
++        boolean dxvkNvapiConfigRequested = parseBooleanFlag(dxvkNvapiConfig, false);
++        boolean dxvkNvapiRequested = dxvkNvapiConfigRequested
++                || "1".equals(envVars.get("DXVK_ENABLE_NVAPI"))
++                || "1".equals(envVars.get("AERO_DXVK_NVAPI_REQUESTED"));
++        boolean dxvkNvapiEffective = dxvkNvapiRequested && dxvkCapNvapi && dxvkWrapperSelected && dxvkNvapiArchGate;
++        String dxvkNvapiReason;
++        if (!dxvkNvapiRequested) {
++            dxvkNvapiReason = "policy_off";
++        } else if (!dxvkWrapperSelected) {
++            dxvkNvapiReason = "wrapper_not_dxvk";
++        } else if (!dxvkNvapiArchGate) {
++            dxvkNvapiReason = "arm64ec_artifact_required";
++        } else if (!dxvkCapNvapi) {
++            dxvkNvapiReason = "dxvk_version_too_low";
++        } else {
++            dxvkNvapiReason = "enabled";
++        }
++        String dxvkCaps = "dx8_native=" + (dxvkCapDx8Native ? "1" : "0") +
++                ";nvapi=" + (dxvkCapNvapi ? "1" : "0");
+         envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
+         envVars.put("AERO_DXVK_VERSION_REQUESTED", dxvkVersionRequested);
+         envVars.put("AERO_VKD3D_VERSION_REQUESTED", vkd3dVersionRequested);
+@@ -2371,8 +2940,25 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
+         envVars.put("AERO_VKD3D_VERSION_EFFECTIVE", vkd3dVersion);
+         envVars.put("AERO_D8VK_VERSION_SELECTED", DefaultVersion.D8VK);
++        envVars.put("AERO_D8VK_VERSION_REQUESTED", dx8AssistRequested ? DefaultVersion.D8VK : "none");
+         envVars.put("AERO_D8VK_VERSION_EFFECTIVE", d8vkVersionEffective);
+         envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
++        envVars.put("AERO_DXVK_CAP_DX8_NATIVE", dxvkCapDx8Native ? "1" : "0");
++        envVars.put("AERO_DXVK_CAP_NVAPI", dxvkCapNvapi ? "1" : "0");
++        envVars.put("AERO_DXVK_CAPS", dxvkCaps);
++        envVars.put("AERO_WINE_ARCH", runtimeArch);
++        envVars.put("AERO_DXVK_ARTIFACT_ARCH", dxvkArtifactArm64ec ? "arm64ec" : "generic");
++        envVars.put("AERO_DXVK_NVAPI_ARCH_GATE", dxvkNvapiArchGate ? "1" : "0");
++        envVars.put("AERO_DXVK_NVAPI_ARCH_REASON", dxvkNvapiArchReason);
++        envVars.put("AERO_DXVK_NVAPI_CONFIG", dxvkNvapiConfig == null || dxvkNvapiConfig.trim().isEmpty() ? "unset" : dxvkNvapiConfig.trim().toLowerCase(Locale.ROOT));
++        envVars.put("AERO_DXVK_NVAPI_REQUESTED", dxvkNvapiRequested ? "1" : "0");
++        envVars.put("AERO_DXVK_NVAPI_EFFECTIVE", dxvkNvapiEffective ? "1" : "0");
++        envVars.put("AERO_DXVK_NVAPI_REASON", dxvkNvapiReason);
++        if (dxvkNvapiEffective) {
++            envVars.put("DXVK_ENABLE_NVAPI", "1");
++        } else {
++            envVars.remove("DXVK_ENABLE_NVAPI");
++        }
+         envVars.put("AERO_DX_POLICY_STACK", policyStack);
+         envVars.put("AERO_DX_POLICY_REASON", policyReason);
+         envVars.put("AERO_DX_POLICY_ORDER", policyOrder);
+@@ -2425,10 +3011,69 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "dx_map", directMap,
+                         "dx_map_extended", directMapExtended,
+                         "d8vk_version_effective", d8vkVersionEffective,
++                        "dxvk_caps", dxvkCaps,
++                        "runtime_flavor", runtimeFlavor,
++                        "wine_arch", runtimeArch,
++                        "dxvk_artifact_arch", envVars.get("AERO_DXVK_ARTIFACT_ARCH"),
++                        "dxvk_nvapi_arch_gate", envVars.get("AERO_DXVK_NVAPI_ARCH_GATE"),
++                        "dxvk_nvapi_arch_reason", envVars.get("AERO_DXVK_NVAPI_ARCH_REASON"),
++                        "dxvk_nvapi_config", envVars.get("AERO_DXVK_NVAPI_CONFIG"),
++                        "dxvk_nvapi_requested", dxvkNvapiRequested ? "1" : "0",
++                        "dxvk_nvapi_effective", dxvkNvapiEffective ? "1" : "0",
++                        "dxvk_nvapi_reason", dxvkNvapiReason,
+                         "dx8_assist_requested", dx8AssistRequested ? "1" : "0",
+                         "dx8_assist_effective", dx8AssistEffective ? "1" : "0",
+                         "dx8_policy", upscalerDx8Policy
+                 ));
++
++        ForensicLogger.logEvent(this, dxvkNvapiEffective ? "info" : "warn", "DXVK_CAPS_RESOLVED",
++                forensicTraceId, "graphics_driver",
++                "dxvk capability envelope resolved",
++                ForensicLogger.fields(
++                        "dxvk_version_effective", dxvkVersion,
++                        "dxvk_cap_dx8_native", dxvkCapDx8Native ? "1" : "0",
++                        "dxvk_cap_nvapi", dxvkCapNvapi ? "1" : "0",
++                        "runtime_flavor", runtimeFlavor,
++                        "wine_arch", runtimeArch,
++                        "dxvk_artifact_arch", envVars.get("AERO_DXVK_ARTIFACT_ARCH"),
++                        "dxvk_nvapi_arch_gate", envVars.get("AERO_DXVK_NVAPI_ARCH_GATE"),
++                        "dxvk_nvapi_arch_reason", envVars.get("AERO_DXVK_NVAPI_ARCH_REASON"),
++                        "dxvk_nvapi_config", envVars.get("AERO_DXVK_NVAPI_CONFIG"),
++                        "dxvk_nvapi_requested", dxvkNvapiRequested ? "1" : "0",
++                        "dxvk_nvapi_effective", dxvkNvapiEffective ? "1" : "0",
++                        "dxvk_nvapi_reason", dxvkNvapiReason,
++                        "policy_stack", policyStack
++                ));
++    }
++
++    private String mergeDllOverrides(String existing, String... overrideEntries) {
++        LinkedHashMap<String, String> merged = new LinkedHashMap<>();
++        addDllOverrides(merged, existing);
++        if (overrideEntries != null) {
++            for (String entry : overrideEntries) {
++                addDllOverrides(merged, entry);
++            }
++        }
++        StringBuilder out = new StringBuilder();
++        for (Map.Entry<String, String> entry : merged.entrySet()) {
++            if (out.length() > 0) out.append(';');
++            out.append(entry.getKey()).append('=').append(entry.getValue());
++        }
++        return out.toString();
++    }
++
++    private void addDllOverrides(LinkedHashMap<String, String> merged, String rawOverrides) {
++        if (rawOverrides == null || rawOverrides.trim().isEmpty()) return;
++        for (String token : rawOverrides.split(";")) {
++            String normalized = token == null ? "" : token.trim();
++            if (normalized.isEmpty()) continue;
++            int split = normalized.indexOf('=');
++            if (split <= 0 || split >= normalized.length() - 1) continue;
++            String dll = normalized.substring(0, split).trim().toLowerCase(Locale.ROOT);
++            String mode = normalized.substring(split + 1).trim().toLowerCase(Locale.ROOT);
++            if (dll.isEmpty() || mode.isEmpty()) continue;
++            merged.put(dll, mode);
++        }
+     }
+ 
+     private String normalizeDxVersion(String value) {
+diff --git a/app/src/main/java/com/winlator/cmod/container/Container.java b/app/src/main/java/com/winlator/cmod/container/Container.java
+index c0717ed7a31a7763440b1f4e3a4fad79299979da..c4f26aa6706afd2d40a1fe7733dbe3595e2ff61b 100644
+--- a/app/src/main/java/com/winlator/cmod/container/Container.java
++++ b/app/src/main/java/com/winlator/cmod/container/Container.java
+@@ -34,7 +34,7 @@ public class Container {
+     public static final String DEFAULT_AUDIO_DRIVER = "alsa";
+     public static final String DEFAULT_EMULATOR = "FEXCore";
+     public static final String DEFAULT_DXWRAPPER = "dxvk+vkd3d";
+-    public static final String DEFAULT_DXWRAPPERCONFIG = "version=" + DefaultVersion.DXVK + ",framerate=0,async=0,asyncCache=0" + ",vkd3dVersion=" + DefaultVersion.VKD3D + ",vkd3dLevel=12_1" + ",ddrawrapper=" + Container.DEFAULT_DDRAWRAPPER + ",csmt=3" + ",gpuName=NVIDIA GeForce GTX 480" + ",videoMemorySize=2048" + ",strict_shader_math=1" + ",OffscreenRenderingMode=fbo" + ",renderer=gl";
++    public static final String DEFAULT_DXWRAPPERCONFIG = "version=" + DefaultVersion.DXVK + ",framerate=0,async=0,asyncCache=0,nvapi=0" + ",vkd3dVersion=" + DefaultVersion.VKD3D + ",vkd3dLevel=12_1" + ",ddrawrapper=" + Container.DEFAULT_DDRAWRAPPER + ",csmt=3" + ",gpuName=NVIDIA GeForce GTX 480" + ",videoMemorySize=2048" + ",strict_shader_math=1" + ",OffscreenRenderingMode=fbo" + ",renderer=gl";
+     public static final String DEFAULT_GRAPHICSDRIVERCONFIG =
+             "vulkanVersion=1.3" + ";version=" + ";blacklistedExtensions=" + ";maxDeviceMemory=0" + ";presentMode=mailbox" + ";syncFrame=0" + ";disablePresentWait=0" + ";resourceType=auto" + ";bcnEmulation=auto" + ";bcnEmulationType=compute" + ";bcnEmulationCache=0" + ";gpuName=Device";
+     public static final String DEFAULT_DDRAWRAPPER = "none";
+diff --git a/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java b/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
+index e193dc793830ce5a4deb993ff5f349bd82f1ac96..1a2b056327b49763c52f3741959afe559e47af85 100644
+--- a/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
++++ b/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
+@@ -29,11 +29,13 @@ public class DXVKConfigDialog extends ContentDialog {
+     public static final int DXVK_TYPE_NONE = 0;
+     public static final int DXVK_TYPE_ASYNC = 1;
+     public static final int DXVK_TYPE_GPLASYNC = 2;
+-    private final ToggleButton swAsync;
+-    private boolean isARM64EC = false;
++    private final ToggleButton swAsync;
++    private boolean isARM64EC = false;
+     private final ToggleButton swAsyncCache;
++    private final ToggleButton swNvapi;
+     private final View llAsync;
+     private final View llAsyncCache;
++    private final View llNvapi;
+     private final Context context;
+     private static List<String> dxvkVersions;
+     
+@@ -69,10 +71,12 @@ public class DXVKConfigDialog extends ContentDialog {
+         final Spinner sFramerate = findViewById(R.id.SFramerate);
+         final Spinner sVKD3DFeatureLevel = findViewById(R.id.SVKD3DFeatureLevel);
+         final Spinner sDDRAWrapper = findViewById(R.id.SDDRAWrapper);
+-        swAsync = findViewById(R.id.SWAsync);
+-        swAsyncCache = findViewById(R.id.SWAsyncCache);
+-        llAsync = findViewById(R.id.LLAsync);
+-        llAsyncCache = findViewById(R.id.LLAsyncCache);
++        swAsync = findViewById(R.id.SWAsync);
++        swAsyncCache = findViewById(R.id.SWAsyncCache);
++        swNvapi = findViewById(R.id.SWNVAPI);
++        llAsync = findViewById(R.id.LLAsync);
++        llAsyncCache = findViewById(R.id.LLAsyncCache);
++        llNvapi = findViewById(R.id.LLNVAPI);
+ 
+         ContentsManager contentsManager = new ContentsManager(context);
+         contentsManager.syncContents();
+@@ -91,8 +95,9 @@ public class DXVKConfigDialog extends ContentDialog {
+         AppUtils.setSpinnerSelectionFromIdentifier(sVKD3DFeatureLevel, config.get("vkd3dLevel"));
+         AppUtils.setSpinnerSelectionFromIdentifier(sDDRAWrapper, config.get("ddrawrapper"));
+ 
+-        swAsync.setChecked(config.get("async").equals("1"));
+-        swAsyncCache.setChecked(config.get("asyncCache").equals("1"));
++        swAsync.setChecked(config.get("async").equals("1"));
++        swAsyncCache.setChecked(config.get("asyncCache").equals("1"));
++        swNvapi.setChecked(config.get("nvapi").equals("1"));
+ 
+         updateConfigVisibility(getDXVKType(sDXVKVersion.getSelectedItemPosition()));
+ 
+@@ -126,10 +131,11 @@ public class DXVKConfigDialog extends ContentDialog {
+         setOnConfirmCallback(() -> {
+             config.put("version", sDXVKVersion.getSelectedItem().toString());
+             config.put("framerate", StringUtils.parseNumber(sFramerate.getSelectedItem()));
+-            config.put("async", ((swAsync.isChecked())&&(llAsync.getVisibility()==View.VISIBLE))?"1":"0");
+-            config.put("asyncCache", ((swAsyncCache.isChecked())&&(llAsyncCache.getVisibility()==View.VISIBLE))?"1":"0");
+-            VKD3DVersionItem selectedItem = (VKD3DVersionItem) sVKD3DVersion.getSelectedItem();
+-            config.put("vkd3dVersion", selectedItem.getIdentifier());
++            config.put("async", ((swAsync.isChecked())&&(llAsync.getVisibility()==View.VISIBLE))?"1":"0");
++            config.put("asyncCache", ((swAsyncCache.isChecked())&&(llAsyncCache.getVisibility()==View.VISIBLE))?"1":"0");
++            config.put("nvapi", ((swNvapi.isChecked())&&(llNvapi.getVisibility()==View.VISIBLE))?"1":"0");
++            VKD3DVersionItem selectedItem = (VKD3DVersionItem) sVKD3DVersion.getSelectedItem();
++            config.put("vkd3dVersion", selectedItem.getIdentifier());
+             config.put("vkd3dLevel", sVKD3DFeatureLevel.getSelectedItem().toString());
+             config.put("ddrawrapper", StringUtils.parseIdentifier(sDDRAWrapper.getSelectedItem().toString()));
+             anchor.setTag(config.toString());
+@@ -137,17 +143,18 @@ public class DXVKConfigDialog extends ContentDialog {
+     }
+ 
+     private void updateConfigVisibility(int dxvkType) {
+-        if (dxvkType == DXVK_TYPE_ASYNC) {
+-            llAsync.setVisibility(View.VISIBLE);
+-            llAsyncCache.setVisibility(View.GONE);
+-        } else if (dxvkType == DXVK_TYPE_GPLASYNC) {
+-            llAsync.setVisibility(View.VISIBLE);
+-            llAsyncCache.setVisibility(View.VISIBLE);
+-        } else {
+-            llAsync.setVisibility(View.GONE);
+-            llAsyncCache.setVisibility(View.GONE);
+-        }
+-    }
++        if (dxvkType == DXVK_TYPE_ASYNC) {
++            llAsync.setVisibility(View.VISIBLE);
++            llAsyncCache.setVisibility(View.GONE);
++        } else if (dxvkType == DXVK_TYPE_GPLASYNC) {
++            llAsync.setVisibility(View.VISIBLE);
++            llAsyncCache.setVisibility(View.VISIBLE);
++        } else {
++            llAsync.setVisibility(View.GONE);
++            llAsyncCache.setVisibility(View.GONE);
++        }
++        llNvapi.setVisibility(View.VISIBLE);
++    }
+ 
+     private int getDXVKType(int pos) {
+         final String v = dxvkVersions.get(pos);
+@@ -185,9 +192,16 @@ public class DXVKConfigDialog extends ContentDialog {
+         if (!async.isEmpty() && !async.equals("0"))
+             envVars.put("DXVK_ASYNC", "1");
+ 
+-        String asyncCache = config.get("asyncCache");
+-        if (!asyncCache.isEmpty() && !asyncCache.equals("0"))
+-            envVars.put("DXVK_GPLASYNCCACHE", "1");
++        String asyncCache = config.get("asyncCache");
++        if (!asyncCache.isEmpty() && !asyncCache.equals("0"))
++            envVars.put("DXVK_GPLASYNCCACHE", "1");
++
++        String nvapi = config.get("nvapi");
++        if (!nvapi.isEmpty() && !nvapi.equals("0")) {
++            envVars.put("DXVK_ENABLE_NVAPI", "1");
++        } else {
++            envVars.remove("DXVK_ENABLE_NVAPI");
++        }
+ 
+         if (!content.isEmpty())
+             envVars.put("DXVK_CONFIG", content);
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 8ac1196c14a74a6b0d8d06d0b892d00eedf70be7..edd6c3f769b83c43b3c6a3f1334f3e270ac70614 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -436,6 +436,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "command", command,
+                             "env_hash", ForensicLogger.hashEnvVars(envVars),
+                             "launch_graphics_packet_sha256", envVars.get("AERO_LAUNCH_GRAPHICS_PACKET_SHA256"),
++                            "distribution", envVars.get("AERO_RUNTIME_DISTRIBUTION"),
+                             "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK"),
+                             "turnip_provider", envVars.get("AERO_TURNIP_PROVIDER"),
+                             "turnip_channel", envVars.get("AERO_TURNIP_CHANNEL"),
+@@ -446,11 +447,32 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "dx_map_effective", envVars.get("AERO_DX_DIRECT_MAP_EXTENDED"),
+                             "dxvk_version_requested", envVars.get("AERO_DXVK_VERSION_REQUESTED"),
+                             "dxvk_version_selected", envVars.get("AERO_DXVK_VERSION_SELECTED"),
++                            "dxvk_caps", envVars.get("AERO_DXVK_CAPS"),
++                            "dxvk_nvapi_config", envVars.get("AERO_DXVK_NVAPI_CONFIG"),
++                            "dxvk_nvapi_arch_gate", envVars.get("AERO_DXVK_NVAPI_ARCH_GATE"),
++                            "dxvk_nvapi_effective", envVars.get("AERO_DXVK_NVAPI_EFFECTIVE"),
+                             "vkd3d_version_requested", envVars.get("AERO_VKD3D_VERSION_REQUESTED"),
+                             "vkd3d_version_selected", envVars.get("AERO_VKD3D_VERSION_SELECTED"),
+                             "d8vk_version_effective", envVars.get("AERO_D8VK_VERSION_EFFECTIVE"),
+                             "upscale_modules_requested", envVars.get("AERO_UPSCALE_MODULES_REQUESTED"),
+                             "upscale_modules_active", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                            "upscale_runtime_matrix", envVars.get("AERO_UPSCALE_RUNTIME_MATRIX"),
++                            "upscale_layout_mode", envVars.get("AERO_UPSCALE_LAYOUT_MODE"),
++                            "upscale_layout_reason", envVars.get("AERO_UPSCALE_LAYOUT_REASON"),
++                            "upscale_layout_nvapi", envVars.get("AERO_UPSCALE_LAYOUT_NVAPI"),
++                            "library_conflicts", envVars.get("AERO_LIBRARY_CONFLICTS"),
++                            "library_conflict_count", envVars.get("AERO_LIBRARY_CONFLICT_COUNT"),
++                            "library_conflict_sha256", envVars.get("AERO_LIBRARY_CONFLICT_SHA256"),
++                            "library_repro_id", envVars.get("AERO_LIBRARY_REPRO_ID"),
++                            "runtime_subsystems", envVars.get("AERO_RUNTIME_SUBSYSTEMS"),
++                            "runtime_subsystems_sha256", envVars.get("AERO_RUNTIME_SUBSYSTEMS_SHA256"),
++                            "library_component_stream", envVars.get("AERO_LIBRARY_COMPONENT_STREAM"),
++                            "library_component_stream_sha256", envVars.get("AERO_LIBRARY_COMPONENT_STREAM_SHA256"),
++                            "library_fastpath", envVars.get("AERO_LIBRARY_FASTPATH"),
++                            "runtime_logging_mode", envVars.get("AERO_RUNTIME_LOGGING_MODE"),
++                            "runtime_logging_required", envVars.get("AERO_RUNTIME_LOGGING_REQUIRED"),
++                            "runtime_logging_coverage", envVars.get("AERO_RUNTIME_LOGGING_COVERAGE"),
++                            "runtime_logging_coverage_sha256", envVars.get("AERO_RUNTIME_LOGGING_COVERAGE_SHA256"),
+                             "upscale_profile", envVars.get("AERO_UPSCALE_PROFILE"),
+                             "upscale_mem_policy_effective", envVars.get("AERO_UPSCALE_MEM_POLICY_EFFECTIVE"),
+                             "upscale_vkbasalt_effective", envVars.get("AERO_UPSCALE_VKBASALT_EFFECTIVE"),
+@@ -458,7 +480,10 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "upscale_scaleforce_effective", envVars.get("AERO_UPSCALE_SCALEFORCE_EFFECTIVE"),
+                             "upscale_proton_fsr_mode", envVars.get("AERO_UPSCALE_PROTON_FSR_MODE"),
+                             "upscale_proton_fsr_effective", envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"),
+-                            "upscale_dx8_assist_effective", envVars.get("AERO_DX8_ASSIST_EFFECTIVE")));
++                            "upscale_proton_fsr_reason", envVars.get("AERO_UPSCALE_PROTON_FSR_REASON"),
++                            "upscale_dx8_assist_effective", envVars.get("AERO_DX8_ASSIST_EFFECTIVE"),
++                            "runtime_flavor", envVars.get("AERO_RUNTIME_FLAVOR"),
++                            "wine_arch", envVars.get("AERO_WINE_ARCH")));
+         }
+ 
+         return ProcessHelper.exec(command, envVars.toStringArray(), rootDir, (status) -> {
+diff --git a/app/src/main/res/layout/dxvk_config_dialog.xml b/app/src/main/res/layout/dxvk_config_dialog.xml
+index 29e1663cec8786302fc165eb52817b0c1dc9a6bf..2c6eee2176311b87071d9fdc16c93ea5be018569 100644
+--- a/app/src/main/res/layout/dxvk_config_dialog.xml
++++ b/app/src/main/res/layout/dxvk_config_dialog.xml
+@@ -67,11 +67,11 @@
+ 
+         </LinearLayout>
+ 
+-        <LinearLayout
+-            android:id="@+id/LLAsyncCache"
+-            android:layout_width="match_parent"
+-            android:layout_height="match_parent"
+-            android:layout_marginTop="8dp"
++        <LinearLayout
++            android:id="@+id/LLAsyncCache"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:layout_marginTop="8dp"
+             android:layout_marginBottom="8dp"
+             android:orientation="horizontal">
+ 
+@@ -88,14 +88,38 @@
+                 android:layout_height="32dp"
+                 android:background="@drawable/toggle_button_selector"
+                 android:textOn=""
+-                android:textOff="" />
+-
+-        </LinearLayout>
+-
+-        <TextView
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            android:text="@string/ddraw_wrapper" />
++                android:textOff="" />
++
++        </LinearLayout>
++
++        <LinearLayout
++            android:id="@+id/LLNVAPI"
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:layout_marginBottom="8dp"
++            android:orientation="horizontal">
++
++            <TextView
++                android:layout_width="0dp"
++                android:layout_height="wrap_content"
++                android:layout_gravity="center"
++                android:layout_weight="1"
++                android:text="@string/enabled_dxvk_nvapi" />
++
++            <ToggleButton
++                android:id="@+id/SWNVAPI"
++                android:layout_width="64dp"
++                android:layout_height="32dp"
++                android:background="@drawable/toggle_button_selector"
++                android:textOn=""
++                android:textOff="" />
++
++        </LinearLayout>
++
++        <TextView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:text="@string/ddraw_wrapper" />
+ 
+         <Spinner
+             style="@style/ComboBox"
+@@ -117,4 +141,4 @@
+             android:spinnerMode="dialog"/>
+ 
+     </LinearLayout>
+-</ScrollView>
+\ No newline at end of file
++</ScrollView>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 944a61c0e072fd7626588274797beb78f29b9ef6..a2132132a9126e7739994508778dfad5612ab529 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -290,6 +290,7 @@
+     <string name="glibc_exp_edition">Based On</string>
+     <string name="enabled_async">Enable Async</string>
+     <string name="enabled_async_cache">Enable Async Cache</string>
++    <string name="enabled_dxvk_nvapi">Enable DXVK NVAPI</string>
+     <string name="vkd3d_feature_level">VKD3D Feature Level</string>
+     <string name="filter">Filter</string>
+     <string name="all">All</string>

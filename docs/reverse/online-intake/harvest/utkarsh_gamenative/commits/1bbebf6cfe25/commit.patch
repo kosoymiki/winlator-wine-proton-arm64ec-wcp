@@ -1,0 +1,47 @@
+commit 1bbebf6cfe257cd935ffc946afd22f75a07f5625
+Author: Kurt Himebauch <136133082+xXJSONDeruloXx@users.noreply.github.com>
+Date:   Sat Feb 28 00:38:44 2026 -0500
+
+    fix: remain connected to SteamService and solve for login page game smother (#677)
+---
+ app/src/main/java/app/gamenative/ui/PluviaMain.kt | 20 +++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/app/src/main/java/app/gamenative/ui/PluviaMain.kt b/app/src/main/java/app/gamenative/ui/PluviaMain.kt
+index 0d275f0..77d1824 100644
+--- a/app/src/main/java/app/gamenative/ui/PluviaMain.kt
++++ b/app/src/main/java/app/gamenative/ui/PluviaMain.kt
+@@ -298,6 +298,10 @@ fun PluviaMain(
+                 }
+ 
+                 MainViewModel.MainUiEvent.OnLoggedOut -> {
++                    if (SteamService.keepAlive) {
++                        return@collect
++                    }
++
+                     // Clear persisted route so next login starts fresh from Home
+                     viewModel.clearPersistedRoute()
+                     // Pop stack and go back to login
+@@ -1020,13 +1024,15 @@ fun PluviaMain(
+             }
+         }
+ 
+-        val startDestination = when {
+-            SteamService.isLoggedIn -> PluviaScreen.Home.route + "?offline=false"
+-            GOGService.hasStoredCredentials(context) ||
+-                EpicService.hasStoredCredentials(context) ||
+-                AmazonService.hasStoredCredentials(context) ->
+-                PluviaScreen.Home.route + "?offline=true"
+-            else -> PluviaScreen.LoginUser.route
++        val startDestination = remember {
++            when {
++                SteamService.isLoggedIn -> PluviaScreen.Home.route + "?offline=false"
++                GOGService.hasStoredCredentials(context) ||
++                    EpicService.hasStoredCredentials(context) ||
++                    AmazonService.hasStoredCredentials(context) ->
++                    PluviaScreen.Home.route + "?offline=true"
++                else -> PluviaScreen.LoginUser.route
++            }
+         }
+ 
+         NavHost(

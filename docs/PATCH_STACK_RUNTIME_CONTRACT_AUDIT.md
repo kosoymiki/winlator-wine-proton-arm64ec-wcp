@@ -1,10 +1,10 @@
 # Winlator Patch Stack Runtime Contract Audit
 
-Generated: `2026-02-27T01:31:05Z`
+Generated: `2026-02-28T16:45:14Z`
 
 ## Scope
 
-- Patch files scanned: `64`
+- Patch files scanned: `10`
 - Target groups: `XServerDisplayActivity`, `GuestProgramLauncherComponent`, `RuntimeSignalContract`
 - Contract: forensic telemetry + reason markers + runtime guard markers
 
@@ -12,28 +12,29 @@ Generated: `2026-02-27T01:31:05Z`
 
 ### XServerDisplayActivity
 
-- `telemetry_calls`: `ok` (11 patches) -> `0005-aeroso-turnip-nightly-logs-branding-cleanup.patch`, `0010-driver-probe-hardening-runtime-fallback-telemetry.patch`, `0011-xserver-session-exit-no-restart-on-guest-termination.patch`, `0025-upscale-runtime-guardrails-and-swfg-contract.patch`, `0026-upscale-container-bridge-launch-normalization-and-ui.patch`, `0031-upscale-runtime-binding-gate-service-processes.patch` ...
-- `reason_markers`: `ok` (12 patches) -> `0010-driver-probe-hardening-runtime-fallback-telemetry.patch`, `0011-xserver-session-exit-no-restart-on-guest-termination.patch`, `0025-upscale-runtime-guardrails-and-swfg-contract.patch`, `0031-upscale-runtime-binding-gate-service-processes.patch`, `0036-upscale-binding-defer-shell-to-child-graphics.patch`, `0044-runtime-launch-precheck-and-forensic-guardrails.patch` ...
-- `fallback_guardrails`: `ok` (15 patches) -> `0010-driver-probe-hardening-runtime-fallback-telemetry.patch`, `0025-upscale-runtime-guardrails-and-swfg-contract.patch`, `0026-upscale-container-bridge-launch-normalization-and-ui.patch`, `0031-upscale-runtime-binding-gate-service-processes.patch`, `0036-upscale-binding-defer-shell-to-child-graphics.patch`, `0044-runtime-launch-precheck-and-forensic-guardrails.patch` ...
-- `external_signal_inputs`: `ok` (2 patches) -> `0057-signal-input-markers-from-launch-precheck.patch`, `0058-launch-env-forensics-include-signal-input-envelope.patch`
-- `launch_env_signal_fields`: `ok` (3 patches) -> `0057-signal-input-markers-from-launch-precheck.patch`, `0058-launch-env-forensics-include-signal-input-envelope.patch`, `0059-runtime-signal-contract-helper-and-adoption.patch`
-- `contract_helper_usage`: `ok` (1 patches) -> `0059-runtime-signal-contract-helper-and-adoption.patch`
+- `telemetry_calls`: `ok` (9 patches) -> `0001-mainline-full-stack-consolidated.patch`, `0003-aeturnip-runtime-bind-and-forensics.patch`, `0004-upscaler-adrenotools-control-plane-x11-bind.patch`, `0005-upscaler-dxvk-proton-fsr-x11-turnip-runtime-matrix.patch`, `0006-upscaler-x11-turnip-dx-all-directs-memory-policy.patch`, `0007-upscaler-module-forensics-dx8assist-contract.patch` ...
+- `reason_markers`: `ok` (6 patches) -> `0001-mainline-full-stack-consolidated.patch`, `0003-aeturnip-runtime-bind-and-forensics.patch`, `0007-upscaler-module-forensics-dx8assist-contract.patch`, `0008-upscaler-dx-policy-order-and-artifact-sources.patch`, `0009-launch-graphics-packet-dx-upscaler-x11-turnip-bundle.patch`, `0010-dxvk-capability-envelope-proton-fsr-gate-upscaler-matrix.patch`
+- `fallback_guardrails`: `ok` (5 patches) -> `0001-mainline-full-stack-consolidated.patch`, `0003-aeturnip-runtime-bind-and-forensics.patch`, `0004-upscaler-adrenotools-control-plane-x11-bind.patch`, `0008-upscaler-dx-policy-order-and-artifact-sources.patch`, `0010-dxvk-capability-envelope-proton-fsr-gate-upscaler-matrix.patch`
+- `external_signal_inputs`: `missing`
+- `launch_env_signal_fields`: `missing`
+- `contract_helper_usage`: `missing`
 
 ### GuestProgramLauncherComponent
 
-- `telemetry_calls`: `ok` (10 patches) -> `0005-aeroso-turnip-nightly-logs-branding-cleanup.patch`, `0019-glibc-rseq-compat-for-wrapped-wine-launchers.patch`, `0020-glibc-wrapper-strip-bionic-ldpreload.patch`, `0026-upscale-container-bridge-launch-normalization-and-ui.patch`, `0029-runtime-launcher-wrapper-preexec-forensics.patch`, `0040-runtime-common-profile-ui-and-launcher-integration.patch` ...
-- `reason_markers`: `ok` (4 patches) -> `0026-upscale-container-bridge-launch-normalization-and-ui.patch`, `0044-runtime-launch-precheck-and-forensic-guardrails.patch`, `0055-termux-x11-compat-contract-preflight-and-diagnostics.patch`, `0056-external-signal-policy-markers-and-forensics.patch`
-- `runtime_contract_markers`: `ok` (2 patches) -> `0044-runtime-launch-precheck-and-forensic-guardrails.patch`, `0056-external-signal-policy-markers-and-forensics.patch`
-- `external_signal_markers`: `ok` (1 patches) -> `0056-external-signal-policy-markers-and-forensics.patch`
-- `contract_helper_usage`: `ok` (1 patches) -> `0059-runtime-signal-contract-helper-and-adoption.patch`
+- `telemetry_calls`: `ok` (1 patches) -> `0001-mainline-full-stack-consolidated.patch`
+- `reason_markers`: `ok` (2 patches) -> `0009-launch-graphics-packet-dx-upscaler-x11-turnip-bundle.patch`, `0010-dxvk-capability-envelope-proton-fsr-gate-upscaler-matrix.patch`
+- `runtime_contract_markers`: `missing`
+- `external_signal_markers`: `missing`
+- `contract_helper_usage`: `missing`
 
 ### RuntimeSignalContract
 
-- `policy_markers_constants`: `ok` (1 patches) -> `0059-runtime-signal-contract-helper-and-adoption.patch`
-- `input_markers_constants`: `ok` (1 patches) -> `0059-runtime-signal-contract-helper-and-adoption.patch`
-- `policy_hashing`: `ok` (1 patches) -> `0059-runtime-signal-contract-helper-and-adoption.patch`
+- `policy_markers_constants`: `missing`
+- `input_markers_constants`: `missing`
+- `policy_hashing`: `missing`
 
 ## Contract Summary
 
-- All required runtime-contract checks are present in current patch stack.
+- Missing checks: `9`
+- Action: add follow-up patch preserving forensic reason-codes and runtime markers.
 

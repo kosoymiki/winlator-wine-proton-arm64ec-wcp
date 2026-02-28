@@ -1,0 +1,49 @@
+commit fa629bb70ed7cce346c8ab6d39aff3fce7eb227e
+Author: Utkarsh Dalal <dalal.utkarsh@gmail.com>
+Date:   Fri Feb 27 21:44:33 2026 -0800
+
+    Revert "fix: remain connected to SteamService and solve for login page game s…" (#678)
+    
+    This reverts commit 1bbebf6cfe257cd935ffc946afd22f75a07f5625.
+---
+ app/src/main/java/app/gamenative/ui/PluviaMain.kt | 20 +++++++-------------
+ 1 file changed, 7 insertions(+), 13 deletions(-)
+
+diff --git a/app/src/main/java/app/gamenative/ui/PluviaMain.kt b/app/src/main/java/app/gamenative/ui/PluviaMain.kt
+index 77d1824..0d275f0 100644
+--- a/app/src/main/java/app/gamenative/ui/PluviaMain.kt
++++ b/app/src/main/java/app/gamenative/ui/PluviaMain.kt
+@@ -298,10 +298,6 @@ fun PluviaMain(
+                 }
+ 
+                 MainViewModel.MainUiEvent.OnLoggedOut -> {
+-                    if (SteamService.keepAlive) {
+-                        return@collect
+-                    }
+-
+                     // Clear persisted route so next login starts fresh from Home
+                     viewModel.clearPersistedRoute()
+                     // Pop stack and go back to login
+@@ -1024,15 +1020,13 @@ fun PluviaMain(
+             }
+         }
+ 
+-        val startDestination = remember {
+-            when {
+-                SteamService.isLoggedIn -> PluviaScreen.Home.route + "?offline=false"
+-                GOGService.hasStoredCredentials(context) ||
+-                    EpicService.hasStoredCredentials(context) ||
+-                    AmazonService.hasStoredCredentials(context) ->
+-                    PluviaScreen.Home.route + "?offline=true"
+-                else -> PluviaScreen.LoginUser.route
+-            }
++        val startDestination = when {
++            SteamService.isLoggedIn -> PluviaScreen.Home.route + "?offline=false"
++            GOGService.hasStoredCredentials(context) ||
++                EpicService.hasStoredCredentials(context) ||
++                AmazonService.hasStoredCredentials(context) ->
++                PluviaScreen.Home.route + "?offline=true"
++            else -> PluviaScreen.LoginUser.route
+         }
+ 
+         NavHost(

@@ -24,6 +24,28 @@ log() {
   printf '[inspect-wcp] %s\n' "$*"
 }
 
+resolve_tool_path() {
+  local tool="$1"
+  local candidate
+  local -a candidates
+
+  if candidate="$(command -v "${tool}" 2>/dev/null)"; then
+    [[ -n "${candidate}" ]] && { printf '%s\n' "${candidate}"; return 0; }
+  fi
+
+  candidates=(
+    "${TOOLCHAIN_DIR:-}/bin/${tool}"
+    "${CACHE_DIR:-}/llvm-mingw/bin/${tool}"
+    "${ROOT_DIR}/.cache/llvm-mingw/bin/${tool}"
+  )
+  for candidate in "${candidates[@]}"; do
+    [[ -n "${candidate}" && -x "${candidate}" ]] || continue
+    printf '%s\n' "${candidate}"
+    return 0
+  done
+  return 1
+}
+
 extract_elf_runpath() {
   local elf_path="$1"
   local dyn
@@ -143,7 +165,7 @@ main() {
   else
     log "unixModuleAbiFile=ABSENT"
     if [[ "${strict_bionic}" == "1" ]]; then
-      fail "Strict bionic check failed: unix-module-abi.tsv is missing (expected Aero.so WCP forensic bundle)"
+      fail "Strict bionic check failed: unix-module-abi.tsv is missing (expected Ae.solator WCP forensic bundle)"
     fi
   fi
 
@@ -224,12 +246,24 @@ PY
     fail "Strict bionic check failed: bionic-source-entry.json is missing"
   fi
 
-  if command -v llvm-readobj >/dev/null 2>&1; then
+  local llvm_coff_exports_bin
+  local llvm_coff_exports_tool
+  if llvm_coff_exports_bin="$(resolve_tool_path llvm-readobj)"; then
+    llvm_coff_exports_tool="llvm-readobj"
+  elif llvm_coff_exports_bin="$(resolve_tool_path llvm-readelf)"; then
+    llvm_coff_exports_tool="llvm-readelf"
+  else
+    llvm_coff_exports_bin=""
+    llvm_coff_exports_tool=""
+  fi
+
+  if [[ -n "${llvm_coff_exports_bin}" ]]; then
     local ntdll_dll wow64_dll win32u_dll
     ntdll_dll="${wcp_root}/lib/wine/aarch64-windows/ntdll.dll"
     wow64_dll="${wcp_root}/lib/wine/aarch64-windows/wow64.dll"
     win32u_dll="${wcp_root}/lib/wine/aarch64-windows/win32u.dll"
     missing_gn_symbols=()
+    log "gamenativeBaseline tool=${llvm_coff_exports_tool}"
 
     check_symbol() {
       local dll="$1" symbol="$2" label="$3"
@@ -239,7 +273,7 @@ PY
         log "gamenativeBaseline warn: ${label} missing (${dll})"
         return
       fi
-      dump="$(llvm-readobj --coff-exports "${dll}" 2>/dev/null || true)"
+      dump="$("${llvm_coff_exports_bin}" --coff-exports "${dll}" 2>/dev/null || true)"
       if grep -q "Name: ${symbol}" <<<"${dump}"; then
         log "gamenativeBaseline ok: ${label} exports ${symbol}"
       else
@@ -260,9 +294,9 @@ PY
       fail "Strict gamenative check failed: missing baseline symbols: ${missing_gn_symbols[*]}"
     fi
   else
-    log "gamenativeBaseline skipped: llvm-readobj unavailable"
+    log "gamenativeBaseline skipped: llvm-readobj/readelf unavailable"
     if [[ "${strict_gamenative}" == "1" ]]; then
-      fail "Strict gamenative check failed: llvm-readobj unavailable"
+      fail "Strict gamenative check failed: llvm-readobj/readelf unavailable"
     fi
   fi
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build GameHub -> Aero.so runtime transfer matrix from extracted signatures."""
+"""Build GameHub -> Ae.solator runtime transfer matrix from extracted signatures."""
 
 from __future__ import annotations
 
@@ -231,7 +231,7 @@ def main() -> int:
 
     lines: list[str] = []
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    lines.append("# GameHub Runtime Transfer Matrix (for Aero.so mainline)")
+    lines.append("# GameHub Runtime Transfer Matrix (for Ae.solator mainline)")
     lines.append("")
     lines.append(f"- Generated (UTC): `{ts}`")
     lines.append(f"- Source APK: `{source_apk}`")
@@ -260,7 +260,7 @@ def main() -> int:
 
     lines.append("## Transfer Decisions")
     lines.append("")
-    lines.append("| Module | Decision | Methods | Edge events | Target in Aero.so | Existing anchor |")
+    lines.append("| Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |")
     lines.append("| --- | --- | ---: | ---: | --- | --- |")
 
     ordered = sorted(MODULE_RULES, key=lambda x: KIND_ORDER.get(x["kind"], 99))

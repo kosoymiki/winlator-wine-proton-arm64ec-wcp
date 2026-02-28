@@ -1,0 +1,341 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 4543c72..e5d5fc0 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -83,6 +83,7 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final String UPSCALE_PROFILE_QUALITY = "quality";
+     private static final String UPSCALE_MEMORY_AGGRESSIVE = "aggressive";
+     private static final String UPSCALE_MEMORY_BALANCED = "balanced";
++    private static final String UPSCALE_MEMORY_LOWMEM = "lowmem";
+     private static final String UPSCALE_MEMORY_AUTO = "auto";
+     private static final String UPSCALE_DX8_AUTO = "auto";
+     private static final String UPSCALE_DX8_SHORTCUT_ONLY = "shortcut_only";
+@@ -90,6 +91,8 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final String UPSCALE_VKBASALT_NONE = "none";
+     private static final String UPSCALE_VKBASALT_CAS = "cas";
+     private static final String UPSCALE_VKBASALT_DLS = "dls";
++    private static final String UPSCALE_VKBASALT_NIS = "nis";
++    private static final String UPSCALE_VKBASALT_FSR = "fsr";
+     private static final String UPSCALE_SCREENFX_OFF = "off";
+     private static final String UPSCALE_SCREENFX_FXAA = "fxaa";
+     private static final String UPSCALE_SCREENFX_CRT = "crt";
+@@ -364,11 +367,13 @@ public class AdrenotoolsFragment extends Fragment {
+         final String[] memoryPolicies = {
+                 UPSCALE_MEMORY_AGGRESSIVE,
+                 UPSCALE_MEMORY_BALANCED,
++                UPSCALE_MEMORY_LOWMEM,
+                 UPSCALE_MEMORY_AUTO,
+         };
+         final String[] memoryLabels = {
+                 getString(R.string.upscaler_memory_aggressive),
+                 getString(R.string.upscaler_memory_balanced),
++                getString(R.string.upscaler_memory_lowmem),
+                 getString(R.string.upscaler_memory_auto),
+         };
+ 
+@@ -387,11 +392,15 @@ public class AdrenotoolsFragment extends Fragment {
+                 UPSCALE_VKBASALT_NONE,
+                 UPSCALE_VKBASALT_CAS,
+                 UPSCALE_VKBASALT_DLS,
++                UPSCALE_VKBASALT_NIS,
++                UPSCALE_VKBASALT_FSR,
+         };
+         final String[] vkbasaltLabels = {
+                 getString(R.string.upscaler_vkbasalt_none),
+                 getString(R.string.upscaler_vkbasalt_cas),
+                 getString(R.string.upscaler_vkbasalt_dls),
++                getString(R.string.upscaler_vkbasalt_nis),
++                getString(R.string.upscaler_vkbasalt_fsr),
+         };
+ 
+         final Integer[] percentOptions = {60, 80, 100, 120, 140};
+@@ -537,6 +546,8 @@ public class AdrenotoolsFragment extends Fragment {
+                 getUpscaleVkbasaltLabel(getUpscaleVkbasaltEffect()),
+                 getUpscalePercent(PREF_UPSCALE_VKBASALT_LEVEL, 100),
+                 getUpscalePercent(PREF_UPSCALE_VKBASALT_DENOISE, 100),
++                getUpscaleScreenFxLabel(getUpscaleScreenFxPipeline()),
++                getUpscaleScaleForceLabel(getUpscaleScaleForcePreset()),
+                 getUpscaleProtonFsrLabel(getUpscaleProtonFsrMode()),
+                 getUpscalePercent(PREF_UPSCALE_PROTON_FSR_STRENGTH, 2)
+         );
+@@ -584,7 +595,7 @@ public class AdrenotoolsFragment extends Fragment {
+         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+         return normalizeBySet(prefs.getString(PREF_UPSCALE_MEMORY_POLICY, UPSCALE_MEMORY_AGGRESSIVE),
+                 UPSCALE_MEMORY_AGGRESSIVE,
+-                UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_AUTO);
++                UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_LOWMEM, UPSCALE_MEMORY_AUTO);
+     }
+ 
+     private String getUpscaleDx8Policy() {
+@@ -600,7 +611,7 @@ public class AdrenotoolsFragment extends Fragment {
+         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+         return normalizeBySet(prefs.getString(PREF_UPSCALE_VKBASALT_EFFECT, UPSCALE_VKBASALT_CAS),
+                 UPSCALE_VKBASALT_CAS,
+-                UPSCALE_VKBASALT_NONE, UPSCALE_VKBASALT_CAS, UPSCALE_VKBASALT_DLS);
++                UPSCALE_VKBASALT_NONE, UPSCALE_VKBASALT_CAS, UPSCALE_VKBASALT_DLS, UPSCALE_VKBASALT_NIS, UPSCALE_VKBASALT_FSR);
+     }
+ 
+     private String getUpscaleScreenFxPipeline() {
+@@ -668,6 +679,9 @@ public class AdrenotoolsFragment extends Fragment {
+         if (UPSCALE_MEMORY_BALANCED.equals(value)) {
+             return getString(R.string.upscaler_memory_balanced);
+         }
++        if (UPSCALE_MEMORY_LOWMEM.equals(value)) {
++            return getString(R.string.upscaler_memory_lowmem);
++        }
+         if (UPSCALE_MEMORY_AUTO.equals(value)) {
+             return getString(R.string.upscaler_memory_auto);
+         }
+@@ -691,9 +705,41 @@ public class AdrenotoolsFragment extends Fragment {
+         if (UPSCALE_VKBASALT_DLS.equals(value)) {
+             return getString(R.string.upscaler_vkbasalt_dls);
+         }
++        if (UPSCALE_VKBASALT_NIS.equals(value)) {
++            return getString(R.string.upscaler_vkbasalt_nis);
++        }
++        if (UPSCALE_VKBASALT_FSR.equals(value)) {
++            return getString(R.string.upscaler_vkbasalt_fsr);
++        }
+         return getString(R.string.upscaler_vkbasalt_cas);
+     }
+ 
++    private String getUpscaleScreenFxLabel(String value) {
++        if (UPSCALE_SCREENFX_FXAA.equals(value)) {
++            return getString(R.string.upscaler_screenfx_fxaa);
++        }
++        if (UPSCALE_SCREENFX_CRT.equals(value)) {
++            return getString(R.string.upscaler_screenfx_crt);
++        }
++        if (UPSCALE_SCREENFX_TOON.equals(value)) {
++            return getString(R.string.upscaler_screenfx_toon);
++        }
++        if (UPSCALE_SCREENFX_NTSC.equals(value)) {
++            return getString(R.string.upscaler_screenfx_ntsc);
++        }
++        return getString(R.string.upscaler_screenfx_off);
++    }
++
++    private String getUpscaleScaleForceLabel(String value) {
++        if (UPSCALE_SCALEFORCE_BALANCED.equals(value)) {
++            return getString(R.string.upscaler_scaleforce_balanced);
++        }
++        if (UPSCALE_SCALEFORCE_AGGRESSIVE.equals(value)) {
++            return getString(R.string.upscaler_scaleforce_aggressive);
++        }
++        return getString(R.string.upscaler_scaleforce_off);
++    }
++
+     private String getUpscaleProtonFsrLabel(String value) {
+         if (UPSCALE_PROTON_FSR_QUALITY.equals(value)) {
+             return getString(R.string.upscaler_proton_fsr_quality);
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index baf09ba..650c00c 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -158,6 +158,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private static final String UPSCALE_PROFILE_QUALITY = "quality";
+     private static final String UPSCALE_MEMORY_AGGRESSIVE = "aggressive";
+     private static final String UPSCALE_MEMORY_BALANCED = "balanced";
++    private static final String UPSCALE_MEMORY_LOWMEM = "lowmem";
+     private static final String UPSCALE_MEMORY_AUTO = "auto";
+     private static final String UPSCALE_DX8_AUTO = "auto";
+     private static final String UPSCALE_DX8_SHORTCUT_ONLY = "shortcut_only";
+@@ -165,6 +166,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private static final String UPSCALE_VKBASALT_NONE = "none";
+     private static final String UPSCALE_VKBASALT_CAS = "cas";
+     private static final String UPSCALE_VKBASALT_DLS = "dls";
++    private static final String UPSCALE_VKBASALT_NIS = "nis";
++    private static final String UPSCALE_VKBASALT_FSR = "fsr";
+     private static final String UPSCALE_SCREENFX_OFF = "off";
+     private static final String UPSCALE_SCALEFORCE_OFF = "off";
+     private static final String UPSCALE_PROTON_FSR_OFF = "off";
+@@ -1911,6 +1914,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_UPSCALE_PROTON_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
+         envVars.put("AERO_UPSCALE_SHORTCUT_OVERRIDE", upscalerShortcutOverride ? "1" : "0");
+         envVars.put("AERO_UPSCALE_MODULES_ACTIVE", buildActiveUpscalerModules());
++        envVars.put("AERO_UPSCALE_VKBASALT_EFFECTIVE", upscalerVkbasaltEnabled ? "1" : "0");
++        envVars.put("AERO_UPSCALE_SCREENFX_EFFECTIVE", UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline) ? "0" : "1");
++        envVars.put("AERO_UPSCALE_SCALEFORCE_EFFECTIVE", UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset) ? "0" : "1");
+         String renderStack = "x11";
+         String turnipVerdict = envVars.get("AERO_TURNIP_BIND_VERDICT");
+         if ("integrated".equals(turnipVerdict)) {
+@@ -1924,6 +1930,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         }
+         envVars.put("AERO_X11_GRAPHICS_STACK", renderStack);
+ 
++        applyUpscalerMemoryPolicyEnv();
+         applyDxWrapperMatrixEnv();
+ 
+         if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) {
+@@ -1962,7 +1969,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         upscalerMemoryPolicy = normalizeUpscalerValue(
+                 preferences.getString(PREF_UPSCALE_MEMORY_POLICY, UPSCALE_MEMORY_AGGRESSIVE),
+                 UPSCALE_MEMORY_AGGRESSIVE,
+-                UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_AUTO);
++                UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_LOWMEM, UPSCALE_MEMORY_AUTO);
+         upscalerDx8Policy = normalizeUpscalerValue(
+                 preferences.getString(PREF_UPSCALE_DX8_POLICY, UPSCALE_DX8_AUTO),
+                 UPSCALE_DX8_AUTO,
+@@ -2021,7 +2028,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 }
+                 if (!shortcutMemory.isEmpty()) {
+                     upscalerMemoryPolicy = normalizeUpscalerValue(shortcutMemory, upscalerMemoryPolicy,
+-                            UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_AUTO);
++                            UPSCALE_MEMORY_AGGRESSIVE, UPSCALE_MEMORY_BALANCED, UPSCALE_MEMORY_LOWMEM, UPSCALE_MEMORY_AUTO);
+                 }
+                 if (!shortcutDx8.isEmpty()) {
+                     upscalerDx8Policy = normalizeUpscalerValue(shortcutDx8, upscalerDx8Policy,
+@@ -2102,11 +2109,45 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         return sb.toString();
+     }
+ 
++    private void applyUpscalerMemoryPolicyEnv() {
++        String effective = upscalerMemoryPolicy;
++        switch (upscalerMemoryPolicy) {
++            case UPSCALE_MEMORY_AGGRESSIVE:
++                envVars.put("MESA_SHADER_CACHE_MAX_SIZE", "768M");
++                envVars.put("DXVK_STATE_CACHE", "1");
++                break;
++            case UPSCALE_MEMORY_BALANCED:
++                envVars.put("MESA_SHADER_CACHE_MAX_SIZE", "384M");
++                envVars.put("DXVK_STATE_CACHE", "1");
++                break;
++            case UPSCALE_MEMORY_LOWMEM:
++                envVars.put("MESA_SHADER_CACHE_MAX_SIZE", "128M");
++                envVars.put("DXVK_STATE_CACHE", "0");
++                break;
++            case UPSCALE_MEMORY_AUTO:
++            default:
++                effective = UPSCALE_MEMORY_AUTO;
++                break;
++        }
++        envVars.put("AERO_UPSCALE_MEM_POLICY_EFFECTIVE", effective);
++        ForensicLogger.logEvent(this, "info", "UPSCALE_MEMORY_POLICY_APPLIED",
++                forensicTraceId, "graphics_driver",
++                "upscaler memory policy applied",
++                ForensicLogger.fields(
++                        "configured", upscalerMemoryPolicy,
++                        "effective", effective,
++                        "mesa_shader_cache_max_size", envVars.get("MESA_SHADER_CACHE_MAX_SIZE"),
++                        "dxvk_state_cache", envVars.get("DXVK_STATE_CACHE")
++                ));
++    }
++
+     private void applyDxWrapperMatrixEnv() {
+         String wrapperMode = dxwrapper == null ? "" : dxwrapper.trim().toLowerCase(Locale.ROOT);
+         String dxvkVersion = normalizeDxVersion(dxwrapperConfig.get("version"));
+         String vkd3dVersion = normalizeDxVersion(dxwrapperConfig.get("vkd3dVersion"));
+         String ddrawWrapper = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
++        boolean shortcutDx8Assist = UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride;
++        boolean forceDx8Assist = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || shortcutDx8Assist;
+ 
+         String dx1to7Route = "wined3d";
+         String dx8Route = "wined3d";
+@@ -2119,6 +2160,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             }
+             if (UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy)) {
+                 dx8Route = "d8vk-forced";
++            } else if (shortcutDx8Assist) {
++                dx8Route = "d8vk-shortcut";
+             } else if (compareVersion(dxvkVersion, "2.4") < 0) {
+                 dx8Route = "d8vk-bundled";
+             } else {
+@@ -2133,11 +2176,31 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 ";dx8=" + dx8Route +
+                 ";dx9-11=" + dx9to11Route +
+                 ";dx12=" + dx12Route;
++        String directMapExtended = "dx1=" + dx1to7Route +
++                ";dx2=" + dx1to7Route +
++                ";dx3=" + dx1to7Route +
++                ";dx4=" + dx1to7Route +
++                ";dx5=" + dx1to7Route +
++                ";dx6=" + dx1to7Route +
++                ";dx7=" + dx1to7Route +
++                ";dx8=" + dx8Route +
++                ";dx9=" + dx9to11Route +
++                ";dx10=" + dx9to11Route +
++                ";dx11=" + dx9to11Route +
++                ";dx12=" + dx12Route;
+         envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
+         envVars.put("AERO_DXVK_VERSION_SELECTED", dxvkVersion);
+         envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
+         envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
+         envVars.put("AERO_DX_DIRECT_MAP", directMap);
++        envVars.put("AERO_DX_DIRECT_MAP_EXTENDED", directMapExtended);
++        envVars.put("AERO_DX_ROUTE_DX1_7", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX8", dx8Route);
++        envVars.put("AERO_DX_ROUTE_DX9", dx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX10", dx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX11", dx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX12", dx12Route);
++        envVars.put("AERO_DX8_ASSIST_EFFECTIVE", forceDx8Assist ? "1" : "0");
+ 
+         ForensicLogger.logEvent(this, "info", "DX_WRAPPER_GRAPH_RESOLVED",
+                 forensicTraceId, "graphics_driver",
+@@ -2148,6 +2211,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "vkd3d_version", vkd3dVersion,
+                         "ddraw_wrapper", ddrawWrapper,
+                         "dx_map", directMap,
++                        "dx_map_extended", directMapExtended,
++                        "dx8_assist_effective", forceDx8Assist ? "1" : "0",
+                         "dx8_policy", upscalerDx8Policy
+                 ));
+     }
+@@ -2180,6 +2245,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String normalized = value.trim().toLowerCase(Locale.ROOT);
+         if (normalized.equals("none")) return UPSCALE_VKBASALT_NONE;
+         if (normalized.equals("dls")) return UPSCALE_VKBASALT_DLS;
++        if (normalized.equals("nis")) return UPSCALE_VKBASALT_NIS;
++        if (normalized.equals("fsr")) return UPSCALE_VKBASALT_FSR;
+         if (normalized.equals("cas")) return UPSCALE_VKBASALT_CAS;
+         return UPSCALE_VKBASALT_CAS;
+     }
+@@ -2281,12 +2348,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 Log.d(TAG, "Extracting fallback DXVK .tzst archive: " + dxvkWrapper);
+                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + dxvkWrapper + ".tzst", windowsDir, onExtractFileListener);
+ 
+-                boolean forceD8vk = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy);
++                boolean shortcutDx8Assist = UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride;
++                boolean forceD8vk = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || shortcutDx8Assist;
+                 if (compareVersion(dxvkWrapper, "2.4") < 0 || forceD8vk) {
+                     Log.d(TAG, forceD8vk
+-                            ? "Extracting forced d8vk for DX8 route, wrapper " + dxvkWrapper
++                            ? "Extracting policy d8vk for DX8 route, wrapper " + dxvkWrapper
+                             : "Extracting d8vk as part of DXVK version " + dxvkWrapper);
+                     TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/d8vk-" + DefaultVersion.D8VK + ".tzst", windowsDir, onExtractFileListener);
++                    envVars.put("AERO_DX8_D8VK_EXTRACTED", "1");
++                } else {
++                    envVars.put("AERO_DX8_D8VK_EXTRACTED", "0");
+                 }
+             }
+ 
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 6ff1667..944a61c 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -632,7 +632,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="turnip_pipeline_saved">Turnip lane policy saved.</string>
+     <string name="upscaler_pipeline_config">Upscaler policy</string>
+     <string name="upscaler_pipeline_saved">Upscaler policy saved.</string>
+-    <string name="upscaler_pipeline_summary">Upscaler: %1$s • Memory: %2$s • DX8: %3$s • vkBasalt: %4$s (%5$d/%6$d) • Proton FSR: %7$s (%8$d)</string>
++    <string name="upscaler_pipeline_summary">Upscaler: %1$s • Memory: %2$s • DX8: %3$s • vkBasalt: %4$s (%5$d/%6$d) • ScreenFX: %7$s • ScaleForce: %8$s • Proton FSR: %9$s (%10$d)</string>
+     <string name="upscaler_pipeline_summary_placeholder">Upscaler policy is loading...</string>
+     <string name="upscaler_profile_mode">Upscaler profile</string>
+     <string name="upscaler_profile_aggressive">Aggressive</string>
+@@ -641,6 +641,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="upscaler_memory_policy">Upscaler memory policy</string>
+     <string name="upscaler_memory_aggressive">Aggressive memory</string>
+     <string name="upscaler_memory_balanced">Balanced memory</string>
++    <string name="upscaler_memory_lowmem">Low memory</string>
+     <string name="upscaler_memory_auto">Auto memory</string>
+     <string name="upscaler_dx8_policy">DX8 assist policy</string>
+     <string name="upscaler_dx8_auto">Auto</string>
+@@ -650,6 +651,8 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="upscaler_vkbasalt_none">Disabled</string>
+     <string name="upscaler_vkbasalt_cas">CAS</string>
+     <string name="upscaler_vkbasalt_dls">DLS</string>
++    <string name="upscaler_vkbasalt_nis">NIS</string>
++    <string name="upscaler_vkbasalt_fsr">FSR</string>
+     <string name="upscaler_vkbasalt_level">vkBasalt level</string>
+     <string name="upscaler_vkbasalt_denoise">vkBasalt denoise</string>
+     <string name="upscaler_screenfx_pipeline">ScreenFX pipeline</string>

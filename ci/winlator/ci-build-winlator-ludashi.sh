@@ -15,10 +15,18 @@ RUNTIME_CONTRACT_AUDIT_REPORT="${WINLATOR_RUNTIME_CONTRACT_AUDIT_REPORT:-${ROOT_
 : "${WINLATOR_LUDASHI_REF:=winlator_bionic}"
 : "${WINLATOR_GRADLE_TASK:=assembleDebug}"
 : "${WINLATOR_APK_BASENAME:=by.aero.so.benchmark-debug}"
+: "${WINLATOR_PATCH_PREFLIGHT:=1}"
 
 log() { printf '[winlator-ci] %s\n' "$*"; }
 fail() { printf '[winlator-ci][error] %s\n' "$*" >&2; exit 1; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"; }
+
+require_bool() {
+  case "${2:-}" in
+    0|1) ;;
+    *) fail "${1} must be 0 or 1 (got: ${2:-})" ;;
+  esac
+}
 
 prepare_layout() {
   rm -rf "${WORK_DIR}"
@@ -45,6 +53,21 @@ inspect_upstream() {
     "${INSPECT_DIR}/commits.tsv" \
     "${DOC_REPORT}" \
     "${WINLATOR_LUDASHI_REPO}"
+}
+
+preflight_patch_stack() {
+  local preflight_log
+  preflight_log="${LOG_DIR}/patch-stack-preflight.log"
+  if [[ "${WINLATOR_PATCH_PREFLIGHT}" != "1" ]]; then
+    log "Skipping patch-stack preflight (WINLATOR_PATCH_PREFLIGHT=0)"
+    return 0
+  fi
+
+  log "Running patch-stack preflight"
+  if ! bash "${ROOT_DIR}/ci/winlator/check-patch-stack.sh" "${SRC_DIR}" > "${preflight_log}" 2>&1; then
+    tail -n 120 "${preflight_log}" >&2 || true
+    fail "Patch-stack preflight failed (see ${preflight_log})"
+  fi
 }
 
 apply_patches() {
@@ -90,10 +113,12 @@ main() {
   require_cmd tar
   require_cmd python3
   require_cmd sha256sum
+  require_bool WINLATOR_PATCH_PREFLIGHT "${WINLATOR_PATCH_PREFLIGHT}"
 
   prepare_layout
   clone_upstream
   inspect_upstream
+  preflight_patch_stack
   apply_patches
   build_apk
 }

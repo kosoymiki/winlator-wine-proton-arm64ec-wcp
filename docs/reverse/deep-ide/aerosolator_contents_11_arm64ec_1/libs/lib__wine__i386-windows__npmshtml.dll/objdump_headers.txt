@@ -1,0 +1,186 @@
+
+out/reverse/sources/device/by_aero_so_benchmark_11-arm64ec-1/11-arm64ec-1/lib/wine/i386-windows/npmshtml.dll:     file format pei-i386
+out/reverse/sources/device/by_aero_so_benchmark_11-arm64ec-1/11-arm64ec-1/lib/wine/i386-windows/npmshtml.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10001080
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Thu Feb 26 21:38:36 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00001000
+SizeOfInitializedData	0000a000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00001080
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		0000c000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00002108 000000a2 Export Directory [.edata (or where ever we found it)]
+Entry 1 000021ac 00000028 Import Directory [parts of .idata]
+Entry 2 00005000 00000420 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00006000 0000002c Base Relocation Directory [.reloc]
+Entry 6 000020d0 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 00002010 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 000021dc 00000008 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x100021ac
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 000021ac	000021d4 00000000 00000000 00002200 000021dc
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	21e4	  324  DisableThreadLibraryCalls
+
+ 000021c0	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10002108
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		93d15366
+Major/Minor 			0/0
+Name 				00002158 npmshtml.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000003
+	[Name Pointer/Ordinal] Table	00000003
+Table Addresses
+	Export Address Table 		00002130
+	Name Pointer Table 		0000213c
+	Ordinal Table 			00002148
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 2191 Forwarder RVA -- mshtml.NP_GetEntryPoints
+	[   1] +base[   2] 1050 Export RVA
+	[   2] +base[   3] 1060 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[   0] NP_GetEntryPoints
+	[   1] NP_Initialize
+	[   2] NP_Shutdown
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset   15 [1015] HIGHLOW
+	reloc    1 offset   34 [1034] HIGHLOW
+	reloc    2 offset   b0 [10b0] HIGHLOW
+	reloc    3 offset   c4 [10c4] HIGHLOW
+
+Virtual Address: 00003000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [300c] HIGHLOW
+	reloc    1 offset   10 [3010] HIGHLOW
+	reloc    2 offset   14 [3014] HIGHLOW
+	reloc    3 offset    0 [3000] ABSOLUTE
+
+Virtual Address: 00004000 Chunk size 12 (0xc) Number of fixups 2
+	reloc    0 offset   20 [4020] HIGHLOW
+	reloc    1 offset   3c [403c] HIGHLOW
+
+There is a debug directory in .rdata at 0x100020d0
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 000020ec 000020ec
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+010   Entry: ID: 0x000010, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+028     Entry: ID: 0x000001, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 00000000, Value: 0x000048
+048        Leaf: Addr: 0x005058, Size: 0x0003c8, Codepage: 0
+ Resources start at offset: 0x58
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000000c8  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        0000020d  10002000  10002000  00002000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000018  10003000  10003000  00003000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      00000050  10004000  10004000  00004000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rsrc         00000420  10005000  10005000  00005000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 .reloc        0000002c  10006000  10006000  00006000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .debug_abbrev 0000018c  10007000  10007000  00007000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_info   000001fa  10008000  10008000  00008000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   0000027e  10009000  10009000  00009000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_ranges 00000018  1000a000  1000a000  0000a000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    000004f0  1000b000  1000b000  0000b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000108 .L__wine_spec_exports
+[  1](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000158 .L__wine_spec_exp_names
+[  2](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000130 .L__wine_spec_exports_funcs
+[  3](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000013c .L__wine_spec_exp_name_ptrs
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000148 .L__wine_spec_exp_ordinals
+[  5](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000191 .L__wine_spec_forwards
+[  6](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000050 _NP_Initialize@4
+[  7](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000060 _NP_Shutdown@0
+[  8](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[  9](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 __wine_spec_relay_entry_points
+[ 10](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_entry_point_offsets
+[ 11](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c .L__wine_spec_relay_args_string
+[ 12](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c __wine_spec_relay_entry_point_2
+[ 13](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 __wine_spec_relay_entry_point_3
+[ 14](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000010 __load_config_used
+[ 15](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[ 16](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_res_0
+[ 17](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000080 _DllMainCRTStartup@12
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000a0 _DllMain@12
+[ 19](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001dc __imp__DisableThreadLibraryCalls@4
+
+

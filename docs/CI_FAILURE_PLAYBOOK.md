@@ -2,6 +2,42 @@
 
 Use this playbook for `wine`, `proton-ge10`, and `protonwine10` workflow failures.
 
+## 0) Freeze patch-base before release work
+
+Before touching runtime fixes for a release line, run:
+
+- `bash ci/validation/prepare-release-patch-base.sh`
+- `bash ci/validation/run-final-stage-gates.sh`
+
+This produces one local bundle with:
+- reflective audits,
+- URC mainline checks,
+- strict no-fetch online intake,
+- strict no-fetch high-priority cycle,
+- optional online commit-scan (GitHub API, no clone),
+- optional Winlator patch-stack preflight when `work/winlator-ludashi/src` is present,
+- optional named patch-base phase cycle (`WLT_RELEASE_PREP_RUN_PATCH_BASE=1`).
+
+`run-final-stage-gates.sh` wraps the same gates plus GN manifest contract and optional snapshot capture in one pre-push run.
+
+For day-to-day patch-base bring-up, prefer the lighter local flow first:
+
+- `bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout` (single-patch base sanity)
+- `bash ci/winlator/check-patch-batches.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_BATCH_SIZE=7 bash ci/winlator/check-patch-batches.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_BATCH_MODE=single bash ci/winlator/check-patch-batches.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_BASE_PROFILE=wide bash ci/winlator/run-patch-base-cycle.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_BASE_PHASE=runtime_policy bash ci/winlator/run-patch-base-cycle.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_BATCH_PHASE=runtime_policy bash ci/winlator/check-patch-batches.sh /path/to/upstream/winlator/checkout`
+- `WINLATOR_PATCH_PHASE=runtime_policy bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout`
+- `bash ci/winlator/list-patch-phases.sh`
+- `bash ci/winlator/resolve-patch-phase.sh runtime_policy`
+- `WINLATOR_PATCH_BATCH_PROFILE=wide bash ci/winlator/list-patch-batches.sh`
+- `WINLATOR_PATCH_BATCH_CURSOR=1 bash ci/winlator/next-patch-batch.sh`
+- `bash ci/winlator/next-patch-number.sh ci/winlator/patches <slug>`
+- `bash ci/winlator/create-slice-patch.sh /path/to/upstream/winlator/checkout <slug>` (create temporary `0002+` slice from local tree delta)
+- `bash ci/winlator/fold-into-mainline.sh /path/to/upstream/winlator/checkout` (fold temporary `0002+` slices back into `0001`)
+
 ## 1) Build fails in `programs/winebrowser/main.c`
 
 Symptom:
@@ -94,6 +130,22 @@ If reverse diff shows launcher runpath drift (`/data/data/com.winlator.cmod/file
 
 - `WCP_STRICT_RUNPATH_CONTRACT=1 WCP_RUNPATH_ACCEPT_REGEX='^/data/data/com\.termux/files/usr/lib$' bash ci/validation/inspect-wcp-runtime-contract.sh <artifact.wcp> --strict-bionic --strict-gamenative`
 
+## 7.2) Inspect step fails with `llvm-readobj/readelf unavailable`
+
+Symptom:
+- `Strict gamenative check failed: llvm-readobj/readelf unavailable` in `Inspect WCP runtime contract`.
+
+Action:
+1. Ensure llvm-mingw toolchain has been restored before inspect step.
+2. Verify one of these exists:
+   - `${TOOLCHAIN_DIR}/bin/llvm-readobj`
+   - `${TOOLCHAIN_DIR}/bin/llvm-readelf`
+   - `${CACHE_DIR}/llvm-mingw/bin/llvm-readobj`
+   - `${CACHE_DIR}/llvm-mingw/bin/llvm-readelf`
+   - `.cache/llvm-mingw/bin/llvm-readobj`
+   - `.cache/llvm-mingw/bin/llvm-readelf`
+3. Re-run failed workflow only after cache/toolchain restore is healthy.
+
 ## 8) Pull latest failed runs automatically
 
 To fetch recent failed runs and auto-parse their first failed job logs:
@@ -161,6 +213,21 @@ To collect a single consolidated snapshot (`health + active failures + urc check
 - `bash ci/validation/collect-mainline-forensic-snapshot.sh`
 - `WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
 - `WLT_TRIAGE_ACTIVE_RUNS=1 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_REQUIRED=1 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_FETCH=0 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_FETCH=1 WLT_ONLINE_INTAKE_MODE=code-only WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_TRANSPORT=gh WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_TRANSPORT=git WLT_ONLINE_INTAKE_GIT_FETCH_TIMEOUT_SEC=600 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_BACKLOG_STRICT=1 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_BACKLOG_STRICT=1 WLT_ONLINE_REQUIRED_HIGH_MARKERS=x11drv_xinput2_enable,NtUserSendHardwareInput,SEND_HWMSG_NO_RAW,WRAPPER_VK_VERSION WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_BACKLOG_STRICT=1 WLT_ONLINE_REQUIRED_MEDIUM_MARKERS=ContentProfile,REMOTE_PROFILES WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_USE_HIGH_CYCLE=1 WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_PROFILE=all WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_PROFILE=core WLT_ONLINE_INTAKE_ALIASES=coffin_wine,gamenative_protonwine WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_ONLINE_INTAKE=1 WLT_ONLINE_INTAKE_ALIASES=coffin_wine,gamenative_protonwine WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_CAPTURE_COMMIT_SCAN=1 WLT_COMMIT_SCAN_PROFILE=core WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_SNAPSHOT_FAIL_MODE=capture-only WLT_SNAPSHOT_DIR=/tmp/mainline-forensic-snapshot bash ci/validation/collect-mainline-forensic-snapshot.sh`
+- `WLT_HIGH_CYCLE_FETCH=0 ci/reverse/run-high-priority-cycle.sh` (strict backlog + high/medium marker gate without network fetch)
 
 Generated in snapshot dir:
 - `mainline-health.tsv/.json`
@@ -168,3 +235,76 @@ Generated in snapshot dir:
 - `health.log`, `active-failures.log`, `urc-check.log`
 - `snapshot.meta`, `status.meta`, `git-head.txt`, `git-status.txt`
 - If `WLT_TRIAGE_ACTIVE_RUNS=1`: `run-triage/run-<id>/` artifacts + `run-triage/run-<id>.log`
+- If `WLT_CAPTURE_ONLINE_INTAKE=1`: `online-intake/combined-matrix.{md,json}` + per-repo online reports.
+- `WLT_ONLINE_INTAKE_REQUIRED=1` upgrades online-intake from best-effort to required gate.
+- `WLT_ONLINE_INTAKE_FETCH=0` skips network pull and only regenerates backlog from existing combined matrix.
+- With `WLT_ONLINE_INTAKE_FETCH=0`, snapshot run seeds `online-intake/combined-matrix.json`
+  from repo baseline (`docs/reverse/online-intake/combined-matrix.json`) when snapshot dir is empty.
+- `WLT_ONLINE_INTAKE_MODE=code-only` keeps intake focused on raw file parsing; `full` adds commit-diff scan.
+- `WLT_ONLINE_INTAKE_SCOPE=focused` is default (only per-repo `focus_paths[]` + fallback); `tree` forces full tree scan.
+- `WLT_ONLINE_INTAKE_TRANSPORT=gh` keeps no-clone API intake (default); `git` enables targeted shallow git fetch mode.
+- `WLT_ONLINE_INTAKE_GIT_DEPTH` controls shallow history window for commit-centric scans.
+- `WLT_ONLINE_INTAKE_GIT_FETCH_TIMEOUT_SEC` controls fetch timeout for slow upstream links.
+- `WLT_ONLINE_INTAKE_ALIASES` limits intake to selected aliases from `ci/reverse/online_intake_repos.json`.
+- `WLT_ONLINE_INTAKE_USE_HIGH_CYCLE=1` routes snapshot intake via `ci/reverse/run-high-priority-cycle.sh`.
+- `WLT_ONLINE_INTAKE_PROFILE=core|all|custom` controls high-cycle repo selection strategy.
+- `WLT_ONLINE_INTAKE_PROFILE=custom` requires `WLT_ONLINE_INTAKE_ALIASES` (comma-separated).
+- `WLT_CAPTURE_COMMIT_SCAN=1` runs online commit-scan into `online-intake/commit-scan.{md,json}`.
+- `WLT_COMMIT_SCAN_REQUIRED=1` upgrades commit-scan from best-effort to required gate.
+- `WLT_COMMIT_SCAN_PROFILE=core|all|custom` controls repo selection for commit scan.
+- `WLT_COMMIT_SCAN_COMMITS_PER_REPO` controls commit window depth per repo.
+- `WLT_CAPTURE_URC=0` (default) keeps snapshot path focused on intake/triage speed; set `1` only when policy drift is suspected.
+- When commit scan is available, backlog rows now include `Focus/Commits` hit split and source-tagged evidence (`focus` vs `commit_scan`).
+- `PATCH_TRANSFER_BACKLOG.json` exports `commit_scan_used` and `commit_scan_errors` for strict gating/reporting.
+- `WLT_ONLINE_BACKLOG_STRICT=1` makes intake fail if high rows stay in `needs_review`, high/medium rows are not `ready_validated`, or intake reports contain errors.
+- `WLT_ONLINE_REQUIRED_HIGH_MARKERS` enforces presence of mandatory high-priority markers during strict gate.
+- `WLT_ONLINE_REQUIRED_MEDIUM_MARKERS` enforces presence of mandatory medium-priority markers during strict gate.
+- `WLT_ONLINE_REQUIRED_LOW_MARKERS` optionally enforces presence of low-priority markers during strict gate.
+- `WLT_ONLINE_REQUIRE_LOW_READY_VALIDATED=1` enforces `ready_validated` status for low-priority rows.
+- With commit-scan merged (`ONLINE_INCLUDE_COMMIT_SCAN=1`), strict mode also fails on `commit_scan_errors > 0`.
+- `status.meta` now includes `online_high_rows`, `online_high_not_ready_validated`, `online_medium_rows`, `online_medium_not_ready_validated`, `online_low_rows`, and `online_low_not_ready_validated` for quick strict-gate visibility.
+- `check-urc-mainline-policy.sh` runs a no-fetch smoke of `run-high-priority-cycle.sh` (`profile=all`) to keep intake gate wiring healthy.
+- `WLT_SNAPSHOT_FAIL_MODE=strict|capture-only` controls whether snapshot command exits non-zero on failed checks.
+
+### Targeted integration harvest (commit-driven transfer)
+
+Use this when patch-base work should prioritize upstream commit deltas over extra policy gates:
+
+- `HARVEST_TRANSFER_PROFILE=core HARVEST_TRANSFER_APPLY=1 bash ci/reverse/harvest-transfer.sh`
+- `HARVEST_TRANSFER_PROFILE=custom HARVEST_TRANSFER_ALIASES=gamenative_protonwine HARVEST_TRANSFER_APPLY=1 bash ci/reverse/harvest-transfer.sh`
+- map file: `ci/reverse/transfer_map.json`
+- outputs: `docs/reverse/online-intake/harvest/transfer-report.{md,json}` + per-commit harvested artifacts
+
+Example strict intake with low-priority gate:
+
+```bash
+WLT_CAPTURE_ONLINE_INTAKE=1 \
+WLT_ONLINE_INTAKE_REQUIRED=1 \
+WLT_ONLINE_BACKLOG_STRICT=1 \
+WLT_ONLINE_INTAKE_SCOPE=focused \
+WLT_ONLINE_REQUIRED_LOW_MARKERS=DXVK,D8VK,VKD3D,PROOT_TMP_DIR,BOX64_LOG,WINEDEBUG,MESA_VK_WSI_PRESENT_MODE,TU_DEBUG,WINE_OPEN_WITH_ANDROID_BROWSER \
+WLT_ONLINE_REQUIRE_LOW_READY_VALIDATED=1 \
+bash ci/validation/collect-mainline-forensic-snapshot.sh
+```
+
+## 11) Device VPN/source diagnostics (contents/adrenotools outages)
+
+When users report empty source lists or stalled downloads under VPN/DNS changes:
+
+- `ADB_SERIAL=<device> WLT_PACKAGE=by.aero.so.benchmark bash ci/winlator/adb-network-source-diagnostics.sh`
+- Artifacts:
+  - `endpoint-probes.tsv` (per-endpoint HTTP/DNS/TLS timings + curl status),
+  - `endpoint-probes.summary.json` (status/code aggregates),
+  - connectivity/proxy/private-DNS snapshots (`dumpsys-connectivity.txt`, `global-http-proxy.txt`, `global-private-dns-*.txt`).
+- For full scenario capture, keep `WLT_CAPTURE_NETWORK_DIAG=1` in `ci/winlator/forensic-adb-harvard-suite.sh`.
+
+## 12) Winlator patch-stack drift before Gradle
+
+Symptom:
+- `Build Winlator Ludashi fork APK` fails before Gradle with patch apply errors.
+
+Action:
+1. Check `out/winlator/logs/patch-stack-preflight.log` first.
+2. If preflight fails, treat it as upstream drift in the Winlator patch stack, not a Gradle failure.
+3. Re-run `bash ci/winlator/check-patch-stack.sh <winlator-src-git-dir>` locally against the pinned upstream ref and fix the first rejected patch.
+4. If the first rejection is the contents-branding block inside `0001-mainline-full-stack-consolidated.patch` and only `strings.xml` drifts, prefer updating the bounded reject-heal in `ci/winlator/apply-repo-patches.sh` instead of broadening patch context across the whole file.

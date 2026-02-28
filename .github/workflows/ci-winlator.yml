@@ -29,6 +29,7 @@ env:
   WINLATOR_OUTPUT_DIR: ${{ github.workspace }}/out/winlator
   WINLATOR_LUDASHI_REPO: https://github.com/StevenMXZ/Winlator-Ludashi.git
   WINLATOR_LUDASHI_REF: ${{ github.event.inputs.winlator_ref || '7a315deaf899f0945fbb779970fe897b96281bb6' }}
+  WINLATOR_PATCH_PREFLIGHT: "1"
   RUNTIME_RELEASE_REPO: ${{ github.repository }}
   RUNTIME_RELEASE_TAG: ${{ github.event.inputs.runtime_release_tag || 'wcp-latest' }}
   PREFIX_PACK_URL: https://raw.githubusercontent.com/GameNative/bionic-prefix-files/main/prefixPack-arm64ec.txz
@@ -89,6 +90,7 @@ jobs:
             out/winlator/*.apk
             out/winlator/SHA256SUMS
             out/winlator/logs/**
+            out/winlator/logs/patch-stack-preflight.log
             docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md
             docs/PATCH_STACK_REFLECTIVE_AUDIT.md
             docs/PATCH_STACK_RUNTIME_CONTRACT_AUDIT.md
@@ -100,7 +102,7 @@ jobs:
         run: |
           set -euxo pipefail
           cat > RELEASE_NOTES.md <<EOF_NOTES
-          Aero.solator (0.9c+ line / rolling)
+          Ae.solator (0.9c+ line / rolling)
 
           RU:
           - APK package: by.aero.so.benchmark
@@ -125,7 +127,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: winlator-latest
-          name: Aero.solator Latest (0.9c+ line)
+          name: Ae.solator Latest (0.9c+ line)
           allowUpdates: true
           prerelease: true
           removeArtifacts: false

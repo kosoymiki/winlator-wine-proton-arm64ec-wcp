@@ -17,7 +17,7 @@ Source bundle: `/home/mikhail/winlator_impl_bundle_20260225_162243.tar.gz`
 | `files/app/src/main/java/com/winlator/cmod/graphics/*` | Driver probe normalization and graphics profile | `ci/winlator/patches/0045+` | Merge with existing `0025/0031/0040` logic |
 | `files/app/src/main/java/com/winlator/cmod/compat/*` | App-specific compatibility overrides | `ci/winlator/patches/0046+` | Port guarded rules only, with explicit telemetry |
 | `files/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java` | Driver probing and source orchestration | `ci/winlator/patches/0047+` | Integrate trust-score + fallback-chain |
-| `files/docs/ARCHITECTURE.md` | Runtime architecture notes | `docs/UNIFIED_RUNTIME_CONTRACT.md` | Normalize into Aero.so contract docs |
+| `files/docs/ARCHITECTURE.md` | Runtime architecture notes | `docs/UNIFIED_RUNTIME_CONTRACT.md` | Normalize into Ae.solator contract docs |
 | `files/docs/TEST_PLAN.md` | Functional/perf matrix | `docs/CONTENTS_QA_CHECKLIST.md` + CI scripts | Promote mandatory matrix cases |
 | `files/docs/VULKAN_ADRENOTOOLS_HYBRID.md` | Hybrid probe policy | `docs/UNIFIED_RUNTIME_CONTRACT.md` | Embed as Vulkan contract section |
 | `files/tools/reverse_gamehub/*` | Reverse pipeline support | `ci/research/*` + docs-only guidance | Keep as research-only; no proprietary payload import |

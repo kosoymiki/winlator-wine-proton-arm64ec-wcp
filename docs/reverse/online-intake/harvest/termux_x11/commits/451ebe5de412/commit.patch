@@ -1,0 +1,24 @@
+commit 451ebe5de41224f2e43474e5f69d62484b7b2d41
+Author: Twaik Yont <9674930+twaik@users.noreply.github.com>
+Date:   Wed Feb 18 22:31:46 2026 +0200
+
+    Fix shell-loader binary size regression after Gradle upgrade
+    
+    Signed-off-by: Twaik Yont <9674930+twaik@users.noreply.github.com>
+---
+ shell-loader/build.gradle | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/shell-loader/build.gradle b/shell-loader/build.gradle
+index 739aa8b..c03f75b 100755
+--- a/shell-loader/build.gradle
++++ b/shell-loader/build.gradle
+@@ -10,6 +10,8 @@ android.namespace 'com.termux.x11.shell_loader'
+ android.defaultConfig.minSdkVersion 26
+ android.compileSdkVersion 34
+ android.buildTypes.debug.signingConfig null
++android.buildTypes.debug.minifyEnabled true
++android.buildTypes.debug.shrinkResources true
+ android.buildFeatures.buildConfig true
+ android.compileOptions.sourceCompatibility JavaVersion.VERSION_1_8
+ android.compileOptions.targetCompatibility JavaVersion.VERSION_1_8

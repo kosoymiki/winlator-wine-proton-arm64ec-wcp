@@ -1,0 +1,122 @@
+commit f1ea28a66303c825454ba9871ab6780a1f168a87
+Author: coffincolors <coffincolors@gmail.com>
+Date:   Mon Aug 4 03:47:31 2025 -0500
+
+    update version name to beta3, update containerdetailfragment gstreamer workaround values, add proton to contents manager, add auto install contents to make shipping new wcp easier
+
+diff --git a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+index f1f24aa..38288ec 100644
+--- a/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
++++ b/app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java
+@@ -119,7 +119,9 @@ public class ContainerDetailFragment extends Fragment {
+         private static final String[] MEDIACONV_ENV_VARS = {
+             "MEDIACONV_VIDEO_TRANSCODED_FILE=/sdcard/transcoded.mkv",
+             "MEDIACONV_BLANK_VIDEO_FILE=/sdcard/blank.mkv",
+-            "MEDIACONV_AUDIO_DUMP_FILE=/sdcard/audio.dump"
++            "MEDIACONV_AUDIO_DUMP_FILE=/sdcard/audio.dump",
++            "WINE_NEW_MEDIASOURCE=0",
++            "WINE_DO_NOT_CREATE_DXGI_DEVICE_MANAGER=1"
+     };
+ 
+     @Override
+@@ -1178,6 +1180,8 @@ public class ContainerDetailFragment extends Fragment {
+         wineVersions.addAll(Arrays.asList(versions));
+         for (ContentProfile profile : contentsManager.getProfiles(ContentProfile.ContentType.CONTENT_TYPE_WINE))
+             wineVersions.add(ContentsManager.getEntryName(profile));
++        for (ContentProfile profile : contentsManager.getProfiles(ContentProfile.ContentType.CONTENT_TYPE_PROTON))
++            wineVersions.add(ContentsManager.getEntryName(profile));
+         sWineVersion.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, wineVersions));
+         if (isEditMode()) AppUtils.setSpinnerSelectionFromValue(sWineVersion, container.getWineVersion());
+     }
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 7976401..a4ee0ca 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1477,15 +1477,20 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String inputAsset = "arm64ec_input_dlls.tzst";
+         String wineVersion = container.getWineVersion();
+         Log.d("XServerDisplayActivity", "arm64ec Input DLL Extraction Verification: Container Wine version: " + wineVersion);
+-        if ("proton-9.0-arm64ec".equals(wineVersion)) {
++
++        // Check if the wineVersion string is not null and contains "arm64ec"
++        if (wineVersion != null && wineVersion.contains("arm64ec")) {
+             File wineFolder = new File(imageFs.getWinePath() + "/lib/wine/");
+-            Log.d("XServerDisplayActivity", "Extracting input dlls to " + wineFolder.getPath());
++            Log.d("XServerDisplayActivity", "Wine version contains arm64ec. Extracting input dlls to " + wineFolder.getPath());
+             boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, inputAsset, wineFolder);
+-            if (!success)
++            if (!success) {
+                 Log.d("XServerDisplayActivity", "Failed to extract input dlls");
++            }
++        }
++        else {
++            // Updated log message for clarity
++            Log.d("XServerDisplayActivity", "Wine version is not arm64ec, skipping input dlls extraction.");
+         }
+-        else
+-            Log.d("XServerDisplayActivity", "Wine version is not proton-9.0-arm64ec, skipping input dlls extraction");
+     }
+ 
+     private void extractx86_64InputDlls() {
+diff --git a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+index d215ea5..b6aff77 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/ContentsManager.java
+@@ -52,6 +52,7 @@ public class ContentsManager {
+     public enum ContentDirName {
+         CONTENT_MAIN_DIR_NAME("contents"),
+         CONTENT_WINE_DIR_NAME("wine"),
++        CONTENT_PROTON_DIR_NAME("proton"),
+         CONTENT_DXVK_DIR_NAME("dxvk"),
+         CONTENT_VKD3D_DIR_NAME("vkd3d"),
+         CONTENT_BOX64_DIR_NAME("box64");
+@@ -217,6 +218,17 @@ public class ContentsManager {
+             }
+         }
+ 
++        if (profile.type == ContentProfile.ContentType.CONTENT_TYPE_PROTON) {
++            File bin = new File(file, profile.protonBinPath);
++            File lib = new File(file, profile.protonLibPath);
++            File cp = new File(file, profile.protonPrefixPack);
++
++            if (!bin.exists() || !bin.isDirectory() || !lib.exists() || !lib.isDirectory() || !cp.exists() || !cp.isFile()) {
++                callback.onFailed(InstallFailedReason.ERROR_MISSINGFILES, null);
++                return;
++            }
++        }
++
+         callback.onSucceed(profile);
+     }
+ 
+@@ -263,6 +275,12 @@ public class ContentsManager {
+                 profile.wineBinPath = wineJSONObject.getString(ContentProfile.MARK_WINE_BINPATH);
+                 profile.winePrefixPack = wineJSONObject.getString(ContentProfile.MARK_WINE_PREFIX_PACK);
+             }
++            if (typeName.equals(ContentProfile.ContentType.CONTENT_TYPE_PROTON.toString())) {
++                JSONObject protonJSONObject = profileJSONObject.getJSONObject(ContentProfile.MARK_PROTON);
++                profile.protonLibPath = protonJSONObject.getString(ContentProfile.MARK_PROTON_LIBPATH);
++                profile.protonBinPath = protonJSONObject.getString(ContentProfile.MARK_PROTON_BINPATH);
++                profile.protonPrefixPack = protonJSONObject.getString(ContentProfile.MARK_PROTON_PREFIX_PACK);
++            }
+ 
+             profile.type = ContentProfile.ContentType.getTypeByName(typeName);
+             profile.verName = verName;
+@@ -397,7 +415,7 @@ public class ContentsManager {
+     }
+ 
+     public boolean applyContent(ContentProfile profile) {
+-        if (profile.type != ContentProfile.ContentType.CONTENT_TYPE_WINE) {
++        if (profile.type != ContentProfile.ContentType.CONTENT_TYPE_WINE && profile.type != ContentProfile.ContentType.CONTENT_TYPE_PROTON) {
+             for (ContentProfile.ContentFile contentFile : profile.fileList) {
+                 File targetFile = new File(getPathFromTemplate(contentFile.target));
+                 File sourceFile = new File(getInstallDir(context, profile), contentFile.source);
+@@ -409,7 +427,8 @@ public class ContentsManager {
+                     FileUtils.chmod(targetFile, 0771);
+                 }
+             }
+-        } else {
++        }
++        else {
+             // TODO: do nothing?
+         }
+         return true;

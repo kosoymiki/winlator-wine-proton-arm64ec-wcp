@@ -1,0 +1,4757 @@
+commit 7b1c9dd7d5dbb8d82bd669cb7beb84e6ffcc1646
+Author: sidaodomorro <danilaferrari77@gmail.com>
+Date:   Mon Feb 23 18:36:43 2026 -0300
+
+    Reverts and patches winemenubuilder for Winlator
+    
+    Reverts previous direct modifications to winemenubuilder.c.
+    
+    Converts the shortcut fix commits into a patch file for easier management and applies it to both ARM64EC and x86_64 build scripts. This ensures Winlator can properly recognize and utilize the created shortcuts.
+
+diff --git a/.github/workflows/build-proton.yml b/.github/workflows/build-proton.yml
+new file mode 100644
+index 0000000..314d6ff
+--- /dev/null
++++ b/.github/workflows/build-proton.yml
+@@ -0,0 +1,289 @@
++name: Build Proton Wine
++
++on:
++  push:
++    branches: [ main, master, proton_10.0 ]
++  pull_request:
++    branches: [ main, master, proton_10.0 ]
++  workflow_dispatch:
++
++jobs:
++  build:
++    runs-on: ubuntu-24.04
++    strategy:
++      matrix:
++        arch: [x86_64, aarch64]
++      fail-fast: false
++    
++    steps:
++      - name: Free up disk space
++        run: |
++          sudo rm -rf /usr/share/dotnet
++          sudo rm -rf /opt/ghc
++          sudo rm -rf /usr/local/share/boost
++          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
++          df -h
++      
++      - name: Checkout repository
++        uses: actions/checkout@v4
++        with:
++          submodules: recursive
++      
++      - name: Set up build environment
++        run: |
++          sudo dpkg --add-architecture i386
++          sudo apt-get update
++          sudo apt-get install -y \
++            build-essential \
++            git \
++            wget \
++            curl \
++            unzip \
++            flex \
++            bison \
++            gettext \
++            autoconf \
++            automake \
++            libtool \
++            pkg-config \
++            mingw-w64 \
++            gcc-multilib \
++            g++-multilib \
++            libfreetype6-dev \
++            libfreetype6-dev:i386 \
++            libpng-dev \
++            libpng-dev:i386 \
++            zlib1g-dev \
++            zlib1g-dev:i386
++      
++      - name: Download and extract termuxfs for ${{ matrix.arch }}
++        run: |
++          mkdir -p $HOME/termuxfs/${{ matrix.arch }}
++          cd $HOME/termuxfs/${{ matrix.arch }}
++          wget https://github.com/GameNative/termux-on-gha/releases/download/build-20260218/termuxfs-${{ matrix.arch }}.tar
++          tar -xf termuxfs-${{ matrix.arch }}.tar
++          ls -la $HOME/termuxfs/${{ matrix.arch }}/
++      
++      - name: Cache Android NDK
++        id: cache-ndk
++        uses: actions/cache@v4
++        with:
++          path: ~/Android/Sdk/ndk/27.3.13750724
++          key: android-ndk-r27d
++      
++      - name: Set up Android NDK
++        if: steps.cache-ndk.outputs.cache-hit != 'true'
++        run: |
++          mkdir -p $HOME/Android/Sdk/ndk
++          cd $HOME/Android/Sdk/ndk
++          wget https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
++          unzip -q android-ndk-r27d-linux.zip
++          mv android-ndk-r27d 27.3.13750724
++      
++      - name: Cache LLVM MinGW toolchain
++        id: cache-llvm-mingw
++        uses: actions/cache@v4
++        with:
++          path: ~/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64
++          key: bylaws-llvm-mingw-20250920
++      
++      - name: Set up LLVM MinGW toolchain
++        if: steps.cache-llvm-mingw.outputs.cache-hit != 'true'
++        run: |
++          mkdir -p $HOME/toolchains
++          cd $HOME/toolchains
++          wget https://github.com/bylaws/llvm-mingw/releases/download/20250920/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
++          tar -xf llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64.tar.xz
++      
++      - name: Run autogen.sh
++        run: |
++          bash autogen.sh
++      
++      - name: Cache wine-tools
++        id: cache-wine-tools
++        uses: actions/cache@v4
++        with:
++          path: wine-tools
++          key: wine-tools-${{ hashFiles('configure.ac', 'configure') }}
++      
++      - name: Build wine-tools (step 0)
++        if: steps.cache-wine-tools.outputs.cache-hit != 'true'
++        run: |
++          bash build-scripts/build-step0.sh
++      
++      - name: Build sysvshm library for ${{ matrix.arch }}
++        if: matrix.arch == 'aarch64'
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            bash build-scripts/build-step-x86_64.sh --build-sysvshm
++          else
++            bash build-scripts/build-step-arm64ec.sh --build-sysvshm
++          fi
++      
++      - name: Configure build for ${{ matrix.arch }}
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            bash build-scripts/build-step-x86_64.sh --configure
++          else
++            bash build-scripts/build-step-arm64ec.sh --configure
++          fi
++      
++      - name: Build Proton for ${{ matrix.arch }}
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            bash build-scripts/build-step-x86_64.sh --build
++          else
++            bash build-scripts/build-step-arm64ec.sh --build
++          fi
++      
++      - name: Install Proton for ${{ matrix.arch }}
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            bash build-scripts/build-step-x86_64.sh --install
++          else
++            bash build-scripts/build-step-arm64ec.sh --install
++          fi
++      
++      - name: Download prefixPack.txz for ${{ matrix.arch }}
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            wget https://github.com/GameNative/bionic-prefix-files/raw/main/prefixPack-x86_64.txz -O $GITHUB_WORKSPACE/prefixPack.txz
++          else
++            wget https://github.com/GameNative/bionic-prefix-files/raw/main/prefixPack-arm64ec.txz -O $GITHUB_WORKSPACE/prefixPack.txz
++          fi
++      
++      - name: Generate profile.json files
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            ARCH_NAME="x86_64"
++          else
++            ARCH_NAME="arm64ec"
++          fi
++          
++          # Generate Proton profile.json
++          cat > $GITHUB_WORKSPACE/profile.json << EOF
++          {
++            "type": "Proton",
++            "versionName": "10.0-4-${ARCH_NAME}",
++            "versionCode": 1,
++            "description": "Proton 10.0-4 ${ARCH_NAME} - Windows compatibility layer with improved gaming support",
++            "files": [],
++            "wine": {
++              "binPath": "bin",
++              "libPath": "lib",
++              "prefixPack": "prefixPack.txz"
++            }
++          }
++          EOF
++          
++          # Generate Wine profile.json for Ludashi
++          cat > $GITHUB_WORKSPACE/profile-wine.json << EOF
++          {
++            "type": "Wine",
++            "versionName": "10.0-4-${ARCH_NAME}",
++            "versionCode": 0,
++            "description": "Proton 10.0-4 ${ARCH_NAME} - Windows compatibility layer with improved gaming support",
++            "files": [],
++            "wine": {
++              "binPath": "bin",
++              "libPath": "lib",
++              "prefixPack": "prefixPack.txz"
++            }
++          }
++          EOF
++      
++      - name: Package build artifacts
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            OUTPUT_DIR="$HOME/compiled-files-x86_64"
++            ARCH_NAME="x86_64"
++          else
++            OUTPUT_DIR="$HOME/compiled-files-aarch64"
++            ARCH_NAME="arm64ec"
++          fi
++          
++          cd $OUTPUT_DIR
++          
++          # Create Proton WCP - txz format
++          cp $GITHUB_WORKSPACE/prefixPack.txz .
++          cp $GITHUB_WORKSPACE/profile.json .
++          tar cJf proton-10.0-4-$ARCH_NAME.wcp bin lib share prefixPack.txz profile.json
++          mv proton-10.0-4-$ARCH_NAME.wcp $GITHUB_WORKSPACE/
++          
++          # Create Wine WCP for CMOD & Ludashi - wcp.xz format
++          cp $GITHUB_WORKSPACE/profile-wine.json profile.json
++          tar cJf proton-wine-10.0-4-$ARCH_NAME.wcp.xz bin lib share prefixPack.txz profile.json
++          mv proton-wine-10.0-4-$ARCH_NAME.wcp.xz $GITHUB_WORKSPACE/
++      
++      - name: Upload build artifacts
++        run: |
++          if [ "${{ matrix.arch }}" == "x86_64" ]; then
++            ARCH_NAME="x86_64"
++          else
++            ARCH_NAME="arm64ec"
++          fi
++          echo "ARCH_NAME=$ARCH_NAME" >> $GITHUB_ENV
++      
++      - name: Upload Proton build artifacts for ${{ matrix.arch }}
++        uses: actions/upload-artifact@v4
++        with:
++          name: proton-${{ env.ARCH_NAME }}
++          path: proton-10.0-4-${{ env.ARCH_NAME }}.wcp
++          retention-days: 30
++      
++      - name: Upload Wine build artifacts for ${{ matrix.arch }}
++        uses: actions/upload-artifact@v4
++        with:
++          name: proton-wine-${{ env.ARCH_NAME }}
++          path: proton-wine-10.0-4-${{ env.ARCH_NAME }}.wcp.xz
++          retention-days: 30
++  
++  release:
++    needs: build
++    runs-on: ubuntu-24.04
++    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/proton_10.0')) || github.event_name == 'workflow_dispatch'
++    
++    steps:
++      - name: Download all artifacts
++        uses: actions/download-artifact@v4
++        with:
++          path: artifacts
++      
++      - name: Prepare release files
++        run: |
++          mkdir -p release
++          find artifacts -name "*.wcp" -exec cp {} release/ \;
++          find artifacts -name "*.wcp.xz" -exec cp {} release/ \;
++          ls -lah release/
++      
++      - name: Create Release
++        uses: softprops/action-gh-release@v1
++        with:
++          tag_name: release-${{ github.sha }}
++          name: Proton Wine 10.0-4 (Build ${{ github.run_number }})
++          files: release/*
++          draft: false
++          prerelease: false
++          body: |
++            # Caution: This version is provided for testing purposes only. It may lead to game instability or crashes. Use at your own risk.
++            
++            ## Proton Wine Build based on Valve [Wine](https://github.com/ValveSoftware/wine/tree/proton_10.0)
++            
++            ### Proton Version: 10.0-4
++            
++            Built from commit: ${{ github.sha }}
++            
++            ### Architectures
++            - x86_64 (Intel/AMD 64-bit)
++            - arm64ec (ARM64EC)
++            
++            ### WCP Files
++            **Proton Type:**
++            - `proton-10.0-4-x86_64.wcp` - For GameNative
++            - `proton-10.0-4-arm64ec.wcp` - For GameNative
++            
++            **Wine Type:**
++            - `proton-wine-10.0-4-x86_64.wcp.xz` - For Winlator for CMOD & Ludashi
++            - `proton-wine-10.0-4-arm64ec.wcp.xz` - For Winlator for CMOD & Ludashi
++        env:
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+diff --git a/android/patches/android_network.patch b/android/patches/android_network.patch
+new file mode 100644
+index 0000000..42098ad
+--- /dev/null
++++ b/android/patches/android_network.patch
+@@ -0,0 +1,401 @@
++diff --git a/dlls/dnsapi/libresolv.c b/dlls/dnsapi/libresolv.c
++index 9034651..65ec125 100644
++--- a/dlls/dnsapi/libresolv.c
+++++ b/dlls/dnsapi/libresolv.c
++@@ -24,7 +24,7 @@
++ 
++ #include "config.h"
++ 
++-#ifdef HAVE_RESOLV
+++#if defined(HAVE_RESOLV) || defined(__ANDROID__)
++ #include <stdarg.h>
++ #include <string.h>
++ #include <stdio.h>
++@@ -44,6 +44,8 @@
++ # include <netdb.h>
++ #endif
++ 
+++#include <arpa/inet.h>
+++
++ #include "ntstatus.h"
++ #define WIN32_NO_STATUS
++ #include "windef.h"
++@@ -53,12 +55,75 @@
++ #define USE_WS_PREFIX
++ #include "ws2def.h"
++ #include "ws2ipdef.h"
++-
++ #include "wine/debug.h"
++ #include "dnsapi.h"
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
++ 
+++#ifdef __ANDROID__
+++
+++#define LIBANDROID_HANDLE "/system/lib64/libandroid.so"
+++
+++#include <dlfcn.h>
+++enum ResNsendFlags : uint32_t {
+++    ANDROID_RESOLV_NO_RETRY = 1 << 0,
+++    ANDROID_RESOLV_NO_CACHE_STORE = 1 << 1,
+++    ANDROID_RESOLV_NO_CACHE_LOOKUP = 1 << 2,
+++};
+++
+++typedef uint64_t net_handle_t;
+++
+++#define NETWORK_UNSPECIFIED ((net_handle_t)0)
+++
+++static void *libandroid_handle;
+++static int (*p_android_res_nquery)(net_handle_t network, const char *dname, int ns_class, int ns_type, uint32_t flags);
+++static int (*p_android_res_nresult)(int fd, int *rcode, uint8_t *answer, size_t anslen);
+++
+++static void init_resolver( void ) {
+++    if (!libandroid_handle)
+++        libandroid_handle = dlopen(LIBANDROID_HANDLE, RTLD_LOCAL | RTLD_NOW);
+++    if (!p_android_res_nquery)
+++        p_android_res_nquery = dlsym(libandroid_handle, "android_res_nquery");
+++    if (!p_android_res_nresult)
+++        p_android_res_nresult = dlsym(libandroid_handle, "android_res_nresult");
+++}
+++
+++static DNS_STATUS map_h_errno( int error )
+++{
+++    switch (error) {
+++        case ns_r_formerr:
+++            return DNS_ERROR_RCODE_FORMAT_ERROR;
+++        case ns_r_servfail:
+++            return DNS_ERROR_RCODE_SERVER_FAILURE;
+++        case ns_r_nxdomain:
+++            return DNS_ERROR_RCODE_NAME_ERROR;
+++        case ns_r_notimpl:
+++            return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+++        case ns_r_refused:
+++            return DNS_ERROR_RCODE_REFUSED;
+++        case ns_r_yxdomain:
+++            return DNS_ERROR_RCODE_YXDOMAIN;
+++        case ns_r_yxrrset:
+++            return DNS_ERROR_RCODE_YXRRSET;
+++        case ns_r_nxrrset:
+++            return DNS_ERROR_RCODE_NXRRSET;
+++        case ns_r_notauth:
+++            return DNS_ERROR_RCODE_NOTAUTH;
+++        case ns_r_notzone:
+++            return DNS_ERROR_RCODE_NOTZONE;
+++        case ns_r_badsig:
+++            return DNS_ERROR_RCODE_BADSIG;
+++        case ns_r_badkey:
+++            return DNS_ERROR_RCODE_BADKEY;
+++        case ns_r_badtime:
+++            return DNS_ERROR_RCODE_BADTIME;
+++        default:
+++            return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+++    }
+++}
+++
+++#else
+++
++ /* call res_init() just once because of a bug in Mac OS X 10.4 */
++ /* call once per thread on systems that have per-thread _res */
++ static void init_resolver( void )
++@@ -66,6 +131,8 @@ static void init_resolver( void )
++     if (!(_res.options & RES_INIT)) res_init();
++ }
++ 
+++
+++
++ static unsigned long map_options( DWORD options )
++ {
++     unsigned long ret = 0;
++@@ -122,6 +189,29 @@ static DNS_STATUS map_h_errno( int error )
++     }
++ }
++ 
+++#endif
+++
+++#ifdef __ANDROID__
+++
+++static NTSTATUS resolv_get_searchlist( void *args )
+++{
+++    const struct get_searchlist_params *params = args;
+++    WCHAR *list = params->list;
+++
+++    if (!list || *params->len < sizeof(WCHAR))
+++    {
+++        *params->len = sizeof(WCHAR);
+++        return !list ? ERROR_SUCCESS : ERROR_MORE_DATA;
+++    }
+++
+++    *list = 0;
+++    *params->len = sizeof(WCHAR);
+++
+++    return ERROR_SUCCESS;
+++}
+++
+++#else
+++
++ static NTSTATUS resolv_get_searchlist( void *args )
++ {
++     const struct get_searchlist_params *params = args;
++@@ -151,6 +241,7 @@ static NTSTATUS resolv_get_searchlist( void *args )
++     return ERROR_SUCCESS;
++ }
++ 
+++#endif
++ 
++ static inline int filter( unsigned short sin_family, USHORT family )
++ {
++@@ -238,10 +329,10 @@ static NTSTATUS resolv_get_serverlist( void *args )
++ 
++ static NTSTATUS resolv_get_serverlist( void *args )
++ {
++-    const struct get_serverlist_params *params = args;
+++    const struct get_serverlist_params *params = args;
++     DNS_ADDR_ARRAY *addrs = params->addrs;
++     DWORD needed, found, i;
++-
+++#ifndef __ANDROID__
++     init_resolver();
++ 
++     if (!_res.nscount) return DNS_ERROR_NO_DNS_SERVERS;
++@@ -300,11 +391,29 @@ static NTSTATUS resolv_get_serverlist( void *args )
++     }
++ 
++     return ERROR_SUCCESS;
+++#else
+++    char *dns = getenv("ANDROID_RESOLV_DNS") ? getenv("ANDROID_RESOLV_DNS") : "8.8.4.4";
+++    TRACE( "resolv_get_serverlist not supported on Android, attempting to hardcode\n" );
+++    memset(addrs, 0, sizeof(DNS_ADDR_ARRAY));
+++
+++    found = 0;
+++
+++    addrs->MaxCount = addrs->AddrCount = 1;
+++
+++    SOCKADDR_IN *sa = (SOCKADDR_IN *)addrs->AddrArray[0].MaxSa;
+++    sa->sin_family = WS_AF_INET;
+++    inet_pton(WS_AF_INET, dns, &sa->sin_addr);
+++    addrs->AddrArray[0].Data.DnsAddrUserDword[0] = sizeof(*sa);
+++    found++;
+++    *params->len = FIELD_OFFSET(DNS_ADDR_ARRAY, AddrArray[found]);
+++    return ERROR_SUCCESS;
+++#endif
++ }
++ #endif
++ 
++ static NTSTATUS resolv_set_serverlist( void *args )
++ {
+++#ifndef __ANDROID__
++     const IP4_ARRAY *addrs = args;
++     int i;
++ 
++@@ -321,8 +430,10 @@ static NTSTATUS resolv_set_serverlist( void *args )
++ 
++     for (i = 0; i < _res.nscount; i++)
++         _res.nsaddr_list[i].sin_addr.s_addr = addrs->AddrArray[i];
++-
++-    return ERROR_SUCCESS;
+++#else
+++    TRACE( "resolv_set_serverlist not supported on Android\n" );
+++#endif
+++    return ERROR_SUCCESS;
++ }
++ 
++ static NTSTATUS resolv_query( void *args )
++@@ -330,17 +441,33 @@ static NTSTATUS resolv_query( void *args )
++     const struct query_params *params = args;
++     DNS_STATUS ret = ERROR_SUCCESS;
++     int len;
++-
+++#ifdef __ANDROID__
+++    uint32_t flags = 0;
+++    int fd = 0;
+++    int rcode = 0;
+++#endif
++     init_resolver();
+++#ifndef __ANDROID__
++     _res.options |= map_options( params->options );
++-
++     if ((len = res_query( params->name, ns_c_in, params->type, params->buf, *params->len )) < 0)
++-        ret = map_h_errno( h_errno );
+++        ret = map_h_errno( h_errno );
++     else
++         *params->len = len;
+++#else
+++    if (params->options & DNS_QUERY_BYPASS_CACHE)
+++        flags = ANDROID_RESOLV_NO_CACHE_STORE | ANDROID_RESOLV_NO_CACHE_LOOKUP;
+++
+++     if ((fd = p_android_res_nquery( NETWORK_UNSPECIFIED, params->name, ns_c_in, params->type, flags)) < 0)
+++        return DNS_ERROR_RCODE_REFUSED;
+++
+++    if ((len = p_android_res_nresult(fd, &rcode, params->buf, *params->len)) < 0)
+++        ret = map_h_errno( rcode );
+++    else
+++        *params->len = len;
+++#endif
++     return ret;
++ }
++-
+++
++ const unixlib_entry_t __wine_unix_call_funcs[] =
++ {
++     resolv_get_searchlist,
++@@ -426,4 +553,4 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
++ 
++ #endif  /* _WIN64 */
++ 
++-#endif /* HAVE_RESOLV */
+++#endif /* HAVE_RESOLV || __ANDROID__ */
++diff --git a/dlls/dnsapi/record.c b/dlls/dnsapi/record.c
++index 1b4cbfe..29b6533 100644
++--- a/dlls/dnsapi/record.c
+++++ b/dlls/dnsapi/record.c
++@@ -1144,7 +1144,7 @@ static DNS_STATUS extract_message_records( const DNS_MESSAGE_BUFFER *buffer, WOR
++     const BYTE *ptr = (const BYTE *)buffer->MessageBody;
++     unsigned int num;
++ 
++-    if (hdr->IsResponse && !hdr->AnswerCount) return DNS_ERROR_BAD_PACKET;
+++    if (hdr->IsResponse && !hdr->AnswerCount) ret = DNS_INFO_NO_RECORDS;
++ 
++     for (num = 0; num < hdr->QuestionCount; num++)
++         if (!(ptr = skip_record( ptr, end, DnsSectionQuestion ))) return DNS_ERROR_BAD_PACKET;
++diff --git a/dlls/nsiproxy.sys/ndis.c b/dlls/nsiproxy.sys/ndis.c
++index 158a39e..35cab14 100644
++--- a/dlls/nsiproxy.sys/ndis.c
+++++ b/dlls/nsiproxy.sys/ndis.c
++@@ -23,7 +23,8 @@
++ #endif
++ 
++ #include "config.h"
++-
+++#include <ifaddrs.h>
+++#include "nsi_common.h"
++ #include <stdarg.h>
++ #include <sys/types.h>
++ #include <sys/socket.h>
++@@ -104,7 +105,8 @@ struct if_entry
++ 
++ static struct list if_list = LIST_INIT( if_list );
++ static pthread_mutex_t if_list_lock = PTHREAD_MUTEX_INITIALIZER;
++-
+++static int do_not_update = -1;
+++int wine_new_ndis = -1;
++ static BOOL have_ethernet_iface;
++ 
++ static struct if_entry *find_entry_from_index( UINT index )
++@@ -309,6 +311,16 @@ static struct if_entry *add_entry( UINT index, const char *name )
++         free( entry );
++         return NULL;
++     }
+++#ifndef __ANDROID__
+++    if_get_physical( name, &entry->if_type, &entry->if_phys_addr );
+++#else
+++    if (strstr(name, "wlan") || strstr(name, "en") || strstr(name, "eth") || strstr(name, "dummy"))
+++        entry->if_type = MIB_IF_TYPE_ETHERNET;
+++    else if (strstr(name, "lo"))
+++        entry->if_type = MIB_IF_TYPE_LOOPBACK;
+++    else if (strstr(name, "rmnet"))
+++        entry->if_type = MIB_IF_TYPE_PPP;
+++#endif
++ 
++     if_get_physical( name, &entry->if_type, &entry->if_phys_addr );
++ 
++@@ -330,9 +342,35 @@ static struct if_entry *add_entry( UINT index, const char *name )
++ 
++ static unsigned int update_if_table( void )
++ {
++-    struct if_nameindex *indices = if_nameindex(), *entry;
+++    struct if_nameindex *indices, *entry;
++     unsigned int append_count = 0;
++     struct if_entry *if_entry;
+++    if (do_not_update == -1)
+++        do_not_update = getenv("WINE_DO_NOT_UPDATE_IF_TABLE") && atoi(getenv("WINE_DO_NOT_UPDATE_IF_TABLE"));
+++
+++    if (wine_new_ndis == -1)
+++        wine_new_ndis = getenv("WINE_NEW_NDIS") && atoi(getenv("WINE_NEW_NDIS"));
+++
+++    if (do_not_update)
+++           return 0;
+++
+++    if (wine_new_ndis) {
+++        struct ifaddrs *ifap;
+++        int res;
+++
+++           TRACE( "Using alternative ndis implementation, output will be limited\n" );
+++
+++        if ((res = getifaddrs( &ifap )) == -1)
+++            return 0;
+++        while (ifap->ifa_next != NULL) {
+++            int index = if_nametoindex( ifap->ifa_name );
+++            if (index && !find_entry_from_index( index ) && add_entry( index, ifap->ifa_name ))
+++                ++append_count;
+++            ifap = ifap->ifa_next;
+++        }
+++        return append_count;
+++    }
+++    indices = if_nameindex();
++ 
++     for (entry = indices; entry->if_index; entry++)
++     {
++@@ -532,7 +570,10 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, UINT key_size, void *rw_da
++     pthread_mutex_lock( &if_list_lock );
++ 
++     update_if_table();
++-
+++    if (do_not_update) {
+++        pthread_mutex_unlock( &if_list_lock );
+++        return STATUS_UNSUCCESSFUL;
+++    }
++     LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
++     {
++         if (num < *count)
++diff --git a/dlls/nsiproxy.sys/nsi_common.h b/dlls/nsiproxy.sys/nsi_common.h
++new file mode 100644
++index 0000000..7c1bfbc
++--- /dev/null
+++++ b/dlls/nsiproxy.sys/nsi_common.h
++@@ -0,0 +1,26 @@
+++/*
+++ * nsiproxy.sys
+++ *
+++ * Copyright 2021 Huw Davies
+++ *
+++ * This library is free software; you can redistribute it and/or
+++ * modify it under the terms of the GNU Lesser General Public
+++ * License as published by the Free Software Foundation; either
+++ * version 2.1 of the License, or (at your option) any later version.
+++ *
+++ * This library is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++ * Lesser General Public License for more details.
+++ *
+++ * You should have received a copy of the GNU Lesser General Public
+++ * License along with this library; if not, write to the Free Software
+++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+++ */
+++
+++ #ifndef __NSI_COMMON_H
+++ #define __NSI_COMMON_H
+++
+++ extern int wine_new_ndis;
+++
+++ #endif
++diff --git a/server/unicode.c b/server/unicode.c
++index b486431..8da12dd 100644
++--- a/server/unicode.c
+++++ b/server/unicode.c
++@@ -334,6 +334,15 @@ struct fd *load_intl_file(void)
++                            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))) break;
++         free( path );
++     }
+++    if (!fd && getenv("XDG_DATA_DIRS")) {
+++        char *share_dir = getenv("XDG_DATA_DIRS");
+++        char *path = malloc(strlen(share_dir) + strlen("/l_intl.nls") + 1);
+++        sprintf(path, "%s/%s", share_dir, "wine/nls/l_intl.nls");
+++        fd = open_fd( NULL, path, nt_name, O_RDONLY, &mode, FILE_READ_DATA,
+++                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+++                      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+++        free ( path );
+++    }
++     if (!fd) fatal_error( "failed to load l_intl.nls\n" );
++     unix_fd = get_unix_fd( fd );
++     /* read initial offset */
+diff --git a/android/patches/dlls_advapi32_advapi_c.patch b/android/patches/dlls_advapi32_advapi_c.patch
+new file mode 100644
+index 0000000..5c510ee
+--- /dev/null
++++ b/android/patches/dlls_advapi32_advapi_c.patch
+@@ -0,0 +1,22 @@
++diff --git a/dlls/advapi32/advapi.c b/dlls/advapi32/advapi.c
++index 127cec5..dc63ded 100644
++--- a/dlls/advapi32/advapi.c
+++++ b/dlls/advapi32/advapi.c
++@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
++  */
++ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
++ {
++-    static const char steamuserA[] = {'s','t','e','a','m','u','s','e','r',0};
+++    static const char steamuserA[] = {'x','u','s','e','r',0};
++     if(*size < ARRAY_SIZE(steamuserA)){
++         SetLastError( ERROR_INSUFFICIENT_BUFFER );
++         *size = ARRAY_SIZE(steamuserA);
++@@ -60,7 +60,7 @@ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
++  */
++ BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
++ {
++-    static const WCHAR steamuserW[] = {'s','t','e','a','m','u','s','e','r',0};
+++    static const WCHAR steamuserW[] = {'x','u','s','e','r',0};
++     if(*size < ARRAY_SIZE(steamuserW)){
++         SetLastError( ERROR_INSUFFICIENT_BUFFER );
++         *size = ARRAY_SIZE(steamuserW);
+diff --git a/android/patches/dlls_amd_ags_x64_unixlib_c.patch b/android/patches/dlls_amd_ags_x64_unixlib_c.patch
+new file mode 100644
+index 0000000..d9aeffd
+--- /dev/null
++++ b/android/patches/dlls_amd_ags_x64_unixlib_c.patch
+@@ -0,0 +1,35 @@
++diff --git a/dlls/amd_ags_x64/unixlib.c b/dlls/amd_ags_x64/unixlib.c
++index d34a162..89b3a55 100644
++--- a/dlls/amd_ags_x64/unixlib.c
+++++ b/dlls/amd_ags_x64/unixlib.c
++@@ -30,11 +30,11 @@
++ #include <unistd.h>
++ #include <fcntl.h>
++ #include <errno.h>
++-
+++#ifndef __ANDROID__
++ #include <xf86drm.h>
++ #include <amdgpu_drm.h>
++ #include <amdgpu.h>
++-
+++#endif
++ #include "ntstatus.h"
++ #define WIN32_NO_STATUS
++ #include "windef.h"
++@@ -46,6 +46,8 @@
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(amd_ags);
++ 
+++#ifndef __ANDROID__
+++
++ #define MAX_DEVICE_COUNT 64
++ 
++ static unsigned int device_count;
++@@ -281,3 +283,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
++     init,
++     get_device_info,
++ };
+++#else
+++const unixlib_entry_t __wine_unix_call_funcs[] = {};
+++#endif
++\ No newline at end of file
+diff --git a/android/patches/dlls_nsiproxy_sys_ip_c.patch b/android/patches/dlls_nsiproxy_sys_ip_c.patch
+new file mode 100644
+index 0000000..4f710f3
+--- /dev/null
++++ b/android/patches/dlls_nsiproxy_sys_ip_c.patch
+@@ -0,0 +1,348 @@
++diff --git a/dlls/nsiproxy.sys/ip.c b/dlls/nsiproxy.sys/ip.c
++index 3e24ba44c56..d0dd32234b4 100644
++--- a/dlls/nsiproxy.sys/ip.c
+++++ b/dlls/nsiproxy.sys/ip.c
++@@ -23,9 +23,11 @@
++ #endif
++ 
++ #include "config.h"
+++#include "nsi_common.h"
++ #include <stdarg.h>
++ #include <sys/types.h>
++ #include <sys/socket.h>
+++#include <net/if.h>
++ 
++ #ifdef HAVE_NET_ROUTE_H
++ #include <net/route.h>
++@@ -1499,84 +1501,126 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void
++ 
++ #ifdef __linux__
++     {
++-        struct ifaddrs *addrs, *ifentry;
++-        char buf[512], *ptr;
++-        struct in_addr mask;
++-        UINT rtf_flags;
++-        FILE *fp;
++-
++-        /* Loopback routes are not present in /proc/net/routes, add those explicitly. */
++-        if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
++-        for (ifentry = addrs; ifentry; ifentry = ifentry->ifa_next)
++-        {
++-            if (!(ifentry->ifa_flags & IFF_LOOPBACK)) continue;
++-            if (!convert_unix_name_to_luid( ifentry->ifa_name, &entry.luid )) continue;
++-            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
++-
++-            if (num < *count)
++-            {
++-                entry.prefix.s_addr = htonl( 0x7f000000 );
++-                entry.next_hop.s_addr = 0;
++-                entry.metric = 256;
++-                entry.prefix_len = 8;
++-                entry.protocol = MIB_IPPROTO_LOCAL;
++-                entry.loopback = 1;
++-                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
++-                key_data = (BYTE *)key_data + key_size;
++-                rw_data = (BYTE *)rw_data + rw_size;
++-                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
++-                static_data = (BYTE *)static_data + static_size;
++-            }
++-            num++;
++-            if (num < *count)
+++        if (wine_new_ndis) {
+++            TRACE( "Using alternative ndis implementation, output will be limited\n" );
+++            struct ifaddrs *ifap;
+++            struct in_addr mask;
+++            getifaddrs( &ifap );
+++            while (ifap->ifa_next != NULL) {
+++                if (!convert_unix_name_to_luid( ifap->ifa_name, &entry.luid )) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++                if (!convert_luid_to_index( &entry.luid, &entry.if_index )) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++                if (ifap->ifa_addr->sa_family != AF_INET) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++                struct sockaddr_in *sa = (struct sockaddr_in *)ifap->ifa_addr;
+++                entry.prefix.s_addr = sa->sin_addr.s_addr;
+++                entry.metric = 0;
+++                struct sockaddr_in *nm = (struct sockaddr_in *)ifap->ifa_netmask;
+++                mask.s_addr = nm->sin_addr.s_addr;
+++                entry.next_hop.s_addr = (entry.prefix.s_addr & mask.s_addr) | htonl(1);
+++                entry.prefix_len = mask_v4_to_prefix( &mask );
+++                entry.protocol = MIB_IPPROTO_LOCAL;
+++                entry.loopback = (ifap->ifa_flags & IFF_LOOPBACK) ? 1 : 0;
+++                if (num < *count)
+++                {
+++                    ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
+++                ifap = ifap->ifa_next;
+++            }
+++        } else {
+++            struct ifaddrs *addrs, *ifentry;
+++            char buf[512], *ptr;
+++            struct in_addr mask;
+++            UINT rtf_flags;
+++            FILE *fp;
+++
+++            /* Loopback routes are not present in /proc/net/routes, add those explicitly. */
+++            if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
+++            for (ifentry = addrs; ifentry; ifentry = ifentry->ifa_next)
++             {
++-                entry.prefix.s_addr = htonl( INADDR_LOOPBACK );
++-                entry.prefix_len = 32;
++-                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
++-                key_data = (BYTE *)key_data + key_size;
++-                rw_data = (BYTE *)rw_data + rw_size;
++-                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
++-                static_data = (BYTE *)static_data + static_size;
++-            }
++-            num++;
++-            break;
++-        }
++-        freeifaddrs( addrs );
++-
++-        if (!(fp = fopen( "/proc/net/route", "r" ))) return STATUS_NOT_SUPPORTED;
+++                if (!(ifentry->ifa_flags & IFF_LOOPBACK)) continue;
+++                if (!convert_unix_name_to_luid( ifentry->ifa_name, &entry.luid )) continue;
+++                if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
++ 
++-        /* skip header line */
++-        fgets( buf, sizeof(buf), fp );
++-        while ((ptr = fgets( buf, sizeof(buf), fp )))
++-        {
++-            while (!isspace( *ptr )) ptr++;
++-            *ptr++ = '\0';
++-
++-            if (!convert_unix_name_to_luid( buf, &entry.luid )) continue;
++-            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+++                if (num < *count)
+++                {
+++                    entry.prefix.s_addr = htonl( 0x7f000000 );
+++                    entry.next_hop.s_addr = 0;
+++                    entry.metric = 256;
+++                    entry.prefix_len = 8;
+++                    entry.protocol = MIB_IPPROTO_LOCAL;
+++                    entry.loopback = 1;
+++                    ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
+++                if (num < *count)
+++                {
+++                    entry.prefix.s_addr = htonl( INADDR_LOOPBACK );
+++                    entry.prefix_len = 32;
+++                    ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
+++                break;
+++            }
+++            freeifaddrs( addrs );
++ 
++-            entry.prefix.s_addr = strtoul( ptr, &ptr, 16 );
++-            entry.next_hop.s_addr = strtoul( ptr + 1, &ptr, 16 );
++-            rtf_flags = strtoul( ptr + 1, &ptr, 16 );
++-            strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
++-            strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
++-            entry.metric = strtoul( ptr + 1, &ptr, 16 );
++-            mask.s_addr = strtoul( ptr + 1, &ptr, 16 );
++-            entry.prefix_len = mask_v4_to_prefix( &mask );
++-            entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
++-            entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
+++            if (!(fp = fopen( "/proc/net/route", "r" ))) return STATUS_NOT_SUPPORTED;
++ 
++-            if (num < *count)
+++            /* skip header line */
+++            fgets( buf, sizeof(buf), fp );
+++            while ((ptr = fgets( buf, sizeof(buf), fp )))
++             {
++-                ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
++-                key_data = (BYTE *)key_data + key_size;
++-                rw_data = (BYTE *)rw_data + rw_size;
++-                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
++-                static_data = (BYTE *)static_data + static_size;
+++                while (!isspace( *ptr )) ptr++;
+++                *ptr++ = '\0';
+++
+++                if (!convert_unix_name_to_luid( buf, &entry.luid )) continue;
+++                if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+++
+++                entry.prefix.s_addr = strtoul( ptr, &ptr, 16 );
+++                entry.next_hop.s_addr = strtoul( ptr + 1, &ptr, 16 );
+++                rtf_flags = strtoul( ptr + 1, &ptr, 16 );
+++                strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
+++                strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
+++                entry.metric = strtoul( ptr + 1, &ptr, 16 );
+++                mask.s_addr = strtoul( ptr + 1, &ptr, 16 );
+++                entry.prefix_len = mask_v4_to_prefix( &mask );
+++                entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
+++                entry.loopback = entry.protocol == MIB_IPPROTO_LOCAL && entry.prefix_len == 32;
+++
+++                if (num < *count)
+++                {
+++                    ipv4_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
++             }
++-            num++;
+++            fclose( fp );
+++
++         }
++-        fclose( fp );
+++
++     }
++ #elif defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
++     {
++@@ -1796,50 +1840,93 @@ static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void
++ 
++ #ifdef __linux__
++     {
++-        struct ipv6_route_data entry;
++-        char buf[512], *ptr, *end;
++-        UINT rtf_flags;
++-        FILE *fp;
++-
++-        if (!(fp = fopen( "/proc/net/ipv6_route", "r" )))
++-        {
++-            *count = 0;
++-            return STATUS_SUCCESS;
++-        }
++-
++-        while ((ptr = fgets( buf, sizeof(buf), fp )))
++-        {
++-            entry.prefix = str_to_in6_addr( ptr, &ptr );
++-            entry.prefix_len = strtoul( ptr + 1, &ptr, 16 );
++-            str_to_in6_addr( ptr + 1, &ptr ); /* source network, skip */
++-            strtoul( ptr + 1, &ptr, 16 ); /* source prefix length, skip */
++-            entry.next_hop = str_to_in6_addr( ptr + 1, &ptr );
++-            entry.metric = strtoul( ptr + 1, &ptr, 16 );
++-            strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
++-            strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
++-            rtf_flags = strtoul( ptr + 1, &ptr, 16);
++-            if (!(rtf_flags & RTF_UP)) continue;
++-            entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
++-            entry.loopback = entry.prefix_len == 128 && IN6_IS_ADDR_LOOPBACK(&entry.prefix);
++-
++-            while (isspace( *ptr )) ptr++;
++-            end = ptr;
++-            while (*end && !isspace(*end)) ++end;
++-            *end = 0;
++-            if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
++-            if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+++        if (wine_new_ndis) {
+++            TRACE( "Using alternative ndis implementation, output will be limited\n" );
+++            struct ipv6_route_data entry;
+++            struct ifaddrs *ifap;
+++            struct in6_addr mask;
+++            getifaddrs( &ifap );
+++            while (ifap->ifa_next != NULL) {
+++                if (!convert_unix_name_to_luid( ifap->ifa_name, &entry.luid )) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++                if (!convert_luid_to_index( &entry.luid, &entry.if_index )) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++                if (ifap->ifa_addr->sa_family != AF_INET6) {
+++                    ifap = ifap->ifa_next;
+++                    continue;
+++                }
+++
+++                struct sockaddr_in6 *sa = (struct sockaddr_in6 *)ifap->ifa_addr;
+++                entry.prefix = sa->sin6_addr;
+++                entry.metric = 0;
+++                struct sockaddr_in6 *nm = (struct sockaddr_in6 *)ifap->ifa_netmask;
+++                mask = nm->sin6_addr;
+++                memset(&entry.next_hop, 0, sizeof(entry.next_hop));
+++                entry.prefix_len = mask_v6_to_prefix( &mask );
+++                entry.protocol = MIB_IPPROTO_LOCAL;
+++                entry.loopback = (ifap->ifa_flags & IFF_LOOPBACK) ? 1 : 0;
+++                if (num < *count)
+++                {
+++                    ipv6_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
+++                ifap = ifap->ifa_next;
+++            }
+++        } else {
+++            struct ipv6_route_data entry;
+++            char buf[512], *ptr, *end;
+++            UINT rtf_flags;
+++            FILE *fp;
+++
+++            if (!(fp = fopen( "/proc/net/ipv6_route", "r" )))
+++            {
+++                *count = 0;
+++                return STATUS_SUCCESS;
+++            }
++ 
++-            if (num < *count)
+++            while ((ptr = fgets( buf, sizeof(buf), fp )))
++             {
++-                ipv6_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
++-                key_data = (BYTE *)key_data + key_size;
++-                rw_data = (BYTE *)rw_data + rw_size;
++-                dynamic_data = (BYTE *)dynamic_data + dynamic_size;
++-                static_data = (BYTE *)static_data + static_size;
+++                entry.prefix = str_to_in6_addr( ptr, &ptr );
+++                entry.prefix_len = strtoul( ptr + 1, &ptr, 16 );
+++                str_to_in6_addr( ptr + 1, &ptr ); /* source network, skip */
+++                strtoul( ptr + 1, &ptr, 16 ); /* source prefix length, skip */
+++                entry.next_hop = str_to_in6_addr( ptr + 1, &ptr );
+++                entry.metric = strtoul( ptr + 1, &ptr, 16 );
+++                strtoul( ptr + 1, &ptr, 16 ); /* refcount, skip */
+++                strtoul( ptr + 1, &ptr, 16 ); /* use, skip */
+++                rtf_flags = strtoul( ptr + 1, &ptr, 16);
+++                if (!(rtf_flags & RTF_UP)) continue;
+++                entry.protocol = (rtf_flags & RTF_GATEWAY) ? MIB_IPPROTO_NETMGMT : MIB_IPPROTO_LOCAL;
+++                entry.loopback = entry.prefix_len == 128 && IN6_IS_ADDR_LOOPBACK(&entry.prefix);
+++
+++                while (isspace( *ptr )) ptr++;
+++                end = ptr;
+++                while (*end && !isspace(*end)) ++end;
+++                *end = 0;
+++                if (!convert_unix_name_to_luid( ptr, &entry.luid )) continue;
+++                if (!convert_luid_to_index( &entry.luid, &entry.if_index )) continue;
+++
+++                if (num < *count)
+++                {
+++                    ipv6_forward_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
+++                    key_data = (BYTE *)key_data + key_size;
+++                    rw_data = (BYTE *)rw_data + rw_size;
+++                    dynamic_data = (BYTE *)dynamic_data + dynamic_size;
+++                    static_data = (BYTE *)static_data + static_size;
+++                }
+++                num++;
++             }
++-            num++;
+++            fclose(fp);
++         }
++-        fclose(fp);
+++
++     }
++ #else
++     FIXME( "not implemented\n" );
+diff --git a/android/patches/dlls_ntdll_loader_c.patch b/android/patches/dlls_ntdll_loader_c.patch
+new file mode 100644
+index 0000000..ab40e44
+--- /dev/null
++++ b/android/patches/dlls_ntdll_loader_c.patch
+@@ -0,0 +1,13 @@
++diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
++index bc71fe0..e8dec1c 100644
++--- a/dlls/ntdll/loader.c
+++++ b/dlls/ntdll/loader.c
++@@ -4429,7 +4429,7 @@ static void load_arm64ec_module(void)
++     ULONG buffer[16];
++     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
++     UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\amd64" );
++-    WCHAR module[64] = L"C:\\windows\\system32\\xtajit64.dll";
+++    WCHAR module[64] = L"C:\\windows\\system32\\libarm64ecfex.dll";
++     OBJECT_ATTRIBUTES attr;
++     WINE_MODREF *wm;
++     NTSTATUS status;
+diff --git a/android/patches/dlls_ntdll_ntdll_spec.patch b/android/patches/dlls_ntdll_ntdll_spec.patch
+new file mode 100644
+index 0000000..71fbb2e
+--- /dev/null
++++ b/android/patches/dlls_ntdll_ntdll_spec.patch
+@@ -0,0 +1,12 @@
++diff --git a/dlls/ntdll/ntdll.spec b/dlls/ntdll/ntdll.spec
++index 8d6676b..c4e4d6a 100644
++--- a/dlls/ntdll/ntdll.spec
+++++ b/dlls/ntdll/ntdll.spec
++@@ -1141,6 +1141,7 @@
++ @ stdcall -arch=win64 RtlWow64PushCrossProcessWorkOntoWorkList(ptr ptr ptr)
++ @ stdcall -arch=win64 RtlWow64RequestCrossProcessHeavyFlush(ptr)
++ @ stdcall -arch=win64 RtlWow64SetThreadContext(long ptr)
+++@ stdcall -arch=win64 RtlWow64SuspendThread(long ptr)
++ @ stub RtlWriteMemoryStream
++ @ stdcall RtlWriteRegistryValue(long ptr wstr long ptr long)
++ @ stub RtlZeroHeap
+diff --git a/android/patches/dlls_ntdll_unix_esync_c.patch b/android/patches/dlls_ntdll_unix_esync_c.patch
+new file mode 100644
+index 0000000..bc99b5a
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_esync_c.patch
+@@ -0,0 +1,14 @@
++diff --git a/dlls/ntdll/unix/esync.c b/dlls/ntdll/unix/esync.c
++index 3074f7c..275d099 100644
++--- a/dlls/ntdll/unix/esync.c
+++++ b/dlls/ntdll/unix/esync.c
++@@ -48,6 +48,9 @@
++ #include "unix_private.h"
++ #include "esync.h"
++ #include "fsync.h"
+++#ifdef __ANDROID__
+++#include "../../../android/shm_utils/shm_utils.h"
+++#endif
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(esync);
++ 
+diff --git a/android/patches/dlls_ntdll_unix_fsync_c.patch b/android/patches/dlls_ntdll_unix_fsync_c.patch
+new file mode 100644
+index 0000000..098e72b
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_fsync_c.patch
+@@ -0,0 +1,23 @@
++diff --git a/dlls/ntdll/unix/fsync.c b/dlls/ntdll/unix/fsync.c
++index 4d9f5cd..b3c738e 100644
++--- a/dlls/ntdll/unix/fsync.c
+++++ b/dlls/ntdll/unix/fsync.c
++@@ -53,6 +53,9 @@
++ 
++ #include "unix_private.h"
++ #include "fsync.h"
+++#ifdef __ANDROID__
+++#include "../../../android/shm_utils/shm_utils.h"
+++#endif
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(fsync);
++ 
++@@ -165,7 +168,7 @@ static inline int futex_wake( int *addr, int val )
++ 
++ int do_fsync(void)
++ {
++-#ifdef __linux__
+++#if defined(__linux__) && !defined(__ANDROID__)
++     static int do_fsync_cached = -1;
++ 
++     if (do_fsync_cached == -1)
+diff --git a/android/patches/dlls_ntdll_unix_loader_c.patch b/android/patches/dlls_ntdll_unix_loader_c.patch
+new file mode 100644
+index 0000000..6d228da
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_loader_c.patch
+@@ -0,0 +1,17 @@
++diff --git a/dlls/ntdll/unix/loader.c b/dlls/ntdll/unix/loader.c
++index 2f97852..a7cac83 100644
++--- a/dlls/ntdll/unix/loader.c
+++++ b/dlls/ntdll/unix/loader.c
++@@ -363,7 +363,11 @@ static const char *get_pe_dir( WORD machine )
++     switch(machine)
++     {
++     case IMAGE_FILE_MACHINE_I386:  return "/i386-windows";
++-    case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-windows";
+++#ifdef __aarch64__
+++        case IMAGE_FILE_MACHINE_AMD64: return "/aarch64-windows";
+++#else
+++        case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-windows";
+++#endif
++     case IMAGE_FILE_MACHINE_ARMNT: return "/arm-windows";
++     case IMAGE_FILE_MACHINE_ARM64: return "/aarch64-windows";
++     default: return "";
+diff --git a/android/patches/dlls_ntdll_unix_server_c.patch b/android/patches/dlls_ntdll_unix_server_c.patch
+new file mode 100644
+index 0000000..9464ec8
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_server_c.patch
+@@ -0,0 +1,21 @@
++diff --git a/dlls/ntdll/unix/server.c b/dlls/ntdll/unix/server.c
++index 30fc6fc..a508915 100644
++--- a/dlls/ntdll/unix/server.c
+++++ b/dlls/ntdll/unix/server.c
++@@ -1307,9 +1307,16 @@ static int setup_config_dir(void)
++ 
++     if (!mkdir( "dosdevices", 0777 ))
++     {
+++#ifdef __ANDROID__
+++        mkdir( "drive_d", 0777 );
+++        symlink( "../drive_c", "dosdevices/c:" );
+++        symlink( "/storage/emulated/0/", "dosdevices/d:" );
+++        symlink( "/data/data/app.gamenative/files/imagefs/", "dosdevices/z:" );
+++#else
++         mkdir( "drive_c", 0777 );
++         symlink( "../drive_c", "dosdevices/c:" );
++         symlink( "/", "dosdevices/z:" );
+++#endif
++     }
++     else if (errno != EEXIST) fatal_perror( "cannot create %s/dosdevices", config_dir );
++ 
+diff --git a/android/patches/dlls_ntdll_unix_signal_x86_64_c.patch b/android/patches/dlls_ntdll_unix_signal_x86_64_c.patch
+new file mode 100644
+index 0000000..0140e03
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_signal_x86_64_c.patch
+@@ -0,0 +1,36 @@
++diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
++index abb98f7..b6cd912 100644
++--- a/dlls/ntdll/unix/signal_x86_64.c
+++++ b/dlls/ntdll/unix/signal_x86_64.c
++@@ -2029,6 +2029,7 @@ static void install_bpf(struct sigaction *sig_act)
++     unsigned int i, j;
++     NTSTATUS status;
++ 
+++#ifndef __ANDROID__
++     if ((ULONG_PTR)sc_seccomp < NATIVE_SYSCALL_ADDRESS_START
++             || (ULONG_PTR)syscall < NATIVE_SYSCALL_ADDRESS_START)
++     {
++@@ -2037,6 +2038,7 @@ static void install_bpf(struct sigaction *sig_act)
++         ERR_(seh)("The known reasons are /proc/sys/vm/legacy_va_layout set to 1 or 'ulimit -s' being 'unlimited'.\n");
++         return;
++     }
+++#endif
++ 
++     sig_act->sa_sigaction = sigsys_handler;
++     memset(&prog, 0, sizeof(prog));
++@@ -2067,9 +2069,15 @@ static void install_bpf(struct sigaction *sig_act)
++ 
++     frame->syscall_flags = syscall_flags;
++ 
+++#ifndef __ANDROID__
++     test_syscall = mmap((void *)0x600000000000, 0x1000, PROT_EXEC | PROT_READ | PROT_WRITE,
++             MAP_PRIVATE | MAP_ANON, -1, 0);
++     if (test_syscall != (void *)0x600000000000)
+++#else
+++    test_syscall = mmap(NULL, 0x1000, PROT_EXEC | PROT_READ | PROT_WRITE,
+++            MAP_PRIVATE | MAP_ANON, -1, 0);
+++    if (test_syscall == MAP_FAILED)
+++#endif
++     {
++         int ret;
++ 
+diff --git a/android/patches/dlls_ntdll_unix_virtual_c.patch b/android/patches/dlls_ntdll_unix_virtual_c.patch
+new file mode 100644
+index 0000000..f1298d5
+--- /dev/null
++++ b/android/patches/dlls_ntdll_unix_virtual_c.patch
+@@ -0,0 +1,39 @@
++diff --git a/dlls/ntdll/unix/virtual.c b/dlls/ntdll/unix/virtual.c
++index 963ebd2..7a70299 100644
++--- a/dlls/ntdll/unix/virtual.c
+++++ b/dlls/ntdll/unix/virtual.c
++@@ -293,9 +293,15 @@ static void *address_space_start = (void *)0x110000; /* keep DOS area clear */
++ static void *address_space_start = (void *)0x10000;
++ #endif
++ #ifdef _WIN64
+++#ifdef __ANDROID__
+++static void *address_space_limit = (void *)0x7fffff0000;  /* top of the total available address space */
+++static void *user_space_limit    = (void *)0x7fffff0000;  /* top of the user address space */
+++static void *working_set_limit   = (void *)0x7fffff0000;  /* top of the current working set */
+++#else
++ static void *address_space_limit = (void *)0x7fffffff0000;  /* top of the total available address space */
++ static void *user_space_limit    = (void *)0x7fffffff0000;  /* top of the user address space */
++ static void *working_set_limit   = (void *)0x7fffffff0000;  /* top of the current working set */
+++#endif
++ #else
++ static void *address_space_limit = (void *)0xc0000000;
++ static void *user_space_limit    = (void *)0x7fff0000;
++@@ -404,6 +410,7 @@ static void kernel_writewatch_softdirty_init(void)
++ 
++ static void kernel_writewatch_init(void)
++ {
+++#ifndef __ANDROID__
++     struct uffdio_api uffdio_api;
++ 
++     uffd_fd = syscall( __NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY );
++@@ -429,6 +436,10 @@ static void kernel_writewatch_init(void)
++         return;
++     }
++     use_kernel_writewatch = 1;
+++#else
+++    TRACE( "Kernel writewatches are not supported on Android\n" );
+++    use_kernel_writewatch = 0;
+++#endif
++ }
++ 
++ static void kernel_writewatch_reset( void *start, SIZE_T len )
+diff --git a/android/patches/dlls_user32_clipboard_c.patch b/android/patches/dlls_user32_clipboard_c.patch
+new file mode 100644
+index 0000000..4791477
+--- /dev/null
++++ b/android/patches/dlls_user32_clipboard_c.patch
+@@ -0,0 +1,220 @@
++diff --git a/dlls/user32/clipboard.c b/dlls/user32/clipboard.c
++index 62889c3..dac3f53 100644
++--- a/dlls/user32/clipboard.c
+++++ b/dlls/user32/clipboard.c
++@@ -25,6 +25,7 @@
++ 
++ #define COBJMACROS
++ #include <assert.h>
+++#include <winsock2.h>
++ #include "user_private.h"
++ #include "winnls.h"
++ #include "objidl.h"
++@@ -33,6 +34,135 @@
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
++ 
+++typedef struct {
+++    int request_code;
+++    int format;
+++    int size;
+++    void *data;
+++} android_clipboard_data_t;
+++
+++static int send_android_clipboard_data(android_clipboard_data_t clipboard_data) {
+++    WSADATA data;
+++    SOCKET sock_fd;
+++    struct sockaddr_in addr;
+++    int net_requestcode, net_data_format, net_data_size;
+++    int ret;
+++
+++    if ((ret = WSAStartup(MAKEWORD(2,2), &data)) != 0) {
+++        TRACE( "WSAStartup failed with error %d\n", ret );
+++        return 0;
+++    }
+++    sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+++    if (sock_fd == INVALID_SOCKET) {
+++        TRACE( "Failed to create client socket\n" );
+++        return 0;
+++    }
+++    ZeroMemory(&addr, sizeof(addr));
+++    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+++    addr.sin_family = AF_INET;
+++    addr.sin_port = htons(20000);
+++    ret = connect(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to connect to server\n" );
+++        return 0;
+++    }
+++    net_requestcode = htonl(clipboard_data.request_code);
+++    net_data_format = htonl(clipboard_data.format);
+++    net_data_size = htonl(clipboard_data.size);
+++    ret = send(sock_fd, &net_requestcode, sizeof(net_requestcode), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send request code\n" );
+++        return 0;
+++    }
+++    ret = send(sock_fd, &net_data_format, sizeof(net_data_format), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send Windows clipboard data format\n" );
+++        return 0;
+++    }
+++    ret = send(sock_fd, &net_data_size, sizeof(net_data_size), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send Windows clipboard data size\n" );
+++        return 0;
+++    }
+++    ret = send(sock_fd, clipboard_data.data, clipboard_data.size, 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send Windows clipboard data\n" );
+++        return 0;
+++    }
+++
+++    ret = closesocket(sock_fd);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to close socket\n" );
+++        return 0;
+++    }
+++
+++    WSACleanup();
+++
+++    return 1;
+++}
+++
+++static android_clipboard_data_t receive_android_clipboard_data() {
+++    WSADATA data;
+++    android_clipboard_data_t clipboard_data = {0};
+++    SOCKET sock_fd;
+++    struct sockaddr_in addr;
+++    int net_requestcode, net_data_format, net_data_size;
+++    int ret;
+++
+++    if ((ret = WSAStartup(MAKEWORD(2,2), &data)) != 0) {
+++        TRACE( "WSAStartup failed with error %d\n", ret );
+++    }
+++
+++    sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+++    if (sock_fd == INVALID_SOCKET) {
+++        TRACE( "Failed to create client socket\n" );
+++    }
+++    ZeroMemory(&addr, sizeof(addr));
+++    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+++    addr.sin_family = AF_INET;
+++    addr.sin_port = htons(20000);
+++
+++    ret = connect(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to connect to server\n" );
+++    }
+++
+++    clipboard_data.request_code = 3;
+++    net_requestcode = htonl(clipboard_data.request_code);
+++
+++    ret = send(sock_fd, &net_requestcode, sizeof(net_requestcode), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send request code\n" );
+++    }
+++    ret = recv(sock_fd, &net_data_format, sizeof(net_data_format), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to receive Android clipboard data format\n" );
+++    }
+++    ret = recv(sock_fd, &net_data_size, sizeof(net_data_size), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to receive Android clipboard data size\n" );
+++    }
+++
+++    clipboard_data.format = ntohl(net_data_format);
+++    clipboard_data.size = ntohl(net_data_size);
+++    clipboard_data.data = malloc(clipboard_data.size);
+++
+++    ret = recv(sock_fd, clipboard_data.data, clipboard_data.size, 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to receive Android clipboard data\n" );
+++    }
+++
+++
+++    ret = closesocket(sock_fd);
+++    if (ret == SOCKET_ERROR) {
+++           TRACE( "Failed to close socket\n" );
+++
+++    }
+++
+++    WSACleanup();
+++
+++    return clipboard_data;
+++}
++ 
++ static CRITICAL_SECTION clipboard_cs;
++ static CRITICAL_SECTION_DEBUG critsect_debug =
++@@ -566,6 +696,7 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
++     struct set_clipboard_params params = { .size = 0 };
++     HANDLE handle = data;
++     NTSTATUS status;
+++    int wine_to_android_clipboard = getenv("WINE_TO_ANDROID_CLIPBOARD") && atoi(getenv("WINE_TO_ANDROID_CLIPBOARD"));
++ 
++     TRACE( "%s %p\n", debugstr_format( format ), data );
++ 
++@@ -577,6 +708,34 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
++ 
++     status = NtUserSetClipboardData( format, data, &params );
++ 
+++    EnterCriticalSection( &clipboard_cs );
+++
+++    if (wine_to_android_clipboard) {
+++        android_clipboard_data_t clipboard_data;
+++        HANDLE hData;
+++        struct get_clipboard_params get_params;
+++        ZeroMemory(&clipboard_data, sizeof(clipboard_data));
+++        clipboard_data.request_code = 2;
+++        clipboard_data.format = CF_UNICODETEXT;
+++        if (format != CF_UNICODETEXT) {
+++            get_params.size = 1024;
+++            get_params.data_size = 0;
+++            get_params.data = GlobalAlloc( GMEM_FIXED, get_params.size );
+++            hData = NtUserGetClipboardData(clipboard_data.format, &get_params);
+++            clipboard_data.size = get_params.size;
+++            clipboard_data.data = GlobalLock(hData);
+++        } else {
+++            clipboard_data.size = params.size;
+++            clipboard_data.data = params.data;
+++        }
+++        if (!send_android_clipboard_data(clipboard_data))
+++            TRACE( "Failed to send Windows clipboard data\n" );
+++        if (hData) GlobalUnlock(hData);
+++        if (get_params.data) GlobalFree(get_params.data);
+++    }
+++
+++    LeaveCriticalSection( &clipboard_cs );
+++
++     if (params.data) GlobalUnlock( handle );
++     if (handle != data) GlobalFree( handle );
++     if (status)
++@@ -595,9 +754,28 @@ HANDLE WINAPI GetClipboardData( UINT format )
++ {
++     struct get_clipboard_params params = { .data_size = 1024 };
++     HANDLE ret = 0;
+++    int wine_from_android_clipboard = getenv("WINE_FROM_ANDROID_CLIPBOARD") && atoi(getenv("WINE_FROM_ANDROID_CLIPBOARD"));
++ 
++     EnterCriticalSection( &clipboard_cs );
++ 
+++    if (wine_from_android_clipboard) {
+++        struct set_clipboard_params set_params;
+++        android_clipboard_data_t clipboard_data = receive_android_clipboard_data();
+++        if (clipboard_data.data) {
+++            ret = GlobalAlloc( GMEM_MOVEABLE, clipboard_data.size );
+++            void *dst = GlobalLock(ret);
+++            memcpy(dst, clipboard_data.data, clipboard_data.size);
+++            GlobalUnlock(ret);
+++            set_params.data = clipboard_data.data;
+++            set_params.size = clipboard_data.size;
+++            set_params.cache_only = FALSE;
+++            NtUserEmptyClipboard();
+++            NtUserSetClipboardData( clipboard_data.format, ret, &set_params );
+++        }
+++        else
+++            TRACE( "Failed to receive Android clipboard data\n" );
+++    }
+++
++     while (params.data_size)
++     {
++         params.size = params.data_size;
+diff --git a/android/patches/dlls_user32_makefile_in.patch b/android/patches/dlls_user32_makefile_in.patch
+new file mode 100644
+index 0000000..3f70e6e
+--- /dev/null
++++ b/android/patches/dlls_user32_makefile_in.patch
+@@ -0,0 +1,13 @@
++diff --git a/dlls/user32/Makefile.in b/dlls/user32/Makefile.in
++index 69e1fa2..d629905 100644
++--- a/dlls/user32/Makefile.in
+++++ b/dlls/user32/Makefile.in
++@@ -1,7 +1,7 @@
++ EXTRADEFS = -D_USER32_
++ MODULE    = user32.dll
++ IMPORTLIB = user32
++-IMPORTS   = $(PNG_PE_LIBS) gdi32 sechost advapi32 kernelbase win32u uuid
+++IMPORTS   = $(PNG_PE_LIBS) gdi32 sechost advapi32 kernelbase win32u uuid ws2_32
++ EXTRAINCL = $(PNG_PE_CFLAGS)
++ DELAYIMPORTS = imm32 combase
++ 
+diff --git a/android/patches/dlls_wdscore_wdscore_spec.patch b/android/patches/dlls_wdscore_wdscore_spec.patch
+new file mode 100644
+index 0000000..6c95481
+--- /dev/null
++++ b/android/patches/dlls_wdscore_wdscore_spec.patch
+@@ -0,0 +1,74 @@
++diff --git a/dlls/wdscore/wdscore.spec b/dlls/wdscore/wdscore.spec
++index 15958b8..928c91f 100644
++--- a/dlls/wdscore/wdscore.spec
+++++ b/dlls/wdscore/wdscore.spec
++@@ -1,69 +1,3 @@
++-@ stub ??0?$CDynamicArray@EPAE@@QAE@I@Z
++-@ stub ??0?$CDynamicArray@EPAUSkey@@@@QAE@I@Z
++-@ stub ??0?$CDynamicArray@EPAUSValue@@@@QAE@I@Z
++-@ stub ??0?$CDynamicArray@GPAG@QAE@I@Z
++-@ stub ??0?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAE@I@Z
++-@ stub ??0?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAE@I@Z
++-@ stub ??0?$CDynamicArray@_KPA_K@@QAE@I@Z
++-@ stub ??1?$CDynamicArray@EPAE@@QAE@XZ
++-@ stub ??1?$CDynamicArray@EPAUSKey@@@@QAE@XZ
++-@ stub ??1?$CDynamicArray@EPAUSValue@@@@QAE@XZ
++-@ stub ??1?$CDynamicArray@GPAG@@QAE@XZ
++-@ stub ??1?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAE@XZ
++-@ stub ??1?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAE@XZ
++-@ stub ??4?$CDynamicArray@_KPA_K@@QAE@XZ
++-@ stub ??4?$CDynamicArray@EPAE@@QAEAAV@ABV@@Z
++-@ stub ??4?$CDynamicArray@EPAUSKey@@@@@QAEAAV0@ABV0@@Z
++-@ stub ??4?$CDynamicArray@EPAUSValue@@@@@QAEAAV0@ABV0@@Z
++-@ stub ??4?$CDynamicArray@GPAG@@QAEAAV@ABV@@Z
++-@ stub ??4?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEAAV@ABV@@Z
++-@ stub ??4?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEAAV@ABV@@Z
++-@ stub ??4?$CDynamicArray@_KPA_K@@QAEAAV@ABV@@Z
++-@ stub ??A?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEAAPAUSEnumBinContext@@I@Z
++-@ stub ??A?$CDynamicArray@_KPA_K@QAEAA_KI@Z
++-@ stub ??B?$CDynamicArray@EPAUSKey@@@@@QBEPAUSKey@@XZ
++-@ stub ??B?$CDynamicArray@EPAUSValue@@@@@QBEPAUSValue@@XZ
++-@ stub ??B?$CDynamicArray@GPAG@@QBEPAGXZ
++-@ stub ??C?$CDynamicArray@EPAUSKey@@@@@QBEPAUSKey@@XZ
++-@ stub ??C?$CDynamicArray@EPAUSValue@@@@@QBEPAUSValue@@XZ
++-@ stub ??_F?$CDynamicArray@EPAE@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@EPAUSKey@@@@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@EPAUSValue@@@@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@GPAG@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEXXZ
++-@ stub ??_F?$CDynamicArray@_KPA_K@@QAEXXZ
++-@ stub ?Add@?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEHAAPAUSEnumBinContext@@@Z
++-@ stub ?Add@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEHAAUSKeeperEntry@CBlackboardFactory@@@Z
++-@ stub ?Add@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEHAAUSKeeperEntry@CBlackboardFactory@@AAI@Z
++-@ stub ?Add@?$CDynamicArray@_KPA_K@@QAEHAA_K@Z
++-@ stub ?ElementAt@?$CDynamicArray@GPAG@@QAEAAGI@Z
++-@ stub ?ElementAt@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEHAAUSKeeperEntry@CBlackboardFactory@@I@Z
++-@ stub ?GetBuffer@?$CDynamicArray@EPAE@@QAEPAEI@Z
++-@ stub ?GetBuffer@?$CDynamicArray@EPAUSValue@@@@QAEPAUSValue@@I@Z
++-@ stub ?GetBuffer@?$CDynamicArray@GPAG@@QAEPAGI@Z
++-@ stub ?GetSize@?$CDynamicArray@EPAE@@QBEIXZ
++-@ stub ?GetSize@?$CDynamicArray@@GPAG@@QBEIXZ
++-@ stub ?GetSize@?$CDynamicArray@@PAUSEnumBinContext@@PAPAU1@@@QBEIXZ
++-@ stub ?GetSize@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QBEIXZ
++-@ stub ?GetSize@?$CDynamicArray@_KPA_K@@QBEIXZ
++-@ stub ?Init@?$CDynamicArray@EPAE@@QBEIXZ
++-@ stub ?Init@?$CDynamicArray@EPAUSKey@@@@IAEXI@Z
++-@ stub ?Init@?$CDynamicArray@EPAUSValue@@@@IAEXI@Z
++-@ stub ?Init@?$CDynamicArray@GPAG@@IAEXI@Z
++-@ stub ?Init@?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@IAEXI@Z
++-@ stub ?Init@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@IAEXI@Z
++-@ stub ?Init@?$CDynamicArray@_KPA_K@@IAEXI@Z
++-@ stub ?RemoveAll@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEXXZ
++-@ stub ?RemoveAll@?$CDynamicArray@_KPA_K@@QAEXXZ
++-@ stub ?RemoveItemFromTail@?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEXXZ
++-@ stub ?SetSize@?$CDynamicArray@EPAE@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@EPAUSKey@@@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@EPAUSValue@@@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@GPAG@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@PAUSEnumBinContext@@PAPAU1@@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@USKeepEntry@CBlackboardFactory@@PAU12@@@QAEHK@Z
++-@ stub ?SetSize@?$CDynamicArray@_KPA_K@@AEHK@Z
++ @ stub WdsGetPointer
++ #@ extern g_Kernel32
++ #@ extern g_bEnableDiagnosticMode
+diff --git a/android/patches/dlls_win32u_clipboard_c.patch b/android/patches/dlls_win32u_clipboard_c.patch
+new file mode 100644
+index 0000000..1319fa7
+--- /dev/null
++++ b/android/patches/dlls_win32u_clipboard_c.patch
+@@ -0,0 +1,28 @@
++diff --git a/dlls/win32u/clipboard.c b/dlls/win32u/clipboard.c
++index 6f3e396..da5b422 100644
++--- a/dlls/win32u/clipboard.c
+++++ b/dlls/win32u/clipboard.c
++@@ -280,6 +280,9 @@ INT WINAPI NtUserCountClipboardFormats(void)
++ BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
++ {
++     BOOL ret = FALSE;
+++    int wine_from_android_clipboard;
+++
+++    wine_from_android_clipboard = getenv("WINE_FROM_ANDROID_CLIPBOARD") && atoi(getenv("WINE_FROM_ANDROID_CLIPBOARD"));
++ 
++     if (!format) return FALSE;
++ 
++@@ -291,7 +294,13 @@ BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
++         if (!wine_server_call_err( req )) ret = (reply->count > 0);
++     }
++     SERVER_END_REQ;
+++
+++    if (wine_from_android_clipboard && !ret && format == CF_UNICODETEXT) {
+++        ret = TRUE;
+++    }
+++
++     TRACE( "%s -> %u\n", debugstr_format( format ), ret );
+++
++     return ret;
++ }
++ 
+diff --git a/android/patches/dlls_winebus_sys_bus_sdl_c.patch b/android/patches/dlls_winebus_sys_bus_sdl_c.patch
+new file mode 100644
+index 0000000..cbb9d59
+--- /dev/null
++++ b/android/patches/dlls_winebus_sys_bus_sdl_c.patch
+@@ -0,0 +1,41 @@
++diff --git a/dlls/winebus.sys/bus_sdl.c b/dlls/winebus.sys/bus_sdl.c
++index 61c054b..ca4ffdc 100644
++--- a/dlls/winebus.sys/bus_sdl.c
+++++ b/dlls/winebus.sys/bus_sdl.c
++@@ -1093,14 +1093,34 @@ NTSTATUS sdl_bus_init(void *args)
++ {
++     const char *mapping;
++     int i;
+++    const char *sdl_paths[] = {
+++        "libSDL2-2.0.so.0", /* GameNative used SDL */
+++        "libSDL2-2.0.so",
+++        "libSDL2.so",
+++        SONAME_LIBSDL2,              /* Standard: libSDL2-2.0.so */
+++        NULL
+++    };
+++    const char **path;
++ 
++     TRACE("args %p\n", args);
++ 
++     options = (struct bus_options *)args;
++ 
++-    if (!(sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW)))
+++    /* Try multiple paths to find SDL library */
+++    for (path = sdl_paths; *path; path++)
+++    {
+++        TRACE("Trying to load SDL from: %s\n", *path);
+++        if ((sdl_handle = dlopen(*path, RTLD_NOW)))
+++        {
+++            TRACE("Successfully loaded SDL from: %s\n", *path);
+++            break;
+++        }
+++        TRACE("Failed to load %s: %s\n", *path, dlerror());
+++    }
+++
+++    if (!sdl_handle)
++     {
++-        WARN("could not load %s\n", SONAME_LIBSDL2);
+++        WARN("Could not load SDL from any known path\n");
++         return STATUS_UNSUCCESSFUL;
++     }
++ #define LOAD_FUNCPTR(f)                          \
+diff --git a/android/patches/dlls_winepulse_drv_pulse_c.patch b/android/patches/dlls_winepulse_drv_pulse_c.patch
+new file mode 100644
+index 0000000..417028f
+--- /dev/null
++++ b/android/patches/dlls_winepulse_drv_pulse_c.patch
+@@ -0,0 +1,47 @@
++diff --git a/dlls/winepulse.drv/pulse.c b/dlls/winepulse.drv/pulse.c
++index 85062ea..5380f3c 100644
++--- a/dlls/winepulse.drv/pulse.c
+++++ b/dlls/winepulse.drv/pulse.c
++@@ -268,8 +268,10 @@ static NTSTATUS pulse_process_attach(void *args)
++     pthread_mutexattr_t attr;
++ 
++     pthread_mutexattr_init(&attr);
+++#ifndef __ANDROID__
++     pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
++     pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
+++#endif
++ 
++     if (pthread_mutex_init(&pulse_mutex, &attr) != 0)
++         pthread_mutex_init(&pulse_mutex, NULL);
++@@ -317,9 +319,13 @@ static NTSTATUS pulse_main_loop(void *args)
++     pulse_ml = pa_mainloop_new();
++     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
++     NtSetEvent(params->event, NULL);
+++#ifdef __ANDROID__
+++    pa_mainloop_run(pulse_ml, &ret);
+++#else
++     pthread_cleanup_push(pulse_main_loop_thread_cleanup, NULL);
++     pa_mainloop_run(pulse_ml, &ret);
++     pthread_cleanup_pop(0);
+++#endif
++     pa_mainloop_free(pulse_ml);
++     pulse_unlock();
++     return STATUS_SUCCESS;
++@@ -1732,6 +1738,17 @@ static void pulse_add_stream_to_period(struct pulse_stream *stream)
++     period->timer_last_time = pa_rtclock_now();
++     period->time_event = pa_context_rttime_new(pulse_ctx, period->timer_last_time + period->period,
++             pa_streams_timer_cb, period);
+++
+++    // GN Patch
+++    if (!period->time_event)
+++    {
+++        WARN("Failed to create timer event, timer callbacks disabled (box64 < 0.4.0?)\n");
+++        list_remove(&period->entry);
+++        free(period);
+++        stream->period = NULL;
+++        return;
+++    }
+++
++     api = pa_mainloop_get_api(pulse_ml);
++     api->time_set_destroy(period->time_event, pa_streams_timer_cb_destroy);
++     TRACE("Created period %p.\n", period);
+diff --git a/android/patches/dlls_winex11_drv_bitblt_c.patch b/android/patches/dlls_winex11_drv_bitblt_c.patch
+new file mode 100644
+index 0000000..d65c9b6
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_bitblt_c.patch
+@@ -0,0 +1,16 @@
++diff --git a/dlls/winex11.drv/bitblt.c b/dlls/winex11.drv/bitblt.c
++index dd9ddb2..dcec77e 100644
++--- a/dlls/winex11.drv/bitblt.c
+++++ b/dlls/winex11.drv/bitblt.c
++@@ -39,7 +39,11 @@
++ #ifdef HAVE_X11_EXTENSIONS_XSHM_H
++ # include <X11/extensions/XShm.h>
++ # ifdef HAVE_SYS_SHM_H
+++#ifdef __ANDROID__
+++#  include "../../android/android_sysvshm/sys/shm.h"
+++#else
++ #  include <sys/shm.h>
+++#endif
++ # endif
++ # ifdef HAVE_SYS_IPC_H
++ #  include <sys/ipc.h>
+diff --git a/android/patches/dlls_winex11_drv_desktop_c.patch b/android/patches/dlls_winex11_drv_desktop_c.patch
+new file mode 100644
+index 0000000..d27e3e9
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_desktop_c.patch
+@@ -0,0 +1,15 @@
++diff --git a/dlls/winex11.drv/desktop.c b/dlls/winex11.drv/desktop.c
++index d9d306e..7fa56b0 100644
++--- a/dlls/winex11.drv/desktop.c
+++++ b/dlls/winex11.drv/desktop.c
++@@ -90,8 +90,9 @@ BOOL X11DRV_CreateDesktop( const WCHAR *name, UINT width, UINT height )
++                          0, 0, width, height, 0, default_visual.depth, InputOutput,
++                          default_visual.visual, CWEventMask | CWCursor | CWColormap, &win_attr );
++     if (!win) return FALSE;
++-
+++#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
++     x11drv_xinput2_enable( display, win );
+++#endif
++     XFlush( display );
++ 
++     X11DRV_init_desktop( win );
+diff --git a/android/patches/dlls_winex11_drv_mouse_c.patch b/android/patches/dlls_winex11_drv_mouse_c.patch
+new file mode 100644
+index 0000000..8aaa5cf
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_mouse_c.patch
+@@ -0,0 +1,19 @@
++diff --git a/dlls/winex11.drv/mouse.c b/dlls/winex11.drv/mouse.c
++index 2ba4960..74cdb87 100644
++--- a/dlls/winex11.drv/mouse.c
+++++ b/dlls/winex11.drv/mouse.c
++@@ -1488,10 +1488,14 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
++         return FALSE;
++     }
++ 
+++#ifndef __ANDROID__
++     pXFixesHideCursor( data->display, root_window );
+++#endif
++     XWarpPointer( data->display, root_window, root_window, 0, 0, 0, 0, pos.x, pos.y );
++     data->warp_serial = NextRequest( data->display );
+++#ifndef __ANDROID__
++     pXFixesShowCursor( data->display, root_window );
+++#endif
++     XFlush( data->display ); /* avoids bad mouse lag in games that do their own mouse warping */
++     TRACE( "warped to %d,%d serial %lu\n", x, y, data->warp_serial );
++     return TRUE;
+diff --git a/android/patches/dlls_winex11_drv_opengl_c.patch b/android/patches/dlls_winex11_drv_opengl_c.patch
+new file mode 100644
+index 0000000..2c3ca34
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_opengl_c.patch
+@@ -0,0 +1,29 @@
++diff --git a/dlls/winex11.drv/opengl.c b/dlls/winex11.drv/opengl.c
++index 478e3c2..b0619f8 100644
++--- a/dlls/winex11.drv/opengl.c
+++++ b/dlls/winex11.drv/opengl.c
++@@ -664,6 +664,9 @@ static void *opengl_handle;
++ static void init_opengl(void)
++ {
++     int error_base, event_base;
+++#ifdef __ANDROID__
+++    int wine_x11forceglx = 0;
+++#endif
++     unsigned int i;
++ 
++     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
++@@ -811,7 +814,14 @@ static void init_opengl(void)
++ 
++     if(!X11DRV_WineGL_InitOpenglInfo()) goto failed;
++ 
+++#ifdef __ANDROID__
+++    if (getenv("WINE_X11FORCEGLX"))
+++        wine_x11forceglx = atoi("WINE_X11FORCEGLX");
+++
+++    if (XQueryExtension( gdi_display, "GLX", &glx_opcode, &event_base, &error_base ) || wine_x11forceglx)
+++#else
++     if (XQueryExtension( gdi_display, "GLX", &glx_opcode, &event_base, &error_base ))
+++#endif
++     {
++         TRACE("GLX is up and running error_base = %d\n", error_base);
++     } else {
+diff --git a/android/patches/dlls_winex11_drv_window_c.patch b/android/patches/dlls_winex11_drv_window_c.patch
+new file mode 100644
+index 0000000..6320a38
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_window_c.patch
+@@ -0,0 +1,87 @@
++diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
++index 28a9f5f..27104a9 100644
++--- a/dlls/winex11.drv/window.c
+++++ b/dlls/winex11.drv/window.c
++@@ -569,7 +569,9 @@ static void sync_window_style( struct x11drv_win_data *data )
++         int mask = get_window_attributes( data, &attr );
++ 
++         XChangeWindowAttributes( data->display, data->whole_window, mask, &attr );
+++#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
++         x11drv_xinput2_enable( data->display, data->whole_window );
+++#endif
++     }
++ }
++ 
++@@ -1113,6 +1115,10 @@ static void set_initial_wm_hints( Display *display, Window window )
++     /* class hints */
++     if ((class_hints = XAllocClassHint()))
++     {
+++#ifdef __ANDROID__
+++        class_hints->res_name = process_name;
+++        class_hints->res_class = process_name;
+++#else
++         static char steam_proton[] = "steam_proton";
++         const char *app_id = getenv("SteamAppId");
++         char proton_app_class[128];
++@@ -1125,17 +1131,20 @@ static void set_initial_wm_hints( Display *display, Window window )
++             class_hints->res_name = steam_proton;
++             class_hints->res_class = steam_proton;
++         }
++-
+++#endif
++         XSetClassHint( display, window, class_hints );
++         XFree( class_hints );
++     }
++ 
++     /* set the WM_CLIENT_MACHINE and WM_LOCALE_NAME properties */
++     XSetWMProperties(display, window, NULL, NULL, NULL, 0, NULL, NULL, NULL);
+++
+++#ifndef __ANDROID__
++     /* set the pid. together, these properties are needed so the window manager can kill us if we freeze */
++     i = getpid();
++     XChangeProperty(display, window, x11drv_atom(_NET_WM_PID),
++                     XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&i, 1);
+++#endif
++ 
++     XChangeProperty( display, window, x11drv_atom(XdndAware),
++                      XA_ATOM, 32, PropModeReplace, (unsigned char*)&dndVersion, 1 );
++@@ -2085,6 +2094,18 @@ void set_net_active_window( HWND hwnd, HWND previous )
++     XSendEvent( data->display, DefaultRootWindow( data->display ), False,
++                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
++     XFlush( data->display );
+++
+++#ifdef __ANDROID__
+++    DWORD pid = 0;
+++
+++    NtUserGetWindowThread( hwnd, &pid );
+++
+++    XChangeProperty(data->display, window, x11drv_atom(_NET_WM_PID),
+++                    XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
+++
+++    XChangeProperty( data->display, window, x11drv_atom(_NET_WM_HWND),
+++                      XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&hwnd, 2 );
+++#endif
++ }
++ 
++ BOOL window_has_pending_wm_state( HWND hwnd, UINT state )
++@@ -2507,7 +2528,9 @@ static void create_whole_window( struct x11drv_win_data *data )
++ 
++     /* Set override-redirect attribute only after window creation, Mutter gets confused otherwise */
++     window_set_managed( data, is_window_managed( data->hwnd, SWP_NOACTIVATE, FALSE ), FALSE );
+++#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
++     x11drv_xinput2_enable( data->display, data->whole_window );
+++#endif
++     set_initial_wm_hints( data->display, data->whole_window );
++     set_wm_hints( data, 0 );
++ 
++@@ -2827,8 +2850,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
++             if (!wcscmp( winstation_name, winsta0 ))
++             {
++                 /* listen to raw xinput event in the desktop window thread */
+++#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
++                 data->xinput2_rawinput = TRUE;
++                 x11drv_xinput2_enable( data->display, DefaultRootWindow( data->display ) );
+++#endif
++             }
++         }
++         /* create the cursor clipping window */
+diff --git a/android/patches/dlls_winex11_drv_x11drv_h.patch b/android/patches/dlls_winex11_drv_x11drv_h.patch
+new file mode 100644
+index 0000000..c2045b6
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_x11drv_h.patch
+@@ -0,0 +1,14 @@
++diff --git a/dlls/winex11.drv/x11drv.h b/dlls/winex11.drv/x11drv.h
++index 27d1af1..585c035 100644
++--- a/dlls/winex11.drv/x11drv.h
+++++ b/dlls/winex11.drv/x11drv.h
++@@ -572,6 +572,9 @@ enum x11drv_atoms
++     XATOM_text_rtf,
++     XATOM_text_richtext,
++     XATOM_text_uri_list,
+++#ifdef __ANDROID__
+++    XATOM__NET_WM_HWND,
+++#endif
++     XATOM_GAMESCOPE_DISPLAY_EDID_PATH,
++     XATOM_GAMESCOPE_XALIA_OVERLAY,
++     NB_XATOMS
+diff --git a/android/patches/dlls_winex11_drv_x11drv_main_c.patch b/android/patches/dlls_winex11_drv_x11drv_main_c.patch
+new file mode 100644
+index 0000000..c919781
+--- /dev/null
++++ b/android/patches/dlls_winex11_drv_x11drv_main_c.patch
+@@ -0,0 +1,25 @@
++diff --git a/dlls/winex11.drv/x11drv_main.c b/dlls/winex11.drv/x11drv_main.c
++index 22a1e37..0700706 100644
++--- a/dlls/winex11.drv/x11drv_main.c
+++++ b/dlls/winex11.drv/x11drv_main.c
++@@ -202,6 +202,9 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
++     "text/rtf",
++     "text/richtext",
++     "text/uri-list",
+++#ifdef __ANDROID__
+++    "_NET_WM_HWND",
+++#endif
++     "GAMESCOPE_DISPLAY_EDID_PATH",
++     "GAMESCOPE_XALIA_OVERLAY",
++ };
++@@ -756,8 +759,9 @@ static NTSTATUS x11drv_init( void *arg )
++ #ifdef SONAME_LIBXCOMPOSITE
++     X11DRV_XComposite_Init();
++ #endif
+++#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
++     x11drv_xinput2_load();
++-
+++#endif
++     XkbUseExtension( gdi_display, NULL, NULL );
++     X11DRV_InitKeyboard( gdi_display );
++     X11DRV_InitMouse( gdi_display );
+diff --git a/android/patches/dlls_wow64_syscall_c.patch b/android/patches/dlls_wow64_syscall_c.patch
+new file mode 100644
+index 0000000..62d8d01
+--- /dev/null
++++ b/android/patches/dlls_wow64_syscall_c.patch
+@@ -0,0 +1,53 @@
++diff --git a/dlls/wow64/syscall.c b/dlls/wow64/syscall.c
++index d2a977e..fddd3c6 100644
++--- a/dlls/wow64/syscall.c
+++++ b/dlls/wow64/syscall.c
++@@ -726,6 +726,29 @@ static HMODULE load_64bit_module( const WCHAR *name )
++     return module;
++ }
++ 
+++/**********************************************************************
+++ *           wow64GetEnvironmentVariableW
+++ */
+++static DWORD wow64GetEnvironmentVariableW( LPCWSTR name, LPWSTR val, DWORD size )
+++{
+++    UNICODE_STRING us_name, us_value;
+++    NTSTATUS status;
+++    DWORD len;
+++
+++    RtlInitUnicodeString( &us_name, name );
+++    us_value.Length = 0;
+++    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+++    us_value.Buffer = val;
+++
+++    status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
+++    len = us_value.Length / sizeof(WCHAR);
+++    if (status == STATUS_BUFFER_TOO_SMALL) return len + 1;
+++    if (status) return 0;
+++    if (!size) return len + 1;
+++    val[len] = 0;
+++    return len;
+++}
+++
++ 
++ /**********************************************************************
++  *           get_cpu_dll_name
++@@ -740,11 +763,17 @@ static const WCHAR *get_cpu_dll_name(void)
++     HANDLE key;
++     ULONG size;
++ 
+++    WCHAR *cpu_dll = (WCHAR*)buffer;
+++    UINT res;
+++    if ((res = wow64GetEnvironmentVariableW( L"HODLL", cpu_dll, ARRAY_SIZE(buffer))) &&
+++        res < ARRAY_SIZE(buffer))
+++        return cpu_dll;
+++
++     switch (current_machine)
++     {
++     case IMAGE_FILE_MACHINE_I386:
++         RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\x86" );
++-        ret = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
+++        ret = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"libwow64fex.dll" : L"wow64cpu.dll");
++         break;
++     case IMAGE_FILE_MACHINE_ARMNT:
++         RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\arm" );
+diff --git a/android/patches/loader_preloader_c.patch b/android/patches/loader_preloader_c.patch
+new file mode 100644
+index 0000000..4157c17
+--- /dev/null
++++ b/android/patches/loader_preloader_c.patch
+@@ -0,0 +1,13 @@
++diff --git a/loader/preloader.c b/loader/preloader.c
++index f27d6df..3041563 100644
++--- a/loader/preloader.c
+++++ b/loader/preloader.c
++@@ -1489,6 +1489,8 @@ void* wld_start( void **stack )
++             if (preload_info[i].addr >= (void *)0x10000
++ #ifdef __aarch64__
++                 && preload_info[i].addr < (void *)0x7fffffffff /* ARM64 address space might end here*/
+++# elif __ANDROID__
+++                && preload_info[i].addr < (void *)0x7fffffffff /* ARM64 address space might end here*/
++ #endif
++             )
++                 wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
+diff --git a/android/patches/loader_wine_inf_in.patch b/android/patches/loader_wine_inf_in.patch
+new file mode 100644
+index 0000000..92f3e03
+--- /dev/null
++++ b/android/patches/loader_wine_inf_in.patch
+@@ -0,0 +1,16 @@
++diff --git a/loader/wine.inf.in b/loader/wine.inf.in
++index 37f6b56..1109350 100644
++--- a/loader/wine.inf.in
+++++ b/loader/wine.inf.in
++@@ -472,9 +472,9 @@ HKLM,%CurrentVersion%,"ProgramFilesDir (x86)",,"%16426%"
++ HKLM,%CurrentVersion%,"CommonFilesDir (x86)",,"%16428%"
++ HKLM,%CurrentVersion%,"ProgramFilesDir (Arm)",,"C:\Program Files (Arm)"
++ HKLM,%CurrentVersion%,"CommonFilesDir (Arm)",,"C:\Program Files (Arm)\Common Files"
++-HKLM,Software\Microsoft\Wow64\amd64,,2,"xtajit64.dll"
+++HKLM,Software\Microsoft\Wow64\amd64,,2,"libarm64ecfex.dll"
++ HKLM,Software\Microsoft\Wow64\arm,,2,"wowarmhw.dll"
++-HKLM,Software\Microsoft\Wow64\x86,,2,"xtajit.dll"
+++HKLM,Software\Microsoft\Wow64\x86,,2,"libwow64fex.dll"
++ 
++ [CurrentVersionWow64.ntx86]
++ HKLM,%CurrentVersion%,"ProgramFilesDir (x86)",,"%16422%"
+diff --git a/android/patches/midi_support.patch b/android/patches/midi_support.patch
+new file mode 100644
+index 0000000..8294cf8
+--- /dev/null
++++ b/android/patches/midi_support.patch
+@@ -0,0 +1,721 @@
++diff --git a/dlls/midimap/Makefile.in b/dlls/midimap/Makefile.in
++index 35ae704..c09a865 100644
++--- a/dlls/midimap/Makefile.in
+++++ b/dlls/midimap/Makefile.in
++@@ -1,5 +1,5 @@
++ MODULE    = midimap.dll
++-IMPORTS   = winmm user32 advapi32
+++IMPORTS   = winmm user32 advapi32 ws2_32
++ 
++ SOURCES = \
++ 	midimap.c
++diff --git a/dlls/midimap/midimap.c b/dlls/midimap/midimap.c
++index e04fe72..f5cbf93 100644
++--- a/dlls/midimap/midimap.c
+++++ b/dlls/midimap/midimap.c
++@@ -2,6 +2,7 @@
++  * Wine MIDI mapper driver
++  *
++  * Copyright 	1999, 2000, 2001 Eric Pouech
+++ * Copyright    2024 Junyu Long
++  *
++  * This library is free software; you can redistribute it and/or
++  * modify it under the terms of the GNU Lesser General Public
++@@ -32,6 +33,36 @@
++ #include "mmddk.h"
++ #include "winreg.h"
++ #include "wine/debug.h"
+++#include "winsock2.h"
+++
+++#define SERVER_PORT 7941
+++#define CLIENT_PORT 7942
+++#define CLIENT_IP "127.0.0.1"
+++#define BUFFER_SIZE 9
+++
+++#define REQUEST_CODE_MIDI_SHORT 1
+++#define REQUEST_CODE_MIDI_LONG 2
+++#define REQUEST_CODE_MIDI_PREPARE 3
+++#define REQUEST_CODE_MIDI_UNPREPARE 4
+++#define REQUEST_CODE_MIDI_OPEN 5
+++#define REQUEST_CODE_MIDI_CLOSE 6
+++#define REQUEST_CODE_MIDI_RESET 7
+++
+++static struct sockaddr_in* client_addr = NULL;
+++static SOCKET server_sock = INVALID_SOCKET;
+++static BOOL winsock_loaded = FALSE;
+++static BYTE* send_buffer;
+++
+++static void close_server_socket(void);
+++static BOOL create_server_socket(void);
+++static void request_midi_data(BYTE*);
+++static void request_midi_short(DWORD_PTR);
+++static void request_midi_long(LPMIDIHDR);
+++static void request_midi_prepare(void);
+++static void request_midi_unprepare(void);
+++static void request_midi_open(void);
+++static void request_midi_close(void);
+++static void request_midi_reset(void);
++ 
++ /*
++  * Here's how Windows stores the midiOut mapping information.
++@@ -129,7 +160,7 @@ static BOOL	MIDIMAP_FindPort(const WCHAR* name, unsigned* dev)
++     {
++         const WCHAR*  ptr = name + 1;
++         *dev = 0;
++-        do 
+++        do
++         {
++             *dev = *dev * 10 + *ptr - '0';
++             ptr++;
++@@ -285,203 +316,185 @@ static void MIDIMAP_NotifyClient(MIDIMAPDATA* mom, WORD wMsg,
++ 
++ static DWORD modOpen(DWORD_PTR *lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
++ {
++-    MIDIMAPDATA*	mom = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
+++    MIDIMAPDATA* mom = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
++ 
++     TRACE("(%p %p %08lx)\n", lpdwUser, lpDesc, dwFlags);
++ 
++-    if (!mom) return MMSYSERR_NOMEM;
+++    if (!mom)
+++        return MMSYSERR_NOMEM;
+++
++     if (!lpDesc) {
++-	HeapFree(GetProcessHeap(), 0, mom);
++-	return MMSYSERR_INVALPARAM;
+++        HeapFree(GetProcessHeap(), 0, mom);
+++        return MMSYSERR_INVALPARAM;
++     }
++ 
++-    if (MIDIMAP_LoadSettings(mom))
++-    {
++-	UINT chn;
++-	*lpdwUser = (DWORD_PTR)mom;
++-	mom->self = mom;
++-	mom->wCbFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
++-	mom->midiDesc = *lpDesc;
++-	mom->runningStatus = 0;
++-
++-	for (chn = 0; chn < 16; chn++)
++-	{
++-	    if (mom->ChannelMap[chn]->loaded) continue;
++-	    if (midiOutOpen(&mom->ChannelMap[chn]->hMidi, mom->ChannelMap[chn]->uDevID,
++-			    0L, 0L, CALLBACK_NULL) == MMSYSERR_NOERROR)
++-		mom->ChannelMap[chn]->loaded = 1;
++-	    else
++-		mom->ChannelMap[chn]->loaded = -1;
++-	    /* FIXME: should load here the IDF midi data... and allow channel and
++-	     * patch mappings
++-	     */
++-	}
++-	MIDIMAP_NotifyClient(mom, MOM_OPEN, 0L, 0L);
++-	return MMSYSERR_NOERROR;
+++    if (MIDIMAP_LoadSettings(mom)) {
+++        UINT chn;
+++        *lpdwUser = (DWORD_PTR)mom;
+++        mom->self = mom;
+++        mom->wCbFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+++        mom->midiDesc = *lpDesc;
+++        mom->runningStatus = 0;
+++
+++        for (chn = 0; chn < 16; chn++) {
+++            if (mom->ChannelMap[chn]->loaded)
+++                continue;
+++            mom->ChannelMap[chn]->loaded = 1;
+++            /* FIXME: should load here the IDF midi data... and allow channel and
+++            * patch mappings
+++            */
+++        }
+++
+++        MIDIMAP_NotifyClient(mom, MOM_OPEN, 0L, 0L);
+++        request_midi_open();
+++        return MMSYSERR_NOERROR;
++     }
+++
++     HeapFree(GetProcessHeap(), 0, mom);
++     return MIDIERR_INVALIDSETUP;
++ }
++ 
++-static	DWORD	modClose(MIDIMAPDATA* mom)
+++static DWORD modClose(MIDIMAPDATA* mom)
++ {
++-    UINT	i;
++-    DWORD	ret = MMSYSERR_NOERROR;
+++    UINT i;
++ 
++-    if (MIDIMAP_IsBadData(mom)) 	return MMSYSERR_ERROR;
+++    if (MIDIMAP_IsBadData(mom))
+++        return MMSYSERR_ERROR;
++ 
++-    for (i = 0; i < 16; i++)
++-    {
++-	DWORD	t;
++-	if (mom->ChannelMap[i] && mom->ChannelMap[i]->loaded > 0)
++-	{
++-	    t = midiOutClose(mom->ChannelMap[i]->hMidi);
++-	    if (t == MMSYSERR_NOERROR)
++-	    {
++-		mom->ChannelMap[i]->loaded = 0;
++-		mom->ChannelMap[i]->hMidi = 0;
++-	    }
++-	    else if (ret == MMSYSERR_NOERROR)
++-		ret = t;
++-	}
++-    }
++-    if (ret == MMSYSERR_NOERROR) {
++-	MIDIMAP_NotifyClient(mom, MOM_CLOSE, 0L, 0L);
++-	HeapFree(GetProcessHeap(), 0, mom);
+++    for (i = 0; i < 16; i++) {
+++        if (mom->ChannelMap[i] && mom->ChannelMap[i]->loaded > 0)  {
+++                mom->ChannelMap[i]->loaded = 0;
+++                mom->ChannelMap[i]->hMidi = 0;
+++        }
++     }
++-    return ret;
+++
+++    MIDIMAP_NotifyClient(mom, MOM_CLOSE, 0L, 0L);
+++    HeapFree(GetProcessHeap(), 0, mom);
+++    request_midi_close();
+++    return MMSYSERR_NOERROR;
++ }
++ 
++ static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwParam2)
++ {
++-    WORD	chn;
++-    DWORD	ret = MMSYSERR_NOERROR;
++-    MIDIHDR	mh;
+++    DWORD ret = MMSYSERR_NOERROR;
++ 
++     if (MIDIMAP_IsBadData(mom))
++-	return MMSYSERR_ERROR;
+++        return MMSYSERR_ERROR;
+++
++     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
++-	return MIDIERR_UNPREPARED;
+++        return MIDIERR_UNPREPARED;
+++
++     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
++-	return MIDIERR_STILLPLAYING;
+++        return MIDIERR_STILLPLAYING;
++ 
++-    mh = *lpMidiHdr;
++     lpMidiHdr->dwFlags &= ~MHDR_DONE;
++     lpMidiHdr->dwFlags |= MHDR_INQUEUE;
++-    for (chn = 0; chn < 16; chn++)
++-    {
++-	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0)
++-	{
++-	    mh.dwFlags = 0;
++-	    midiOutPrepareHeader(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
++-	    ret = midiOutLongMsg(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
++-	    /* As of 2009, wineXYZ.drv's LongData handlers are synchronous */
++-	    if (!ret && !(mh.dwFlags & MHDR_DONE))
++-		FIXME("wait until MHDR_DONE\n");
++-	    midiOutUnprepareHeader(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
++-	    if (ret != MMSYSERR_NOERROR) break;
++-	}
++-    }
+++
+++    request_midi_long(lpMidiHdr);
+++
++     mom->runningStatus = 0;
++     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
++     lpMidiHdr->dwFlags |= MHDR_DONE;
+++
++     MIDIMAP_NotifyClient(mom, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L);
++     return ret;
++ }
++ 
++ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
++ {
++-    BYTE	status = LOBYTE(LOWORD(dwParam));
++-    WORD	chn;
++-    DWORD	ret = MMSYSERR_NOERROR;
+++    BYTE status = LOBYTE(LOWORD(dwParam));
+++    WORD chn;
++ 
++     if (MIDIMAP_IsBadData(mom))
++-	return MMSYSERR_ERROR;
+++        return MMSYSERR_ERROR;
++ 
++-    if (status < 0x80)
++-    {
++-        if (mom->runningStatus)
++-        {
+++    if (status < 0x80) {
+++        if (mom->runningStatus) {
++             status = mom->runningStatus;
++             dwParam = ((LOWORD(dwParam) << 8) | status);
++-        }
++-        else
++-        {
+++        } else {
++             FIXME("ooch %Ix\n", dwParam);
++             return MMSYSERR_NOERROR;
++         }
++     }
++     chn = status & 0x0F;
++ 
++-    if (!mom->ChannelMap[chn]) return MMSYSERR_NOERROR;
++-
++-    switch (status & 0xF0)
++-    {
++-    case 0x80:
++-    case 0x90:
++-    case 0xA0:
++-    case 0xB0:
++-    case 0xC0:
++-    case 0xD0:
++-    case 0xE0:
++-	if (mom->ChannelMap[chn]->loaded > 0)
++-	{
++-	    /* change channel */
++-	    dwParam &= ~0x0F;
++-	    dwParam |= mom->ChannelMap[chn]->aChn[chn];
++-
++-	    if ((LOBYTE(LOWORD(dwParam)) & 0xF0) == 0xC0 /* program change */ &&
++-		mom->ChannelMap[chn]->lpbPatch)
++-	    {
++-		BYTE patch = HIBYTE(LOWORD(dwParam));
++-
++-		/* change patch */
++-		dwParam &= ~0x0000FF00;
++-		dwParam |= mom->ChannelMap[chn]->lpbPatch[patch];
++-	    }
++-	    ret = midiOutShortMsg(mom->ChannelMap[chn]->hMidi, dwParam);
++-	}
++-	mom->runningStatus = status;
++-	break;
++-    case 0xF0:
++-	for (chn = 0; chn < 16; chn++)
++-	{
++-	    if (mom->ChannelMap[chn]->loaded > 0)
++-		ret = midiOutShortMsg(mom->ChannelMap[chn]->hMidi, dwParam);
++-	}
++-	/* system common message */
++-	if (status <= 0xF7)
++-	    mom->runningStatus = 0;
++-	break;
++-    default:
++-	FIXME("ooch %Ix\n", dwParam);
+++    if (!mom->ChannelMap[chn])
+++        return MMSYSERR_NOERROR;
+++
+++    switch (status & 0xF0) {
+++        case 0x80:
+++        case 0x90:
+++        case 0xA0:
+++        case 0xB0:
+++        case 0xC0:
+++        case 0xD0:
+++        case 0xE0:
+++            if (mom->ChannelMap[chn]->loaded > 0)
+++            {
+++                /* change channel */
+++                dwParam &= ~0x0F;
+++                dwParam |= mom->ChannelMap[chn]->aChn[chn];
+++
+++                if ((LOBYTE(LOWORD(dwParam)) & 0xF0) == 0xC0 /* program change */ &&
+++                mom->ChannelMap[chn]->lpbPatch) {
+++                    BYTE patch = HIBYTE(LOWORD(dwParam));
+++
+++                    /* change patch */
+++                    dwParam &= ~0x0000FF00;
+++                    dwParam |= mom->ChannelMap[chn]->lpbPatch[patch];
+++                }
+++                request_midi_short(dwParam);
+++            }
+++            mom->runningStatus = status;
+++            break;
+++        case 0xF0:
+++            request_midi_short(dwParam);
+++            /* system common message */
+++            if (status <= 0xF7)
+++                mom->runningStatus = 0;
+++            break;
+++        default:
+++            FIXME("ooch %Ix\n", dwParam);
++     }
++ 
++-    return ret;
+++    return MMSYSERR_NOERROR;
++ }
++ 
++ static DWORD modPrepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwSize)
++ {
++-    if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
+++    if (MIDIMAP_IsBadData(mom))
+++        return MMSYSERR_ERROR;
+++
++     if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
++-	return MMSYSERR_INVALPARAM;
+++        return MMSYSERR_INVALPARAM;
+++
+++    request_midi_prepare();
+++
++     if (lpMidiHdr->dwFlags & MHDR_PREPARED)
++-	return MMSYSERR_NOERROR;
+++        return MMSYSERR_NOERROR;
++ 
++     lpMidiHdr->dwFlags |= MHDR_PREPARED;
++     lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
+++
++     return MMSYSERR_NOERROR;
++ }
++ 
++ static DWORD modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwSize)
++ {
++-    if (MIDIMAP_IsBadData(mom)) return MMSYSERR_ERROR;
+++    if (MIDIMAP_IsBadData(mom))
+++        return MMSYSERR_ERROR;
+++
++     if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
++-	return MMSYSERR_INVALPARAM;
+++        return MMSYSERR_INVALPARAM;
+++
+++    request_midi_unprepare();
+++
++     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
++-	return MMSYSERR_NOERROR;
+++        return MMSYSERR_NOERROR;
+++
++     if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
++-	return MIDIERR_STILLPLAYING;
+++        return MIDIERR_STILLPLAYING;
++ 
++     lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
++     return MMSYSERR_NOERROR;
++@@ -505,37 +518,123 @@ static DWORD modSetVolume(MIDIMAPDATA* mom, DWORD dwVolume)
++ static DWORD modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSW lpMidiCaps, DWORD_PTR size)
++ {
++     static const MIDIOUTCAPSW mappercaps = {
++-	0x00FF, 0x0001, 0x0100, /* Manufacturer and Product ID */
+++        0x00FF, 0x0001, 0x0100, /* Manufacturer and Product ID */
++         L"Wine midi mapper", MOD_MAPPER, 0, 0, 0xFFFF,
++-	/* Native returns volume caps of underlying device + MIDICAPS_STREAM */
++-	MIDICAPS_VOLUME|MIDICAPS_LRVOLUME
+++        MIDICAPS_VOLUME|MIDICAPS_LRVOLUME /* Native returns volume caps of underlying device + MIDICAPS_STREAM */
++     };
++-    if (lpMidiCaps == NULL) return MMSYSERR_INVALPARAM;
++-    if (!numMidiOutPorts) return MMSYSERR_BADDEVICEID;
+++
+++    if (lpMidiCaps == NULL)
+++        return MMSYSERR_INVALPARAM;
+++
+++    if (!numMidiOutPorts)
+++        return MMSYSERR_BADDEVICEID;
++ 
++     memcpy(lpMidiCaps, &mappercaps, min(size, sizeof(*lpMidiCaps)));
++     return MMSYSERR_NOERROR;
++ }
++ 
++-static	DWORD	modReset(MIDIMAPDATA* mom)
+++static DWORD modReset(MIDIMAPDATA* mom)
++ {
++-    WORD	chn;
++-    DWORD	ret = MMSYSERR_NOERROR;
++-
++     if (MIDIMAP_IsBadData(mom))
++-	return MMSYSERR_ERROR;
+++        return MMSYSERR_ERROR;
+++
+++    mom->runningStatus = 0;
+++    request_midi_reset();
+++
+++    return MMSYSERR_NOERROR;
+++}
+++
+++static BOOL create_server_socket(void)
+++{
+++    WSADATA wsa_data;
+++    struct sockaddr_in server_addr;
+++    const UINT reuse_addr = 1;
+++    ULONG non_blocking = 1;
+++    int res;
+++
+++    close_server_socket();
+++
+++    winsock_loaded = WSAStartup(MAKEWORD(2,2), &wsa_data) == NO_ERROR;
+++    if (!winsock_loaded) return FALSE;
+++
+++    server_addr.sin_family = AF_INET;
+++    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+++    server_addr.sin_port = htons(SERVER_PORT);
+++
+++    server_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+++    if (server_sock == INVALID_SOCKET) return FALSE;
+++
+++    res = setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse_addr, sizeof(reuse_addr));
+++    if (res == SOCKET_ERROR) return FALSE;
+++
+++    ioctlsocket(server_sock, FIONBIO, &non_blocking);
++ 
++-    for (chn = 0; chn < 16; chn++)
+++    res = bind(server_sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+++    if (res == SOCKET_ERROR) return FALSE;
+++
+++    return TRUE;
+++}
+++
+++static void close_server_socket(void)
+++{
+++    if (server_sock != INVALID_SOCKET)
++     {
++-	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0)
++-	{
++-	    ret = midiOutReset(mom->ChannelMap[chn]->hMidi);
++-	    if (ret != MMSYSERR_NOERROR) break;
++-	}
+++        closesocket(server_sock);
+++        server_sock = INVALID_SOCKET;
++     }
++-    mom->runningStatus = 0;
++ 
++-    return ret;
+++    if (winsock_loaded)
+++    {
+++        WSACleanup();
+++        winsock_loaded = FALSE;
+++    }
+++}
+++
+++static void request_midi_data(BYTE* buffer) {
+++    if (client_addr == NULL) {
+++        client_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct sockaddr_in));
+++        client_addr->sin_family = AF_INET;
+++        client_addr->sin_addr.s_addr = inet_addr(CLIENT_IP);
+++        client_addr->sin_port = htons(CLIENT_PORT);
+++    }
+++
+++    sendto(server_sock, (const void*) buffer, BUFFER_SIZE, 0, (struct sockaddr*)client_addr, sizeof(struct sockaddr_in));
+++}
+++
+++static void request_midi_short(DWORD_PTR param) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_SHORT;
+++    memcpy(send_buffer + 1, &param, sizeof(DWORD_PTR));
+++    request_midi_data(send_buffer);
+++}
+++
+++static void request_midi_long(LPMIDIHDR param) {
+++    // TODO: implement long msg
+++    FIXME("long midi msg not supported yet!\n");
+++}
+++
+++static void request_midi_prepare(void) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_PREPARE;
+++    request_midi_data(send_buffer);
+++}
+++
+++static void request_midi_unprepare(void) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_UNPREPARE;
+++    request_midi_data(send_buffer);
+++}
+++
+++static void request_midi_open(void) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_OPEN;
+++    request_midi_data(send_buffer);
+++}
+++
+++static void request_midi_close(void) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_CLOSE;
+++    request_midi_data(send_buffer);
+++}
+++
+++static void request_midi_reset(void) {
+++    send_buffer[0] = REQUEST_CODE_MIDI_RESET;
+++    request_midi_data(send_buffer);
++ }
++ 
++ static LRESULT MIDIMAP_drvOpen(void);
++@@ -545,10 +644,10 @@ static LRESULT MIDIMAP_drvClose(void);
++  * 				modMessage (MIDIMAP.@)
++  */
++ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
++-				DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+++    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
++ {
++     TRACE("(%u, %04X, %08IX, %08IX, %08IX);\n",
++-	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+++        wDevID, wMsg, dwUser, dwParam1, dwParam2);
++ 
++     switch (wMsg)
++     {
++@@ -558,24 +657,33 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
++         return MIDIMAP_drvClose();
++     case DRVM_ENABLE:
++     case DRVM_DISABLE:
++-	/* FIXME: Pretend this is supported */
++-	return 0;
++-
++-    case MODM_OPEN: return modOpen((DWORD_PTR *)dwUser, (LPMIDIOPENDESC)dwParam1, dwParam2);
++-    case MODM_CLOSE:	 	return modClose		((MIDIMAPDATA*)dwUser);
++-
++-    case MODM_DATA:		return modData		((MIDIMAPDATA*)dwUser, dwParam1);
++-    case MODM_LONGDATA:		return modLongData      ((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1,     dwParam2);
++-    case MODM_PREPARE:	 	return modPrepare	((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, 	dwParam2);
++-    case MODM_UNPREPARE: 	return modUnprepare	((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, 	dwParam2);
++-    case MODM_RESET:		return modReset		((MIDIMAPDATA*)dwUser);
++-
++-    case MODM_GETDEVCAPS:	return modGetDevCaps	(wDevID, (MIDIMAPDATA*)dwUser, (LPMIDIOUTCAPSW)dwParam1,dwParam2);
++-    case MODM_GETNUMDEVS:	return 1;
++-    case MODM_GETVOLUME:	return modGetVolume	((MIDIMAPDATA*)dwUser, (DWORD*)dwParam1);
++-    case MODM_SETVOLUME:	return modSetVolume	((MIDIMAPDATA*)dwUser, dwParam1);
+++    /* FIXME: Pretend this is supported */
+++    return 0;
+++
+++    case MODM_OPEN:
+++        return modOpen((DWORD_PTR *)dwUser, (LPMIDIOPENDESC)dwParam1, dwParam2);
+++    case MODM_CLOSE:
+++        return modClose((MIDIMAPDATA*)dwUser);
+++    case MODM_DATA:
+++        return modData((MIDIMAPDATA*)dwUser, dwParam1);
+++    case MODM_LONGDATA:
+++        return modLongData((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, dwParam2);
+++    case MODM_PREPARE:
+++        return modPrepare((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, dwParam2);
+++    case MODM_UNPREPARE:
+++        return modUnprepare((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, 	dwParam2);
+++    case MODM_RESET:
+++        return modReset((MIDIMAPDATA*)dwUser);
+++    case MODM_GETDEVCAPS:
+++        return modGetDevCaps(wDevID, (MIDIMAPDATA*)dwUser, (LPMIDIOUTCAPSW)dwParam1,dwParam2);
+++    case MODM_GETNUMDEVS:
+++        return 1;
+++    case MODM_GETVOLUME:
+++        return modGetVolume	((MIDIMAPDATA*)dwUser, (DWORD*)dwParam1);
+++    case MODM_SETVOLUME:
+++        return modSetVolume	((MIDIMAPDATA*)dwUser, dwParam1);
++     default:
++-	FIXME("unknown message %d!\n", wMsg);
+++        FIXME("unknown message %d!\n", wMsg);
++     }
++     return MMSYSERR_NOTSUPPORTED;
++ }
++@@ -589,39 +697,29 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
++  */
++ static LRESULT MIDIMAP_drvOpen(void)
++ {
++-    MIDIOUTCAPSW	moc;
++-    unsigned		dev, i;
++-    BOOL                found_valid_port = FALSE;
+++    unsigned i;
+++    MIDIOUTPORT* winlatorMidiOutPort;
++ 
++     if (midiOutPorts)
++-	return 0;
++-
++-    numMidiOutPorts = midiOutGetNumDevs();
++-    midiOutPorts = HeapAlloc(GetProcessHeap(), 0,
++-			     numMidiOutPorts * sizeof(MIDIOUTPORT));
++-    for (dev = 0; dev < numMidiOutPorts; dev++)
++-    {
++-	if (midiOutGetDevCapsW(dev, &moc, sizeof(moc)) == 0L)
++-	{
++-	    lstrcpyW(midiOutPorts[dev].name, moc.szPname);
++-	    midiOutPorts[dev].loaded = 0;
++-	    midiOutPorts[dev].hMidi = 0;
++-	    midiOutPorts[dev].uDevID = dev;
++-	    midiOutPorts[dev].lpbPatch = NULL;
++-	    for (i = 0; i < 16; i++)
++-		midiOutPorts[dev].aChn[i] = i;
++-            if (wcsncmp(midiOutPorts[dev].name, L"Midi Through", lstrlenW(L"Midi Through")) != 0)
++-	        found_valid_port = TRUE;
++-	}
++-	else
++-	{
++-	    midiOutPorts[dev].loaded = -1;
++-	}
+++        return 0;
+++
+++    // we create a fake midi out port here.
+++    numMidiOutPorts = 1;
+++    midiOutPorts = HeapAlloc(GetProcessHeap(), 0, numMidiOutPorts * sizeof(MIDIOUTPORT));
+++
+++    winlatorMidiOutPort = midiOutPorts;
+++    lstrcpyW(winlatorMidiOutPort->name, L"Midi Through Winlator");
+++    winlatorMidiOutPort->loaded = 0;
+++    winlatorMidiOutPort->hMidi = 0;
+++    winlatorMidiOutPort->uDevID = 0;
+++    winlatorMidiOutPort->lpbPatch = NULL;
+++    for (i = 0; i < 16; i++) {
+++        winlatorMidiOutPort->aChn[i] = i;
++     }
++ 
++-    if (!found_valid_port)
++-        ERR_(winediag)("No software synthesizer midi port found, Midi sound output probably won't work.\n");
++-
+++    // start socket server
+++    create_server_socket();
+++    send_buffer = HeapAlloc(GetProcessHeap(), 0, BUFFER_SIZE * sizeof(BYTE));
++     return 1;
++ }
++ 
++@@ -630,12 +728,16 @@ static LRESULT MIDIMAP_drvOpen(void)
++  */
++ static LRESULT MIDIMAP_drvClose(void)
++ {
++-    if (midiOutPorts)
++-    {
++-	HeapFree(GetProcessHeap(), 0, midiOutPorts);
++-	midiOutPorts = NULL;
++-	return 1;
+++    if (midiOutPorts) {
+++        HeapFree(GetProcessHeap(), 0, midiOutPorts);
+++        midiOutPorts = NULL;
+++        return 1;
++     }
+++
+++    // close socket server
+++    close_server_socket();
+++    HeapFree(GetProcessHeap(), 0, client_addr);
+++    HeapFree(GetProcessHeap(), 0, send_buffer);
++     return 0;
++ }
++ 
++@@ -645,22 +747,33 @@ static LRESULT MIDIMAP_drvClose(void)
++ LRESULT CALLBACK MIDIMAP_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
++                                     LPARAM dwParam1, LPARAM dwParam2)
++ {
++-/* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
++-/* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
+++    TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",
+++        dwDevID, hDriv, wMsg, dwParam1, dwParam2);
++ 
++     switch (wMsg)
++     {
++-    case DRV_LOAD:		return 1;
++-    case DRV_FREE:		return 1;
++-    case DRV_OPEN:		return 1;
++-    case DRV_CLOSE:		return 1;
++-    case DRV_ENABLE:		return 1;
++-    case DRV_DISABLE:		return 1;
++-    case DRV_QUERYCONFIGURE:	return 1;
++-    case DRV_CONFIGURE:		MessageBoxA(0, "MIDIMAP MultiMedia Driver !", "OSS Driver", MB_OK);	return 1;
++-    case DRV_INSTALL:		return DRVCNF_RESTART;
++-    case DRV_REMOVE:		return DRVCNF_RESTART;
+++    case DRV_LOAD:
+++        return 1;
+++    case DRV_FREE:
+++        return 1;
+++    case DRV_OPEN:
+++        return 1;
+++    case DRV_CLOSE:
+++        return 1;
+++    case DRV_ENABLE:
+++        return 1;
+++    case DRV_DISABLE:
+++        return 1;
+++    case DRV_QUERYCONFIGURE:
+++        return 1;
+++    case DRV_CONFIGURE:
+++        MessageBoxA(0, "MIDIMAP MultiMedia Driver !", "OSS Driver", MB_OK);
+++        return 1;
+++    case DRV_INSTALL:
+++        return DRVCNF_RESTART;
+++    case DRV_REMOVE:
+++        return DRVCNF_RESTART;
++     default:
++-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+++        return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
++     }
++ }
+diff --git a/android/patches/programs_explorer_desktop_c.patch b/android/patches/programs_explorer_desktop_c.patch
+new file mode 100644
+index 0000000..448dea6
+--- /dev/null
++++ b/android/patches/programs_explorer_desktop_c.patch
+@@ -0,0 +1,21 @@
++diff --git a/programs/explorer/desktop.c b/programs/explorer/desktop.c
++index f4edba3..2dfcb50 100644
++--- a/programs/explorer/desktop.c
+++++ b/programs/explorer/desktop.c
++@@ -1334,6 +1334,16 @@ void manage_desktop( WCHAR *arg )
++         }
++         SetThreadDesktop( desktop );
++     }
+++#if defined(__ANDROID__) || defined(__aarch64__)
+++    else
+++    {
+++        int wine_no_duplicate_explorer = getenv("WINE_NO_DUPLICATE_EXPLORER") && atoi(getenv("WINE_NO_DUPLICATE_EXPLORER"));
+++        if (wine_no_duplicate_explorer == 1)
+++        {
+++            ExitProcess( 0 );
+++        }
+++    }
+++#endif
++ 
++     /* the desktop process should always have an admin token */
++     status = NtSetInformationProcess( GetCurrentProcess(), ProcessWineGrantAdminToken, NULL, 0 );
+diff --git a/android/patches/programs_wineboot_wineboot_c.patch b/android/patches/programs_wineboot_wineboot_c.patch
+new file mode 100644
+index 0000000..77ee404
+--- /dev/null
++++ b/android/patches/programs_wineboot_wineboot_c.patch
+@@ -0,0 +1,30 @@
++diff --git a/programs/wineboot/wineboot.c b/programs/wineboot/wineboot.c
++index 636b6d7..72d361a 100644
++--- a/programs/wineboot/wineboot.c
+++++ b/programs/wineboot/wineboot.c
++@@ -387,6 +387,25 @@ static UINT64 read_tsc_frequency(void)
++     return tsc_frequency;
++ }
++ 
+++static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
+++{
+++    XSTATE_CONFIGURATION *xstate = &data->XState;
+++
+++    xstate->EnabledFeatures = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | (1 << XSTATE_AVX);
+++    xstate->EnabledVolatileFeatures = xstate->EnabledFeatures;
+++    xstate->AllFeatureSize = 0x340;
+++
+++    xstate->OptimizedSave = 0;
+++    xstate->CompactionEnabled = 0;
+++
+++    xstate->Features[0].Size = xstate->AllFeatures[0] = offsetof(XSAVE_FORMAT, XmmRegisters);
+++    xstate->Features[1].Size = xstate->AllFeatures[1] = sizeof(M128A) * 16;
+++    xstate->Features[1].Offset = xstate->Features[0].Size;
+++    xstate->Features[2].Offset = 0x240;
+++    xstate->Features[2].Size = 0x100;
+++    xstate->Size = 0x340;
+++}
+++
++ #else
++ 
++ static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
+diff --git a/android/patches/programs_winebrowser_main_c.patch b/android/patches/programs_winebrowser_main_c.patch
+new file mode 100644
+index 0000000..c436bd3
+--- /dev/null
++++ b/android/patches/programs_winebrowser_main_c.patch
+@@ -0,0 +1,162 @@
++diff --git a/programs/winebrowser/main.c b/programs/winebrowser/main.c
++index 738930e..94988b9 100644
++--- a/programs/winebrowser/main.c
+++++ b/programs/winebrowser/main.c
++@@ -49,11 +49,102 @@
++ #include <shellapi.h>
++ #include <urlmon.h>
++ #include <ddeml.h>
+++#include <winsock2.h>
++ 
++ #include "wine/debug.h"
++ 
++ WINE_DEFAULT_DEBUG_CHANNEL(winebrowser);
++ 
+++typedef struct {
+++    int request_code;
+++    char *data;
+++} android_message_t;
+++
+++static int send_android_message(android_message_t message) {
+++    WSADATA data;
+++    int ret;
+++
+++    if ((ret = WSAStartup(MAKEWORD(2,2), &data)) != 0) {
+++        TRACE( "WSAStartup failed with error %d\n", ret );
+++        return 0;
+++    };
+++    SOCKET sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+++    if (sock_fd == INVALID_SOCKET) {
+++        TRACE( "Failed to create client socket\n" );
+++        return 0;
+++    }
+++    struct sockaddr_in addr;
+++    ZeroMemory(&addr, sizeof(addr));
+++    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+++    addr.sin_family = AF_INET;
+++    addr.sin_port = htons(20000);
+++    ret = connect(sock_fd, (struct sockaddr *)&addr, sizeof(addr));
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to connect to server\n" );
+++        return 0;
+++    }
+++    int net_requestcode = htonl(message.request_code);
+++    int net_data_length = htonl(strlen(message.data));
+++    ret = send(sock_fd, &net_requestcode, sizeof(net_requestcode), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send request code to server\n" );
+++        return 0;
+++    }
+++    ret = send(sock_fd, &net_data_length, sizeof(net_data_length), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send data length to server\n" );
+++        return 0;
+++    }
+++    ret = send(sock_fd, message.data, strlen(message.data), 0);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to send data to server\n" );
+++        return 0;
+++    }
+++
+++    ret = closesocket(sock_fd);
+++    if (ret == SOCKET_ERROR) {
+++        TRACE( "Failed to close socket\n" );
+++        return 0;
+++    }
+++
+++    WSACleanup();
+++
+++    return 1;
+++}
+++
+++static char *from_unix_to_dos_path(const char *url) {
+++    char *path = url + 7;
+++    char *temp = strdup(path);
+++    char *token = strtok(temp, "/");
+++    char *new_url = NULL;
+++
+++    while (token != NULL) {
+++        if (strcmp("dosdevices", token) == 0) {
+++            token = strtok(NULL, "/");
+++            new_url = strstr(path, token);
+++            TRACE( "New URL is %s\n", new_url );
+++            break;
+++        }
+++        token = strtok(NULL, "/");
+++    }
+++
+++    free(temp);
+++
+++    return new_url;
+++}
+++
+++static int launch_url_with_internet_explorer(const char *url) {
+++    STARTUPINFOA si;
+++    PROCESS_INFORMATION pi;
+++    ZeroMemory(&si, sizeof(si));
+++    si.cb = sizeof(si);
+++    ZeroMemory(&pi, sizeof(pi));
+++    char command[1024];
+++    snprintf(command, sizeof(command), "iexplore.exe %s", url);
+++    return CreateProcessA(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+++}
+++
+++
++ static char *strdup_unixcp( const WCHAR *str )
++ {
++     char *ret;
++@@ -106,7 +197,12 @@ static int launch_app( const WCHAR *candidates, const WCHAR *argv1 )
++         free( argv_new );
++         candidates += lstrlenW( candidates ) + 1;  /* grab the next app */
++     }
++-    WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
+++
+++    if (strstr(cmdline, "file://")) {
+++        cmdline = from_unix_to_dos_path(cmdline);
+++     }
+++
+++    if (!launch_url_with_internet_explorer(cmdline)) WINE_ERR( "could not find a suitable app to open %s\n", debugstr_w( argv1 ));
++ 
++     free( cmdline );
++     return 1;
++@@ -141,6 +237,7 @@ static int open_http_url( const WCHAR *url )
++     WCHAR browsers[256];
++     HKEY key;
++     LONG r;
+++    int wine_open_with_android_browser;
++ 
++     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
++     if  (!(r = RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\WineBrowser", &key )))
++@@ -151,6 +248,24 @@ static int open_http_url( const WCHAR *url )
++     if (r != ERROR_SUCCESS)
++         memcpy( browsers, defaultbrowsers, sizeof(defaultbrowsers) );
++ 
+++    wine_open_with_android_browser = getenv("WINE_OPEN_WITH_ANDROID_BROwSER") && atoi(getenv("WINE_OPEN_WITH_ANDROID_BROWSER"));
+++
+++    if (wine_open_with_android_browser) {
+++        char *p = strdup_unixcp(url);
+++           if (strstr(p, "file://")) {
+++            if (launch_url_with_internet_explorer(from_unix_to_dos_path(p)))
+++                   return 0;
+++        }
+++        else {
+++            android_message_t message;
+++            ZeroMemory(&message, sizeof(message));
+++            message.request_code = 1;
+++            message.data = p;
+++               if (send_android_message(message))
+++                  return 0;
+++        }
+++    }
+++
++     return launch_app( browsers, url );
++ }
++ 
++@@ -165,6 +280,7 @@ static int open_mailto_url( const WCHAR *url )
++     WCHAR mailers[256];
++     HKEY key;
++     LONG r;
+++    int wine_open_with_android_browser;
++ 
++     /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
++     if (!(r = RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\WineBrowser", &key )))
+diff --git a/android/patches/programs_winebrowser_makefile_in.patch b/android/patches/programs_winebrowser_makefile_in.patch
+new file mode 100644
+index 0000000..4b22fc1
+--- /dev/null
++++ b/android/patches/programs_winebrowser_makefile_in.patch
+@@ -0,0 +1,11 @@
++diff --git a/programs/winebrowser/Makefile.in b/programs/winebrowser/Makefile.in
++index 328f75a..4aaf53a 100644
++--- a/programs/winebrowser/Makefile.in
+++++ b/programs/winebrowser/Makefile.in
++@@ -1,5 +1,5 @@
++ MODULE    = winebrowser.exe
++-IMPORTS   = urlmon oleaut32 shell32 user32 advapi32
+++IMPORTS   = urlmon oleaut32 shell32 user32 advapi32 ws2_32
++ 
++ EXTRADLLFLAGS = -mwindows -municode
++ 
+diff --git a/android/patches/programs_winemenubuilder_winemenubuilder_c.patch b/android/patches/programs_winemenubuilder_winemenubuilder_c.patch
+new file mode 100644
+index 0000000..af2b557
+--- /dev/null
++++ b/android/patches/programs_winemenubuilder_winemenubuilder_c.patch
+@@ -0,0 +1,147 @@
++From 26f805adfd901872280825db6e86890c80cc1551 Mon Sep 17 00:00:00 2001
++From: sidaodomorro <danilaferrari77@gmail.com>
++Date: Mon, 23 Feb 2026 18:36:43 -0300
++Subject: [PATCH 1/4] winemenubuilder: Delete proton_shortcuts, patch .desktop
++ creation and change its location so Winlator can recognize it.
++
++---
++ programs/winemenubuilder/winemenubuilder.c | 21 +++++++++++++--------
++ 1 file changed, 13 insertions(+), 8 deletions(-)
++
++diff --git a/programs/winemenubuilder/winemenubuilder.c b/programs/winemenubuilder/winemenubuilder.c
++index 6d34fa687ad..8468abcdd38 100644
++--- a/programs/winemenubuilder/winemenubuilder.c
+++++ b/programs/winemenubuilder/winemenubuilder.c
++@@ -1148,7 +1148,7 @@ static WCHAR *extract_icon(LPCWSTR icoPathW, int index, const WCHAR *destFilenam
++     WCHAR fullPathW[MAX_PATH];
++     DWORD len;
++ 
++-    WINE_TRACE("path=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_w(destFilename));
+++    WINE_TRACE("=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_w(destFilename));
++ 
++     len = GetFullPathNameW(icoPathW, MAX_PATH, fullPathW, NULL);
++     if (len == 0 || len > MAX_PATH)
++@@ -1265,7 +1265,7 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const
++     char *workdir_unix;
++     int needs_chmod = FALSE;
++     const WCHAR *name;
++-    WCHAR *shortcuts_dir;
+++    const WCHAR *prefix = _wgetenv( L"WINECONFIGDIR" );
++ 
++     WINE_TRACE("(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", wine_dbgstr_w(link), wine_dbgstr_w(location),
++                wine_dbgstr_w(linkname), wine_dbgstr_w(path), wine_dbgstr_w(args),
++@@ -1273,12 +1273,11 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const
++                wine_dbgstr_w(wmclass));
++ 
++     name = PathFindFileNameW( linkname );
++-
++-    shortcuts_dir = heap_wprintf(L"%s", L"c:\\proton_shortcuts");
++-    create_directories(shortcuts_dir);
++-    location = heap_wprintf(L"%s\\%s.desktop", shortcuts_dir, name);
++-    heap_free(shortcuts_dir);
++-    needs_chmod = TRUE;
+++    if(!location)
+++    {
+++        location = heap_wprintf(L"%s\\%s.desktop", xdg_desktop_dir, name);
+++        needs_chmod = TRUE;
+++    }
++ 
++     file = _wfopen( location, L"wb" );
++     if (file == NULL)
++@@ -1287,6 +1286,12 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const
++     fprintf(file, "[Desktop Entry]\n");
++     fprintf(file, "Name=%s\n", wchars_to_utf8_chars(name));
++     fprintf(file, "Exec=" );
+++    if (prefix)
+++    {
+++        char *path = wine_get_unix_file_name( prefix );
+++        fprintf(file, "env WINEPREFIX=\"%s\" ", path);
+++        heap_free( path );
+++    }
++ 
++     fprintf(file, "%s", escape(path));
++     if (args) fprintf(file, " %s", escape(args) );
++-- 
++2.43.0
++
++
++From 9ffa7d0d7b5ca50348208fa969ff5e7465095b08 Mon Sep 17 00:00:00 2001
++From: sidaodomorro <danilaferrari77@gmail.com>
++Date: Mon, 23 Feb 2026 18:47:01 -0300
++Subject: [PATCH 2/4] winemenubuilder: Fix my mistake
++
++---
++ programs/winemenubuilder/winemenubuilder.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/programs/winemenubuilder/winemenubuilder.c b/programs/winemenubuilder/winemenubuilder.c
++index 8468abcdd38..d7d2739566c 100644
++--- a/programs/winemenubuilder/winemenubuilder.c
+++++ b/programs/winemenubuilder/winemenubuilder.c
++@@ -1148,7 +1148,7 @@ static WCHAR *extract_icon(LPCWSTR icoPathW, int index, const WCHAR *destFilenam
++     WCHAR fullPathW[MAX_PATH];
++     DWORD len;
++ 
++-    WINE_TRACE("=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_w(destFilename));
+++    WINE_TRACE("path=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_w(destFilename));
++ 
++     len = GetFullPathNameW(icoPathW, MAX_PATH, fullPathW, NULL);
++     if (len == 0 || len > MAX_PATH)
++-- 
++2.43.0
++
++
++From 15d82b9b208046e8affea1dd03e41ff7b201476e Mon Sep 17 00:00:00 2001
++From: sidaodomorro <danilaferrari77@gmail.com>
++Date: Mon, 23 Feb 2026 19:41:37 -0300
++Subject: [PATCH 3/4] winemenubuilder: Add wine before path so shortcuts can
++ finally work
++
++---
++ programs/winemenubuilder/winemenubuilder.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/programs/winemenubuilder/winemenubuilder.c b/programs/winemenubuilder/winemenubuilder.c
++index d7d2739566c..9b682c30816 100644
++--- a/programs/winemenubuilder/winemenubuilder.c
+++++ b/programs/winemenubuilder/winemenubuilder.c
++@@ -1293,7 +1293,7 @@ static BOOL write_desktop_entry(const WCHAR *link, const WCHAR *location, const
++         heap_free( path );
++     }
++ 
++-    fprintf(file, "%s", escape(path));
+++    fprintf(file, "wine %s", escape(path));
++     if (args) fprintf(file, " %s", escape(args) );
++     fputc( '\n', file );
++     fprintf(file, "Type=Application\n");
++-- 
++2.43.0
++
++
++From 6accbcfa2f207f4b6f18061e477d0d0abad9831e Mon Sep 17 00:00:00 2001
++From: sidaodomorro <danilaferrari77@gmail.com>
++Date: Mon, 23 Feb 2026 20:20:51 -0300
++Subject: [PATCH 4/4] winemenubuilder: change icon directory so Winlator can
++ recognize it
++
++---
++ programs/winemenubuilder/winemenubuilder.c | 3 +--
++ 1 file changed, 1 insertion(+), 2 deletions(-)
++
++diff --git a/programs/winemenubuilder/winemenubuilder.c b/programs/winemenubuilder/winemenubuilder.c
++index 9b682c30816..e0b86675b3f 100644
++--- a/programs/winemenubuilder/winemenubuilder.c
+++++ b/programs/winemenubuilder/winemenubuilder.c
++@@ -1082,8 +1082,7 @@ static HRESULT platform_write_icon(IStream *icoStream, ICONDIRENTRY *iconDirEntr
++     LARGE_INTEGER zero;
++ 
++     *nativeIdentifier = compute_native_identifier(exeIndex, icoPathW, destFilename);
++-    iconsDir = heap_wprintf(L"%s", L"c:\\proton_shortcuts\\icons");
++-    create_directories(iconsDir);
+++    iconsDir = heap_wprintf(L"%s\\icons\\hicolor", xdg_data_dir);
++ 
++     for (i = 0; i < numEntries; i++)
++     {
++-- 
++2.43.0
++
+diff --git a/android/patches/server_esync_c.patch b/android/patches/server_esync_c.patch
+new file mode 100644
+index 0000000..da1b34e
+--- /dev/null
++++ b/android/patches/server_esync_c.patch
+@@ -0,0 +1,14 @@
++diff --git a/server/esync.c b/server/esync.c
++index a516443..c40b4ad 100644
++--- a/server/esync.c
+++++ b/server/esync.c
++@@ -44,6 +44,9 @@
++ #include "file.h"
++ #include "esync.h"
++ #include "fsync.h"
+++#ifdef __ANDROID__
+++#include "../android/shm_utils/shm_utils.h"
+++#endif
++ 
++ int do_esync(void)
++ {
+diff --git a/android/patches/server_fsync_c.patch b/android/patches/server_fsync_c.patch
+new file mode 100644
+index 0000000..3ca1861
+--- /dev/null
++++ b/android/patches/server_fsync_c.patch
+@@ -0,0 +1,23 @@
++diff --git a/server/fsync.c b/server/fsync.c
++index 8097b86..7da0aa5 100644
++--- a/server/fsync.c
+++++ b/server/fsync.c
++@@ -43,6 +43,9 @@
++ #include "handle.h"
++ #include "request.h"
++ #include "fsync.h"
+++#ifdef __ANDROID__
+++#include "../android/shm_utils/shm_utils.h"
+++#endif
++ 
++ #include "pshpack4.h"
++ #include "poppack.h"
++@@ -53,7 +56,7 @@
++ 
++ int do_fsync(void)
++ {
++-#ifdef __linux__
+++#if defined(__linux__) && !defined(__ANDROID__)
++     static int do_fsync_cached = -1;
++ 
++     if (do_fsync_cached == -1)
+diff --git a/android/patches/test-bylaws/dlls_ntdll_loader_c.patch b/android/patches/test-bylaws/dlls_ntdll_loader_c.patch
+new file mode 100644
+index 0000000..3663c03
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_loader_c.patch
+@@ -0,0 +1,64 @@
++diff --git a/dlls/ntdll/loader.c b/dlls/ntdll/loader.c
++index bc71fe0..b5d0539 100644
++--- a/dlls/ntdll/loader.c
+++++ b/dlls/ntdll/loader.c
++@@ -4089,6 +4089,11 @@ void WINAPI LdrShutdownThread(void)
++     /* don't do any detach calls if process is exiting */
++     if (process_detaching) return;
++ 
+++    if (NtCurrentTeb()->SkipThreadAttach) {
+++        heap_thread_detach();
+++        return;
+++    }
+++
++     RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 1 );
++ 
++     RtlEnterCriticalSection( &loader_section );
++@@ -4429,7 +4434,7 @@ static void load_arm64ec_module(void)
++     ULONG buffer[16];
++     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
++     UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\amd64" );
++-    WCHAR module[64] = L"C:\\windows\\system32\\xtajit64.dll";
+++    WCHAR module[64] = L"C:\\windows\\system32\\libarm64ecfex.dll";
++     OBJECT_ATTRIBUTES attr;
++     WINE_MODREF *wm;
++     NTSTATUS status;
++@@ -4479,6 +4484,7 @@ static void build_wow64_main_module(void)
++ static void (WINAPI *pWow64LdrpInitialize)( CONTEXT *ctx );
++ 
++ void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context ) = NULL;
+++NTSTATUS (WINAPI *pWow64SuspendLocalThread)( HANDLE thread, ULONG *count ) = NULL;
++ 
++ static void init_wow64( CONTEXT *context )
++ {
++@@ -4503,6 +4509,7 @@ static void init_wow64( CONTEXT *context )
++ 
++         GET_PTR( Wow64LdrpInitialize );
++         GET_PTR( Wow64PrepareForException );
+++        GET_PTR( Wow64SuspendLocalThread );
++ #undef GET_PTR
++         imports_fixup_done = TRUE;
++     }
++@@ -4598,6 +4605,8 @@ void loader_init( CONTEXT *context, void **entry )
++ 
++     if (process_detaching) NtTerminateThread( GetCurrentThread(), 0 );
++ 
+++    if (NtCurrentTeb()->SkipLoaderInit) return;
+++
++     RtlEnterCriticalSection( &loader_section );
++ 
++     if (!imports_fixup_done)
++@@ -4701,6 +4710,13 @@ void loader_init( CONTEXT *context, void **entry )
++ #ifdef __arm64ec__
++         arm64ec_thread_init();
++ #endif
+++
+++        if (NtCurrentTeb()->SkipThreadAttach)
+++        {
+++            RtlLeaveCriticalSection( &loader_section );
+++            return;
+++        }
+++
++         wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
++     }
++ 
+diff --git a/android/patches/test-bylaws/dlls_ntdll_ntdll_misc_h.patch b/android/patches/test-bylaws/dlls_ntdll_ntdll_misc_h.patch
+new file mode 100644
+index 0000000..0f21220
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_ntdll_misc_h.patch
+@@ -0,0 +1,12 @@
++diff --git a/dlls/ntdll/ntdll_misc.h b/dlls/ntdll/ntdll_misc.h
++index 4c62304..c4a7a9d 100644
++--- a/dlls/ntdll/ntdll_misc.h
+++++ b/dlls/ntdll/ntdll_misc.h
++@@ -82,6 +82,7 @@ extern void WINAPI KiUserApcDispatcher(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PN
++ extern void WINAPI KiUserCallbackDispatcher(ULONG,void*,ULONG);
++ extern void WINAPI KiUserCallbackDispatcherReturn(void);
++ extern void (WINAPI *pWow64PrepareForException)( EXCEPTION_RECORD *rec, CONTEXT *context );
+++extern NTSTATUS (WINAPI *pWow64SuspendLocalThread)( HANDLE thread, ULONG *count );
++ 
++ /* debug helpers */
++ extern LPCSTR debugstr_us( const UNICODE_STRING *str );
+diff --git a/android/patches/test-bylaws/dlls_ntdll_signal_arm64_c.patch b/android/patches/test-bylaws/dlls_ntdll_signal_arm64_c.patch
+new file mode 100644
+index 0000000..e5eff6b
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_signal_arm64_c.patch
+@@ -0,0 +1,79 @@
++diff --git a/dlls/ntdll/signal_arm64.c b/dlls/ntdll/signal_arm64.c
++index a5d2825..0f83572 100644
++--- a/dlls/ntdll/signal_arm64.c
+++++ b/dlls/ntdll/signal_arm64.c
++@@ -667,6 +667,74 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
++             user_shared_data->ProcessorFeatures[feature]);
++ }
++ 
+++static void suspend_remote_breakin( HANDLE thread )
+++{
+++    ULONG count;
+++    NTSTATUS status = pWow64SuspendLocalThread( thread, &count );
+++    if (status >= 0) status = count;
+++    NtTerminateThread( GetCurrentThread(),  status );
+++}
+++
+++/***********************************************************************
+++ *              RtlWow64SuspendThread (NTDLL.@)
+++ */
+++NTSTATUS WINAPI RtlWow64SuspendThread( HANDLE thread, ULONG *count )
+++{
+++    HANDLE thread_dup;
+++    THREAD_BASIC_INFORMATION tbi;
+++    NTSTATUS status = NtDuplicateObject( NtCurrentProcess(), thread, NtCurrentProcess(), &thread_dup,
+++                                         THREAD_QUERY_INFORMATION | THREAD_SUSPEND_RESUME, 0, 0 );
+++    if (status) return status;
+++    status = NtQueryInformationThread( thread_dup, ThreadBasicInformation, &tbi, sizeof(tbi), NULL);
+++    NtClose( thread_dup );
+++    if (status) return status;
+++
+++    if (tbi.ClientId.UniqueProcess != NtCurrentTeb()->ClientId.UniqueProcess)
+++    {
+++        HANDLE process;
+++        HANDLE suspender_thread;
+++        HANDLE remote_suspendee_thread;
+++        OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
+++
+++        status = NtOpenProcess( &process, PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE, &attr, &tbi.ClientId );
+++        if (status) return status;
+++
+++        status = NtDuplicateObject( NtCurrentProcess(), thread, process, &remote_suspendee_thread, 0, 0,
+++                                    DUPLICATE_SAME_ACCESS );
+++        if (status) goto err_close_proc;
+++
+++        status = NtCreateThreadEx( &suspender_thread, SYNCHRONIZE | THREAD_QUERY_INFORMATION, NULL, process,
+++                                   suspend_remote_breakin, remote_suspendee_thread,
+++                                   THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH | THREAD_CREATE_FLAGS_SKIP_LOADER_INIT |
+++                                   THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER | THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE,
+++                                   0, 0, 0, NULL );
+++        if (status) goto err_close_remote_hnd;
+++
+++        NtWaitForSingleObject( suspender_thread, FALSE, NULL );
+++        status = NtQueryInformationThread( suspender_thread, ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+++        if (!status)
+++        {
+++            if (tbi.ExitStatus < 0)
+++            {
+++                status = tbi.ExitStatus;
+++            }
+++            else if (count)
+++            {
+++                *count = (ULONG)tbi.ExitStatus;
+++            }
+++        }
+++
+++        NtClose( suspender_thread );
+++err_close_remote_hnd:
+++        NtDuplicateObject( process, remote_suspendee_thread, NULL, NULL, 0, 0, DUPLICATE_CLOSE_SOURCE );
+++err_close_proc:
+++        NtClose( process );
+++        return status;
+++    }
+++
+++    return pWow64SuspendLocalThread( thread, count );
+++}
+++
++ 
++ /*************************************************************************
++  *		RtlWalkFrameChain (NTDLL.@)
+diff --git a/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch b/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch
+new file mode 100644
+index 0000000..68e78e4
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_signal_arm64ec_c.patch
+@@ -0,0 +1,135 @@
++diff --git a/dlls/ntdll/signal_arm64ec.c b/dlls/ntdll/signal_arm64ec.c
++index 061c9a6..4d5e4d3 100644
++--- a/dlls/ntdll/signal_arm64ec.c
+++++ b/dlls/ntdll/signal_arm64ec.c
++@@ -36,6 +36,11 @@
++ #include "wine/debug.h"
++ #include "ntsyscalls.h"
++ 
+++union ARM64EC_NT_XCONTEXT {
+++    ARM64EC_NT_CONTEXT context;
+++    BYTE buffer[0x800];
+++};
+++
++ WINE_DEFAULT_DEBUG_CHANNEL(seh);
++ WINE_DECLARE_DEBUG_CHANNEL(relay);
++ 
++@@ -1240,7 +1245,11 @@ NTSTATUS call_seh_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
++  */
++ void dispatch_emulation( ARM64_NT_CONTEXT *arm_ctx )
++ {
++-    context_arm_to_x64( get_arm64ec_cpu_area()->ContextAmd64, arm_ctx );
+++    ARM64EC_NT_CONTEXT *context = get_arm64ec_cpu_area()->ContextAmd64;
+++    CONTEXT_EX *xctx;
+++
+++    RtlInitializeExtendedContext( context, ctx_flags_arm_to_x64( arm_ctx->ContextFlags), &xctx );
+++    context_arm_to_x64( context, arm_ctx );
++     get_arm64ec_cpu_area()->InSimulation = 1;
++     pBeginSimulation();
++ }
++@@ -1270,11 +1279,13 @@ static void dispatch_syscall( ARM64_NT_CONTEXT *context )
++ }
++ 
++ 
++-static void * __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, ARM64EC_NT_CONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
+++static void * __attribute__((used)) prepare_exception_arm64ec( EXCEPTION_RECORD *rec, union ARM64EC_NT_XCONTEXT *context, ARM64_NT_CONTEXT *arm_ctx )
++ {
+++    CONTEXT_EX *xctx;
++     if (rec->ExceptionCode == STATUS_EMULATION_SYSCALL) dispatch_syscall( arm_ctx );
++-    context_arm_to_x64( context, arm_ctx );
++-    if (pResetToConsistentState) pResetToConsistentState( rec, &context->AMD64_Context, arm_ctx );
+++    RtlInitializeExtendedContext( context, ctx_flags_arm_to_x64( arm_ctx->ContextFlags ), &xctx );
+++    context_arm_to_x64( &context->context, arm_ctx );
+++    if (pResetToConsistentState) pResetToConsistentState( rec, &context->context.AMD64_Context, arm_ctx );
++     /* call x64 dispatcher if the thunk or the function pointer was modified */
++     if (pWow64PrepareForException || memcmp( KiUserExceptionDispatcher_thunk, KiUserExceptionDispatcher_orig,
++                                              sizeof(KiUserExceptionDispatcher_orig) ))
++@@ -1289,12 +1300,13 @@ void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CO
++ {
++     asm( ".seh_proc \"#KiUserExceptionDispatcher\"\n\t"
++          ".seh_context\n\t"
++-         "sub sp, sp, #0x4d0\n\t"       /* sizeof(ARM64EC_NT_CONTEXT) */
++-         ".seh_stackalloc 0x4d0\n\t"
+++         "sub sp, sp, #0xcd0\n\t"       /* sizeof(union ARM64EC_NT_XCONTEXT) */
+++         ".seh_stackalloc 0xcd0\n\t"
++          ".seh_endprologue\n\t"
++-         "add x0, sp, #0x3b0+0x4d0\n\t" /* rec */
+++         "add x0, sp, #0xcd0\n\t"
+++         "add x0, x0, #0x3b0\n\t"       /* rec */
++          "mov x1, sp\n\t"               /* context */
++-         "add x2, sp, #0x4d0\n\t"       /* arm_ctx (context + 1) */
+++         "add x2, sp, #0xcd0\n\t"       /* arm_ctx (context + 1) */
++          "bl \"#prepare_exception_arm64ec\"\n\t"
++          "cbz x0, 1f\n\t"
++          /* bypass exit thunk to avoid messing up the stack */
++@@ -1302,8 +1314,9 @@ void __attribute__((naked)) KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CO
++          "ldr x16, [x16, #:lo12:__os_arm64x_dispatch_call_no_redirect]\n\t"
++          "mov x9, x0\n\t"
++          "blr x16\n"
++-         "1:\tadd x0, sp, #0x3b0+0x4d0\n\t" /* rec */
++-         "mov x1, sp\n\t"                   /* context */
+++         "1:\tadd x0, sp, #0xcd0\n\t"
+++         "add x0, x0, #0x3b0\n\t"       /* rec */
+++         "mov x1, sp\n\t"               /* context */
++          "bl #dispatch_exception\n\t"
++          "brk #1\n\t"
++          ".seh_endproc" );
++@@ -1317,11 +1330,12 @@ static void __attribute__((used)) dispatch_apc( void (CALLBACK *func)(ULONG_PTR,
++                                                 ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
++                                                 BOOLEAN alertable, ARM64_NT_CONTEXT *arm_ctx )
++ {
++-    ARM64EC_NT_CONTEXT context;
++-
++-    context_arm_to_x64( &context, arm_ctx );
++-    func( arg1, arg2, arg3, &context.AMD64_Context );
++-    NtContinue( &context.AMD64_Context, alertable );
+++    union ARM64EC_NT_XCONTEXT context;
+++    CONTEXT_EX *xctx;
+++    RtlInitializeExtendedContext( &context, ctx_flags_arm_to_x64( arm_ctx->ContextFlags), &xctx );
+++    context_arm_to_x64( &context.context, arm_ctx );
+++    func( arg1, arg2, arg3, &context.context.AMD64_Context );
+++    NtContinue( &context.context.AMD64_Context, alertable );
++ }
++ __ASM_GLOBAL_FUNC( "#KiUserApcDispatcher",
++                    ".seh_context\n\t"
++@@ -1788,6 +1802,14 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
++     return emulated_processor_features[feature];
++ }
++ 
+++/***********************************************************************
+++ *              RtlWow64SuspendThread (NTDLL.@)
+++ */
+++NTSTATUS WINAPI RtlWow64SuspendThread( HANDLE thread, ULONG *count )
+++{
+++    return NtSuspendThread( thread, count );
+++}
+++
++ 
++ /*************************************************************************
++  *		RtlWalkFrameChain (NTDLL.@)
++@@ -2069,7 +2091,9 @@ void __attribute__((naked)) RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry,
++  */
++ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR unk3, ULONG_PTR unk4 )
++ {
++-    ARM64EC_NT_CONTEXT context;
+++    union ARM64EC_NT_XCONTEXT context;
+++    CONTEXT_EX *xctx;
+++    RtlInitializeExtendedContext( &context, ctx_flags_arm_to_x64( arm_context->ContextFlags), &xctx );
++ 
++     if (!__os_arm64x_check_call)
++     {
++@@ -2080,10 +2104,10 @@ void WINAPI LdrInitializeThunk( CONTEXT *arm_context, ULONG_PTR unk2, ULONG_PTR 
++         __os_arm64x_set_x64_information = LdrpSetX64Information;
++     }
++ 
++-    context_arm_to_x64( &context, (ARM64_NT_CONTEXT *)arm_context );
++-    loader_init( &context.AMD64_Context, (void **)&context.X0 );
++-    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.X0, (void *)context.X1 );
++-    NtContinue( &context.AMD64_Context, TRUE );
+++    context_arm_to_x64( &context.context, (ARM64_NT_CONTEXT *)arm_context );
+++    loader_init( &context.context.AMD64_Context, (void **)&context.context.X0 );
+++    TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", (void *)context.context.X0, (void *)context.context.X1 );
+++    NtContinue( &context.context.AMD64_Context, TRUE );
++ }
++ 
++ 
+diff --git a/android/patches/test-bylaws/dlls_ntdll_signal_x86_64_c.patch b/android/patches/test-bylaws/dlls_ntdll_signal_x86_64_c.patch
+new file mode 100644
+index 0000000..b97c1c3
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_signal_x86_64_c.patch
+@@ -0,0 +1,28 @@
++diff --git a/dlls/ntdll/signal_x86_64.c b/dlls/ntdll/signal_x86_64.c
++index f81b83c..92f5522 100644
++--- a/dlls/ntdll/signal_x86_64.c
+++++ b/dlls/ntdll/signal_x86_64.c
++@@ -83,7 +83,7 @@ __ASM_GLOBAL_FUNC( "EXP+#KiUserExceptionDispatcher",
++                    "test %rax,%rax\n\t"
++                    "jz 1f\n\t"
++                    "subq $0x28,%rsp\n\t"
++-                   "leaq 0x30+0x3b0+0x4d0(%rsp),%rcx\n\t" /* rec */
+++                   "leaq 0x30+0x3b0+0xcd0(%rsp),%rcx\n\t" /* rec */
++                    "leaq 0x30(%rsp),%rdx\n\t"             /* context */
++                    "call *%rax\n"
++                    "addq $0x28,%rsp\n"
++@@ -892,6 +892,14 @@ BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
++     return feature < PROCESSOR_FEATURE_MAX && user_shared_data->ProcessorFeatures[feature];
++ }
++ 
+++/***********************************************************************
+++ *              RtlWow64SuspendThread (NTDLL.@)
+++ */
+++NTSTATUS WINAPI RtlWow64SuspendThread( HANDLE thread, ULONG *count )
+++{
+++    return NtSuspendThread( thread, count );
+++}
+++
++ 
++ /*************************************************************************
++  *		RtlWalkFrameChain (NTDLL.@)
+diff --git a/android/patches/test-bylaws/dlls_ntdll_unix_process_c.patch b/android/patches/test-bylaws/dlls_ntdll_unix_process_c.patch
+new file mode 100644
+index 0000000..77e967b
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_unix_process_c.patch
+@@ -0,0 +1,76 @@
++diff --git a/dlls/ntdll/unix/process.c b/dlls/ntdll/unix/process.c
++index 01286e1..e2ecb7b 100644
++--- a/dlls/ntdll/unix/process.c
+++++ b/dlls/ntdll/unix/process.c
++@@ -46,6 +46,9 @@
++ #ifdef HAVE_SYS_PARAM_H
++ # include <sys/param.h>
++ #endif
+++#ifdef HAVE_SYS_PRCTL_H
+++# include <sys/prctl.h>
+++#endif
++ #ifdef HAVE_SYS_QUEUE_H
++ # include <sys/queue.h>
++ #endif
++@@ -1147,6 +1150,46 @@ int get_unix_debugger_pid(void)
++ 
++ #endif
++ 
+++static BOOL set_hardware_tso( BOOL enable ) {
+++#ifdef HAVE_PRCTL
+++#ifndef PR_GET_MEM_MODEL
+++#define PR_GET_MEM_MODEL 0x6d4d444c
+++#endif
+++#ifndef PR_SET_MEM_MODEL
+++#define PR_SET_MEM_MODEL 0x4d4d444c
+++#endif
+++#ifndef PR_SET_MEM_MODEL_DEFAULT
+++#define PR_SET_MEM_MODEL_DEFAULT 0
+++#endif
+++#ifndef PR_SET_MEM_MODEL_TSO
+++#define PR_SET_MEM_MODEL_TSO 1
+++#endif
+++    if (enable)
+++    {
+++        int ret = prctl( PR_GET_MEM_MODEL, 0, 0, 0, 0 );
+++        if (ret == PR_SET_MEM_MODEL_DEFAULT)
+++            return !prctl( PR_SET_MEM_MODEL, PR_SET_MEM_MODEL_TSO, 0, 0, 0 );
+++        return ret == PR_SET_MEM_MODEL_TSO;
+++    }
+++
+++    prctl( PR_SET_MEM_MODEL, PR_SET_MEM_MODEL_DEFAULT, 0, 0, 0 );
+++    return TRUE;
+++#else
+++    return FALSE;
+++#endif
+++}
+++
+++static BOOL set_unalign_atomic_mode( ULONG64 flags ) {
+++#ifdef HAVE_PRCTL
+++#ifndef PR_ARM64_SET_UNALIGN_ATOMIC
+++#define PR_ARM64_SET_UNALIGN_ATOMIC 0x46455849
+++#endif
+++    return !prctl( PR_ARM64_SET_UNALIGN_ATOMIC, flags, 0, 0, 0 );;
+++#else
+++    return FALSE;
+++#endif
+++}
+++
++ #define UNIMPLEMENTED_INFO_CLASS(c) \
++     case c: \
++         FIXME( "(process=%p) Unimplemented information class: " #c "\n", handle); \
++@@ -1930,6 +1973,14 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
++         SERVER_END_REQ;
++         break;
++ 
+++        case ProcessFexHardwareTso:
+++            if (size != sizeof(BOOL)) return STATUS_INFO_LENGTH_MISMATCH;
+++            return set_hardware_tso( *(BOOL *)info ) ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
+++
+++        case ProcessFexUnalignAtomic:
+++            if (size != sizeof(ULONG64)) return STATUS_INFO_LENGTH_MISMATCH;
+++            return set_unalign_atomic_mode( *(ULONG64 *)info ) ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
+++
++     case ProcessPowerThrottlingState:
++         FIXME( "ProcessPowerThrottlingState - stub\n" );
++         return STATUS_SUCCESS;
+diff --git a/android/patches/test-bylaws/dlls_ntdll_unix_thread_c.patch b/android/patches/test-bylaws/dlls_ntdll_unix_thread_c.patch
+new file mode 100644
+index 0000000..9ece25a
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_unix_thread_c.patch
+@@ -0,0 +1,37 @@
++diff --git a/dlls/ntdll/unix/thread.c b/dlls/ntdll/unix/thread.c
++index d0bba28..54b0420 100644
++--- a/dlls/ntdll/unix/thread.c
+++++ b/dlls/ntdll/unix/thread.c
++@@ -1336,7 +1336,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
++                                   ULONG flags, ULONG_PTR zero_bits, SIZE_T stack_commit,
++                                   SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list )
++ {
++-    static const ULONG supported_flags = THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER;
+++    static const ULONG supported_flags = THREAD_CREATE_FLAGS_CREATE_SUSPENDED | THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH |
+++                                         THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER | THREAD_CREATE_FLAGS_SKIP_LOADER_INIT |
+++                                         THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE;
++     sigset_t sigset;
++     pthread_t pthread_id;
++     pthread_attr_t pthread_attr;
++@@ -1345,6 +1347,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
++     struct ntdll_thread_data *thread_data;
++     DWORD tid = 0;
++     int request_pipe[2];
+++    WOW_TEB *wow_teb;
++     TEB *teb;
++     unsigned int status;
++ 
++@@ -1431,6 +1434,13 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
++ 
++     set_thread_id( teb, GetCurrentProcessId(), tid );
++ 
+++    teb->SkipThreadAttach = !!(flags & THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH);
+++    teb->SkipLoaderInit = !!(flags & THREAD_CREATE_FLAGS_SKIP_LOADER_INIT);
+++    wow_teb = get_wow_teb( teb );
+++    if (wow_teb) {
+++        wow_teb->SameTebFlags = teb->SameTebFlags;
+++    }
+++
++     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
++     thread_data->request_fd  = request_pipe[1];
++     thread_data->start = start;
+diff --git a/android/patches/test-bylaws/dlls_ntdll_unix_virtual_c.patch b/android/patches/test-bylaws/dlls_ntdll_unix_virtual_c.patch
+new file mode 100644
+index 0000000..fb896dc
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_unix_virtual_c.patch
+@@ -0,0 +1,110 @@
++diff --git a/dlls/ntdll/unix/virtual.c b/dlls/ntdll/unix/virtual.c
++index 963ebd2..9bb6973 100644
++--- a/dlls/ntdll/unix/virtual.c
+++++ b/dlls/ntdll/unix/virtual.c
++@@ -87,6 +87,10 @@
++ #include "unix_private.h"
++ #include "wine/debug.h"
++ 
+++#ifdef __ANDROID__
+++#include "../../android/shm_utils/shm_utils.h"
+++#endif
+++
++ WINE_DEFAULT_DEBUG_CHANNEL(virtual);
++ WINE_DECLARE_DEBUG_CHANNEL(module);
++ WINE_DECLARE_DEBUG_CHANNEL(virtual_ranges);
++@@ -293,9 +297,15 @@ static void *address_space_start = (void *)0x110000; /* keep DOS area clear */
++ static void *address_space_start = (void *)0x10000;
++ #endif
++ #ifdef _WIN64
+++#ifdef __ANDROID__
+++static void *address_space_limit = (void *)0x7fffff0000;  /* top of the total available address space */
+++static void *user_space_limit    = (void *)0x7fffff0000;  /* top of the user address space */
+++static void *working_set_limit   = (void *)0x7fffff0000;  /* top of the current working set */
+++#else
++ static void *address_space_limit = (void *)0x7fffffff0000;  /* top of the total available address space */
++ static void *user_space_limit    = (void *)0x7fffffff0000;  /* top of the user address space */
++ static void *working_set_limit   = (void *)0x7fffffff0000;  /* top of the current working set */
+++#endif
++ #else
++ static void *address_space_limit = (void *)0xc0000000;
++ static void *user_space_limit    = (void *)0x7fff0000;
++@@ -353,6 +363,9 @@ static void *preload_reserve_end;
++ static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
++ static BOOL enable_write_exceptions;  /* raise exception on writes to executable memory */
++ 
+++#define FEX_STATS_SHM_MAX_SIZE 0x400000
+++static void *fex_stats_shm;
+++
++ struct range_entry
++ {
++     void *base;
++@@ -404,6 +417,7 @@ static void kernel_writewatch_softdirty_init(void)
++ 
++ static void kernel_writewatch_init(void)
++ {
+++#ifndef __ANDROID__
++     struct uffdio_api uffdio_api;
++ 
++     uffd_fd = syscall( __NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY );
++@@ -429,6 +443,10 @@ static void kernel_writewatch_init(void)
++         return;
++     }
++     use_kernel_writewatch = 1;
+++#else
+++    TRACE( "Kernel writewatches are not supported on Android\n" );
+++    use_kernel_writewatch = 0;
+++#endif
++ }
++ 
++ static void kernel_writewatch_reset( void *start, SIZE_T len )
++@@ -6331,6 +6349,49 @@ static unsigned int get_memory_image_info( HANDLE process, LPCVOID addr, MEMORY_
++     return status;
++ }
++ 
+++#if defined(linux) && defined(__aarch64__)
+++NTSTATUS get_memory_fex_stats_shm( HANDLE process, LPCVOID addr, MEMORY_FEX_STATS_SHM_INFORMATION *info,
+++                                   SIZE_T len, SIZE_T *res_len)
+++{
+++    char buf[0x20];
+++    int fd;
+++    int oflag = O_RDWR;
+++
+++    if (len != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+++    if (process != GetCurrentProcess()) return STATUS_INVALID_HANDLE;
+++
+++    sprintf( buf, "fex-%d-stats", getpid() );
+++
+++    if (!fex_stats_shm) {
+++        fex_stats_shm = mmap( NULL, FEX_STATS_SHM_MAX_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS |
+++                              MAP_NORESERVE, -1, 0 );
+++        if (fex_stats_shm == MAP_FAILED) {
+++            fex_stats_shm = NULL;
+++            return STATUS_INTERNAL_ERROR;
+++        }
+++
+++        oflag |= O_CREAT | O_TRUNC;
+++    }
+++
+++    fd = shm_open( buf, oflag, S_IRWXU | S_IRWXG | S_IRWXO );
+++    if (fd == -1) return STATUS_INTERNAL_ERROR;
+++
+++    if (ftruncate( fd, info->map_size )) goto err;
+++
+++    if (mmap( fex_stats_shm, info->map_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+++              0 ) == MAP_FAILED) goto err;
+++
+++    close( fd );
+++
+++    info->shm_base = fex_stats_shm;
+++    *res_len = len;
+++    return STATUS_SUCCESS;
+++
+++    err:
+++        close( fd );
+++    return STATUS_INTERNAL_ERROR;
+++}
+++#endif
++ 
++ /***********************************************************************
++  *             NtQueryVirtualMemory   (NTDLL.@)
+diff --git a/android/patches/test-bylaws/dlls_ntdll_unwind_h.patch b/android/patches/test-bylaws/dlls_ntdll_unwind_h.patch
+new file mode 100644
+index 0000000..52f818b
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_ntdll_unwind_h.patch
+@@ -0,0 +1,48 @@
++diff --git a/dlls/ntdll/unwind.h b/dlls/ntdll/unwind.h
++index faca8a2..93da7e8 100644
++--- a/dlls/ntdll/unwind.h
+++++ b/dlls/ntdll/unwind.h
++@@ -36,6 +36,7 @@ static inline ULONG ctx_flags_x64_to_arm( ULONG flags )
++     if (flags & CONTEXT_AMD64_CONTROL) ret |= CONTEXT_ARM64_CONTROL;
++     if (flags & CONTEXT_AMD64_INTEGER) ret |= CONTEXT_ARM64_INTEGER;
++     if (flags & CONTEXT_AMD64_FLOATING_POINT) ret |= CONTEXT_ARM64_FLOATING_POINT;
+++    if (flags & CONTEXT_AMD64_XSTATE) ret |= CONTEXT_ARM64_FEX_YMMSTATE;
++     return ret;
++ }
++ 
++@@ -47,6 +48,7 @@ static inline ULONG ctx_flags_arm_to_x64( ULONG flags )
++     if (flags & CONTEXT_ARM64_CONTROL) ret |= CONTEXT_AMD64_CONTROL;
++     if (flags & CONTEXT_ARM64_INTEGER) ret |= CONTEXT_AMD64_INTEGER;
++     if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= CONTEXT_AMD64_FLOATING_POINT;
+++    if (flags & CONTEXT_ARM64_FEX_YMMSTATE) ret |= CONTEXT_AMD64_XSTATE;
++     return ret;
++ }
++ 
++@@ -166,6 +168,13 @@ static inline void context_x64_to_arm( ARM64_NT_CONTEXT *arm_ctx, const ARM64EC_
++     fpcsr = mxcsr_to_fpcsr( ec_ctx->AMD64_MxCsr );
++     arm_ctx->Fpcr = fpcsr;
++     arm_ctx->Fpsr = fpcsr >> 32;
+++
+++    if ((ec_ctx->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+++    {
+++        CONTEXT_EX *ec_xctx = (CONTEXT_EX *)(ec_ctx + 1);
+++        YMMCONTEXT *ec_ymm = RtlLocateExtendedFeature( ec_xctx, XSTATE_AVX, NULL );
+++        memcpy( arm_ctx->V + 16, ec_ymm, sizeof(*ec_ymm) );
+++    }
++ }
++ 
++ static inline void context_arm_to_x64( ARM64EC_NT_CONTEXT *ec_ctx, const ARM64_NT_CONTEXT *arm_ctx )
++@@ -216,6 +225,13 @@ static inline void context_arm_to_x64( ARM64EC_NT_CONTEXT *ec_ctx, const ARM64_N
++     ec_ctx->X17_3 = arm_ctx->X17 >> 48;
++ 
++     memcpy( ec_ctx->V, arm_ctx->V, sizeof(ec_ctx->V) );
+++
+++    if ((arm_ctx->ContextFlags & CONTEXT_ARM64_FEX_YMMSTATE) == CONTEXT_ARM64_FEX_YMMSTATE)
+++    {
+++        CONTEXT_EX *ec_xctx = (CONTEXT_EX *)(ec_ctx + 1);
+++        YMMCONTEXT *ec_ymm = RtlLocateExtendedFeature( ec_xctx, XSTATE_AVX, NULL );
+++        memcpy( ec_ymm, arm_ctx->V + 16, sizeof(*ec_ymm) );
+++    }
++ }
++ 
++ #endif /* __aarch64__ || __arm64ec__ */
+diff --git a/android/patches/test-bylaws/dlls_wow64_process_c.patch b/android/patches/test-bylaws/dlls_wow64_process_c.patch
+new file mode 100644
+index 0000000..2a64102
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_wow64_process_c.patch
+@@ -0,0 +1,13 @@
++diff --git a/dlls/wow64/process.c b/dlls/wow64/process.c
++index 269843a..8968bcc 100644
++--- a/dlls/wow64/process.c
+++++ b/dlls/wow64/process.c
++@@ -1092,7 +1092,7 @@ NTSTATUS WINAPI wow64_NtSuspendThread( UINT *args )
++     HANDLE handle = get_handle( &args );
++     ULONG *count = get_ptr( &args );
++ 
++-    return NtSuspendThread( handle, count );
+++    return RtlWow64SuspendThread( handle, count );
++ }
++ 
++ 
+diff --git a/android/patches/test-bylaws/dlls_wow64_syscall_c.patch b/android/patches/test-bylaws/dlls_wow64_syscall_c.patch
+new file mode 100644
+index 0000000..5958471
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_wow64_syscall_c.patch
+@@ -0,0 +1,81 @@
++diff --git a/dlls/wow64/syscall.c b/dlls/wow64/syscall.c
++index d2a977e..dde24d8 100644
++--- a/dlls/wow64/syscall.c
+++++ b/dlls/wow64/syscall.c
++@@ -102,6 +102,7 @@ static void     (WINAPI *pBTCpuProcessInit)(void);
++ static NTSTATUS (WINAPI *pBTCpuSetContext)(HANDLE,HANDLE,void *,void *);
++ static void     (WINAPI *pBTCpuThreadInit)(void);
++ static void     (WINAPI *pBTCpuSimulate)(void) __attribute__((used));
+++static NTSTATUS (WINAPI *pBTCpuSuspendLocalThread)(HANDLE,ULONG *);
++ static void *   (WINAPI *p__wine_get_unix_opcode)(void);
++ static void *   (WINAPI *pKiRaiseUserExceptionDispatcher)(void);
++ void     (WINAPI *pBTCpuFlushInstructionCache2)( const void *, SIZE_T ) = NULL;
++@@ -726,6 +727,29 @@ static HMODULE load_64bit_module( const WCHAR *name )
++     return module;
++ }
++ 
+++/**********************************************************************
+++ *           wow64GetEnvironmentVariableW
+++ */
+++static DWORD wow64GetEnvironmentVariableW( LPCWSTR name, LPWSTR val, DWORD size )
+++{
+++    UNICODE_STRING us_name, us_value;
+++    NTSTATUS status;
+++    DWORD len;
+++
+++    RtlInitUnicodeString( &us_name, name );
+++    us_value.Length = 0;
+++    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+++    us_value.Buffer = val;
+++
+++    status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
+++    len = us_value.Length / sizeof(WCHAR);
+++    if (status == STATUS_BUFFER_TOO_SMALL) return len + 1;
+++    if (status) return 0;
+++    if (!size) return len + 1;
+++    val[len] = 0;
+++    return len;
+++}
+++
++ 
++ /**********************************************************************
++  *           get_cpu_dll_name
++@@ -740,11 +764,17 @@ static const WCHAR *get_cpu_dll_name(void)
++     HANDLE key;
++     ULONG size;
++ 
+++    WCHAR *cpu_dll = (WCHAR*)buffer;
+++    UINT res;
+++    if ((res = wow64GetEnvironmentVariableW( L"HODLL", cpu_dll, ARRAY_SIZE(buffer))) &&
+++        res < ARRAY_SIZE(buffer))
+++        return cpu_dll;
+++
++     switch (current_machine)
++     {
++     case IMAGE_FILE_MACHINE_I386:
++         RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\x86" );
++-        ret = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"xtajit.dll" : L"wow64cpu.dll");
+++        ret = (native_machine == IMAGE_FILE_MACHINE_ARM64 ? L"libwow64fex.dll" : L"wow64cpu.dll");
++         break;
++     case IMAGE_FILE_MACHINE_ARMNT:
++         RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Wow64\\arm" );
++@@ -839,6 +869,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
++     GET_PTR( BTCpuProcessInit );
++     GET_PTR( BTCpuThreadInit );
++     GET_PTR( BTCpuResetToConsistentState );
+++    GET_PTR( BTCpuSuspendLocalThread );
++     GET_PTR( BTCpuSetContext );
++     GET_PTR( BTCpuSimulate );
++     GET_PTR( BTCpuFlushInstructionCache2 );
++@@ -1525,3 +1556,11 @@ NTSTATUS WINAPI Wow64RaiseException( int code, EXCEPTION_RECORD *rec )
++ 
++     return STATUS_SUCCESS;
++ }
+++
+++/**********************************************************************
+++ *            Wow64SuspendLocalThread (wow64.@)
+++ */
+++NTSTATUS WINAPI Wow64SuspendLocalThread( HANDLE thread, ULONG *count )
+++{
+++    return pBTCpuSuspendLocalThread( thread, count );
+++}
+diff --git a/android/patches/test-bylaws/dlls_wow64_virtual_c.patch b/android/patches/test-bylaws/dlls_wow64_virtual_c.patch
+new file mode 100644
+index 0000000..d98fcca
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_wow64_virtual_c.patch
+@@ -0,0 +1,34 @@
++diff --git a/dlls/wow64/virtual.c b/dlls/wow64/virtual.c
++index ca36243..8f88be7 100644
++--- a/dlls/wow64/virtual.c
+++++ b/dlls/wow64/virtual.c
++@@ -506,10 +506,11 @@ NTSTATUS WINAPI wow64_NtProtectVirtualMemory( UINT *args )
++     ULONG *addr32 = get_ptr( &args );
++     ULONG *size32 = get_ptr( &args );
++     ULONG new_prot = get_ulong( &args );
++-    ULONG *old_prot = get_ptr( &args );
+++    ULONG *old_prot_ptr = get_ptr( &args );
++ 
++     void *addr = ULongToPtr( *addr32 );
++     SIZE_T size = *size32;
+++    ULONG old_prot = *old_prot_ptr;
++     BOOL is_current = RtlIsCurrentProcess( process );
++     NTSTATUS status;
++ 
++@@ -517,7 +518,7 @@ NTSTATUS WINAPI wow64_NtProtectVirtualMemory( UINT *args )
++                                                       addr, size, 2, new_prot, 0 );
++     else if (pBTCpuNotifyMemoryProtect) pBTCpuNotifyMemoryProtect( addr, size, new_prot, FALSE, 0 );
++ 
++-    status = NtProtectVirtualMemory( process, &addr, &size, new_prot, old_prot );
+++    status = NtProtectVirtualMemory( process, &addr, &size, new_prot, &old_prot );
++ 
++     if (!is_current) send_cross_process_notification( process, CrossProcessPostVirtualProtect,
++                                                       addr, size, 2, new_prot, status );
++@@ -527,6 +528,7 @@ NTSTATUS WINAPI wow64_NtProtectVirtualMemory( UINT *args )
++     {
++         put_addr( addr32, addr );
++         put_size( size32, size );
+++        *old_prot_ptr = old_prot;
++     }
++     return status;
++ }
+diff --git a/android/patches/test-bylaws/dlls_wow64_wow64_spec.patch b/android/patches/test-bylaws/dlls_wow64_wow64_spec.patch
+new file mode 100644
+index 0000000..c9c0d9a
+--- /dev/null
++++ b/android/patches/test-bylaws/dlls_wow64_wow64_spec.patch
+@@ -0,0 +1,13 @@
++diff --git a/dlls/wow64/wow64.spec b/dlls/wow64/wow64.spec
++index 5b4e565..8f95dfc 100644
++--- a/dlls/wow64/wow64.spec
+++++ b/dlls/wow64/wow64.spec
++@@ -22,7 +22,7 @@
++ @ stub Wow64ShallowThunkAllocSecurityQualityOfService32TO64_FNC
++ @ stub Wow64ShallowThunkSIZE_T32TO64
++ @ stub Wow64ShallowThunkSIZE_T64TO32
++-@ stub Wow64SuspendLocalThread
+++@ stdcall Wow64SuspendLocalThread(long ptr)
++ @ stdcall -norelay Wow64SystemServiceEx(long ptr)
++ @ stub Wow64ValidateUserCallTarget
++ @ stub Wow64ValidateUserCallTargetFilter
+diff --git a/android/patches/test-bylaws/include_winnt_h.patch b/android/patches/test-bylaws/include_winnt_h.patch
+new file mode 100644
+index 0000000..0499755
+--- /dev/null
++++ b/android/patches/test-bylaws/include_winnt_h.patch
+@@ -0,0 +1,38 @@
++diff --git a/include/winnt.h b/include/winnt.h
++index a6ea3f0..be7704c 100644
++--- a/include/winnt.h
+++++ b/include/winnt.h
++@@ -1485,6 +1485,10 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS
++ #define XSTATE_MASK_LEGACY                  (XSTATE_MASK_LEGACY_FLOATING_POINT | XSTATE_MASK_LEGACY_SSE)
++ #define XSTATE_MASK_GSSE                    (1 << XSTATE_GSSE)
++ 
+++#define XSTATE_ARM64_SVE 2
+++
+++#define XSTATE_MASK_ARM64_SVE (1 << XSTATE_ARM64_SVE)
+++
++ typedef struct _XSTATE_FEATURE
++ {
++     ULONG Offset;
++@@ -1515,6 +1519,13 @@ typedef struct _XSAVE_AREA_HEADER
++ }
++ XSAVE_AREA_HEADER, *PXSAVE_AREA_HEADER;
++ 
+++typedef struct _XSAVE_ARM64_SVE_HEADER {
+++    ULONG VectorLength;
+++    ULONG VectorRegisterOffset;
+++    ULONG PredicateRegisterOffset;
+++    ULONG Reserved[5];
+++} XSAVE_ARM64_SVE_HEADER, *PXSAVE_ARM64_SVE_HEADER;
+++
++ typedef struct _YMMCONTEXT
++ {
++     M128A Ymm0;
++@@ -1695,6 +1706,8 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS
++ #define CONTEXT_ARM64_FLOATING_POINT  (CONTEXT_ARM64 | 0x00000004)
++ #define CONTEXT_ARM64_DEBUG_REGISTERS (CONTEXT_ARM64 | 0x00000008)
++ #define CONTEXT_ARM64_X18       (CONTEXT_ARM64 | 0x00000010)
+++#define CONTEXT_ARM64_XSTATE    (CONTEXT_ARM64 | 0x00000020)
+++#define CONTEXT_ARM64_FEX_YMMSTATE   (CONTEXT_ARM64 | 0x00000040)
++ #define CONTEXT_ARM64_FULL (CONTEXT_ARM64_CONTROL | CONTEXT_ARM64_INTEGER | CONTEXT_ARM64_FLOATING_POINT)
++ #define CONTEXT_ARM64_ALL  (CONTEXT_ARM64_FULL | CONTEXT_ARM64_DEBUG_REGISTERS | CONTEXT_ARM64_X18)
++ 
+diff --git a/android/patches/test-bylaws/include_winternl_h.patch b/android/patches/test-bylaws/include_winternl_h.patch
+new file mode 100644
+index 0000000..ff2b10b
+--- /dev/null
++++ b/android/patches/test-bylaws/include_winternl_h.patch
+@@ -0,0 +1,90 @@
++diff --git a/include/winternl.h b/include/winternl.h
++index 4ae1177..7eb63a9 100644
++--- a/include/winternl.h
+++++ b/include/winternl.h
++@@ -599,7 +599,27 @@ typedef struct _TEB
++     PVOID                        MergedPrefLanguages;               /* fc0/17e0 */
++     ULONG                        MuiImpersonation;                  /* fc4/17e8 */
++     USHORT                       CrossTebFlags;                     /* fc8/17ec */
++-    USHORT                       SameTebFlags;                      /* fca/17ee */
+++    union {
+++        USHORT SameTebFlags;                                        /* fca/17ee */
+++        struct {
+++            USHORT SafeThunkCall : 1;
+++            USHORT InDebugPrint : 1;
+++            USHORT HasFiberData : 1;
+++            USHORT SkipThreadAttach : 1;
+++            USHORT WerInShipAssertCode : 1;
+++            USHORT RanProcessInit : 1;
+++            USHORT ClonedThread : 1;
+++            USHORT SuppressDebugMsg : 1;
+++            USHORT DisableUserStackWalk : 1;
+++            USHORT RtlExceptionAttached : 1;
+++            USHORT InitialThread : 1;
+++            USHORT SessionAware : 1;
+++            USHORT LoadOwner : 1;
+++            USHORT LoaderWorker : 1;
+++            USHORT SkipLoaderInit : 1;
+++            USHORT SkipFileAPIBrokering : 1;
+++        } DUMMYSTRUCTNAME;
+++    } DUMMYUNIONNAME1;
++     PVOID                        TxnScopeEnterCallback;             /* fcc/17f0 */
++     PVOID                        TxnScopeExitCallback;              /* fd0/17f8 */
++     PVOID                        TxnScopeContext;                   /* fd4/1800 */
++@@ -1900,8 +1920,15 @@ typedef enum _PROCESSINFOCLASS {
++     ProcessWineGrantAdminToken,
++     ProcessWineUnixDebuggerPid = 1100,
++ #endif
+++    ProcessFexHardwareTso = 2000,
+++    ProcessFexUnalignAtomic,
++ } PROCESSINFOCLASS;
++ 
+++// These match the prctl flag values
+++#define FEX_UNALIGN_ATOMIC_EMULATE       (1ULL << 0)
+++#define FEX_UNALIGN_ATOMIC_BACKPATCH     (1ULL << 1)
+++#define FEX_UNALIGN_ATOMIC_STRICT_SPLIT_LOCKS    (1ULL << 2)
+++
++ #define MEM_EXECUTE_OPTION_DISABLE   0x01
++ #define MEM_EXECUTE_OPTION_ENABLE    0x02
++ #define MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION 0x04
++@@ -2303,6 +2330,7 @@ typedef enum _MEMORY_INFORMATION_CLASS {
++     MemoryWineUnixFuncs = 1000,
++     MemoryWineUnixWow64Funcs,
++ #endif
+++    MemoryFexStatsShm = 2000,
++ } MEMORY_INFORMATION_CLASS;
++ 
++ typedef struct _MEMORY_SECTION_NAME
++@@ -2352,6 +2380,12 @@ typedef struct _MEMORY_REGION_INFORMATION
++     ULONG_PTR NodePreference;
++ } MEMORY_REGION_INFORMATION, *PMEMORY_REGION_INFORMATION;
++ 
+++typedef struct _MEMORY_FEX_STATS_SHM_INFORMATION
+++{
+++    void *shm_base;
+++    SIZE_T map_size;
+++} MEMORY_FEX_STATS_SHM_INFORMATION, *PMEMORY_FEX_STATS_SHM_INFORMATION;
+++
++ typedef struct _MEMORY_IMAGE_INFORMATION
++ {
++     PVOID ImageBase;
++@@ -4015,8 +4049,9 @@ typedef struct _RTL_PROCESS_MODULE_INFORMATION_EX
++ #define THREAD_CREATE_FLAGS_CREATE_SUSPENDED        0x00000001
++ #define THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH      0x00000002
++ #define THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER      0x00000004
++-#define THREAD_CREATE_FLAGS_HAS_SECURITY_DESCRIPTOR 0x00000010
++-#define THREAD_CREATE_FLAGS_ACCESS_CHECK_IN_TARGET  0x00000020
+++#define THREAD_CREATE_FLAGS_LOADER_WORKER           0x00000010
+++#define THREAD_CREATE_FLAGS_SKIP_LOADER_INIT        0x00000020
+++#define THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE   0x00000040
++ #define THREAD_CREATE_FLAGS_INITIAL_THREAD          0x00000080
++ 
++ #ifdef __WINESRC__
++@@ -5186,6 +5221,7 @@ NTSYSAPI USHORT    WINAPI RtlWow64GetCurrentMachine(void);
++ NTSYSAPI NTSTATUS  WINAPI RtlWow64GetProcessMachines(HANDLE,USHORT*,USHORT*);
++ NTSYSAPI NTSTATUS  WINAPI RtlWow64GetSharedInfoProcess(HANDLE,BOOLEAN*,WOW64INFO*);
++ NTSYSAPI NTSTATUS  WINAPI RtlWow64IsWowGuestMachineSupported(USHORT,BOOLEAN*);
+++NTSYSAPI NTSTATUS  WINAPI RtlWow64SuspendThread(HANDLE,ULONG*);
++ NTSYSAPI NTSTATUS  WINAPI RtlWriteRegistryValue(ULONG,PCWSTR,PCWSTR,ULONG,PVOID,ULONG);
++ NTSYSAPI NTSTATUS  WINAPI RtlZombifyActivationContext(HANDLE);
++ NTSYSAPI NTSTATUS  WINAPI RtlpNtCreateKey(PHANDLE,ACCESS_MASK,const OBJECT_ATTRIBUTES*,ULONG,const UNICODE_STRING*,ULONG,PULONG);
+diff --git a/android/patches/test-bylaws/server_process_c.patch b/android/patches/test-bylaws/server_process_c.patch
+new file mode 100644
+index 0000000..b926c73
+--- /dev/null
++++ b/android/patches/test-bylaws/server_process_c.patch
+@@ -0,0 +1,40 @@
++diff --git a/server/process.c b/server/process.c
++index 30f18d1..0d54465 100644
++--- a/server/process.c
+++++ b/server/process.c
++@@ -1093,7 +1093,7 @@ void suspend_process( struct process *process )
++         LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
++         {
++             struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
++-            if (!thread->suspend) stop_thread( thread );
+++            if (!thread->bypass_proc_suspend && !thread->suspend) stop_thread( thread );
++         }
++     }
++ }
++@@ -1109,7 +1109,7 @@ void resume_process( struct process *process )
++         LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
++         {
++             struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
++-            if (!thread->suspend) wake_thread( thread );
+++            if (!thread->bypass_proc_suspend && !thread->suspend) wake_thread( thread );
++         }
++     }
++ }
++@@ -1944,7 +1944,7 @@ DECL_HANDLER(suspend_process)
++         LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
++         {
++             struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
++-            suspend_thread( thread );
+++            if (!thread->bypass_proc_suspend) suspend_thread( thread );
++         }
++ 
++         release_object( process );
++@@ -1963,7 +1963,7 @@ DECL_HANDLER(resume_process)
++         LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
++         {
++             struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
++-            resume_thread( thread );
+++            if (!thread->bypass_proc_suspend) resume_thread( thread );
++         }
++ 
++         release_object( process );
+diff --git a/android/patches/test-bylaws/server_thread_c.patch b/android/patches/test-bylaws/server_thread_c.patch
+new file mode 100644
+index 0000000..f372587
+--- /dev/null
++++ b/android/patches/test-bylaws/server_thread_c.patch
+@@ -0,0 +1,86 @@
++diff --git a/server/thread.c b/server/thread.c
++index 25b91a9..42bd48d 100644
++--- a/server/thread.c
+++++ b/server/thread.c
++@@ -305,6 +305,7 @@ static inline void init_thread_structure( struct thread *thread )
++     thread->priority        = 0;
++     thread->suspend         = 0;
++     thread->dbg_hidden      = 0;
+++    thread->bypass_proc_suspend = 0;
++     thread->desktop_users   = 0;
++     thread->token           = NULL;
++     thread->desc            = NULL;
++@@ -323,6 +324,11 @@ static inline void init_thread_structure( struct thread *thread )
++         thread->inflight[i].server = thread->inflight[i].client = -1;
++ }
++ 
+++static int get_effective_proc_suspend( struct thread *thread )
+++{
+++    return thread->bypass_proc_suspend ? 0 : thread->process->suspend;
+++}
+++
++ /* check if address looks valid for a client-side data structure (TEB etc.) */
++ static inline int is_valid_address( client_ptr_t addr )
++ {
++@@ -833,7 +839,7 @@ int suspend_thread( struct thread *thread )
++     int old_count = thread->suspend;
++     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
++     {
++-        if (!(thread->process->suspend + thread->suspend++))
+++        if (!(get_effective_proc_suspend( thread ) + thread->suspend++))
++         {
++             stop_thread( thread );
++             if (thread == current) return old_count | 0x80000000;
++@@ -850,7 +856,7 @@ int resume_thread( struct thread *thread )
++     if (thread->suspend > 0)
++     {
++         if (!(--thread->suspend)) resume_delayed_debug_events( thread );
++-        if (!(thread->suspend + thread->process->suspend)) wake_thread( thread );
+++        if (!(thread->suspend + get_effective_proc_suspend( thread ))) wake_thread( thread );
++     }
++     return old_count;
++ }
++@@ -999,7 +1005,7 @@ static int check_wait( struct thread *thread )
++         return STATUS_KERNEL_APC;
++ 
++     /* Suspended threads may not acquire locks, but they can run system APCs */
++-    if (thread->process->suspend + thread->suspend > 0) return -1;
+++    if (get_effective_proc_suspend( thread ) + thread->suspend > 0) return -1;
++ 
++     if (wait->select == SELECT_WAIT_ALL)
++     {
++@@ -1086,7 +1092,7 @@ int wake_thread_queue_entry( struct wait_queue_entry *entry )
++     client_ptr_t cookie;
++ 
++     if (thread->wait != wait) return 0;  /* not the current wait */
++-    if (thread->process->suspend + thread->suspend > 0) return 0;  /* cannot acquire locks */
+++    if (get_effective_proc_suspend( thread ) + thread->suspend > 0) return 0;  /* cannot acquire locks */
++ 
++     assert( wait->select != SELECT_WAIT_ALL );
++ 
++@@ -1109,7 +1115,7 @@ static void thread_timeout( void *ptr )
++ 
++     wait->user = NULL;
++     if (thread->wait != wait) return; /* not the top-level wait, ignore it */
++-    if (thread->suspend + thread->process->suspend > 0) return;  /* suspended, ignore it */
+++    if (thread->suspend + get_effective_proc_suspend( thread ) > 0) return;  /* suspended, ignore it */
++ 
++     if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=TIMEOUT\n", thread->id );
++     end_wait( thread, STATUS_TIMEOUT );
++@@ -1549,6 +1555,7 @@ DECL_HANDLER(new_thread)
++         thread->system_regs = current->system_regs;
++         if (req->flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED) thread->suspend++;
++         thread->dbg_hidden = !!(req->flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER);
+++        thread->bypass_proc_suspend = !!(req->flags & THREAD_CREATE_FLAGS_BYPASS_PROCESS_FREEZE);
++         reply->tid = get_thread_id( thread );
++         if ((reply->handle = alloc_handle_no_access_check( current->process, thread,
++                                                            req->access, objattr->attributes )))
++@@ -1665,7 +1672,7 @@ DECL_HANDLER(init_thread)
++     apply_thread_priority( current, get_base_priority( current->process->priority, current->priority ));
++     set_thread_affinity( current, current->affinity );
++ 
++-    reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
+++    reply->suspend = (current->suspend || get_effective_proc_suspend( current ) || current->context != NULL);
++ }
++ 
++ /* terminate a thread */
+diff --git a/android/patches/test-bylaws/server_thread_h.patch b/android/patches/test-bylaws/server_thread_h.patch
+new file mode 100644
+index 0000000..ff4c7fb
+--- /dev/null
++++ b/android/patches/test-bylaws/server_thread_h.patch
+@@ -0,0 +1,12 @@
++diff --git a/server/thread.h b/server/thread.h
++index 057ad9e..d9b0573 100644
++--- a/server/thread.h
+++++ b/server/thread.h
++@@ -88,6 +88,7 @@ struct thread
++     int                    priority;      /* priority level */
++     int                    suspend;       /* suspend count */
++     int                    dbg_hidden;    /* hidden from debugger */
+++    int                    bypass_proc_suspend; /* will still run if the process is suspended */
++     obj_handle_t           desktop;       /* desktop handle */
++     int                    desktop_users; /* number of objects using the thread desktop */
++     timeout_t              creation_time; /* Thread creation time */
+diff --git a/android/patches/test-bylaws/tools_makedep_c.patch b/android/patches/test-bylaws/tools_makedep_c.patch
+new file mode 100644
+index 0000000..fd9ccd7
+--- /dev/null
++++ b/android/patches/test-bylaws/tools_makedep_c.patch
+@@ -0,0 +1,28 @@
++diff --git a/tools/makedep.c b/tools/makedep.c
++index 22a7c14..63f97b9 100644
++--- a/tools/makedep.c
+++++ b/tools/makedep.c
++@@ -3601,7 +3601,10 @@ static void output_unix_lib( struct makefile *make )
++     const char *unixlib;
++ 
++     if (make->disabled[arch]) return;
++-    if (!(unixlib = get_expanded_make_variable( make, strmake( "%s_%s", archs.str[arch], "UNIXLIB" ) ))) unixlib = make->unixlib;
+++    if ((unixlib = get_expanded_make_variable( make, strmake( "%s_%s", archs.str[arch], "UNIXLIB" ) )))
+++        output_symlink_rule( strmake( "%s%s", arch_install_dirs[arch], unixlib ), strmake( "%s%s", arch_install_dirs[arch], make->unixlib ), 1 );
+++    else
+++        unixlib = make->unixlib;
++ 
++     strarray_add( &make->all_targets[arch], unixlib );
++     add_install_rule( make, make->module, arch, unixlib,
++@@ -4699,7 +4702,10 @@ int main( int argc, char *argv[] )
++         strarray_add( &target_flags[arch], target );
++         arch_dirs[arch] = strmake( "%s-windows/", archs.str[arch] );
++         arch_pe_dirs[arch] = arch_dirs[arch];
++-        arch_install_dirs[arch] = strmake( "$(libdir)/wine/%s", arch_dirs[arch] );
+++        if (!strcmp( archs.str[arch], "arm64ec" ))
+++            arch_install_dirs[arch] = "$(libdir)/wine/aarch64-windows/";
+++        else
+++            arch_install_dirs[arch] = strmake( "$(libdir)/wine/%s", arch_dirs[arch] );
++         strip_progs[arch] = get_expanded_arch_var( top_makefile, "STRIP", arch );
++         dll_ext[arch] = "";
++     }
+diff --git a/build-scripts/build-step-arm64ec.sh b/build-scripts/build-step-arm64ec.sh
+new file mode 100755
+index 0000000..36b6eb1
+--- /dev/null
++++ b/build-scripts/build-step-arm64ec.sh
+@@ -0,0 +1,259 @@
++#!/bin/bash
++
++export ARCH="aarch64"
++export WIN_ARCH="arm64ec,aarch64,i386"
++export OUTPUT_DIR="$HOME/compiled-files-aarch64"
++
++export deps="$HOME/termuxfs/aarch64/data/data/com.termux/files/usr"
++export RUNTIME_PATH="/data/data/com.termux/files/usr"
++export install_dir=$deps/../opt/wine
++
++#export TOOLCHAIN="$HOME/Android/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin"
++export TOOLCHAIN="$HOME/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin"
++export LLVM_MINGW_TOOLCHAIN="$HOME/toolchains/llvm-mingw-20250920-ucrt-ubuntu-22.04-x86_64/bin"
++export TARGET=aarch64-linux-android28
++export PATH=$LLVM_MINGW_TOOLCHAIN:$PATH
++
++export CC=$TOOLCHAIN/$TARGET-clang
++export AS=$CC
++export CXX=$TOOLCHAIN/$TARGET-clang++
++export AR=$TOOLCHAIN/llvm-ar
++export LD=$TOOLCHAIN/ld
++export RANLIB=$TOOLCHAIN/llvm-ranlib
++export STRIP=$TOOLCHAIN/llvm-strip
++export DLLTOOL=$LLVM_MINGW_TOOLCHAIN/llvm-dlltool
++
++export PKG_CONFIG_LIBDIR=$deps/lib/pkgconfig:$deps/share/pkgconfig
++export ACLOCAL_PATH=$deps/lib/aclocal:$deps/share/aclocal
++export CPPFLAGS="-I$deps/include --sysroot=$TOOLCHAIN/../sysroot"
++
++export C_OPTS="-Wno-declaration-after-statement -Wno-implicit-function-declaration -Wno-int-conversion"
++export CFLAGS=$C_OPTS
++export CXXFLAGS=$C_OPTS
++export LDFLAGS="-L$deps/lib -Wl,-rpath=$RUNTIME_PATH/lib"
++
++export FREETYPE_CFLAGS="-I$deps/include/freetype2"
++export PULSE_CFLAGS="-I$deps/include/pulse"
++export PULSE_LIBS="-L$deps/lib/pulseaudio -lpulse"
++export SDL2_CFLAGS="-I$deps/include/SDL2"
++export SDL2_LIBS="-L$deps/lib -lSDL2"
++export X_CFLAGS="-I$deps/include/X11"
++export X_LIBS="-landroid-sysvshm"
++export GSTREAMER_CFLAGS="-I$deps/include/gstreamer-1.0 -I$deps/include/glib-2.0 -I$deps/lib/glib-2.0/include -I$deps/glib-2.0/include -I$deps/lib/gstreamer-1.0/include"
++export GSTREAMER_LIBS="-L$deps/lib -lgstgl-1.0 -lgstapp-1.0 -lgstvideo-1.0 -lgstaudio-1.0 -lglib-2.0 -lgobject-2.0 -lgio-2.0 -lgsttag-1.0 -lgstbase-1.0 -lgstreamer-1.0"
++export FFMPEG_CFLAGS="-I$deps/include/libavutil -I$deps/include/libavcodec -I$deps/include/libavformat"
++export FFMPEG_LIBS="-L$deps/lib -lavutil -lavcodec -lavformat"
++
++for arg in "$@"
++do
++  if [ "$arg" == "--build-sysvshm" ];
++  then
++    # Build android_sysvshm library
++    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
++
++    if [ -d "$PROJECT_ROOT/android/android_sysvshm" ]; then
++        echo "Building android_sysvshm library..."
++        cd "$PROJECT_ROOT/android/android_sysvshm"
++        ./build-aarch64.sh
++        if [ $? -eq 0 ]; then
++            echo "android_sysvshm built successfully"
++            # Copy the library to deps/lib for linking
++            mkdir -p "$deps/lib"
++            cp build-aarch64/libandroid-sysvshm.so "$deps/lib/"
++            echo "Copied libandroid-sysvshm.so to $deps/lib/"
++        else
++            echo "Warning: android_sysvshm build failed"
++        fi
++        cd "$PROJECT_ROOT"
++    fi
++  fi
++
++  if [ "$arg" == "--configure" ];
++  then
++    ./configure \
++      --enable-archs=$WIN_ARCH \
++      --host=$TARGET \
++      --prefix $install_dir \
++      --bindir $install_dir/bin \
++      --libdir $install_dir/lib \
++      --exec-prefix $install_dir \
++      --with-mingw=clang \
++      --with-wine-tools=./wine-tools \
++      --enable-win64 \
++      --disable-win16 \
++      --enable-nls \
++      --disable-amd_ags_x64 \
++      --enable-wineandroid_drv=no \
++      --disable-tests \
++      --with-alsa \
++      --without-capi \
++      --without-coreaudio \
++      --without-cups \
++      --without-dbus \
++      --without-ffmpeg \
++      --with-fontconfig \
++      --with-freetype \
++      --without-gcrypt \
++      --without-gettext \
++      --with-gettextpo=no \
++      --without-gphoto \
++      --with-gnutls \
++      --without-gssapi \
++      --with-gstreamer \
++      --without-inotify \
++      --without-krb5 \
++      --without-netapi \
++      --without-opencl \
++      --with-opengl \
++      --without-osmesa \
++      --without-oss \
++      --without-pcap \
++      --without-pcsclite \
++      --without-piper \
++      --with-pthread \
++      --with-pulse \
++      --without-sane \
++      --with-sdl \
++      --without-udev \
++      --without-unwind \
++      --without-usb \
++      --without-v4l2 \
++      --without-vosk \
++      --with-vulkan \
++      --without-wayland \
++      --without-xcomposite \
++      --without-xcursor \
++      --without-xfixes \
++      --without-xinerama \
++      --without-xinput \
++      --without-xinput2 \
++      --without-xrandr \
++      --without-xrender \
++      --without-xshape \
++      --with-xshm \
++      --without-xxf86vm
++
++    echo "Applying patches..."
++
++    PATCHES=(
++      # android network patch
++      "android_network.patch"
++      "dlls_nsiproxy_sys_ip_c.patch"
++
++      # midi support
++      "midi_support.patch"
++
++      # sdl patch
++      "dlls_winebus_sys_bus_sdl_c.patch"
++
++      # shm_utils
++      "dlls_ntdll_unix_esync_c.patch"
++      "dlls_ntdll_unix_fsync_c.patch"
++      "server_esync_c.patch"
++      "server_fsync_c.patch"
++
++      # winex11
++      "dlls_winex11_drv_x11drv_h.patch"
++      "dlls_winex11_drv_bitblt_c.patch"
++      "dlls_winex11_drv_desktop_c.patch"
++      "dlls_winex11_drv_mouse_c.patch"
++      "dlls_winex11_drv_window_c.patch"
++      "dlls_winex11_drv_x11drv_main_c.patch"
++
++      # address space patches
++      "dlls_ntdll_unix_virtual_c.patch"
++      "loader_preloader_c.patch"
++
++      # syscall Patches
++      "dlls_ntdll_unix_signal_x86_64_c.patch"
++
++      # pulse Patches
++      "dlls_winepulse_drv_pulse_c.patch"
++
++      # desktop patches
++      "programs_explorer_desktop_c.patch"
++
++      # path patches
++      "dlls_ntdll_unix_server_c.patch"
++
++      # winlator patches
++      "dlls_amd_ags_x64_unixlib_c.patch"
++      "dlls_winex11_drv_opengl_c.patch"
++
++      # shortcut patch
++      "programs_winemenubuilder_winemenubuilder_c.patch"
++
++      # advapi32 patches
++      "dlls_advapi32_advapi_c.patch"
++
++      # browser patches
++      "programs_winebrowser_makefile_in.patch"
++      "programs_winebrowser_main_c.patch"
++
++      # clipboard patches
++      "dlls_user32_makefile_in.patch"
++      "dlls_user32_clipboard_c.patch"
++      "dlls_win32u_clipboard_c.patch"
++
++      # fexcore patch
++      "dlls_ntdll_loader_c.patch"
++      "dlls_ntdll_unix_loader_c.patch"
++      "dlls_wow64_syscall_c.patch"
++      "loader_wine_inf_in.patch"
++
++      # bylaws patch
++#      "test-bylaws/dlls_ntdll_signal_arm64_c.patch"
++#      "test-bylaws/dlls_ntdll_signal_arm64ec_c.patch"
++#      "test-bylaws/dlls_ntdll_signal_x86_64_c.patch"
++#      "test-bylaws/dlls_ntdll_unwind_h.patch"
++#      "test-bylaws/include_winnt_h.patch"
++      "programs_wineboot_wineboot_c.patch"
++      "dlls_wdscore_wdscore_spec.patch"
++#      "test-bylaws/dlls_ntdll_ntdll_spec.patch"
++#      "test-bylaws/dlls_ntdll_ntdll_misc_h.patch"
++#      "test-bylaws/dlls_wow64_process_c.patch"
++#      "test-bylaws/dlls_wow64_wow64_spec.patch"
++#      "test-bylaws/dlls_wow64_virtual_c.patch"
++#      "test-bylaws/include_winternl_h.patch"
++#      "test-bylaws/server_thread_h.patch"
++#      "test-bylaws/server_thread_c.patch"
++#      "test-bylaws/server_process_c.patch"
++#      "test-bylaws/dlls_ntdll_unix_thread_c.patch"
++#      "test-bylaws/tools_makedep_c.patch"
++#      "test-bylaws/dlls_ntdll_unix_process_c.patch"
++    )
++
++    for patch in "${PATCHES[@]}"; do
++#      if git apply --check ./android/patches/$patch 2>/dev/null; then
++        git apply ./android/patches/$patch
++#      fi
++    done
++  fi
++
++  if [ "$arg" == "--build" ]
++  then
++    echo "Building..."
++    rm -rf $OUTPUT_DIR/bin
++    rm -rf $OUTPUT_DIR/lib
++    rm -rf $OUTPUT_DIR/share
++    rm -rf $install_dir
++    make -j$(nproc)
++  fi
++
++  if [ "$arg" == "--install" ]
++  then
++    echo "Installing..."
++    mkdir -p $OUTPUT_DIR/bin
++    mkdir -p $OUTPUT_DIR/lib
++    mkdir -p $OUTPUT_DIR/share
++    mkdir -p $install_dir
++    make install -j$(nproc)
++    cp -r $install_dir/bin/wine* $OUTPUT_DIR/bin
++    cp -r $install_dir/bin/reg* $OUTPUT_DIR/bin
++    cp -r $install_dir/bin/msi* $OUTPUT_DIR/bin
++    cp -r $install_dir/bin/notepad $OUTPUT_DIR/bin
++    cp -r $install_dir/lib/wine  $OUTPUT_DIR/lib
++    cp -r $install_dir/share/wine  $OUTPUT_DIR/share
++  fi
++done
+diff --git a/build-scripts/build-step0.sh b/build-scripts/build-step0.sh
+new file mode 100755
+index 0000000..5361ebd
+--- /dev/null
++++ b/build-scripts/build-step0.sh
+@@ -0,0 +1,6 @@
++#!/bin/sh
++
++mkdir wine-tools
++cd wine-tools
++../configure --without-x --without-gstreamer --without-vulkan --without-wayland
++make -j$(nproc) __tooldeps__ nls/all
+\ No newline at end of file

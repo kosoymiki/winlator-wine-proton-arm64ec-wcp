@@ -1,4 +1,4 @@
-# Aero.solator - Reflective Implementation Log
+# Ae.solator - Reflective Implementation Log
 
 ## Baseline (Stage 0)
 
@@ -124,7 +124,7 @@
 - `LogView` and runtime log files share the same `Winlator/logs` path policy.
 - Device-side validation is still required to confirm exact FEX env-var support on the shipped runtime build.
 
-## Stage 4 - Branding and package identity (`Aero.solator`)
+## Stage 4 - Branding and package identity (`Ae.solator`)
 
 ### Before
 
@@ -138,8 +138,8 @@
 
 ### During
 
-- Updated `applicationId` to `by.aero.so.benchmark` and version name suffix for Aero.so benchmark build identity.
-- Switched app label to `@string/app_name` and set resource value to `Aero.solator`.
+- Updated `applicationId` to `by.aero.so.benchmark` and version name suffix for Ae.solator benchmark build identity.
+- Switched app label to `@string/app_name` and set resource value to `Ae.solator`.
 - Replaced hardcoded provider authorities with `${applicationId}` placeholders.
 - Removed an extra stray `>` in `AndroidManifest.xml` while touching the file.
 
@@ -174,24 +174,24 @@
 
 ### Before
 
-- Goal: clean repo noise and reposition project branding to `Aero.solator`, while keeping Ludashi as upstream thanks.
+- Goal: clean repo noise and reposition project branding to `Ae.solator`, while keeping Ludashi as upstream thanks.
 - Risks:
   - Over-cleaning may hide files developers actually want tracked locally.
   - README rewrite can drift from real script names / artifact naming.
 - Success criteria:
-  - Root README reflects Aero.so branding and benchmark rationale.
+  - Root README reflects Ae.solator branding and benchmark rationale.
   - Local noise (`work/`, `out/`, `*.rej`) is suppressed from root status.
 
 ### During
 
 - Added root `.gitignore` for generated folders and patch rejection artifacts.
 - Copied upstream-style logo graphic into `docs/assets/` for README hero image.
-- Rewrote root `README.md` in a Ludashi-inspired structure (hero image, install/build notes, components, credits), but with Aero.so branding and explicit `.benchmark` explanation.
-- Updated `docs/winlator-fork-integration.md` and `AGENTS.md` wording to reference Aero.so build identity while preserving upstream Ludashi context.
+- Rewrote root `README.md` in a Ludashi-inspired structure (hero image, install/build notes, components, credits), but with Ae.solator branding and explicit `.benchmark` explanation.
+- Updated `docs/winlator-fork-integration.md` and `AGENTS.md` wording to reference Ae.solator build identity while preserving upstream Ludashi context.
 
 ### After
 
-- Repo top-level presentation now reflects `Aero.solator` as the primary fork identity.
+- Repo top-level presentation now reflects `Ae.solator` as the primary fork identity.
 - Ludashi remains credited as upstream base/inspiration rather than the main brand.
 - Cleanup stayed non-destructive: no user local work trees or `.rej` files were deleted.
 
@@ -322,7 +322,7 @@
 
 ### Before
 
-- Goal: implement the forensic plan on top of the current Aero.so fork without breaking the working patch stack, and make the changes reusable across all WCP packages (`wine-11`, `GE`, `GameNative`).
+- Goal: implement the forensic plan on top of the current Ae.solator fork without breaking the working patch stack, and make the changes reusable across all WCP packages (`wine-11`, `GE`, `GameNative`).
 - Risks:
   - The repo is intentionally dirty (including `.rej` files), so validation steps can fail for reasons unrelated to new logic.
   - Parser hardening, runtime normalization, and launch tracing touch critical startup paths (`ContainerManager`, `XServerDisplayActivity`, `GuestProgramLauncherComponent`).
@@ -433,3 +433,46 @@
 - Residual blockers remain operational, not code-level:
   - GitHub CLI auth is still invalid in current environment (cannot yet delete runs/releases, push, or publish `v0.2b` / `wcp-v0.2b`).
   - Winlator patch export (`0006+`) still depends on first regenerating a cleanly re-applicable `0005` against the current nested base.
+
+## Harvard Continuation (2026-02-28) - Consolidated mainline + active slices (`0001..0010`)
+
+### Before
+
+- Историческая запись выше отражала эпоху pre-consolidation (`0001..0048`) и не покрывала текущий live-стек `0001..0010`.
+- Требовалось выровнять:
+  - X11-first графический контур,
+  - Adrenotools global control plane (Turnip + Upscaler + DX policy),
+  - intake/harvest/commit-scan операционный контур,
+  - URC/reflective контракты под режим `0001 + 0002..0010`.
+
+### During
+
+- Собран и закреплен текущий slice-стек:
+  - `0002` Turnip + глобальная перестройка Adrenotools,
+  - `0003` strict `aeturnip` runtime bind + source/install forensic markers,
+  - `0004..0010` X11/DXVK/upscaler matrix (DX requested/effective map, Proton FSR DXVK gate, NVAPI/ARM64EC capability envelope, launch packet).
+- Добавлен runtime distribution marker:
+  - `AERO_RUNTIME_DISTRIBUTION=ae.solator`,
+  - проброс в launch graphics packet и launcher forensic submit path.
+- Усилен online intake:
+  - commit-scan (GH API, no-clone),
+  - backlog merge (`focus + commit_scan`),
+  - harvest resilience (`repo_errors` model + optional fail gate),
+  - branch-pin sync + snapshot audit orchestration.
+- Нормализованы policy/gate инструменты:
+  - contiguous patch-sequence contract для slice-режима,
+  - reflective audit strictness как opt-in (`WLT_REFLECTIVE_AUDIT_STRICT`),
+  - final-stage/release-prep/snapshot исключают скрытое дублирование commit-scan/harvest.
+
+### After
+
+- Репозиторий перешел в фактический Harvard-режим:
+  - `0001` остается каноническим mainline,
+  - `0002..0010` используются как активные review/integration slices без потери контракта.
+- Для текущего состояния подтверждены gate-проходы:
+  - `validate-patch-sequence`,
+  - `check-patch-stack (0001..0010)`,
+  - `run-reflective-audits`,
+  - `check-urc-mainline-policy`,
+  - `run-final-stage-gates` (strict/no-fetch).
+- Эта запись фиксирует переход от исторического 0.2b-лога к актуальной operational модели Ae.solator (`X11-first + aeturnip + dxvk/upscaler matrix`).

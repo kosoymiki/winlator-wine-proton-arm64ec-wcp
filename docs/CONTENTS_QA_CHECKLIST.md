@@ -1,12 +1,24 @@
 # Contents QA Checklist
 
+## Static Contract Gate (No Device Required)
+- `python3 ci/validation/check-contents-qa-contract.py --root . --output /tmp/contents-qa-contract.md`
+- `WLT_WCP_PARITY_REQUIRE_ANY=1 WLT_WCP_PARITY_FAIL_ON_MISSING=1 bash ci/validation/run-wcp-parity-suite.sh`
+- `WLT_RELEASE_PREP_RUN_COMMIT_SCAN=0 WLT_RELEASE_PREP_RUN_HARVEST=0 WLT_RELEASE_PREP_RUN_PATCH_BASE=0 bash ci/validation/prepare-release-patch-base.sh`
+- This gate validates repository-side invariants for:
+  `contents/contents.json`, `artifact-source-map.json`, patch contract tokens in
+  `0001-mainline-full-stack-consolidated.patch`, and WCP workflow metadata
+  (`WCP_VERSION_CODE/WCP_CHANNEL/WCP_DELIVERY/WCP_DISPLAY_CATEGORY/WCP_RELEASE_TAG`).
+- Parity suite validates binary payload parity for configured source/install pairs in
+  `ci/validation/wcp-parity-pairs.tsv` (critical path coverage + missing/extra/drift report).
+
 ## Contents source and schema
-- [ ] `ContentsManager.REMOTE_PROFILES` points to this repo `contents/contents.json`
-- [ ] `ci/contents/validate-contents-json.py contents/contents.json` passes
-- [ ] Each `Wine/Proton` stable entry points to `wcp-stable`
-- [ ] Each `Wine/Proton` entry points to its per-package rolling tag (`*-latest`)
-- [ ] `channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag` are present
-- [ ] Wine-family entries carry `internalType` (`wine|proton|protonge|protonwine`) while `type` stays `Wine`
+- [x] `ContentsManager.REMOTE_WINE_PROTON_OVERLAY` points to this repo `contents/contents.json`
+- [x] `ContentsManager.REMOTE_PROFILES` remains WCP Hub source (`pack.json`) for non-Wine packages
+- [x] `ci/contents/validate-contents-json.py contents/contents.json` passes
+- [x] Each `Wine/Proton` entry points to its per-package rolling tag (`*-latest`) in overlay
+- [x] Stable bundle release flow keeps `wcp-stable` publish lane in `ci/release/publish-0.9c.sh`
+- [x] `channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag` are present
+- [x] Wine-family entries carry `internalType` (`wine|proton|protonge|protonwine`) while `type` stays `Wine`
 
 ## Winlator UI behavior
 - [ ] Spinner/category shows `Wine/Proton` (not just `Wine`) for package entries
@@ -30,7 +42,7 @@
 - [ ] Network/API failures show user-readable error messages
 
 ## CI/WCP metadata parity
-- [ ] `wine-11` nightly build emits `channel=nightly`, `releaseTag=wine-11-arm64ec-latest`, `versionCode=1`
-- [ ] `proton-ge10` nightly build emits same metadata policy
-- [ ] `protonwine10` nightly build emits same metadata policy
-- [ ] Stable release builds emit `channel=stable` and `releaseTag=wcp-stable`
+- [x] `wine-11` nightly build emits `channel=nightly`, `releaseTag=wine-11-arm64ec-latest`, `versionCode=1`
+- [x] `proton-ge10` nightly build emits same metadata policy
+- [x] `protonwine10` nightly build emits same metadata policy
+- [x] Stable release flow keeps `channel=stable` messaging and `wcp-stable` publish tag

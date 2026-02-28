@@ -100,7 +100,7 @@ def main() -> int:
     lines.append("# GN + GH Unified Backlog Matrix")
     lines.append("")
     lines.append(f"- Generated (UTC): `{ts}`")
-    lines.append("- Purpose: anti-conflict migration matrix for GameNative + GameHub signals into Aero.so mainline")
+    lines.append("- Purpose: anti-conflict migration matrix for GameNative + GameHub signals into Ae.solator mainline")
     lines.append("- Mainline policy: `bionic-native` + `external-only runtime`")
     lines.append("")
 

@@ -1,0 +1,257 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 620b627..42ae379 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1146,14 +1146,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             containerDataChanged = true;
+         }
+ 
+-        String dxwrapper = this.dxwrapper;
+-
+-        if (dxwrapper.contains("dxvk")) {
+-            String dxvkWrapper = "dxvk-" + dxwrapperConfig.get("version");
+-            String vkd3dWrapper = "vkd3d-" + dxwrapperConfig.get("vkd3dVersion");
+-            String ddrawrapper = dxwrapperConfig.get("ddrawrapper");
+-            dxwrapper = dxvkWrapper + ";" + vkd3dWrapper + ";" + ddrawrapper;
+-        }
++        String dxwrapper = this.dxwrapper;
++
++        if (dxwrapper.contains("dxvk")) {
++            String dxvkVersionToken = normalizeDxVersionToken(dxwrapperConfig.get("version"), DefaultVersion.DXVK);
++            String vkd3dVersionToken = normalizeDxVersionToken(dxwrapperConfig.get("vkd3dVersion"), DefaultVersion.VKD3D);
++            String dxvkWrapper = "dxvk-" + dxvkVersionToken;
++            String vkd3dWrapper = "vkd3d-" + vkd3dVersionToken;
++            String ddrawrapper = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
++            dxwrapper = dxvkWrapper + ";" + vkd3dWrapper + ";" + ddrawrapper;
++        }
+ 
+         if (!dxwrapper.equals(container.getExtra("dxwrapper"))) {
+             extractDXWrapperFiles(dxwrapper);
+@@ -2211,11 +2213,25 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private void applyDxWrapperMatrixEnv() {
+         String wrapperMode = dxwrapper == null ? "" : dxwrapper.trim().toLowerCase(Locale.ROOT);
+         boolean dxvkWrapperSelected = wrapperMode.contains("dxvk");
+-        String dxvkVersion = normalizeDxVersion(dxwrapperConfig.get("version"));
+-        String vkd3dVersion = normalizeDxVersion(dxwrapperConfig.get("vkd3dVersion"));
+-        String ddrawWrapper = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
++        String dxvkVersionRequested = normalizeDxVersionToken(dxwrapperConfig.get("version"), DefaultVersion.DXVK);
++        String vkd3dVersionRequested = normalizeDxVersionToken(dxwrapperConfig.get("vkd3dVersion"), DefaultVersion.VKD3D);
++        String ddrawWrapperRequested = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
++        String dxvkVersion = dxvkWrapperSelected ? dxvkVersionRequested : "none";
++        String vkd3dVersion = dxvkWrapperSelected ? vkd3dVersionRequested : "none";
++        String ddrawWrapper = dxvkWrapperSelected ? ddrawWrapperRequested : "none";
+         boolean dx8AssistRequested = isDx8AssistRequested();
+         boolean dx8AssistEffective = dxvkWrapperSelected && dx8AssistRequested;
++        String policyStack = dxvkWrapperSelected ? "dxvk_stack" : "wined3d_stack";
++        String policyReason = "";
++        if (!dxvkWrapperSelected && (!"none".equals(dxvkVersionRequested)
++                || !"none".equals(vkd3dVersionRequested)
++                || !"none".equals(ddrawWrapperRequested))) {
++            policyReason = "wrapper_not_dxvk";
++        } else if (dxvkWrapperSelected) {
++            policyReason = "dxvk_wrapper_selected";
++        } else {
++            policyReason = "wined3d_selected";
++        }
+ 
+         String dx1to7Route = "wined3d";
+         String dx8Route = "wined3d";
+@@ -2256,11 +2272,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 ";dx10=" + dx9to11Route +
+                 ";dx11=" + dx9to11Route +
+                 ";dx12=" + dx12Route;
++        String policyOrder = "ddraw->dx8assist->dxvk->vkd3d";
+         envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
++        envVars.put("AERO_DXVK_VERSION_REQUESTED", dxvkVersionRequested);
++        envVars.put("AERO_VKD3D_VERSION_REQUESTED", vkd3dVersionRequested);
++        envVars.put("AERO_DDRAW_WRAPPER_REQUESTED", ddrawWrapperRequested);
+         envVars.put("AERO_DXVK_VERSION_SELECTED", dxvkVersion);
+         envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
+         envVars.put("AERO_D8VK_VERSION_SELECTED", DefaultVersion.D8VK);
+         envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
++        envVars.put("AERO_DX_POLICY_STACK", policyStack);
++        envVars.put("AERO_DX_POLICY_REASON", policyReason);
++        envVars.put("AERO_DX_POLICY_ORDER", policyOrder);
+         envVars.put("AERO_DX_DIRECT_MAP", directMap);
+         envVars.put("AERO_DX_DIRECT_MAP_EXTENDED", directMapExtended);
+         envVars.put("AERO_DX_ROUTE_DX1_7", dx1to7Route);
+@@ -2277,9 +2300,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 "dx wrapper matrix resolved",
+                 ForensicLogger.fields(
+                         "wrapper_mode", wrapperMode.isEmpty() ? "unknown" : wrapperMode,
++                        "dxvk_version_requested", dxvkVersionRequested,
++                        "vkd3d_version_requested", vkd3dVersionRequested,
++                        "ddraw_wrapper_requested", ddrawWrapperRequested,
+                         "dxvk_version", dxvkVersion,
+                         "vkd3d_version", vkd3dVersion,
+                         "ddraw_wrapper", ddrawWrapper,
++                        "policy_stack", policyStack,
++                        "policy_reason", policyReason,
++                        "policy_order", policyOrder,
+                         "dx_map", directMap,
+                         "dx_map_extended", directMapExtended,
+                         "dx8_assist_requested", dx8AssistRequested ? "1" : "0",
+@@ -2289,9 +2318,23 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     }
+ 
+     private String normalizeDxVersion(String value) {
+-        if (value == null || value.trim().isEmpty()) return "none";
+-        String normalized = value.trim().toLowerCase(Locale.ROOT);
+-        if ("none".equals(normalized)) return "none";
++        return normalizeDxVersionToken(value, "none");
++    }
++
++    private String normalizeDxVersionToken(String value, String fallback) {
++        String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
++        String defaultValue = fallback == null ? "none" : fallback.trim().toLowerCase(Locale.ROOT);
++        if (normalized.isEmpty()) {
++            normalized = defaultValue.isEmpty() ? "none" : defaultValue;
++        }
++        if (normalized.startsWith("dxvk-")) {
++            normalized = normalized.substring("dxvk-".length());
++        } else if (normalized.startsWith("vkd3d-")) {
++            normalized = normalized.substring("vkd3d-".length());
++        }
++        if (normalized.isEmpty()) {
++            normalized = defaultValue.isEmpty() ? "none" : defaultValue;
++        }
+         return normalized;
+     }
+ 
+@@ -2405,21 +2448,28 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         File rootDir = imageFs.getRootDir();
+         File windowsDir = new File(rootDir, ImageFs.WINEPREFIX + "/drive_c/windows");
+         envVars.put("AERO_DX8_D8VK_EXTRACTED", "0");
++        envVars.put("AERO_DXVK_ARTIFACT_SOURCE", "none");
++        envVars.put("AERO_VKD3D_ARTIFACT_SOURCE", "none");
++        envVars.put("AERO_DDRAW_ARTIFACT_SOURCE", "none");
+ 
+         if (dxwrapper.contains("dxvk")) {
+-            Log.d(TAG, "Extracting DXVK wrapper files, version: " + dxwrapper);
+-
+-            String dxvkWrapper = dxwrapper.split(";")[0];
+-            String vkd3dWrapper = dxwrapper.split(";")[1];
+-            String ddrawrapper = dxwrapper.split(";")[2];
+-            ContentProfile dxvkProfile = contentsManager.getProfileByEntryName(dxvkWrapper);
+-            if (dxvkProfile != null) {
+-                Log.d(TAG, "Applying user-defined DXVK content profile: " + dxvkWrapper);
+-                contentsManager.applyContent(dxvkProfile);
+-            } else {
+-                Log.d(TAG, "Extracting fallback DXVK .tzst archive: " + dxvkWrapper);
+-                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + dxvkWrapper + ".tzst", windowsDir, onExtractFileListener);
+-
++            Log.d(TAG, "Extracting DXVK wrapper files, version: " + dxwrapper);
++
++            String dxvkWrapper = dxwrapper.split(";")[0];
++            String vkd3dWrapper = dxwrapper.split(";")[1];
++            String ddrawrapper = dxwrapper.split(";")[2];
++            String vkd3dWrapperNormalized = vkd3dWrapper.trim().toLowerCase(Locale.ROOT);
++            String ddrawWrapperNormalized = ddrawrapper.trim().toLowerCase(Locale.ROOT);
++            ContentProfile dxvkProfile = contentsManager.getProfileByEntryName(dxvkWrapper);
++            if (dxvkProfile != null) {
++                Log.d(TAG, "Applying user-defined DXVK content profile: " + dxvkWrapper);
++                contentsManager.applyContent(dxvkProfile);
++                envVars.put("AERO_DXVK_ARTIFACT_SOURCE", "profile");
++            } else {
++                Log.d(TAG, "Extracting fallback DXVK .tzst archive: " + dxvkWrapper);
++                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + dxvkWrapper + ".tzst", windowsDir, onExtractFileListener);
++                envVars.put("AERO_DXVK_ARTIFACT_SOURCE", "asset");
++
+                 boolean forceD8vk = isDx8AssistRequested();
+                 if (compareVersion(dxvkWrapper, "2.4") < 0 || forceD8vk) {
+                     Log.d(TAG, forceD8vk
+@@ -2432,42 +2482,62 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 }
+             }
+ 
+-            if (vkd3dWrapper.contains("None")) {
+-                Log.d(TAG, "No VKD3D has been selected, restoring original d3d12");
+-                restoreOriginalDllFiles(new String[]{"d3d12.dll", "d3d12core.dll"});
+-            }
+-            else {
+-                ContentProfile vkd3dProfile = contentsManager.getProfileByEntryName(vkd3dWrapper);
+-                if (vkd3dProfile != null) {
+-                    Log.d(TAG, "Applying user-defined VKD3D content profile: " + vkd3dWrapper);
+-                    contentsManager.applyContent(vkd3dProfile);
+-                } else {
+-                    Log.d(TAG, "Extracting fallback VKD3D .tzst archive: " + vkd3dWrapper);
+-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + vkd3dWrapper + ".tzst", windowsDir, onExtractFileListener);
+-                }
+-            }
++            if (vkd3dWrapperNormalized.endsWith("-none") || "none".equals(vkd3dWrapperNormalized)) {
++                Log.d(TAG, "No VKD3D has been selected, restoring original d3d12");
++                restoreOriginalDllFiles(new String[]{"d3d12.dll", "d3d12core.dll"});
++                envVars.put("AERO_VKD3D_ARTIFACT_SOURCE", "system");
++            }
++            else {
++                ContentProfile vkd3dProfile = contentsManager.getProfileByEntryName(vkd3dWrapper);
++                if (vkd3dProfile != null) {
++                    Log.d(TAG, "Applying user-defined VKD3D content profile: " + vkd3dWrapper);
++                    contentsManager.applyContent(vkd3dProfile);
++                    envVars.put("AERO_VKD3D_ARTIFACT_SOURCE", "profile");
++                } else {
++                    Log.d(TAG, "Extracting fallback VKD3D .tzst archive: " + vkd3dWrapper);
++                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + vkd3dWrapper + ".tzst", windowsDir, onExtractFileListener);
++                    envVars.put("AERO_VKD3D_ARTIFACT_SOURCE", "asset");
++                }
++            }
+ 
+             Log.d(TAG, "Extracting nglide wrapper");
+             TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "ddrawrapper/nglide.tzst", windowsDir, onExtractFileListener);
+ 
+-            if (ddrawrapper.contains("None")) {
+-                Log.d(TAG, "No DDRaw wrapper has been selected, restoring original ddraw files");
+-                restoreOriginalDllFiles(new String[]{ "ddraw.dll", "d3dimm.dll" });
+-            }
+-            else {
+-                if (ddrawrapper.equals("cnc-ddraw"))
+-                    envVars.put("CNC_DDRAW_CONFIG_FILE", "C:\\windows\\syswow64\\ddraw.ini");
+-
+-                Log.d(TAG, "Extracting ddrawrapper " + ddrawrapper);
+-                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "ddrawrapper/" + ddrawrapper + ".tzst", windowsDir, onExtractFileListener);
+-            }
+-
+-            Log.d(TAG, "Finished extraction of DXVK wrapper files, version: " + dxwrapper);
+-        } else if (dxwrapper.contains("wined3d")) {
+-            Log.d(TAG, "Restoring original DLL files for wined3d.");
+-            restoreOriginalDllFiles(dlls);
+-        }
+-    }
++            if ("none".equals(ddrawWrapperNormalized)) {
++                Log.d(TAG, "No DDRaw wrapper has been selected, restoring original ddraw files");
++                restoreOriginalDllFiles(new String[]{ "ddraw.dll", "d3dimm.dll" });
++                envVars.put("AERO_DDRAW_ARTIFACT_SOURCE", "system");
++            }
++            else {
++                if ("cnc-ddraw".equals(ddrawWrapperNormalized))
++                    envVars.put("CNC_DDRAW_CONFIG_FILE", "C:\\windows\\syswow64\\ddraw.ini");
++
++                Log.d(TAG, "Extracting ddrawrapper " + ddrawrapper);
++                TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "ddrawrapper/" + ddrawrapper + ".tzst", windowsDir, onExtractFileListener);
++                envVars.put("AERO_DDRAW_ARTIFACT_SOURCE", "asset");
++            }
++
++            ForensicLogger.logEvent(this, "info", "DX_WRAPPER_ARTIFACTS_APPLIED",
++                    forensicTraceId, "graphics_driver",
++                    "dx wrapper artifacts applied",
++                    ForensicLogger.fields(
++                            "dxvk_wrapper", dxvkWrapper,
++                            "dxvk_source", envVars.get("AERO_DXVK_ARTIFACT_SOURCE"),
++                            "vkd3d_wrapper", vkd3dWrapper,
++                            "vkd3d_source", envVars.get("AERO_VKD3D_ARTIFACT_SOURCE"),
++                            "ddraw_wrapper", ddrawrapper,
++                            "ddraw_source", envVars.get("AERO_DDRAW_ARTIFACT_SOURCE"),
++                            "d8vk_extracted", envVars.get("AERO_DX8_D8VK_EXTRACTED")
++                    ));
++            Log.d(TAG, "Finished extraction of DXVK wrapper files, version: " + dxwrapper);
++        } else if (dxwrapper.contains("wined3d")) {
++            Log.d(TAG, "Restoring original DLL files for wined3d.");
++            restoreOriginalDllFiles(dlls);
++            envVars.put("AERO_DXVK_ARTIFACT_SOURCE", "system");
++            envVars.put("AERO_VKD3D_ARTIFACT_SOURCE", "system");
++            envVars.put("AERO_DDRAW_ARTIFACT_SOURCE", "system");
++        }
++    }
+ 
+     private static int compareVersion(String varA, String varB) {
+         int[] a = parseSemverLoose(varA);

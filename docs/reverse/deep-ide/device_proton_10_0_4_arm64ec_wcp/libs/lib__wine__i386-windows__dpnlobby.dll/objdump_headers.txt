@@ -1,0 +1,158 @@
+
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/dpnlobby.dll:     file format pei-i386
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/dpnlobby.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10001010
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Wed Feb 25 04:45:34 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00001000
+SizeOfInitializedData	00008000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00001010
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		0000a000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00002038 00000070 Export Directory [.edata (or where ever we found it)]
+Entry 1 000020a8 00000028 Import Directory [parts of .idata]
+Entry 2 00004000 000003b8 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00005000 0000000c Base Relocation Directory [.reloc]
+Entry 6 00002000 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 00003000 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 000020d8 00000008 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x100020a8
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 000020a8	000020d0 00000000 00000000 000020fc 000020d8
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	20e0	  323  DisableThreadLibraryCalls
+
+ 000020bc	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10002038
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		2e199505
+Major/Minor 			0/0
+Name 				0000206c dpnlobby.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000001
+	[Name Pointer/Ordinal] Table	00000001
+Table Addresses
+	Export Address Table 		00002060
+	Name Pointer Table 		00002064
+	Ordinal Table 			00002068
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 2090 Forwarder RVA -- dpnet.DirectPlay8Create
+
+[Ordinal/Name Pointer] Table
+	[   0] DirectPlay8LobbyCreate
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 12 (0xc) Number of fixups 2
+	reloc    0 offset   40 [1040] HIGHLOW
+	reloc    1 offset   54 [1054] HIGHLOW
+
+There is a debug directory in .rdata at 0x10002000
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 0000201c 0000201c
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+010   Entry: ID: 0x000010, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+028     Entry: ID: 0x000001, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 00000000, Value: 0x000048
+048        Leaf: Addr: 0x004058, Size: 0x000360, Codepage: 0
+ Resources start at offset: 0x58
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00000058  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        00000109  10002000  10002000  00002000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .rodata       000000c0  10003000  10003000  00003000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .rsrc         000003b8  10004000  10004000  00004000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .reloc        0000000c  10005000  10005000  00005000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 .debug_abbrev 00000116  10006000  10006000  00006000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   0000017d  10007000  10007000  00007000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_line   000000d1  10008000  10008000  00008000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_str    00000240  10009000  10009000  00009000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000038 .L__wine_spec_exports
+[  1](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c .L__wine_spec_exp_names
+[  2](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 .L__wine_spec_exports_funcs
+[  3](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000064 .L__wine_spec_exp_name_ptrs
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 .L__wine_spec_exp_ordinals
+[  5](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000090 .L__wine_spec_forwards
+[  6](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000000 __load_config_used
+[  7](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[  8](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_res_0
+[  9](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000010 _DllMainCRTStartup@12
+[ 10](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000030 _DllMain@12
+[ 11](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000d8 __imp__DisableThreadLibraryCalls@4
+
+

@@ -38,7 +38,7 @@ trim() {
 download_with_retries() {
   local url="$1"
   local out="$2"
-  curl -fL --retry 3 --retry-all-errors --connect-timeout 20 --max-time 0 -A "Aero.solator artifact sync/0.9c+" -o "${out}" "${url}"
+  curl -fL --retry 3 --retry-all-errors --connect-timeout 20 --max-time 0 -A "Ae.solator artifact sync/0.9c+" -o "${out}" "${url}"
 }
 
 extract_archive() {

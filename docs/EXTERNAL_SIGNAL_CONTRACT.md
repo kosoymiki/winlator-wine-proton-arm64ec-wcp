@@ -2,7 +2,7 @@
 
 ## Scope
 
-This contract defines how Aero.solator mainline accepts and resolves
+This contract defines how Ae.solator mainline accepts and resolves
 runtime signals imported from external lanes (GameNative, GameHub, Termux/FEX,
 legacy wrapper ecosystems).
 
@@ -40,6 +40,11 @@ Before launcher submit, precheck input envelope must be exported as:
 - `WINLATOR_SIGNAL_INPUT_TARGET_EXECUTABLE`
 - `WINLATOR_SIGNAL_INPUT_PRECHECK_REASON`
 - `WINLATOR_SIGNAL_INPUT_PRECHECK_FALLBACK`
+
+When Termux/proot-based external lanes are active, signal evidence should also
+capture:
+
+- `PROOT_TMP_DIR`
 
 ## Rollback Rule
 

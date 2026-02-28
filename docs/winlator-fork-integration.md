@@ -1,6 +1,6 @@
 # Winlator Fork Integration
 
-Этот pipeline собирает APK форка `Aero.solator` (на базе upstream `Winlator-Ludashi`) с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
+Этот pipeline собирает APK форка `Ae.solator` (на базе upstream `Winlator-Ludashi`) с вшитыми ARM64EC runtime из нашего релиза (`wcp-latest`), без ручного импорта WCP в интерфейсе приложения.
 
 ## Что делает сборка
 
@@ -8,7 +8,7 @@
 2. Генерирует upstream-обзор и рефлексивный отчёт:
    - `out/winlator/logs/inspect-upstream/*`
    - `docs/WINLATOR_LUDASHI_REFLECTIVE_ANALYSIS.md`
-3. Применяет локальные патчи из `ci/winlator/patches/*.patch` (включая branding/logging/Turnip/nightly правки Aero.so).
+3. Применяет локальные патчи из `ci/winlator/patches/*.patch` (включая branding/logging/Turnip/nightly правки Ae.solator).
 4. Подготавливает встроенные runtime assets:
    - `wine-11-arm64ec.txz`
    - `proton-ge10-arm64ec.txz`

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/winlator-cmod-aeroso-logo.png" alt="Aero.solator" width="680">
+  <img src="docs/assets/winlator-cmod-aesolator-logo.png" alt="Ae.solator" width="680">
 </p>
 
-# Aero.solator
+# Ae.solator
 
 **RU:** Авторский форк Winlator/Ludashi для ARM64EC + FEXCore + WCP-потока, с форензикой и воспроизводимым CI.
 
@@ -82,6 +82,7 @@ ci/reverse/online-intake.sh
 - `ci/validation/gh-mainline-health.sh`
 - `ci/validation/gh-run-root-cause.sh`
 - `ci/validation/collect-mainline-forensic-snapshot.sh`
+- `docs/HARVARD_RUNTIME_CONFLICT_BOARD.md` (Trello-style runtime conflict board for multi-agent handoff)
 - `ci/winlator/adb-logcat-winlator.sh`
 - `ci/gamenative/selftest-normalizers.sh`
 - `ci/validation/inspect-wcp-runtime-contract.sh`

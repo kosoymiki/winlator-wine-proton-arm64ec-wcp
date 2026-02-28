@@ -10,95 +10,76 @@ middle of the stack.
 
 ## Current thematic ranges
 
-- `0001-0005` - base fork, runtime/FEX, branding, CI compatibility
-- `0006-0012` - forensics, diagnostics, contents/turnip, launch-exit fixes, UI cleanup
-- `0013-0024` - WCPHub/contents UX, Adrenotools browser refactors and cleanup
-- `0025-0027` - upscale transfer (runtime guardrails + container-owned config path)
-- `0028+` - Adrenotools native source adapters (GameNative), browser UX polish/sorting, runtime forensic instrumentation follow-ups, FEX/Box preset editor surface expansion,
-  upscale runtime binding gates, forensic log sink reliability fixes, common runtime profile system, launch precheck contract guardrails, and follow-up driver browser UI/source pruning fixes
+The patch base currently uses a consolidated mainline plus active review
+slices:
 
-## Upscale patch consolidation note
+- `0001-mainline-full-stack-consolidated.patch`
+  - base fork/runtime/FEX contract
+  - branding + versioning
+  - contents/WCPHub routing and UI changes
+  - Adrenotools browser/control-plane work
+  - runtime profiles, FEX/Box/WoWBox surface, and launch contracts
+  - forensic logging, diagnostics, network hardening, and Vulkan policy
+  - upscale/render controls and container/runtime glue
+- `0002-turnip-lane-global-adrenotools-restructure.patch`
+  - Turnip multi-source lane orchestration (Steven + mirror repos)
+  - policy-driven source/channel/limit controls in Adrenotools
+  - restructured Adrenotools screen for turnip + install/catalog flow
+- `0003-aeturnip-runtime-bind-and-forensics.patch`
+  - integrated `aeturnip` provider lane with trust-ranked mirror ingestion
+  - persisted driver origin metadata (`provider/channel/source`) for runtime bind
+  - strict runtime bind verdict + forensic markers (`TURNIP_RUNTIME_BOUND`, source/install events)
+- `0004-upscaler-adrenotools-control-plane-x11-bind.patch`
+  - Adrenotools upscaler policy panel (profile/memory/DX8/vkBasalt/ScreenFX/ScaleForce)
+  - runtime merge path keeps shortcut override compatibility while promoting Adrenotools policy
+  - X11 launch env markers + forensic integration (`AERO_UPSCALE_*`, `UPSCALE_PROFILE_RESOLVED`)
+- `0005-upscaler-dxvk-proton-fsr-x11-turnip-runtime-matrix.patch`
+  - extends upscaler policy with Proton FSR hack mode/strength and runtime env export
+  - adds DX wrapper matrix markers for all DirectX paths (`AERO_DX_DIRECT_MAP`, DXVK/VKD3D/DDRAW selected versions)
+  - forces DX8->d8vk route when policy demands it, without dropping older DXVK version choices in config UI
+- `0006-upscaler-x11-turnip-dx-all-directs-memory-policy.patch`
+  - expands DX route matrix to per-DirectX contracts (`dx1..dx12`) with explicit route markers
+  - adds memory-policy runtime application (`aggressive|balanced|lowmem|auto`) for X11+Turnip launch path
+  - extends upscaler policy surface with additional vkBasalt effects (NIS/FSR) and richer pipeline summary (ScreenFX/ScaleForce/Proton FSR)
+- `0007-upscaler-module-forensics-dx8assist-contract.patch`
+  - adds per-module upscaler forensic trace events (`UPSCALE_MODULE_APPLIED` / `UPSCALE_MODULE_SKIPPED`) with reasoned state
+  - tightens DX8 assist contract so `shortcut_only` activates only under shortcut override
+  - exports explicit DX8 assist request/effective markers and selected D8VK version for X11+Turnip runtime diagnostics
+- `0008-upscaler-dx-policy-order-and-artifact-sources.patch`
+  - adds requested vs effective DX stack markers (`DXVK/VKD3D/DDraw`) to preserve full selection provenance
+  - enforces deterministic DX policy order marker (`ddraw->dx8assist->dxvk->vkd3d`) with stack/reason telemetry
+  - logs wrapper artifact sources (`profile|asset|system`) via `DX_WRAPPER_ARTIFACTS_APPLIED` for audit-safe runtime debugging
+- `0009-launch-graphics-packet-dx-upscaler-x11-turnip-bundle.patch`
+  - builds a deterministic launch graphics packet (`AERO_LAUNCH_GRAPHICS_PACKET*`) covering X11 stack, Turnip bind verdict, DX requested/effective map, and upscaler modules
+  - expands DX route contracts to explicit requested/effective markers for each DirectX lane (`dx1..dx12`) plus effective D8VK version
+  - propagates the packet into launcher submit for end-to-end forensic correlation (`LAUNCH_GRAPHICS_PACKET_READY`, `LAUNCH_EXEC_SUBMIT`)
+- `0010-dxvk-capability-envelope-proton-fsr-gate-upscaler-matrix.patch`
+  - adds DXVK capability envelope (`AERO_DXVK_CAPS`) with version-aware flags (`dx8_native`, `nvapi`) and NVAPI requested/effective telemetry
+  - adds ARM64EC-aware NVAPI capability gates (`AERO_DXVK_NVAPI_ARCH_*`) so unsupported paths fail closed without hiding DXVK usage
+  - gates Proton FSR hack by effective DX policy stack (`dxvk_stack`) to avoid invalid apply on non-DXVK paths
+  - exports unified upscaler runtime matrix and forwards it to launcher submit forensic payload
+  - exports runtime flavor/distribution/layout markers (`AERO_RUNTIME_FLAVOR`, `AERO_RUNTIME_DISTRIBUTION=ae.solator`, `AERO_UPSCALE_LAYOUT_*`) for Wine/Proton parity diagnostics
+  - emits reproducible runtime library conflict snapshots (`AERO_LIBRARY_CONFLICT_*`, `RUNTIME_LIBRARY_CONFLICT_*`) to surface loader/layout conflicts with deterministic SHA fingerprints
+  - emits strict runtime subsystem logging envelope (`AERO_RUNTIME_SUBSYSTEMS*`, `AERO_LIBRARY_COMPONENT_STREAM*`, `AERO_RUNTIME_LOGGING_*`) for X11/Turnip/DXVK/VKD3D/FEX/Box/loader coverage with conflict-grade forensic events
 
-The original incremental upscale bring-up (`0025`..`0030`) was intentionally
-split during implementation for safe iteration. After validation, it was
-consolidated into:
+Historical incremental patches (`0001`..`0064`) were folded into `0001` after
+equivalence checks (`EQUIV_DIFFS 0`). During active patch-base work, targeted
+`0002+` slices are allowed and later folded back.
 
-- `0025-upscale-runtime-guardrails-and-swfg-contract.patch`
-  - historical steps: old `0025`, `0026`, `0027`
-- `0026-upscale-container-bridge-launch-normalization-and-ui.patch`
-  - historical steps: old `0028`, `0029`, `0030`
-- `0027-upscale-container-settings-own-config-and-env-migration.patch`
-  - moves upscale config ownership to container settings UI and strips legacy raw env overrides from generic env editor
-- `0029-runtime-launcher-wrapper-preexec-forensics.patch`
-  - adds launcher wrapper artifact telemetry and final pre-exec env markers for glibc/bionic runtime triage
-- `0030-fexcore-upstream-config-vars-and-inline-help.patch`
-  - expands FEX preset env-var editor to track upstream FEX config options and uses inline help text parsed from the source config descriptions
-- `0031-upscale-runtime-binding-gate-service-processes.patch`
-  - binds ScaleForce/SWFG activation to graphics-eligible shortcut launches (Vulkan/OpenGL) and disables it for container shell/service processes with forensic reasons
-- `0032-forensicslogger-fallback-to-app-private-jsonl-sink.patch`
-  - falls back from `/sdcard/Winlator/logs/forensics` to app-private `files/Winlator/logs/forensics` when external storage writes fail (EACCES), and logs sink switches
-- `0033-adrenotools-driver-browser-version-list-ui-polish.patch`
-  - makes the driver-version picker rows look and behave closer to `Contents` (icon + structured metadata rows + recommended badge)
-- `0034-adrenotools-contents-style-version-rows-and-disable-dead-xforyoux.patch`
-  - temporarily removes dead `XForYouX` release source entries (404) from the in-app driver browser pending a valid upstream source
-- `0035-adrenotools-fix-version-dialog-and-gamenative-native-browser-ux.patch`
-  - fixes OEM AlertDialog list/message collision in version picker (source hint moved into custom clickable header), improves GameNative native parsing/filter labels, and hardens driver row readability in themed dialogs
-- `0036-upscale-binding-defer-shell-to-child-graphics.patch`
-  - defers ScaleForce/SWFG binding decisions at container-shell/service launches so child graphics launches can apply upscale policy later instead of being preemptively downgraded
-- `0037-fex-box-preset-switch-semantics-and-box-descriptions.patch`
-  - hardens FEX/Box preset JSON boolean parsing (`true`/`false`/`1`/`0`), supports explicit toggle on/off values and labels, and upgrades Box preset help to use inline JSON descriptions
-- `0038-contents-list-title-layout-for-long-package-names.patch`
-  - improves `Contents` list rows for long package names (2-line title, ellipsis, tighter action spacing) to avoid truncated/awkward package labels
-- `0039-box64-wowbox64-envvars-and-device-tier-presets.patch`
-  - imports a fuller Box64/WoWBox64 env-var surface with typed toggle metadata and extends FEX/Box preset managers with 2026 device-tier profiles (including S8+G1 performance-focused presets)
-- `0040-runtime-common-profile-ui-and-launcher-integration.patch`
-  - adds a runtime-common profile layer (independent from FEX/Box presets), persists it in container/settings UI, bridges it into launcher env overlays, and emits forensic telemetry for applied common profile selection
-- `0042-external-runtime-placeholders-and-fex-resolution.patch`
-  - switches Box/WoWBox/FEX version pickers to installed-only lists with neutral `—` placeholder when external runtime packages are absent, sanitizes placeholder tokens from persisted container/shortcut data, resolves FEX/WoWBox runtime payload from installed Contents profiles (no embedded tar fallback for ARM64EC path), and applies non-crashing HODLL fallback selection during launch
-- `0043-runtime-profile-translator-preset-migration-and-defaults.patch`
-  - binds common runtime profile policy to translator preset defaults/migration (legacy `COMPATIBILITY`/`INTERMEDIATE` values map to profile-matched overlays for non-`AUTO` mode), unifies default Box64/FEX presets in container/settings/normalizer, and logs requested vs effective preset resolution in launcher forensics
-- `0044-runtime-launch-precheck-and-forensic-guardrails.patch`
-  - introduces a launch precheck contract between `XServerDisplayActivity` and `GuestProgramLauncherComponent` (route/kind/target/reason/shell-fallback markers), hardens missing-shortcut or empty-command launches with deterministic shell fallback, and adds reason-coded forensic telemetry for launch acceptance and runtime preset migration guards
-- `0045-graphics-driver-fallback-chain-and-telemetry.patch`
-  - adds deterministic graphics driver probe fallback chain (`requested -> fallback candidate -> system`), exports probe-chain env telemetry for runtime triage, and refines graphics suitability fallback severity when a usable non-system fallback driver is selected
-- `0046-runtime-appcompat-guarded-rules-and-forensics.patch`
-  - introduces guarded runtime app-compat rules (env defaults only, executable-token matched), applies them in launcher pre-exec path, and emits rule-level forensic telemetry (`RUNTIME_APPCOMPAT_APPLIED` + submit-stage fields)
-- `0047-driver-fallback-chain-ranking-and-telemetry.patch`
-  - upgrades graphics-driver fallback from single-candidate to ranked fallback chain, adds scored candidate ranking in `AdrenotoolsManager`, and exports attempt/ranking telemetry into forensic events and runtime env markers
-- `0048-adrenotools-source-trust-and-fallback-orchestration.patch`
-  - adds Adrenotools source orchestration with trust-scored repo fallback chain (primary/fallback/discovered), deduplicates mirrored assets by identity, and prioritizes version list ordering/recommendation using source trust + semantic recency
-- `0049-upscale-eden-render-controls-and-runtime-contract.patch`
-  - extends container-owned upscale controls with Eden-aligned render knobs (resolution, scaling filter, FSR sharpness, frame pacing, anisotropy, vsync, Vulkan-call logging), persists them in `extraData`, bridges to runtime env aliases, and adds forensic render-policy telemetry plus launcher-side normalization of the expanded contract
-- `0050-upscale-eden-advanced-renderer-runtime-controls.patch`
-  - extends the upscale contract with Eden-style advanced renderer controls (backend selection, async shaders, disk shader cache, speed-limit policy/values, force-max-clock), adds container UI persistence and legacy env migration for those keys, bridges them into runtime env aliases, and normalizes the full control set in launcher pre-exec telemetry
-- `0051-upscale-eden-shader-debug-and-advanced-runtime-controls.patch`
-  - extends the Eden transfer with advanced shader/debug renderer controls (shader dumps, IR3 debug, shader-build visibility, shader-cache drop, descriptor/dynamic/provoking/sample/spirv toggles, legacy QCOM patching, NVDEC emulation, slow speed-limit), persists them in container settings, and normalizes + mirrors them through launcher/runtime forensic contracts
-- `0052-upscale-eden-renderer-gpu-diagnostics-control-parity.patch`
-  - completes the Eden transfer surface for renderer/gpu diagnostic controls (accuracy/AA/aspect/ASTC/screen-layout/VRAM mode, vertex-input dynamic state, GPU logging and unswizzle controls, GPU model/time tokens, Mesa debug), stores them in container-owned extras, strips legacy raw env duplication, and mirrors normalized aliases through runtime + launcher forensic contracts
-- `0053-graphics-lib-integrity-self-heal-and-forensics.patch`
-  - adds runtime integrity validation for critical `imagefs/usr/lib/libGL.so.1.5.0` (ELF header/section table sanity), quarantines corrupted copies, re-extracts `graphics_driver/extra_libs.tzst` automatically, and emits forensic events for verify-fail/repair-applied/repair-failed paths
-- `0054-contents-proton-type-aliases.patch`
-  - accepts `proton*` type aliases (`proton`, `protonge`, `protonwine`, `wine/proton`) as Wine-family content in parser/resolver paths, and ensures local profile parsing treats those aliases as Wine for required `wine` metadata extraction
-- `0055-termux-x11-compat-contract-preflight-and-diagnostics.patch`
-  - adds optional `termux_compat` X11 backend contract controls (settings + env export), performs startup preflight checks for TMPDIR/XKB/shared-tmp semantics with forensic events and fallback to internal backend, and exposes a diagnostics action to run the same preflight interactively
-- `0056-external-signal-policy-markers-and-forensics.patch`
-  - adds deterministic external signal markers in launcher runtime env (`WINLATOR_SIGNAL_POLICY`, `WINLATOR_SIGNAL_SOURCES`, `WINLATOR_SIGNAL_DECISION_HASH`, `WINLATOR_SIGNAL_DECISION_COUNT`) and emits forensic `RUNTIME_SIGNAL_POLICY_APPLIED` with policy/source metadata for GN/GH/Termux lane arbitration traces
-- `0057-signal-input-markers-from-launch-precheck.patch`
-  - exports launch-precheck inputs as explicit signal markers in `XServerDisplayActivity` (`WINLATOR_SIGNAL_INPUT_*`) before launcher start, and emits forensic `RUNTIME_SIGNAL_INPUTS_PREPARED` to bridge route/kind/target/fallback intent into runtime signal arbitration
-- `0058-launch-env-forensics-include-signal-input-envelope.patch`
-  - extends `LAUNCH_ENV_PREPARED` forensic payload with `WINLATOR_SIGNAL_INPUT_*` envelope fields so adb log triage can correlate launch-env hash with precheck signal inputs without decoding raw env dumps
-- `0059-runtime-signal-contract-helper-and-adoption.patch`
-  - introduces shared `RuntimeSignalContract` helper for signal marker keys/hash generation/deduped source lists, and rewires `XServerDisplayActivity` + `GuestProgramLauncherComponent` to use centralized contract methods/constants (reduces drift between signal docs and launcher implementation)
-- `0060-contents-internal-type-canonicalization.patch`
-  - adds explicit `internalType` metadata support for Wine-family entries (`wine`, `proton`, `protonge`, `protonwine`), canonicalizes aliases in contents parsing, and preserves source metadata fields when reading local profiles so UI/forensics can distinguish Wine-family subtype without breaking the unified `Wine/Proton` group
-- `0061-contents-wine-family-internal-type-labels.patch`
-  - uses `internalType` in `Contents` meta rows to surface Wine-family subtype labels (`Proton`, `Proton GE`, `ProtonWine`) for entries grouped under the shared `Wine/Proton` category
-- `0062-contents-info-dialog-wine-family-variant-and-meta-format.patch`
-  - extends the content info dialog to show Wine-family subtype (`Variant`) for Wine/Proton entries and normalizes metadata block formatting (`Channel/Delivery/Source/Artifact/SHA256`) without empty leading lines
-- `0063-network-vpn-download-hardening.patch`
-  - hardens content/driver downloads with retry+timeout headers, HTTP status validation, and partial-file cleanup for unstable VPN/DNS conditions
-- `0064-vulkan-1-4-policy-and-negotiation.patch`
-  - adds Vulkan selector `auto`+`1.4`, defaults container graphics config to `vulkanPolicy=force_latest`, and negotiates runtime `WRAPPER_VK_VERSION` from requested/detected policy with forensic env markers
+## Patch-base rule
+
+- Mainline stays consolidated by default (`0001`).
+- New work can land as `0002+` slices when isolated review/debug windows are
+  needed.
+- Once a slice is stable, fold it back into
+  `0001-mainline-full-stack-consolidated.patch` and restore the one-patch
+  baseline.
+
+## Phase map
+
+`ci/winlator/patch-batch-plan.tsv` maps phases to active patch windows (`0001`
+and optional `0002+` slices) so batch tooling stays deterministic during patch
+base expansion.
 
 ## Known high-overlap files (intentional)
 
@@ -123,3 +104,119 @@ bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout
 
 This creates a clean temporary clone, applies the full stack, and reports file
 overlaps touched by multiple patches.
+
+For Winlator CI mainline, keep `WINLATOR_PATCH_PREFLIGHT=1` so the same
+apply-check runs before Gradle. This turns patch drift into an early patch-stack
+failure instead of a late APK build failure.
+
+`ci/winlator/apply-repo-patches.sh` also contains a narrow reject-heal path for
+the contents-branding block inside `0001-mainline-full-stack-consolidated.patch`.
+It only applies when upstream drifts in
+`app/src/main/res/values/strings.xml`; do not generalize this pattern without
+adding an explicit bounded self-heal condition.
+
+## Fast local patch-base flow
+
+When the goal is to keep moving through the patch base instead of running the
+full audit loop every time, use the lighter batch runner:
+
+```bash
+bash ci/winlator/check-patch-batches.sh /path/to/upstream/winlator/checkout
+```
+
+Useful modes:
+
+- `WINLATOR_PATCH_BATCH_SIZE=5` - apply in blocks of 5 patches (default)
+- `WINLATOR_PATCH_BATCH_SIZE=7` - apply in blocks of 7 patches
+- `WINLATOR_PATCH_BATCH_MODE=single` - apply strictly one patch at a time
+- `WINLATOR_PATCH_BATCH_PROFILE=standard|wide|single` - convenience aliases for 5, 7 or 1 patch windows
+- `WINLATOR_PATCH_BATCH_FIRST=1 WINLATOR_PATCH_BATCH_LAST=1` - focus only the
+  current consolidated mainline window
+
+`ci/winlator/apply-repo-patches.sh` supports the same selective window via
+`WINLATOR_PATCH_FROM=NNNN` and `WINLATOR_PATCH_TO=NNNN`.
+
+The heavier full audit can also be scoped to a contiguous window:
+
+```bash
+WINLATOR_PATCH_FROM=0001 WINLATOR_PATCH_TO=0001 \
+  bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout
+
+WINLATOR_PATCH_PHASE=runtime_policy \
+  bash ci/winlator/check-patch-stack.sh /path/to/upstream/winlator/checkout
+```
+
+For multi-window patch-base work, use the phase runner:
+
+```bash
+bash ci/winlator/run-patch-base-cycle.sh /path/to/upstream/winlator/checkout
+WINLATOR_PATCH_BASE_PROFILE=wide bash ci/winlator/run-patch-base-cycle.sh /path/to/upstream/winlator/checkout
+WINLATOR_PATCH_BASE_PHASE=runtime_policy bash ci/winlator/run-patch-base-cycle.sh /path/to/upstream/winlator/checkout
+```
+
+To inspect the exact local 5/7/1 windows before running anything:
+
+```bash
+bash ci/winlator/list-patch-batches.sh
+WINLATOR_PATCH_BATCH_PROFILE=wide bash ci/winlator/list-patch-batches.sh
+WINLATOR_PATCH_BATCH_FIRST=1 WINLATOR_PATCH_BATCH_LAST=1 bash ci/winlator/list-patch-batches.sh
+WINLATOR_PATCH_BATCH_PHASE=runtime_policy bash ci/winlator/list-patch-batches.sh
+```
+
+To inspect the named phases themselves:
+
+```bash
+bash ci/winlator/list-patch-phases.sh
+bash ci/winlator/resolve-patch-phase.sh runtime_policy
+```
+
+To reserve the next patch number safely:
+
+```bash
+bash ci/winlator/next-patch-number.sh
+bash ci/winlator/next-patch-number.sh ci/winlator/patches my-new-patch-slug
+```
+
+To create a temporary `0002+` slice patch from a modified Winlator source tree
+relative to the current consolidated base:
+
+```bash
+bash ci/winlator/create-slice-patch.sh /path/to/upstream/winlator/checkout my-slice
+```
+
+To step through the next local batch window deterministically:
+
+```bash
+bash ci/winlator/next-patch-batch.sh
+WINLATOR_PATCH_BATCH_CURSOR=1 bash ci/winlator/next-patch-batch.sh
+WINLATOR_PATCH_BATCH_PHASE=runtime_policy bash ci/winlator/next-patch-batch.sh
+```
+
+## Ae.solator asset overlay import
+
+To import a `res/*` overlay zip (safezone/allskins pack), generate a slice, and
+fold it back into consolidated mainline:
+
+```bash
+bash ci/winlator/import-aesolator-assets.sh \
+  "/path/to/res_custom_AE_SOLATOR_mipmap_safezone_allskins.zip" \
+  "/path/to/winlator-src-git"
+```
+
+Useful modes:
+
+- `WINLATOR_ASSET_IMPORT_MODE=slice` - keep a temporary `0002-...` review slice
+- `WINLATOR_ASSET_IMPORT_MODE=fold` - default, folds back into `0001` baseline
+- `WINLATOR_ASSET_VALIDATE_ONLY=1` - inspect zip metadata without mutating source
+
+## Folding slices back into mainline
+
+When temporary slice patches (`0002+`) are done, fold them back into the
+single-patch base:
+
+```bash
+bash ci/winlator/fold-into-mainline.sh /path/to/upstream/winlator/checkout
+```
+
+By default it drops folded `0002+` patch files and keeps only
+`0001-mainline-full-stack-consolidated.patch`.

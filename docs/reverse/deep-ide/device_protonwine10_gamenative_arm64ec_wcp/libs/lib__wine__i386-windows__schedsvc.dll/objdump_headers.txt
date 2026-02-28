@@ -1,0 +1,2400 @@
+
+/tmp/elf_ide_xya3332k/tar_extract/lib/wine/i386-windows/schedsvc.dll:     file format pei-i386
+/tmp/elf_ide_xya3332k/tar_extract/lib/wine/i386-windows/schedsvc.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10007510
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Thu Feb 26 17:05:16 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00007000
+SizeOfInitializedData	0002c000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00007510
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		00034000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 0000b0f8 00000055 Export Directory [.edata (or where ever we found it)]
+Entry 1 0000b150 000000a0 Import Directory [parts of .idata]
+Entry 2 00000000 00000000 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 0000f000 00000aac Base Relocation Directory [.reloc]
+Entry 6 0000b0c0 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000e008 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 0000b3cc 000001dc Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x1000b150
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 0000b150	0000b1f0 00000000 00000000 0000bd74 0000b3cc
+
+	DLL Name: rpcrt4.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b5a8	  273  NdrServerCall2
+	b5ba	  363  RpcBindingVectorFree
+	b5d2	  373  RpcEpRegisterW
+	b5e4	  375  RpcEpUnregister
+	b5f6	  410  RpcMgmtStopServerListening
+	b614	  427  RpcServerInqBindings
+	b62c	  433  RpcServerListen
+	b63e	  438  RpcServerRegisterIf
+	b654	  441  RpcServerUnregisterIf
+	b66c	  451  RpcServerUseProtseqEpW
+	b686	  497  UuidCreate
+
+ 0000b164	0000b220 00000000 00000000 0000bd7f 0000b3fc
+
+	DLL Name: advapi32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b694	   45  ChangeServiceConfigW
+	b6ac	   51  CloseServiceHandle
+	b6c2	  256  IsTextUnicode
+	b6d2	  355  OpenSCManagerW
+	b6e4	  357  OpenServiceW
+	b6f4	  382  QueryServiceConfigW
+	b70a	  475  RegisterServiceCtrlHandlerW
+	b728	  506  SetServiceStatus
+
+ 0000b178	0000b244 00000000 00000000 0000bd8c 0000b420
+
+	DLL Name: ole32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b73c	  109  CreateStreamOnHGlobal
+	b754	  287  StringFromGUID2
+
+ 0000b18c	0000b250 00000000 00000000 0000bd96 0000b42c
+
+	DLL Name: xmllite.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b766	    1  CreateXmlReader
+
+ 0000b1a0	0000b258 00000000 00000000 0000bda2 0000b434
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b778	   74  __acrt_iob_func
+	b78a	  158  __stdio_common_vsprintf
+	b7a4	  162  __stdio_common_vswprintf
+	b7c0	 1894  _strdup
+	b7ca	 1984  _wcsdup
+	b7d4	 2155  calloc
+	b7de	 2284  free
+	b7e6	 2291  fwrite
+	b7f0	 2294  getenv
+	b7fa	 2317  isspace
+	b804	 2367  malloc
+	b80e	 2380  memcpy
+	b818	 2382  memmove
+	b822	 2384  memset
+	b82c	 2415  realloc
+	b836	 2449  strchr
+	b840	 2450  strcmp
+	b84a	 2452  strcpy
+	b854	 2454  strcspn
+	b85e	 2458  strlen
+	b868	 2507  wcschr
+	b872	 2508  wcscmp
+	b87c	 2514  wcslen
+	b886	 2522  wcsrchr
+
+ 0000b1b4	0000b2bc 00000000 00000000 0000bdaf 0000b498
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	b890	  142  AssignProcessToJobObject
+	b8ac	  176  CancelWaitableTimer
+	b8c2	  184  CloseHandle
+	b8d0	  198  CompareFileTime
+	b8e2	  228  CreateDirectoryW
+	b8f6	  232  CreateEventW
+	b906	  241  CreateFileMappingW
+	b91c	  242  CreateFileW
+	b92a	  248  CreateIoCompletionPort
+	b944	  250  CreateJobObjectW
+	b958	  267  CreateProcessW
+	b96a	  279  CreateThread
+	b97a	  293  CreateWaitableTimerW
+	b992	  312  DeleteFileW
+	b9a0	  323  DisableThreadLibraryCalls
+	b9bc	  334  EnterCriticalSection
+	b9d4	  405  FileTimeToLocalFileTime
+	b9ee	  406  FileTimeToSystemTime
+	ba06	  415  FindClose
+	ba12	  425  FindFirstFileW
+	ba24	  433  FindNextFileW
+	ba34	  589  GetExitCodeProcess
+	ba4a	  598  GetFileAttributesW
+	ba60	  603  GetFileSize
+	ba6e	  625  GetLocalTime
+	ba7e	  644  GetModuleHandleW
+	ba92	  694  GetProcAddress
+	baa4	  722  GetQueuedCompletionStatus
+	bac0	  743  GetSystemDirectoryW
+	bad6	  749  GetSystemTime
+	bae6	  751  GetSystemTimeAsFileTime
+	bb00	  781  GetTickCount
+	bb10	  794  GetVersion
+	bb1e	  807  GetWindowsDirectoryW
+	bb36	  813  GlobalAlloc
+	bb44	  820  GlobalFree
+	bb52	  824  GlobalLock
+	bb60	  831  GlobalUnlock
+	bb70	  837  HeapAlloc
+	bb7c	  847  HeapReAlloc
+	bb8a	  892  IsBadStringPtrW
+	bb9c	  955  LeaveCriticalSection
+	bbb4	  967  LocalFileTimeToFileTime
+	bbce	  992  MapViewOfFile
+	bbde	 1009  MultiByteToWideChar
+	bbf4	 1074  QueryPerformanceCounter
+	bc0e	 1075  QueryPerformanceFrequency
+	bc2a	 1096  ReadDirectoryChangesW
+	bc42	 1097  ReadFile
+	bc4e	 1161  RemoveDirectoryW
+	bc62	 1272  SetEvent
+	bc6e	 1280  SetFilePointer
+	bc80	 1289  SetInformationJobObject
+	bc9a	 1352  SetWaitableTimer
+	bcae	 1358  Sleep
+	bcb6	 1367  SystemTimeToFileTime
+	bcce	 1370  TerminateProcess
+	bce2	 1399  UnmapViewOfFile
+	bcf4	 1433  WaitForMultipleObjects
+	bd0e	 1435  WaitForSingleObject
+	bd24	 1455  WideCharToMultiByte
+	bd3a	 1474  WriteFile
+	bd46	 1509  lstrcmpiW
+
+ 0000b1c8	0000b3bc 00000000 00000000 0000bdbc 0000b598
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	bd52	 1236  _alldiv
+	bd5c	 1240  _allrem
+	bd66	 1296  _vsnprintf
+
+ 0000b1dc	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x1000b0f8
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		5dd15796
+Major/Minor 			0/0
+Name 				0000b134 schedsvc.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000001
+	[Name Pointer/Ordinal] Table	00000001
+Table Addresses
+	Export Address Table 		0000b120
+	Name Pointer Table 		0000b124
+	Ordinal Table 			0000b128
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 5db0 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[   0] ServiceMain
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 328 (0x148) Number of fixups 160
+	reloc    0 offset   15 [1015] HIGHLOW
+	reloc    1 offset   41 [1041] HIGHLOW
+	reloc    2 offset   49 [1049] HIGHLOW
+	reloc    3 offset   4e [104e] HIGHLOW
+	reloc    4 offset   54 [1054] HIGHLOW
+	reloc    5 offset   5a [105a] HIGHLOW
+	reloc    6 offset   60 [1060] HIGHLOW
+	reloc    7 offset   85 [1085] HIGHLOW
+	reloc    8 offset   a8 [10a8] HIGHLOW
+	reloc    9 offset   b8 [10b8] HIGHLOW
+	reloc   10 offset   be [10be] HIGHLOW
+	reloc   11 offset   cd [10cd] HIGHLOW
+	reloc   12 offset   e0 [10e0] HIGHLOW
+	reloc   13 offset   e6 [10e6] HIGHLOW
+	reloc   14 offset  156 [1156] HIGHLOW
+	reloc   15 offset  161 [1161] HIGHLOW
+	reloc   16 offset  19c [119c] HIGHLOW
+	reloc   17 offset  1d6 [11d6] HIGHLOW
+	reloc   18 offset  1dd [11dd] HIGHLOW
+	reloc   19 offset  245 [1245] HIGHLOW
+	reloc   20 offset  25e [125e] HIGHLOW
+	reloc   21 offset  29a [129a] HIGHLOW
+	reloc   22 offset  2aa [12aa] HIGHLOW
+	reloc   23 offset  2c0 [12c0] HIGHLOW
+	reloc   24 offset  31d [131d] HIGHLOW
+	reloc   25 offset  340 [1340] HIGHLOW
+	reloc   26 offset  356 [1356] HIGHLOW
+	reloc   27 offset  364 [1364] HIGHLOW
+	reloc   28 offset  3a6 [13a6] HIGHLOW
+	reloc   29 offset  3bc [13bc] HIGHLOW
+	reloc   30 offset  3c4 [13c4] HIGHLOW
+	reloc   31 offset  3e6 [13e6] HIGHLOW
+	reloc   32 offset  40d [140d] HIGHLOW
+	reloc   33 offset  47c [147c] HIGHLOW
+	reloc   34 offset  491 [1491] HIGHLOW
+	reloc   35 offset  4af [14af] HIGHLOW
+	reloc   36 offset  4c6 [14c6] HIGHLOW
+	reloc   37 offset  4d2 [14d2] HIGHLOW
+	reloc   38 offset  4fb [14fb] HIGHLOW
+	reloc   39 offset  503 [1503] HIGHLOW
+	reloc   40 offset  538 [1538] HIGHLOW
+	reloc   41 offset  542 [1542] HIGHLOW
+	reloc   42 offset  57e [157e] HIGHLOW
+	reloc   43 offset  58b [158b] HIGHLOW
+	reloc   44 offset  5a4 [15a4] HIGHLOW
+	reloc   45 offset  5b8 [15b8] HIGHLOW
+	reloc   46 offset  5c6 [15c6] HIGHLOW
+	reloc   47 offset  5e5 [15e5] HIGHLOW
+	reloc   48 offset  5ed [15ed] HIGHLOW
+	reloc   49 offset  5fc [15fc] HIGHLOW
+	reloc   50 offset  614 [1614] HIGHLOW
+	reloc   51 offset  620 [1620] HIGHLOW
+	reloc   52 offset  62d [162d] HIGHLOW
+	reloc   53 offset  656 [1656] HIGHLOW
+	reloc   54 offset  65e [165e] HIGHLOW
+	reloc   55 offset  675 [1675] HIGHLOW
+	reloc   56 offset  686 [1686] HIGHLOW
+	reloc   57 offset  692 [1692] HIGHLOW
+	reloc   58 offset  6f4 [16f4] HIGHLOW
+	reloc   59 offset  70a [170a] HIGHLOW
+	reloc   60 offset  712 [1712] HIGHLOW
+	reloc   61 offset  724 [1724] HIGHLOW
+	reloc   62 offset  73e [173e] HIGHLOW
+	reloc   63 offset  746 [1746] HIGHLOW
+	reloc   64 offset  758 [1758] HIGHLOW
+	reloc   65 offset  779 [1779] HIGHLOW
+	reloc   66 offset  81e [181e] HIGHLOW
+	reloc   67 offset  82f [182f] HIGHLOW
+	reloc   68 offset  837 [1837] HIGHLOW
+	reloc   69 offset  849 [1849] HIGHLOW
+	reloc   70 offset  870 [1870] HIGHLOW
+	reloc   71 offset  878 [1878] HIGHLOW
+	reloc   72 offset  88a [188a] HIGHLOW
+	reloc   73 offset  8a1 [18a1] HIGHLOW
+	reloc   74 offset  8a9 [18a9] HIGHLOW
+	reloc   75 offset  8bb [18bb] HIGHLOW
+	reloc   76 offset  8d2 [18d2] HIGHLOW
+	reloc   77 offset  8da [18da] HIGHLOW
+	reloc   78 offset  8ec [18ec] HIGHLOW
+	reloc   79 offset  903 [1903] HIGHLOW
+	reloc   80 offset  90b [190b] HIGHLOW
+	reloc   81 offset  91d [191d] HIGHLOW
+	reloc   82 offset  934 [1934] HIGHLOW
+	reloc   83 offset  93c [193c] HIGHLOW
+	reloc   84 offset  94e [194e] HIGHLOW
+	reloc   85 offset  965 [1965] HIGHLOW
+	reloc   86 offset  96d [196d] HIGHLOW
+	reloc   87 offset  97f [197f] HIGHLOW
+	reloc   88 offset  995 [1995] HIGHLOW
+	reloc   89 offset  99d [199d] HIGHLOW
+	reloc   90 offset  9af [19af] HIGHLOW
+	reloc   91 offset  9c5 [19c5] HIGHLOW
+	reloc   92 offset  9cd [19cd] HIGHLOW
+	reloc   93 offset  9df [19df] HIGHLOW
+	reloc   94 offset  9f5 [19f5] HIGHLOW
+	reloc   95 offset  9fd [19fd] HIGHLOW
+	reloc   96 offset  a0f [1a0f] HIGHLOW
+	reloc   97 offset  a25 [1a25] HIGHLOW
+	reloc   98 offset  a2d [1a2d] HIGHLOW
+	reloc   99 offset  a3f [1a3f] HIGHLOW
+	reloc  100 offset  a55 [1a55] HIGHLOW
+	reloc  101 offset  a5d [1a5d] HIGHLOW
+	reloc  102 offset  a6f [1a6f] HIGHLOW
+	reloc  103 offset  ae5 [1ae5] HIGHLOW
+	reloc  104 offset  aed [1aed] HIGHLOW
+	reloc  105 offset  b04 [1b04] HIGHLOW
+	reloc  106 offset  b0e [1b0e] HIGHLOW
+	reloc  107 offset  b2e [1b2e] HIGHLOW
+	reloc  108 offset  b3d [1b3d] HIGHLOW
+	reloc  109 offset  b45 [1b45] HIGHLOW
+	reloc  110 offset  b82 [1b82] HIGHLOW
+	reloc  111 offset  bbe [1bbe] HIGHLOW
+	reloc  112 offset  bf7 [1bf7] HIGHLOW
+	reloc  113 offset  bff [1bff] HIGHLOW
+	reloc  114 offset  c2a [1c2a] HIGHLOW
+	reloc  115 offset  c40 [1c40] HIGHLOW
+	reloc  116 offset  c50 [1c50] HIGHLOW
+	reloc  117 offset  c58 [1c58] HIGHLOW
+	reloc  118 offset  c6d [1c6d] HIGHLOW
+	reloc  119 offset  c7f [1c7f] HIGHLOW
+	reloc  120 offset  c87 [1c87] HIGHLOW
+	reloc  121 offset  cac [1cac] HIGHLOW
+	reloc  122 offset  cb4 [1cb4] HIGHLOW
+	reloc  123 offset  ccc [1ccc] HIGHLOW
+	reloc  124 offset  ce8 [1ce8] HIGHLOW
+	reloc  125 offset  cf0 [1cf0] HIGHLOW
+	reloc  126 offset  d17 [1d17] HIGHLOW
+	reloc  127 offset  d1d [1d1d] HIGHLOW
+	reloc  128 offset  d37 [1d37] HIGHLOW
+	reloc  129 offset  d55 [1d55] HIGHLOW
+	reloc  130 offset  d5d [1d5d] HIGHLOW
+	reloc  131 offset  d7b [1d7b] HIGHLOW
+	reloc  132 offset  d8a [1d8a] HIGHLOW
+	reloc  133 offset  d92 [1d92] HIGHLOW
+	reloc  134 offset  db9 [1db9] HIGHLOW
+	reloc  135 offset  dd0 [1dd0] HIGHLOW
+	reloc  136 offset  ddc [1ddc] HIGHLOW
+	reloc  137 offset  df5 [1df5] HIGHLOW
+	reloc  138 offset  dfd [1dfd] HIGHLOW
+	reloc  139 offset  e16 [1e16] HIGHLOW
+	reloc  140 offset  e32 [1e32] HIGHLOW
+	reloc  141 offset  e3e [1e3e] HIGHLOW
+	reloc  142 offset  e5e [1e5e] HIGHLOW
+	reloc  143 offset  e66 [1e66] HIGHLOW
+	reloc  144 offset  e7b [1e7b] HIGHLOW
+	reloc  145 offset  ea4 [1ea4] HIGHLOW
+	reloc  146 offset  eb5 [1eb5] HIGHLOW
+	reloc  147 offset  ecf [1ecf] HIGHLOW
+	reloc  148 offset  f36 [1f36] HIGHLOW
+	reloc  149 offset  f3e [1f3e] HIGHLOW
+	reloc  150 offset  f51 [1f51] HIGHLOW
+	reloc  151 offset  f68 [1f68] HIGHLOW
+	reloc  152 offset  f70 [1f70] HIGHLOW
+	reloc  153 offset  f83 [1f83] HIGHLOW
+	reloc  154 offset  fa4 [1fa4] HIGHLOW
+	reloc  155 offset  fac [1fac] HIGHLOW
+	reloc  156 offset  fbf [1fbf] HIGHLOW
+	reloc  157 offset  fdb [1fdb] HIGHLOW
+	reloc  158 offset  fe3 [1fe3] HIGHLOW
+	reloc  159 offset  ff6 [1ff6] HIGHLOW
+
+Virtual Address: 00002000 Chunk size 360 (0x168) Number of fixups 176
+	reloc    0 offset   12 [2012] HIGHLOW
+	reloc    1 offset   1a [201a] HIGHLOW
+	reloc    2 offset   2d [202d] HIGHLOW
+	reloc    3 offset   49 [2049] HIGHLOW
+	reloc    4 offset   51 [2051] HIGHLOW
+	reloc    5 offset   64 [2064] HIGHLOW
+	reloc    6 offset   80 [2080] HIGHLOW
+	reloc    7 offset   88 [2088] HIGHLOW
+	reloc    8 offset   9b [209b] HIGHLOW
+	reloc    9 offset   b7 [20b7] HIGHLOW
+	reloc   10 offset   bf [20bf] HIGHLOW
+	reloc   11 offset   d2 [20d2] HIGHLOW
+	reloc   12 offset   ee [20ee] HIGHLOW
+	reloc   13 offset   f6 [20f6] HIGHLOW
+	reloc   14 offset  109 [2109] HIGHLOW
+	reloc   15 offset  125 [2125] HIGHLOW
+	reloc   16 offset  12d [212d] HIGHLOW
+	reloc   17 offset  140 [2140] HIGHLOW
+	reloc   18 offset  15c [215c] HIGHLOW
+	reloc   19 offset  164 [2164] HIGHLOW
+	reloc   20 offset  177 [2177] HIGHLOW
+	reloc   21 offset  192 [2192] HIGHLOW
+	reloc   22 offset  19a [219a] HIGHLOW
+	reloc   23 offset  1ad [21ad] HIGHLOW
+	reloc   24 offset  1c8 [21c8] HIGHLOW
+	reloc   25 offset  1d0 [21d0] HIGHLOW
+	reloc   26 offset  1e3 [21e3] HIGHLOW
+	reloc   27 offset  1fe [21fe] HIGHLOW
+	reloc   28 offset  206 [2206] HIGHLOW
+	reloc   29 offset  219 [2219] HIGHLOW
+	reloc   30 offset  234 [2234] HIGHLOW
+	reloc   31 offset  23c [223c] HIGHLOW
+	reloc   32 offset  24f [224f] HIGHLOW
+	reloc   33 offset  26b [226b] HIGHLOW
+	reloc   34 offset  273 [2273] HIGHLOW
+	reloc   35 offset  286 [2286] HIGHLOW
+	reloc   36 offset  2a2 [22a2] HIGHLOW
+	reloc   37 offset  2aa [22aa] HIGHLOW
+	reloc   38 offset  2bd [22bd] HIGHLOW
+	reloc   39 offset  2e7 [22e7] HIGHLOW
+	reloc   40 offset  2ef [22ef] HIGHLOW
+	reloc   41 offset  301 [2301] HIGHLOW
+	reloc   42 offset  324 [2324] HIGHLOW
+	reloc   43 offset  32c [232c] HIGHLOW
+	reloc   44 offset  357 [2357] HIGHLOW
+	reloc   45 offset  37b [237b] HIGHLOW
+	reloc   46 offset  39d [239d] HIGHLOW
+	reloc   47 offset  3a5 [23a5] HIGHLOW
+	reloc   48 offset  3bd [23bd] HIGHLOW
+	reloc   49 offset  3cc [23cc] HIGHLOW
+	reloc   50 offset  3e3 [23e3] HIGHLOW
+	reloc   51 offset  3e9 [23e9] HIGHLOW
+	reloc   52 offset  3f8 [23f8] HIGHLOW
+	reloc   53 offset  403 [2403] HIGHLOW
+	reloc   54 offset  40c [240c] HIGHLOW
+	reloc   55 offset  415 [2415] HIGHLOW
+	reloc   56 offset  41a [241a] HIGHLOW
+	reloc   57 offset  425 [2425] HIGHLOW
+	reloc   58 offset  42c [242c] HIGHLOW
+	reloc   59 offset  432 [2432] HIGHLOW
+	reloc   60 offset  46c [246c] HIGHLOW
+	reloc   61 offset  4aa [24aa] HIGHLOW
+	reloc   62 offset  4d4 [24d4] HIGHLOW
+	reloc   63 offset  4e5 [24e5] HIGHLOW
+	reloc   64 offset  53a [253a] HIGHLOW
+	reloc   65 offset  57f [257f] HIGHLOW
+	reloc   66 offset  5c2 [25c2] HIGHLOW
+	reloc   67 offset  5ce [25ce] HIGHLOW
+	reloc   68 offset  5f3 [25f3] HIGHLOW
+	reloc   69 offset  5fb [25fb] HIGHLOW
+	reloc   70 offset  616 [2616] HIGHLOW
+	reloc   71 offset  659 [2659] HIGHLOW
+	reloc   72 offset  68b [268b] HIGHLOW
+	reloc   73 offset  6bc [26bc] HIGHLOW
+	reloc   74 offset  6c2 [26c2] HIGHLOW
+	reloc   75 offset  6c7 [26c7] HIGHLOW
+	reloc   76 offset  6d4 [26d4] HIGHLOW
+	reloc   77 offset  6e5 [26e5] HIGHLOW
+	reloc   78 offset  6eb [26eb] HIGHLOW
+	reloc   79 offset  723 [2723] HIGHLOW
+	reloc   80 offset  73f [273f] HIGHLOW
+	reloc   81 offset  751 [2751] HIGHLOW
+	reloc   82 offset  764 [2764] HIGHLOW
+	reloc   83 offset  78a [278a] HIGHLOW
+	reloc   84 offset  790 [2790] HIGHLOW
+	reloc   85 offset  7b7 [27b7] HIGHLOW
+	reloc   86 offset  7d5 [27d5] HIGHLOW
+	reloc   87 offset  80a [280a] HIGHLOW
+	reloc   88 offset  81a [281a] HIGHLOW
+	reloc   89 offset  838 [2838] HIGHLOW
+	reloc   90 offset  84c [284c] HIGHLOW
+	reloc   91 offset  887 [2887] HIGHLOW
+	reloc   92 offset  88e [288e] HIGHLOW
+	reloc   93 offset  89c [289c] HIGHLOW
+	reloc   94 offset  8c2 [28c2] HIGHLOW
+	reloc   95 offset  8ca [28ca] HIGHLOW
+	reloc   96 offset  8fc [28fc] HIGHLOW
+	reloc   97 offset  902 [2902] HIGHLOW
+	reloc   98 offset  908 [2908] HIGHLOW
+	reloc   99 offset  90e [290e] HIGHLOW
+	reloc  100 offset  939 [2939] HIGHLOW
+	reloc  101 offset  95a [295a] HIGHLOW
+	reloc  102 offset  979 [2979] HIGHLOW
+	reloc  103 offset  981 [2981] HIGHLOW
+	reloc  104 offset  99d [299d] HIGHLOW
+	reloc  105 offset  9bc [29bc] HIGHLOW
+	reloc  106 offset  9c4 [29c4] HIGHLOW
+	reloc  107 offset  9db [29db] HIGHLOW
+	reloc  108 offset  a0d [2a0d] HIGHLOW
+	reloc  109 offset  a20 [2a20] HIGHLOW
+	reloc  110 offset  a6c [2a6c] HIGHLOW
+	reloc  111 offset  a74 [2a74] HIGHLOW
+	reloc  112 offset  aa4 [2aa4] HIGHLOW
+	reloc  113 offset  ab5 [2ab5] HIGHLOW
+	reloc  114 offset  abf [2abf] HIGHLOW
+	reloc  115 offset  aef [2aef] HIGHLOW
+	reloc  116 offset  af4 [2af4] HIGHLOW
+	reloc  117 offset  aff [2aff] HIGHLOW
+	reloc  118 offset  b22 [2b22] HIGHLOW
+	reloc  119 offset  b41 [2b41] HIGHLOW
+	reloc  120 offset  b49 [2b49] HIGHLOW
+	reloc  121 offset  b5d [2b5d] HIGHLOW
+	reloc  122 offset  b74 [2b74] HIGHLOW
+	reloc  123 offset  b9e [2b9e] HIGHLOW
+	reloc  124 offset  bb4 [2bb4] HIGHLOW
+	reloc  125 offset  bd7 [2bd7] HIGHLOW
+	reloc  126 offset  bdf [2bdf] HIGHLOW
+	reloc  127 offset  bf8 [2bf8] HIGHLOW
+	reloc  128 offset  bfe [2bfe] HIGHLOW
+	reloc  129 offset  c21 [2c21] HIGHLOW
+	reloc  130 offset  c29 [2c29] HIGHLOW
+	reloc  131 offset  c55 [2c55] HIGHLOW
+	reloc  132 offset  c5b [2c5b] HIGHLOW
+	reloc  133 offset  c61 [2c61] HIGHLOW
+	reloc  134 offset  c67 [2c67] HIGHLOW
+	reloc  135 offset  c84 [2c84] HIGHLOW
+	reloc  136 offset  ca2 [2ca2] HIGHLOW
+	reloc  137 offset  cb8 [2cb8] HIGHLOW
+	reloc  138 offset  cbe [2cbe] HIGHLOW
+	reloc  139 offset  ce1 [2ce1] HIGHLOW
+	reloc  140 offset  ce9 [2ce9] HIGHLOW
+	reloc  141 offset  cee [2cee] HIGHLOW
+	reloc  142 offset  cf4 [2cf4] HIGHLOW
+	reloc  143 offset  cfa [2cfa] HIGHLOW
+	reloc  144 offset  d00 [2d00] HIGHLOW
+	reloc  145 offset  d14 [2d14] HIGHLOW
+	reloc  146 offset  d21 [2d21] HIGHLOW
+	reloc  147 offset  d41 [2d41] HIGHLOW
+	reloc  148 offset  d57 [2d57] HIGHLOW
+	reloc  149 offset  d5d [2d5d] HIGHLOW
+	reloc  150 offset  d79 [2d79] HIGHLOW
+	reloc  151 offset  d7f [2d7f] HIGHLOW
+	reloc  152 offset  d85 [2d85] HIGHLOW
+	reloc  153 offset  d8b [2d8b] HIGHLOW
+	reloc  154 offset  d96 [2d96] HIGHLOW
+	reloc  155 offset  da4 [2da4] HIGHLOW
+	reloc  156 offset  dd0 [2dd0] HIGHLOW
+	reloc  157 offset  e03 [2e03] HIGHLOW
+	reloc  158 offset  e09 [2e09] HIGHLOW
+	reloc  159 offset  e30 [2e30] HIGHLOW
+	reloc  160 offset  e5d [2e5d] HIGHLOW
+	reloc  161 offset  e65 [2e65] HIGHLOW
+	reloc  162 offset  e86 [2e86] HIGHLOW
+	reloc  163 offset  eb9 [2eb9] HIGHLOW
+	reloc  164 offset  f06 [2f06] HIGHLOW
+	reloc  165 offset  f24 [2f24] HIGHLOW
+	reloc  166 offset  f2c [2f2c] HIGHLOW
+	reloc  167 offset  f45 [2f45] HIGHLOW
+	reloc  168 offset  f63 [2f63] HIGHLOW
+	reloc  169 offset  f74 [2f74] HIGHLOW
+	reloc  170 offset  f95 [2f95] HIGHLOW
+	reloc  171 offset  fb4 [2fb4] HIGHLOW
+	reloc  172 offset  fc8 [2fc8] HIGHLOW
+	reloc  173 offset  feb [2feb] HIGHLOW
+	reloc  174 offset  ffa [2ffa] HIGHLOW
+	reloc  175 offset    0 [2000] ABSOLUTE
+
+Virtual Address: 00003000 Chunk size 340 (0x154) Number of fixups 166
+	reloc    0 offset   3a [303a] HIGHLOW
+	reloc    1 offset  101 [3101] HIGHLOW
+	reloc    2 offset  13d [313d] HIGHLOW
+	reloc    3 offset  14f [314f] HIGHLOW
+	reloc    4 offset  18b [318b] HIGHLOW
+	reloc    5 offset  1c2 [31c2] HIGHLOW
+	reloc    6 offset  1f6 [31f6] HIGHLOW
+	reloc    7 offset  231 [3231] HIGHLOW
+	reloc    8 offset  291 [3291] HIGHLOW
+	reloc    9 offset  2b3 [32b3] HIGHLOW
+	reloc   10 offset  2c0 [32c0] HIGHLOW
+	reloc   11 offset  2d6 [32d6] HIGHLOW
+	reloc   12 offset  2e1 [32e1] HIGHLOW
+	reloc   13 offset  2f3 [32f3] HIGHLOW
+	reloc   14 offset  2fb [32fb] HIGHLOW
+	reloc   15 offset  31d [331d] HIGHLOW
+	reloc   16 offset  323 [3323] HIGHLOW
+	reloc   17 offset  329 [3329] HIGHLOW
+	reloc   18 offset  32f [332f] HIGHLOW
+	reloc   19 offset  337 [3337] HIGHLOW
+	reloc   20 offset  34f [334f] HIGHLOW
+	reloc   21 offset  356 [3356] HIGHLOW
+	reloc   22 offset  35c [335c] HIGHLOW
+	reloc   23 offset  363 [3363] HIGHLOW
+	reloc   24 offset  369 [3369] HIGHLOW
+	reloc   25 offset  379 [3379] HIGHLOW
+	reloc   26 offset  37e [337e] HIGHLOW
+	reloc   27 offset  384 [3384] HIGHLOW
+	reloc   28 offset  38a [338a] HIGHLOW
+	reloc   29 offset  390 [3390] HIGHLOW
+	reloc   30 offset  398 [3398] HIGHLOW
+	reloc   31 offset  3b0 [33b0] HIGHLOW
+	reloc   32 offset  3b7 [33b7] HIGHLOW
+	reloc   33 offset  3bd [33bd] HIGHLOW
+	reloc   34 offset  3c4 [33c4] HIGHLOW
+	reloc   35 offset  3ca [33ca] HIGHLOW
+	reloc   36 offset  3da [33da] HIGHLOW
+	reloc   37 offset  3df [33df] HIGHLOW
+	reloc   38 offset  3e5 [33e5] HIGHLOW
+	reloc   39 offset  3eb [33eb] HIGHLOW
+	reloc   40 offset  3f1 [33f1] HIGHLOW
+	reloc   41 offset  3f9 [33f9] HIGHLOW
+	reloc   42 offset  411 [3411] HIGHLOW
+	reloc   43 offset  418 [3418] HIGHLOW
+	reloc   44 offset  41e [341e] HIGHLOW
+	reloc   45 offset  425 [3425] HIGHLOW
+	reloc   46 offset  42b [342b] HIGHLOW
+	reloc   47 offset  43b [343b] HIGHLOW
+	reloc   48 offset  440 [3440] HIGHLOW
+	reloc   49 offset  446 [3446] HIGHLOW
+	reloc   50 offset  44c [344c] HIGHLOW
+	reloc   51 offset  452 [3452] HIGHLOW
+	reloc   52 offset  45a [345a] HIGHLOW
+	reloc   53 offset  472 [3472] HIGHLOW
+	reloc   54 offset  479 [3479] HIGHLOW
+	reloc   55 offset  47f [347f] HIGHLOW
+	reloc   56 offset  486 [3486] HIGHLOW
+	reloc   57 offset  48c [348c] HIGHLOW
+	reloc   58 offset  498 [3498] HIGHLOW
+	reloc   59 offset  49d [349d] HIGHLOW
+	reloc   60 offset  4a3 [34a3] HIGHLOW
+	reloc   61 offset  4a9 [34a9] HIGHLOW
+	reloc   62 offset  4af [34af] HIGHLOW
+	reloc   63 offset  4b7 [34b7] HIGHLOW
+	reloc   64 offset  4cf [34cf] HIGHLOW
+	reloc   65 offset  4d6 [34d6] HIGHLOW
+	reloc   66 offset  4dc [34dc] HIGHLOW
+	reloc   67 offset  4e3 [34e3] HIGHLOW
+	reloc   68 offset  4e9 [34e9] HIGHLOW
+	reloc   69 offset  504 [3504] HIGHLOW
+	reloc   70 offset  50f [350f] HIGHLOW
+	reloc   71 offset  535 [3535] HIGHLOW
+	reloc   72 offset  53d [353d] HIGHLOW
+	reloc   73 offset  573 [3573] HIGHLOW
+	reloc   74 offset  580 [3580] HIGHLOW
+	reloc   75 offset  5a3 [35a3] HIGHLOW
+	reloc   76 offset  5c7 [35c7] HIGHLOW
+	reloc   77 offset  5cf [35cf] HIGHLOW
+	reloc   78 offset  5e2 [35e2] HIGHLOW
+	reloc   79 offset  5e8 [35e8] HIGHLOW
+	reloc   80 offset  5f9 [35f9] HIGHLOW
+	reloc   81 offset  5ff [35ff] HIGHLOW
+	reloc   82 offset  619 [3619] HIGHLOW
+	reloc   83 offset  636 [3636] HIGHLOW
+	reloc   84 offset  652 [3652] HIGHLOW
+	reloc   85 offset  65a [365a] HIGHLOW
+	reloc   86 offset  672 [3672] HIGHLOW
+	reloc   87 offset  68c [368c] HIGHLOW
+	reloc   88 offset  69b [369b] HIGHLOW
+	reloc   89 offset  6a3 [36a3] HIGHLOW
+	reloc   90 offset  6bb [36bb] HIGHLOW
+	reloc   91 offset  6c1 [36c1] HIGHLOW
+	reloc   92 offset  706 [3706] HIGHLOW
+	reloc   93 offset  735 [3735] HIGHLOW
+	reloc   94 offset  73d [373d] HIGHLOW
+	reloc   95 offset  768 [3768] HIGHLOW
+	reloc   96 offset  781 [3781] HIGHLOW
+	reloc   97 offset  787 [3787] HIGHLOW
+	reloc   98 offset  790 [3790] HIGHLOW
+	reloc   99 offset  796 [3796] HIGHLOW
+	reloc  100 offset  7ca [37ca] HIGHLOW
+	reloc  101 offset  7e3 [37e3] HIGHLOW
+	reloc  102 offset  808 [3808] HIGHLOW
+	reloc  103 offset  821 [3821] HIGHLOW
+	reloc  104 offset  827 [3827] HIGHLOW
+	reloc  105 offset  85b [385b] HIGHLOW
+	reloc  106 offset  86f [386f] HIGHLOW
+	reloc  107 offset  876 [3876] HIGHLOW
+	reloc  108 offset  87c [387c] HIGHLOW
+	reloc  109 offset  8a3 [38a3] HIGHLOW
+	reloc  110 offset  8c7 [38c7] HIGHLOW
+	reloc  111 offset  8cf [38cf] HIGHLOW
+	reloc  112 offset  8e2 [38e2] HIGHLOW
+	reloc  113 offset  8e8 [38e8] HIGHLOW
+	reloc  114 offset  8f1 [38f1] HIGHLOW
+	reloc  115 offset  8fc [38fc] HIGHLOW
+	reloc  116 offset  919 [3919] HIGHLOW
+	reloc  117 offset  922 [3922] HIGHLOW
+	reloc  118 offset  928 [3928] HIGHLOW
+	reloc  119 offset  946 [3946] HIGHLOW
+	reloc  120 offset  971 [3971] HIGHLOW
+	reloc  121 offset  9bb [39bb] HIGHLOW
+	reloc  122 offset  9ff [39ff] HIGHLOW
+	reloc  123 offset  a14 [3a14] HIGHLOW
+	reloc  124 offset  a25 [3a25] HIGHLOW
+	reloc  125 offset  a2c [3a2c] HIGHLOW
+	reloc  126 offset  a7e [3a7e] HIGHLOW
+	reloc  127 offset  ab9 [3ab9] HIGHLOW
+	reloc  128 offset  acb [3acb] HIGHLOW
+	reloc  129 offset  ae4 [3ae4] HIGHLOW
+	reloc  130 offset  af8 [3af8] HIGHLOW
+	reloc  131 offset  bbe [3bbe] HIGHLOW
+	reloc  132 offset  bcd [3bcd] HIGHLOW
+	reloc  133 offset  bd5 [3bd5] HIGHLOW
+	reloc  134 offset  c29 [3c29] HIGHLOW
+	reloc  135 offset  c5b [3c5b] HIGHLOW
+	reloc  136 offset  c96 [3c96] HIGHLOW
+	reloc  137 offset  cf3 [3cf3] HIGHLOW
+	reloc  138 offset  cfb [3cfb] HIGHLOW
+	reloc  139 offset  d45 [3d45] HIGHLOW
+	reloc  140 offset  d55 [3d55] HIGHLOW
+	reloc  141 offset  d65 [3d65] HIGHLOW
+	reloc  142 offset  d77 [3d77] HIGHLOW
+	reloc  143 offset  db0 [3db0] HIGHLOW
+	reloc  144 offset  dbd [3dbd] HIGHLOW
+	reloc  145 offset  de3 [3de3] HIGHLOW
+	reloc  146 offset  df6 [3df6] HIGHLOW
+	reloc  147 offset  e10 [3e10] HIGHLOW
+	reloc  148 offset  e36 [3e36] HIGHLOW
+	reloc  149 offset  e42 [3e42] HIGHLOW
+	reloc  150 offset  e65 [3e65] HIGHLOW
+	reloc  151 offset  e72 [3e72] HIGHLOW
+	reloc  152 offset  e7c [3e7c] HIGHLOW
+	reloc  153 offset  e8e [3e8e] HIGHLOW
+	reloc  154 offset  e95 [3e95] HIGHLOW
+	reloc  155 offset  eb6 [3eb6] HIGHLOW
+	reloc  156 offset  ec5 [3ec5] HIGHLOW
+	reloc  157 offset  f14 [3f14] HIGHLOW
+	reloc  158 offset  f37 [3f37] HIGHLOW
+	reloc  159 offset  f47 [3f47] HIGHLOW
+	reloc  160 offset  f62 [3f62] HIGHLOW
+	reloc  161 offset  f77 [3f77] HIGHLOW
+	reloc  162 offset  fab [3fab] HIGHLOW
+	reloc  163 offset  fb5 [3fb5] HIGHLOW
+	reloc  164 offset  fc4 [3fc4] HIGHLOW
+	reloc  165 offset  fdc [3fdc] HIGHLOW
+
+Virtual Address: 00004000 Chunk size 228 (0xe4) Number of fixups 110
+	reloc    0 offset   1f [401f] HIGHLOW
+	reloc    1 offset   34 [4034] HIGHLOW
+	reloc    2 offset   44 [4044] HIGHLOW
+	reloc    3 offset   4b [404b] HIGHLOW
+	reloc    4 offset   5a [405a] HIGHLOW
+	reloc    5 offset   8e [408e] HIGHLOW
+	reloc    6 offset   c9 [40c9] HIGHLOW
+	reloc    7 offset   db [40db] HIGHLOW
+	reloc    8 offset   f4 [40f4] HIGHLOW
+	reloc    9 offset  108 [4108] HIGHLOW
+	reloc   10 offset  1c6 [41c6] HIGHLOW
+	reloc   11 offset  1cf [41cf] HIGHLOW
+	reloc   12 offset  1ec [41ec] HIGHLOW
+	reloc   13 offset  205 [4205] HIGHLOW
+	reloc   14 offset  20c [420c] HIGHLOW
+	reloc   15 offset  216 [4216] HIGHLOW
+	reloc   16 offset  228 [4228] HIGHLOW
+	reloc   17 offset  24c [424c] HIGHLOW
+	reloc   18 offset  28d [428d] HIGHLOW
+	reloc   19 offset  29e [429e] HIGHLOW
+	reloc   20 offset  2c3 [42c3] HIGHLOW
+	reloc   21 offset  2e7 [42e7] HIGHLOW
+	reloc   22 offset  2f4 [42f4] HIGHLOW
+	reloc   23 offset  31d [431d] HIGHLOW
+	reloc   24 offset  347 [4347] HIGHLOW
+	reloc   25 offset  393 [4393] HIGHLOW
+	reloc   26 offset  3c2 [43c2] HIGHLOW
+	reloc   27 offset  3ca [43ca] HIGHLOW
+	reloc   28 offset  403 [4403] HIGHLOW
+	reloc   29 offset  432 [4432] HIGHLOW
+	reloc   30 offset  455 [4455] HIGHLOW
+	reloc   31 offset  473 [4473] HIGHLOW
+	reloc   32 offset  48a [448a] HIGHLOW
+	reloc   33 offset  499 [4499] HIGHLOW
+	reloc   34 offset  4bb [44bb] HIGHLOW
+	reloc   35 offset  4c2 [44c2] HIGHLOW
+	reloc   36 offset  4f5 [44f5] HIGHLOW
+	reloc   37 offset  531 [4531] HIGHLOW
+	reloc   38 offset  55b [455b] HIGHLOW
+	reloc   39 offset  569 [4569] HIGHLOW
+	reloc   40 offset  585 [4585] HIGHLOW
+	reloc   41 offset  595 [4595] HIGHLOW
+	reloc   42 offset  5c3 [45c3] HIGHLOW
+	reloc   43 offset  5eb [45eb] HIGHLOW
+	reloc   44 offset  5f3 [45f3] HIGHLOW
+	reloc   45 offset  629 [4629] HIGHLOW
+	reloc   46 offset  652 [4652] HIGHLOW
+	reloc   47 offset  689 [4689] HIGHLOW
+	reloc   48 offset  691 [4691] HIGHLOW
+	reloc   49 offset  6c2 [46c2] HIGHLOW
+	reloc   50 offset  6ef [46ef] HIGHLOW
+	reloc   51 offset  6f7 [46f7] HIGHLOW
+	reloc   52 offset  739 [4739] HIGHLOW
+	reloc   53 offset  76f [476f] HIGHLOW
+	reloc   54 offset  777 [4777] HIGHLOW
+	reloc   55 offset  7c7 [47c7] HIGHLOW
+	reloc   56 offset  7d9 [47d9] HIGHLOW
+	reloc   57 offset  80f [480f] HIGHLOW
+	reloc   58 offset  82d [482d] HIGHLOW
+	reloc   59 offset  83a [483a] HIGHLOW
+	reloc   60 offset  857 [4857] HIGHLOW
+	reloc   61 offset  892 [4892] HIGHLOW
+	reloc   62 offset  901 [4901] HIGHLOW
+	reloc   63 offset  91d [491d] HIGHLOW
+	reloc   64 offset  93a [493a] HIGHLOW
+	reloc   65 offset  942 [4942] HIGHLOW
+	reloc   66 offset  95d [495d] HIGHLOW
+	reloc   67 offset  995 [4995] HIGHLOW
+	reloc   68 offset  9bf [49bf] HIGHLOW
+	reloc   69 offset  9ed [49ed] HIGHLOW
+	reloc   70 offset  a0f [4a0f] HIGHLOW
+	reloc   71 offset  a28 [4a28] HIGHLOW
+	reloc   72 offset  a36 [4a36] HIGHLOW
+	reloc   73 offset  a79 [4a79] HIGHLOW
+	reloc   74 offset  aaf [4aaf] HIGHLOW
+	reloc   75 offset  ab7 [4ab7] HIGHLOW
+	reloc   76 offset  b0a [4b0a] HIGHLOW
+	reloc   77 offset  b1c [4b1c] HIGHLOW
+	reloc   78 offset  b5f [4b5f] HIGHLOW
+	reloc   79 offset  b7d [4b7d] HIGHLOW
+	reloc   80 offset  b8a [4b8a] HIGHLOW
+	reloc   81 offset  ba7 [4ba7] HIGHLOW
+	reloc   82 offset  bc8 [4bc8] HIGHLOW
+	reloc   83 offset  c24 [4c24] HIGHLOW
+	reloc   84 offset  c3d [4c3d] HIGHLOW
+	reloc   85 offset  c44 [4c44] HIGHLOW
+	reloc   86 offset  c5d [4c5d] HIGHLOW
+	reloc   87 offset  c65 [4c65] HIGHLOW
+	reloc   88 offset  c80 [4c80] HIGHLOW
+	reloc   89 offset  cb9 [4cb9] HIGHLOW
+	reloc   90 offset  ce3 [4ce3] HIGHLOW
+	reloc   91 offset  d11 [4d11] HIGHLOW
+	reloc   92 offset  d30 [4d30] HIGHLOW
+	reloc   93 offset  d48 [4d48] HIGHLOW
+	reloc   94 offset  d56 [4d56] HIGHLOW
+	reloc   95 offset  d82 [4d82] HIGHLOW
+	reloc   96 offset  db7 [4db7] HIGHLOW
+	reloc   97 offset  dbf [4dbf] HIGHLOW
+	reloc   98 offset  df2 [4df2] HIGHLOW
+	reloc   99 offset  e20 [4e20] HIGHLOW
+	reloc  100 offset  e8a [4e8a] HIGHLOW
+	reloc  101 offset  ec9 [4ec9] HIGHLOW
+	reloc  102 offset  ed1 [4ed1] HIGHLOW
+	reloc  103 offset  f02 [4f02] HIGHLOW
+	reloc  104 offset  f2a [4f2a] HIGHLOW
+	reloc  105 offset  f8e [4f8e] HIGHLOW
+	reloc  106 offset  fa9 [4fa9] HIGHLOW
+	reloc  107 offset  fb1 [4fb1] HIGHLOW
+	reloc  108 offset  fe2 [4fe2] HIGHLOW
+	reloc  109 offset    0 [4000] ABSOLUTE
+
+Virtual Address: 00005000 Chunk size 344 (0x158) Number of fixups 168
+	reloc    0 offset    7 [5007] HIGHLOW
+	reloc    1 offset    f [500f] HIGHLOW
+	reloc    2 offset   32 [5032] HIGHLOW
+	reloc    3 offset   85 [5085] HIGHLOW
+	reloc    4 offset   8d [508d] HIGHLOW
+	reloc    5 offset   c3 [50c3] HIGHLOW
+	reloc    6 offset   dd [50dd] HIGHLOW
+	reloc    7 offset   e5 [50e5] HIGHLOW
+	reloc    8 offset  141 [5141] HIGHLOW
+	reloc    9 offset  173 [5173] HIGHLOW
+	reloc   10 offset  199 [5199] HIGHLOW
+	reloc   11 offset  1c2 [51c2] HIGHLOW
+	reloc   12 offset  1f9 [51f9] HIGHLOW
+	reloc   13 offset  201 [5201] HIGHLOW
+	reloc   14 offset  232 [5232] HIGHLOW
+	reloc   15 offset  27c [527c] HIGHLOW
+	reloc   16 offset  284 [5284] HIGHLOW
+	reloc   17 offset  2b2 [52b2] HIGHLOW
+	reloc   18 offset  2df [52df] HIGHLOW
+	reloc   19 offset  2e7 [52e7] HIGHLOW
+	reloc   20 offset  326 [5326] HIGHLOW
+	reloc   21 offset  34e [534e] HIGHLOW
+	reloc   22 offset  356 [5356] HIGHLOW
+	reloc   23 offset  38b [538b] HIGHLOW
+	reloc   24 offset  3a2 [53a2] HIGHLOW
+	reloc   25 offset  3b0 [53b0] HIGHLOW
+	reloc   26 offset  3c1 [53c1] HIGHLOW
+	reloc   27 offset  3ca [53ca] HIGHLOW
+	reloc   28 offset  3e4 [53e4] HIGHLOW
+	reloc   29 offset  3f1 [53f1] HIGHLOW
+	reloc   30 offset  404 [5404] HIGHLOW
+	reloc   31 offset  473 [5473] HIGHLOW
+	reloc   32 offset  48d [548d] HIGHLOW
+	reloc   33 offset  495 [5495] HIGHLOW
+	reloc   34 offset  4a9 [54a9] HIGHLOW
+	reloc   35 offset  4b2 [54b2] HIGHLOW
+	reloc   36 offset  4d0 [54d0] HIGHLOW
+	reloc   37 offset  502 [5502] HIGHLOW
+	reloc   38 offset  545 [5545] HIGHLOW
+	reloc   39 offset  577 [5577] HIGHLOW
+	reloc   40 offset  589 [5589] HIGHLOW
+	reloc   41 offset  591 [5591] HIGHLOW
+	reloc   42 offset  5aa [55aa] HIGHLOW
+	reloc   43 offset  5da [55da] HIGHLOW
+	reloc   44 offset  5ec [55ec] HIGHLOW
+	reloc   45 offset  5f4 [55f4] HIGHLOW
+	reloc   46 offset  61a [561a] HIGHLOW
+	reloc   47 offset  622 [5622] HIGHLOW
+	reloc   48 offset  649 [5649] HIGHLOW
+	reloc   49 offset  652 [5652] HIGHLOW
+	reloc   50 offset  698 [5698] HIGHLOW
+	reloc   51 offset  6a1 [56a1] HIGHLOW
+	reloc   52 offset  6c7 [56c7] HIGHLOW
+	reloc   53 offset  6e5 [56e5] HIGHLOW
+	reloc   54 offset  6ed [56ed] HIGHLOW
+	reloc   55 offset  714 [5714] HIGHLOW
+	reloc   56 offset  722 [5722] HIGHLOW
+	reloc   57 offset  72a [572a] HIGHLOW
+	reloc   58 offset  750 [5750] HIGHLOW
+	reloc   59 offset  759 [5759] HIGHLOW
+	reloc   60 offset  799 [5799] HIGHLOW
+	reloc   61 offset  7b3 [57b3] HIGHLOW
+	reloc   62 offset  7bb [57bb] HIGHLOW
+	reloc   63 offset  7e9 [57e9] HIGHLOW
+	reloc   64 offset  803 [5803] HIGHLOW
+	reloc   65 offset  80b [580b] HIGHLOW
+	reloc   66 offset  81f [581f] HIGHLOW
+	reloc   67 offset  828 [5828] HIGHLOW
+	reloc   68 offset  897 [5897] HIGHLOW
+	reloc   69 offset  8b1 [58b1] HIGHLOW
+	reloc   70 offset  8b9 [58b9] HIGHLOW
+	reloc   71 offset  8d0 [58d0] HIGHLOW
+	reloc   72 offset  8d7 [58d7] HIGHLOW
+	reloc   73 offset  8e5 [58e5] HIGHLOW
+	reloc   74 offset  8ec [58ec] HIGHLOW
+	reloc   75 offset  93a [593a] HIGHLOW
+	reloc   76 offset  94c [594c] HIGHLOW
+	reloc   77 offset  954 [5954] HIGHLOW
+	reloc   78 offset  96e [596e] HIGHLOW
+	reloc   79 offset  984 [5984] HIGHLOW
+	reloc   80 offset  98c [598c] HIGHLOW
+	reloc   81 offset  9b2 [59b2] HIGHLOW
+	reloc   82 offset  9cf [59cf] HIGHLOW
+	reloc   83 offset  9d7 [59d7] HIGHLOW
+	reloc   84 offset  9f2 [59f2] HIGHLOW
+	reloc   85 offset  a17 [5a17] HIGHLOW
+	reloc   86 offset  a1f [5a1f] HIGHLOW
+	reloc   87 offset  a42 [5a42] HIGHLOW
+	reloc   88 offset  a67 [5a67] HIGHLOW
+	reloc   89 offset  a6f [5a6f] HIGHLOW
+	reloc   90 offset  abb [5abb] HIGHLOW
+	reloc   91 offset  aed [5aed] HIGHLOW
+	reloc   92 offset  afa [5afa] HIGHLOW
+	reloc   93 offset  b07 [5b07] HIGHLOW
+	reloc   94 offset  b12 [5b12] HIGHLOW
+	reloc   95 offset  b1a [5b1a] HIGHLOW
+	reloc   96 offset  b69 [5b69] HIGHLOW
+	reloc   97 offset  b9b [5b9b] HIGHLOW
+	reloc   98 offset  bcd [5bcd] HIGHLOW
+	reloc   99 offset  bda [5bda] HIGHLOW
+	reloc  100 offset  be8 [5be8] HIGHLOW
+	reloc  101 offset  bf0 [5bf0] HIGHLOW
+	reloc  102 offset  c0b [5c0b] HIGHLOW
+	reloc  103 offset  c1c [5c1c] HIGHLOW
+	reloc  104 offset  c23 [5c23] HIGHLOW
+	reloc  105 offset  c3c [5c3c] HIGHLOW
+	reloc  106 offset  c61 [5c61] HIGHLOW
+	reloc  107 offset  c7a [5c7a] HIGHLOW
+	reloc  108 offset  c86 [5c86] HIGHLOW
+	reloc  109 offset  c9d [5c9d] HIGHLOW
+	reloc  110 offset  cbb [5cbb] HIGHLOW
+	reloc  111 offset  cc5 [5cc5] HIGHLOW
+	reloc  112 offset  cd0 [5cd0] HIGHLOW
+	reloc  113 offset  cdb [5cdb] HIGHLOW
+	reloc  114 offset  cfa [5cfa] HIGHLOW
+	reloc  115 offset  d02 [5d02] HIGHLOW
+	reloc  116 offset  d1c [5d1c] HIGHLOW
+	reloc  117 offset  d37 [5d37] HIGHLOW
+	reloc  118 offset  d3f [5d3f] HIGHLOW
+	reloc  119 offset  d55 [5d55] HIGHLOW
+	reloc  120 offset  d5d [5d5d] HIGHLOW
+	reloc  121 offset  d78 [5d78] HIGHLOW
+	reloc  122 offset  d80 [5d80] HIGHLOW
+	reloc  123 offset  d96 [5d96] HIGHLOW
+	reloc  124 offset  dbc [5dbc] HIGHLOW
+	reloc  125 offset  dca [5dca] HIGHLOW
+	reloc  126 offset  dd2 [5dd2] HIGHLOW
+	reloc  127 offset  de6 [5de6] HIGHLOW
+	reloc  128 offset  deb [5deb] HIGHLOW
+	reloc  129 offset  df1 [5df1] HIGHLOW
+	reloc  130 offset  df6 [5df6] HIGHLOW
+	reloc  131 offset  e25 [5e25] HIGHLOW
+	reloc  132 offset  e30 [5e30] HIGHLOW
+	reloc  133 offset  e3a [5e3a] HIGHLOW
+	reloc  134 offset  e3f [5e3f] HIGHLOW
+	reloc  135 offset  e4c [5e4c] HIGHLOW
+	reloc  136 offset  e56 [5e56] HIGHLOW
+	reloc  137 offset  e6a [5e6a] HIGHLOW
+	reloc  138 offset  e70 [5e70] HIGHLOW
+	reloc  139 offset  e7a [5e7a] HIGHLOW
+	reloc  140 offset  e90 [5e90] HIGHLOW
+	reloc  141 offset  e98 [5e98] HIGHLOW
+	reloc  142 offset  eb2 [5eb2] HIGHLOW
+	reloc  143 offset  ed1 [5ed1] HIGHLOW
+	reloc  144 offset  ed9 [5ed9] HIGHLOW
+	reloc  145 offset  ef7 [5ef7] HIGHLOW
+	reloc  146 offset  efd [5efd] HIGHLOW
+	reloc  147 offset  f07 [5f07] HIGHLOW
+	reloc  148 offset  f19 [5f19] HIGHLOW
+	reloc  149 offset  f21 [5f21] HIGHLOW
+	reloc  150 offset  f3a [5f3a] HIGHLOW
+	reloc  151 offset  f40 [5f40] HIGHLOW
+	reloc  152 offset  f49 [5f49] HIGHLOW
+	reloc  153 offset  f50 [5f50] HIGHLOW
+	reloc  154 offset  f56 [5f56] HIGHLOW
+	reloc  155 offset  f61 [5f61] HIGHLOW
+	reloc  156 offset  f68 [5f68] HIGHLOW
+	reloc  157 offset  f6e [5f6e] HIGHLOW
+	reloc  158 offset  f78 [5f78] HIGHLOW
+	reloc  159 offset  f9e [5f9e] HIGHLOW
+	reloc  160 offset  fa4 [5fa4] HIGHLOW
+	reloc  161 offset  faa [5faa] HIGHLOW
+	reloc  162 offset  fb8 [5fb8] HIGHLOW
+	reloc  163 offset  fc0 [5fc0] HIGHLOW
+	reloc  164 offset  fe7 [5fe7] HIGHLOW
+	reloc  165 offset  ff1 [5ff1] HIGHLOW
+	reloc  166 offset  ff7 [5ff7] HIGHLOW
+	reloc  167 offset    0 [5000] ABSOLUTE
+
+Virtual Address: 00006000 Chunk size 344 (0x158) Number of fixups 168
+	reloc    0 offset    1 [6001] HIGHLOW
+	reloc    1 offset   17 [6017] HIGHLOW
+	reloc    2 offset   26 [6026] HIGHLOW
+	reloc    3 offset   2c [602c] HIGHLOW
+	reloc    4 offset   32 [6032] HIGHLOW
+	reloc    5 offset   40 [6040] HIGHLOW
+	reloc    6 offset   46 [6046] HIGHLOW
+	reloc    7 offset   4c [604c] HIGHLOW
+	reloc    8 offset   56 [6056] HIGHLOW
+	reloc    9 offset   6c [606c] HIGHLOW
+	reloc   10 offset   80 [6080] HIGHLOW
+	reloc   11 offset   8a [608a] HIGHLOW
+	reloc   12 offset   a0 [60a0] HIGHLOW
+	reloc   13 offset   c8 [60c8] HIGHLOW
+	reloc   14 offset   ce [60ce] HIGHLOW
+	reloc   15 offset   d7 [60d7] HIGHLOW
+	reloc   16 offset   de [60de] HIGHLOW
+	reloc   17 offset   e6 [60e6] HIGHLOW
+	reloc   18 offset   ec [60ec] HIGHLOW
+	reloc   19 offset   f4 [60f4] HIGHLOW
+	reloc   20 offset   fa [60fa] HIGHLOW
+	reloc   21 offset  104 [6104] HIGHLOW
+	reloc   22 offset  10a [610a] HIGHLOW
+	reloc   23 offset  111 [6111] HIGHLOW
+	reloc   24 offset  117 [6117] HIGHLOW
+	reloc   25 offset  11d [611d] HIGHLOW
+	reloc   26 offset  127 [6127] HIGHLOW
+	reloc   27 offset  133 [6133] HIGHLOW
+	reloc   28 offset  15e [615e] HIGHLOW
+	reloc   29 offset  170 [6170] HIGHLOW
+	reloc   30 offset  178 [6178] HIGHLOW
+	reloc   31 offset  1b5 [61b5] HIGHLOW
+	reloc   32 offset  1bb [61bb] HIGHLOW
+	reloc   33 offset  1c1 [61c1] HIGHLOW
+	reloc   34 offset  1c7 [61c7] HIGHLOW
+	reloc   35 offset  1ef [61ef] HIGHLOW
+	reloc   36 offset  1f5 [61f5] HIGHLOW
+	reloc   37 offset  223 [6223] HIGHLOW
+	reloc   38 offset  22e [622e] HIGHLOW
+	reloc   39 offset  236 [6236] HIGHLOW
+	reloc   40 offset  269 [6269] HIGHLOW
+	reloc   41 offset  28b [628b] HIGHLOW
+	reloc   42 offset  29d [629d] HIGHLOW
+	reloc   43 offset  2b3 [62b3] HIGHLOW
+	reloc   44 offset  2bd [62bd] HIGHLOW
+	reloc   45 offset  2db [62db] HIGHLOW
+	reloc   46 offset  300 [6300] HIGHLOW
+	reloc   47 offset  308 [6308] HIGHLOW
+	reloc   48 offset  317 [6317] HIGHLOW
+	reloc   49 offset  321 [6321] HIGHLOW
+	reloc   50 offset  333 [6333] HIGHLOW
+	reloc   51 offset  35c [635c] HIGHLOW
+	reloc   52 offset  379 [6379] HIGHLOW
+	reloc   53 offset  3ae [63ae] HIGHLOW
+	reloc   54 offset  3cc [63cc] HIGHLOW
+	reloc   55 offset  40a [640a] HIGHLOW
+	reloc   56 offset  428 [6428] HIGHLOW
+	reloc   57 offset  43c [643c] HIGHLOW
+	reloc   58 offset  471 [6471] HIGHLOW
+	reloc   59 offset  49e [649e] HIGHLOW
+	reloc   60 offset  4a9 [64a9] HIGHLOW
+	reloc   61 offset  4b1 [64b1] HIGHLOW
+	reloc   62 offset  4df [64df] HIGHLOW
+	reloc   63 offset  516 [6516] HIGHLOW
+	reloc   64 offset  51e [651e] HIGHLOW
+	reloc   65 offset  53f [653f] HIGHLOW
+	reloc   66 offset  551 [6551] HIGHLOW
+	reloc   67 offset  5c5 [65c5] HIGHLOW
+	reloc   68 offset  5db [65db] HIGHLOW
+	reloc   69 offset  5f5 [65f5] HIGHLOW
+	reloc   70 offset  5fd [65fd] HIGHLOW
+	reloc   71 offset  63b [663b] HIGHLOW
+	reloc   72 offset  643 [6643] HIGHLOW
+	reloc   73 offset  670 [6670] HIGHLOW
+	reloc   74 offset  678 [6678] HIGHLOW
+	reloc   75 offset  699 [6699] HIGHLOW
+	reloc   76 offset  6ab [66ab] HIGHLOW
+	reloc   77 offset  70d [670d] HIGHLOW
+	reloc   78 offset  715 [6715] HIGHLOW
+	reloc   79 offset  736 [6736] HIGHLOW
+	reloc   80 offset  748 [6748] HIGHLOW
+	reloc   81 offset  7b6 [67b6] HIGHLOW
+	reloc   82 offset  7be [67be] HIGHLOW
+	reloc   83 offset  7fe [67fe] HIGHLOW
+	reloc   84 offset  80f [680f] HIGHLOW
+	reloc   85 offset  81e [681e] HIGHLOW
+	reloc   86 offset  826 [6826] HIGHLOW
+	reloc   87 offset  842 [6842] HIGHLOW
+	reloc   88 offset  851 [6851] HIGHLOW
+	reloc   89 offset  861 [6861] HIGHLOW
+	reloc   90 offset  88a [688a] HIGHLOW
+	reloc   91 offset  89a [689a] HIGHLOW
+	reloc   92 offset  8a9 [68a9] HIGHLOW
+	reloc   93 offset  8b7 [68b7] HIGHLOW
+	reloc   94 offset  8c3 [68c3] HIGHLOW
+	reloc   95 offset  8e1 [68e1] HIGHLOW
+	reloc   96 offset  8fd [68fd] HIGHLOW
+	reloc   97 offset  908 [6908] HIGHLOW
+	reloc   98 offset  910 [6910] HIGHLOW
+	reloc   99 offset  924 [6924] HIGHLOW
+	reloc  100 offset  92f [692f] HIGHLOW
+	reloc  101 offset  93c [693c] HIGHLOW
+	reloc  102 offset  947 [6947] HIGHLOW
+	reloc  103 offset  94f [694f] HIGHLOW
+	reloc  104 offset  97a [697a] HIGHLOW
+	reloc  105 offset  99a [699a] HIGHLOW
+	reloc  106 offset  9e6 [69e6] HIGHLOW
+	reloc  107 offset  9f0 [69f0] HIGHLOW
+	reloc  108 offset  a2e [6a2e] HIGHLOW
+	reloc  109 offset  a69 [6a69] HIGHLOW
+	reloc  110 offset  a7b [6a7b] HIGHLOW
+	reloc  111 offset  a94 [6a94] HIGHLOW
+	reloc  112 offset  aa8 [6aa8] HIGHLOW
+	reloc  113 offset  b6c [6b6c] HIGHLOW
+	reloc  114 offset  b7c [6b7c] HIGHLOW
+	reloc  115 offset  bb1 [6bb1] HIGHLOW
+	reloc  116 offset  bcb [6bcb] HIGHLOW
+	reloc  117 offset  bd1 [6bd1] HIGHLOW
+	reloc  118 offset  bd6 [6bd6] HIGHLOW
+	reloc  119 offset  bdd [6bdd] HIGHLOW
+	reloc  120 offset  be4 [6be4] HIGHLOW
+	reloc  121 offset  bed [6bed] HIGHLOW
+	reloc  122 offset  bf5 [6bf5] HIGHLOW
+	reloc  123 offset  c1b [6c1b] HIGHLOW
+	reloc  124 offset  c2b [6c2b] HIGHLOW
+	reloc  125 offset  c38 [6c38] HIGHLOW
+	reloc  126 offset  c3f [6c3f] HIGHLOW
+	reloc  127 offset  c51 [6c51] HIGHLOW
+	reloc  128 offset  c6b [6c6b] HIGHLOW
+	reloc  129 offset  c71 [6c71] HIGHLOW
+	reloc  130 offset  c76 [6c76] HIGHLOW
+	reloc  131 offset  c7d [6c7d] HIGHLOW
+	reloc  132 offset  c84 [6c84] HIGHLOW
+	reloc  133 offset  c8d [6c8d] HIGHLOW
+	reloc  134 offset  c95 [6c95] HIGHLOW
+	reloc  135 offset  cbd [6cbd] HIGHLOW
+	reloc  136 offset  cde [6cde] HIGHLOW
+	reloc  137 offset  ce6 [6ce6] HIGHLOW
+	reloc  138 offset  cf4 [6cf4] HIGHLOW
+	reloc  139 offset  d11 [6d11] HIGHLOW
+	reloc  140 offset  d2b [6d2b] HIGHLOW
+	reloc  141 offset  d31 [6d31] HIGHLOW
+	reloc  142 offset  d36 [6d36] HIGHLOW
+	reloc  143 offset  d3d [6d3d] HIGHLOW
+	reloc  144 offset  d44 [6d44] HIGHLOW
+	reloc  145 offset  d4d [6d4d] HIGHLOW
+	reloc  146 offset  d55 [6d55] HIGHLOW
+	reloc  147 offset  d7d [6d7d] HIGHLOW
+	reloc  148 offset  d94 [6d94] HIGHLOW
+	reloc  149 offset  d9a [6d9a] HIGHLOW
+	reloc  150 offset  da3 [6da3] HIGHLOW
+	reloc  151 offset  db6 [6db6] HIGHLOW
+	reloc  152 offset  dc7 [6dc7] HIGHLOW
+	reloc  153 offset  dd9 [6dd9] HIGHLOW
+	reloc  154 offset  de1 [6de1] HIGHLOW
+	reloc  155 offset  e18 [6e18] HIGHLOW
+	reloc  156 offset  e1f [6e1f] HIGHLOW
+	reloc  157 offset  f0c [6f0c] HIGHLOW
+	reloc  158 offset  f15 [6f15] HIGHLOW
+	reloc  159 offset  f26 [6f26] HIGHLOW
+	reloc  160 offset  f2d [6f2d] HIGHLOW
+	reloc  161 offset  f40 [6f40] HIGHLOW
+	reloc  162 offset  f79 [6f79] HIGHLOW
+	reloc  163 offset  fa1 [6fa1] HIGHLOW
+	reloc  164 offset  fb1 [6fb1] HIGHLOW
+	reloc  165 offset  fcc [6fcc] HIGHLOW
+	reloc  166 offset  fe7 [6fe7] HIGHLOW
+	reloc  167 offset  ff4 [6ff4] HIGHLOW
+
+Virtual Address: 00007000 Chunk size 392 (0x188) Number of fixups 192
+	reloc    0 offset    d [700d] HIGHLOW
+	reloc    1 offset   1c [701c] HIGHLOW
+	reloc    2 offset   23 [7023] HIGHLOW
+	reloc    3 offset   28 [7028] HIGHLOW
+	reloc    4 offset   65 [7065] HIGHLOW
+	reloc    5 offset   73 [7073] HIGHLOW
+	reloc    6 offset   82 [7082] HIGHLOW
+	reloc    7 offset   90 [7090] HIGHLOW
+	reloc    8 offset   99 [7099] HIGHLOW
+	reloc    9 offset   a3 [70a3] HIGHLOW
+	reloc   10 offset   d9 [70d9] HIGHLOW
+	reloc   11 offset   fc [70fc] HIGHLOW
+	reloc   12 offset  10b [710b] HIGHLOW
+	reloc   13 offset  131 [7131] HIGHLOW
+	reloc   14 offset  14b [714b] HIGHLOW
+	reloc   15 offset  151 [7151] HIGHLOW
+	reloc   16 offset  156 [7156] HIGHLOW
+	reloc   17 offset  15d [715d] HIGHLOW
+	reloc   18 offset  164 [7164] HIGHLOW
+	reloc   19 offset  16d [716d] HIGHLOW
+	reloc   20 offset  175 [7175] HIGHLOW
+	reloc   21 offset  1a8 [71a8] HIGHLOW
+	reloc   22 offset  1bb [71bb] HIGHLOW
+	reloc   23 offset  1c1 [71c1] HIGHLOW
+	reloc   24 offset  1c6 [71c6] HIGHLOW
+	reloc   25 offset  1cd [71cd] HIGHLOW
+	reloc   26 offset  1d4 [71d4] HIGHLOW
+	reloc   27 offset  1dd [71dd] HIGHLOW
+	reloc   28 offset  1e8 [71e8] HIGHLOW
+	reloc   29 offset  200 [7200] HIGHLOW
+	reloc   30 offset  218 [7218] HIGHLOW
+	reloc   31 offset  220 [7220] HIGHLOW
+	reloc   32 offset  22c [722c] HIGHLOW
+	reloc   33 offset  232 [7232] HIGHLOW
+	reloc   34 offset  237 [7237] HIGHLOW
+	reloc   35 offset  23e [723e] HIGHLOW
+	reloc   36 offset  245 [7245] HIGHLOW
+	reloc   37 offset  24e [724e] HIGHLOW
+	reloc   38 offset  256 [7256] HIGHLOW
+	reloc   39 offset  25b [725b] HIGHLOW
+	reloc   40 offset  272 [7272] HIGHLOW
+	reloc   41 offset  27e [727e] HIGHLOW
+	reloc   42 offset  28a [728a] HIGHLOW
+	reloc   43 offset  290 [7290] HIGHLOW
+	reloc   44 offset  295 [7295] HIGHLOW
+	reloc   45 offset  29c [729c] HIGHLOW
+	reloc   46 offset  2a3 [72a3] HIGHLOW
+	reloc   47 offset  2ac [72ac] HIGHLOW
+	reloc   48 offset  2b4 [72b4] HIGHLOW
+	reloc   49 offset  2b9 [72b9] HIGHLOW
+	reloc   50 offset  2cc [72cc] HIGHLOW
+	reloc   51 offset  2eb [72eb] HIGHLOW
+	reloc   52 offset  300 [7300] HIGHLOW
+	reloc   53 offset  306 [7306] HIGHLOW
+	reloc   54 offset  30d [730d] HIGHLOW
+	reloc   55 offset  313 [7313] HIGHLOW
+	reloc   56 offset  31e [731e] HIGHLOW
+	reloc   57 offset  343 [7343] HIGHLOW
+	reloc   58 offset  349 [7349] HIGHLOW
+	reloc   59 offset  381 [7381] HIGHLOW
+	reloc   60 offset  399 [7399] HIGHLOW
+	reloc   61 offset  3a1 [73a1] HIGHLOW
+	reloc   62 offset  3b1 [73b1] HIGHLOW
+	reloc   63 offset  3b7 [73b7] HIGHLOW
+	reloc   64 offset  3bc [73bc] HIGHLOW
+	reloc   65 offset  3c3 [73c3] HIGHLOW
+	reloc   66 offset  3ca [73ca] HIGHLOW
+	reloc   67 offset  3d3 [73d3] HIGHLOW
+	reloc   68 offset  3df [73df] HIGHLOW
+	reloc   69 offset  3e4 [73e4] HIGHLOW
+	reloc   70 offset  3f5 [73f5] HIGHLOW
+	reloc   71 offset  408 [7408] HIGHLOW
+	reloc   72 offset  432 [7432] HIGHLOW
+	reloc   73 offset  464 [7464] HIGHLOW
+	reloc   74 offset  474 [7474] HIGHLOW
+	reloc   75 offset  482 [7482] HIGHLOW
+	reloc   76 offset  4bc [74bc] HIGHLOW
+	reloc   77 offset  4e4 [74e4] HIGHLOW
+	reloc   78 offset  4ec [74ec] HIGHLOW
+	reloc   79 offset  540 [7540] HIGHLOW
+	reloc   80 offset  554 [7554] HIGHLOW
+	reloc   81 offset  55f [755f] HIGHLOW
+	reloc   82 offset  56a [756a] HIGHLOW
+	reloc   83 offset  575 [7575] HIGHLOW
+	reloc   84 offset  580 [7580] HIGHLOW
+	reloc   85 offset  58b [758b] HIGHLOW
+	reloc   86 offset  596 [7596] HIGHLOW
+	reloc   87 offset  5a1 [75a1] HIGHLOW
+	reloc   88 offset  5ac [75ac] HIGHLOW
+	reloc   89 offset  5b7 [75b7] HIGHLOW
+	reloc   90 offset  5c2 [75c2] HIGHLOW
+	reloc   91 offset  5cd [75cd] HIGHLOW
+	reloc   92 offset  5d8 [75d8] HIGHLOW
+	reloc   93 offset  5e3 [75e3] HIGHLOW
+	reloc   94 offset  5ee [75ee] HIGHLOW
+	reloc   95 offset  5f9 [75f9] HIGHLOW
+	reloc   96 offset  604 [7604] HIGHLOW
+	reloc   97 offset  60f [760f] HIGHLOW
+	reloc   98 offset  61a [761a] HIGHLOW
+	reloc   99 offset  625 [7625] HIGHLOW
+	reloc  100 offset  630 [7630] HIGHLOW
+	reloc  101 offset  63b [763b] HIGHLOW
+	reloc  102 offset  646 [7646] HIGHLOW
+	reloc  103 offset  651 [7651] HIGHLOW
+	reloc  104 offset  65c [765c] HIGHLOW
+	reloc  105 offset  667 [7667] HIGHLOW
+	reloc  106 offset  672 [7672] HIGHLOW
+	reloc  107 offset  67d [767d] HIGHLOW
+	reloc  108 offset  688 [7688] HIGHLOW
+	reloc  109 offset  693 [7693] HIGHLOW
+	reloc  110 offset  69e [769e] HIGHLOW
+	reloc  111 offset  6a9 [76a9] HIGHLOW
+	reloc  112 offset  6b4 [76b4] HIGHLOW
+	reloc  113 offset  6bf [76bf] HIGHLOW
+	reloc  114 offset  6ca [76ca] HIGHLOW
+	reloc  115 offset  6d5 [76d5] HIGHLOW
+	reloc  116 offset  6e0 [76e0] HIGHLOW
+	reloc  117 offset  6eb [76eb] HIGHLOW
+	reloc  118 offset  6f6 [76f6] HIGHLOW
+	reloc  119 offset  701 [7701] HIGHLOW
+	reloc  120 offset  70c [770c] HIGHLOW
+	reloc  121 offset  717 [7717] HIGHLOW
+	reloc  122 offset  722 [7722] HIGHLOW
+	reloc  123 offset  72d [772d] HIGHLOW
+	reloc  124 offset  738 [7738] HIGHLOW
+	reloc  125 offset  743 [7743] HIGHLOW
+	reloc  126 offset  74e [774e] HIGHLOW
+	reloc  127 offset  759 [7759] HIGHLOW
+	reloc  128 offset  764 [7764] HIGHLOW
+	reloc  129 offset  76f [776f] HIGHLOW
+	reloc  130 offset  77a [777a] HIGHLOW
+	reloc  131 offset  785 [7785] HIGHLOW
+	reloc  132 offset  790 [7790] HIGHLOW
+	reloc  133 offset  79b [779b] HIGHLOW
+	reloc  134 offset  7a6 [77a6] HIGHLOW
+	reloc  135 offset  7b1 [77b1] HIGHLOW
+	reloc  136 offset  7bc [77bc] HIGHLOW
+	reloc  137 offset  7c7 [77c7] HIGHLOW
+	reloc  138 offset  7d2 [77d2] HIGHLOW
+	reloc  139 offset  7dd [77dd] HIGHLOW
+	reloc  140 offset  7e8 [77e8] HIGHLOW
+	reloc  141 offset  7f3 [77f3] HIGHLOW
+	reloc  142 offset  7fe [77fe] HIGHLOW
+	reloc  143 offset  809 [7809] HIGHLOW
+	reloc  144 offset  814 [7814] HIGHLOW
+	reloc  145 offset  81f [781f] HIGHLOW
+	reloc  146 offset  82a [782a] HIGHLOW
+	reloc  147 offset  835 [7835] HIGHLOW
+	reloc  148 offset  840 [7840] HIGHLOW
+	reloc  149 offset  84b [784b] HIGHLOW
+	reloc  150 offset  856 [7856] HIGHLOW
+	reloc  151 offset  861 [7861] HIGHLOW
+	reloc  152 offset  86c [786c] HIGHLOW
+	reloc  153 offset  877 [7877] HIGHLOW
+	reloc  154 offset  882 [7882] HIGHLOW
+	reloc  155 offset  88d [788d] HIGHLOW
+	reloc  156 offset  898 [7898] HIGHLOW
+	reloc  157 offset  8a3 [78a3] HIGHLOW
+	reloc  158 offset  8ae [78ae] HIGHLOW
+	reloc  159 offset  8b9 [78b9] HIGHLOW
+	reloc  160 offset  8c4 [78c4] HIGHLOW
+	reloc  161 offset  8cf [78cf] HIGHLOW
+	reloc  162 offset  8da [78da] HIGHLOW
+	reloc  163 offset  8e5 [78e5] HIGHLOW
+	reloc  164 offset  8f0 [78f0] HIGHLOW
+	reloc  165 offset  8fb [78fb] HIGHLOW
+	reloc  166 offset  906 [7906] HIGHLOW
+	reloc  167 offset  911 [7911] HIGHLOW
+	reloc  168 offset  91c [791c] HIGHLOW
+	reloc  169 offset  927 [7927] HIGHLOW
+	reloc  170 offset  932 [7932] HIGHLOW
+	reloc  171 offset  93d [793d] HIGHLOW
+	reloc  172 offset  948 [7948] HIGHLOW
+	reloc  173 offset  953 [7953] HIGHLOW
+	reloc  174 offset  95e [795e] HIGHLOW
+	reloc  175 offset  969 [7969] HIGHLOW
+	reloc  176 offset  974 [7974] HIGHLOW
+	reloc  177 offset  97f [797f] HIGHLOW
+	reloc  178 offset  98a [798a] HIGHLOW
+	reloc  179 offset  995 [7995] HIGHLOW
+	reloc  180 offset  9a0 [79a0] HIGHLOW
+	reloc  181 offset  9ab [79ab] HIGHLOW
+	reloc  182 offset  9b6 [79b6] HIGHLOW
+	reloc  183 offset  9c1 [79c1] HIGHLOW
+	reloc  184 offset  9cc [79cc] HIGHLOW
+	reloc  185 offset  9d7 [79d7] HIGHLOW
+	reloc  186 offset  9e2 [79e2] HIGHLOW
+	reloc  187 offset  9ed [79ed] HIGHLOW
+	reloc  188 offset  9f8 [79f8] HIGHLOW
+	reloc  189 offset  a03 [7a03] HIGHLOW
+	reloc  190 offset  a0e [7a0e] HIGHLOW
+	reloc  191 offset  a19 [7a19] HIGHLOW
+
+Virtual Address: 00008000 Chunk size 76 (0x4c) Number of fixups 34
+	reloc    0 offset  91c [891c] HIGHLOW
+	reloc    1 offset  920 [8920] HIGHLOW
+	reloc    2 offset  924 [8924] HIGHLOW
+	reloc    3 offset  928 [8928] HIGHLOW
+	reloc    4 offset  92c [892c] HIGHLOW
+	reloc    5 offset  930 [8930] HIGHLOW
+	reloc    6 offset  934 [8934] HIGHLOW
+	reloc    7 offset  938 [8938] HIGHLOW
+	reloc    8 offset  93c [893c] HIGHLOW
+	reloc    9 offset  940 [8940] HIGHLOW
+	reloc   10 offset  944 [8944] HIGHLOW
+	reloc   11 offset  948 [8948] HIGHLOW
+	reloc   12 offset  94c [894c] HIGHLOW
+	reloc   13 offset  950 [8950] HIGHLOW
+	reloc   14 offset  954 [8954] HIGHLOW
+	reloc   15 offset  958 [8958] HIGHLOW
+	reloc   16 offset  95c [895c] HIGHLOW
+	reloc   17 offset  960 [8960] HIGHLOW
+	reloc   18 offset  964 [8964] HIGHLOW
+	reloc   19 offset  968 [8968] HIGHLOW
+	reloc   20 offset  96c [896c] HIGHLOW
+	reloc   21 offset  970 [8970] HIGHLOW
+	reloc   22 offset  974 [8974] HIGHLOW
+	reloc   23 offset  978 [8978] HIGHLOW
+	reloc   24 offset  97c [897c] HIGHLOW
+	reloc   25 offset  980 [8980] HIGHLOW
+	reloc   26 offset  984 [8984] HIGHLOW
+	reloc   27 offset  988 [8988] HIGHLOW
+	reloc   28 offset  98c [898c] HIGHLOW
+	reloc   29 offset  990 [8990] HIGHLOW
+	reloc   30 offset  994 [8994] HIGHLOW
+	reloc   31 offset  998 [8998] HIGHLOW
+	reloc   32 offset  99c [899c] HIGHLOW
+	reloc   33 offset  9a0 [89a0] HIGHLOW
+
+Virtual Address: 0000a000 Chunk size 204 (0xcc) Number of fixups 98
+	reloc    0 offset   d8 [a0d8] HIGHLOW
+	reloc    1 offset   dc [a0dc] HIGHLOW
+	reloc    2 offset   e0 [a0e0] HIGHLOW
+	reloc    3 offset   e4 [a0e4] HIGHLOW
+	reloc    4 offset   e8 [a0e8] HIGHLOW
+	reloc    5 offset   ec [a0ec] HIGHLOW
+	reloc    6 offset   f0 [a0f0] HIGHLOW
+	reloc    7 offset   f4 [a0f4] HIGHLOW
+	reloc    8 offset   f8 [a0f8] HIGHLOW
+	reloc    9 offset   fc [a0fc] HIGHLOW
+	reloc   10 offset  100 [a100] HIGHLOW
+	reloc   11 offset  104 [a104] HIGHLOW
+	reloc   12 offset  108 [a108] HIGHLOW
+	reloc   13 offset  10c [a10c] HIGHLOW
+	reloc   14 offset  110 [a110] HIGHLOW
+	reloc   15 offset  114 [a114] HIGHLOW
+	reloc   16 offset  118 [a118] HIGHLOW
+	reloc   17 offset  11c [a11c] HIGHLOW
+	reloc   18 offset  120 [a120] HIGHLOW
+	reloc   19 offset  124 [a124] HIGHLOW
+	reloc   20 offset  128 [a128] HIGHLOW
+	reloc   21 offset  12c [a12c] HIGHLOW
+	reloc   22 offset  130 [a130] HIGHLOW
+	reloc   23 offset  134 [a134] HIGHLOW
+	reloc   24 offset  138 [a138] HIGHLOW
+	reloc   25 offset  13c [a13c] HIGHLOW
+	reloc   26 offset  588 [a588] HIGHLOW
+	reloc   27 offset  58c [a58c] HIGHLOW
+	reloc   28 offset  590 [a590] HIGHLOW
+	reloc   29 offset  594 [a594] HIGHLOW
+	reloc   30 offset  598 [a598] HIGHLOW
+	reloc   31 offset  59c [a59c] HIGHLOW
+	reloc   32 offset  5a0 [a5a0] HIGHLOW
+	reloc   33 offset  5a4 [a5a4] HIGHLOW
+	reloc   34 offset  5a8 [a5a8] HIGHLOW
+	reloc   35 offset  5ac [a5ac] HIGHLOW
+	reloc   36 offset  5b0 [a5b0] HIGHLOW
+	reloc   37 offset  5b4 [a5b4] HIGHLOW
+	reloc   38 offset  5b8 [a5b8] HIGHLOW
+	reloc   39 offset  5bc [a5bc] HIGHLOW
+	reloc   40 offset  5c0 [a5c0] HIGHLOW
+	reloc   41 offset  5c4 [a5c4] HIGHLOW
+	reloc   42 offset  5c8 [a5c8] HIGHLOW
+	reloc   43 offset  5cc [a5cc] HIGHLOW
+	reloc   44 offset  5d0 [a5d0] HIGHLOW
+	reloc   45 offset  5d4 [a5d4] HIGHLOW
+	reloc   46 offset  5d8 [a5d8] HIGHLOW
+	reloc   47 offset  5dc [a5dc] HIGHLOW
+	reloc   48 offset  5e0 [a5e0] HIGHLOW
+	reloc   49 offset  5e4 [a5e4] HIGHLOW
+	reloc   50 offset  5e8 [a5e8] HIGHLOW
+	reloc   51 offset  5ec [a5ec] HIGHLOW
+	reloc   52 offset  61c [a61c] HIGHLOW
+	reloc   53 offset  62c [a62c] HIGHLOW
+	reloc   54 offset  634 [a634] HIGHLOW
+	reloc   55 offset  638 [a638] HIGHLOW
+	reloc   56 offset  63c [a63c] HIGHLOW
+	reloc   57 offset  640 [a640] HIGHLOW
+	reloc   58 offset  654 [a654] HIGHLOW
+	reloc   59 offset  658 [a658] HIGHLOW
+	reloc   60 offset  65c [a65c] HIGHLOW
+	reloc   61 offset  674 [a674] HIGHLOW
+	reloc   62 offset  6a4 [a6a4] HIGHLOW
+	reloc   63 offset  6a8 [a6a8] HIGHLOW
+	reloc   64 offset  6ac [a6ac] HIGHLOW
+	reloc   65 offset  6b0 [a6b0] HIGHLOW
+	reloc   66 offset  874 [a874] HIGHLOW
+	reloc   67 offset  884 [a884] HIGHLOW
+	reloc   68 offset  88c [a88c] HIGHLOW
+	reloc   69 offset  890 [a890] HIGHLOW
+	reloc   70 offset  894 [a894] HIGHLOW
+	reloc   71 offset  898 [a898] HIGHLOW
+	reloc   72 offset  8ac [a8ac] HIGHLOW
+	reloc   73 offset  8b0 [a8b0] HIGHLOW
+	reloc   74 offset  8b4 [a8b4] HIGHLOW
+	reloc   75 offset  8cc [a8cc] HIGHLOW
+	reloc   76 offset  8fc [a8fc] HIGHLOW
+	reloc   77 offset  900 [a900] HIGHLOW
+	reloc   78 offset  904 [a904] HIGHLOW
+	reloc   79 offset  908 [a908] HIGHLOW
+	reloc   80 offset  90c [a90c] HIGHLOW
+	reloc   81 offset  910 [a910] HIGHLOW
+	reloc   82 offset  914 [a914] HIGHLOW
+	reloc   83 offset  918 [a918] HIGHLOW
+	reloc   84 offset  91c [a91c] HIGHLOW
+	reloc   85 offset  920 [a920] HIGHLOW
+	reloc   86 offset  924 [a924] HIGHLOW
+	reloc   87 offset  928 [a928] HIGHLOW
+	reloc   88 offset  92c [a92c] HIGHLOW
+	reloc   89 offset  930 [a930] HIGHLOW
+	reloc   90 offset  934 [a934] HIGHLOW
+	reloc   91 offset  938 [a938] HIGHLOW
+	reloc   92 offset  93c [a93c] HIGHLOW
+	reloc   93 offset  940 [a940] HIGHLOW
+	reloc   94 offset  944 [a944] HIGHLOW
+	reloc   95 offset  948 [a948] HIGHLOW
+	reloc   96 offset  ffc [affc] HIGHLOW
+	reloc   97 offset    0 [a000] ABSOLUTE
+
+Virtual Address: 0000b000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    0 [b000] HIGHLOW
+	reloc    1 offset    4 [b004] HIGHLOW
+	reloc    2 offset    8 [b008] HIGHLOW
+	reloc    3 offset    0 [b000] ABSOLUTE
+
+Virtual Address: 0000c000 Chunk size 88 (0x58) Number of fixups 40
+	reloc    0 offset    c [c00c] HIGHLOW
+	reloc    1 offset   10 [c010] HIGHLOW
+	reloc    2 offset   14 [c014] HIGHLOW
+	reloc    3 offset   18 [c018] HIGHLOW
+	reloc    4 offset   30 [c030] HIGHLOW
+	reloc    5 offset   34 [c034] HIGHLOW
+	reloc    6 offset   4c [c04c] HIGHLOW
+	reloc    7 offset   50 [c050] HIGHLOW
+	reloc    8 offset   68 [c068] HIGHLOW
+	reloc    9 offset   6c [c06c] HIGHLOW
+	reloc   10 offset   70 [c070] HIGHLOW
+	reloc   11 offset   7c [c07c] HIGHLOW
+	reloc   12 offset  118 [c118] HIGHLOW
+	reloc   13 offset  120 [c120] HIGHLOW
+	reloc   14 offset  128 [c128] HIGHLOW
+	reloc   15 offset  12c [c12c] HIGHLOW
+	reloc   16 offset  130 [c130] HIGHLOW
+	reloc   17 offset  134 [c134] HIGHLOW
+	reloc   18 offset  13c [c13c] HIGHLOW
+	reloc   19 offset  144 [c144] HIGHLOW
+	reloc   20 offset  14c [c14c] HIGHLOW
+	reloc   21 offset  150 [c150] HIGHLOW
+	reloc   22 offset  154 [c154] HIGHLOW
+	reloc   23 offset  158 [c158] HIGHLOW
+	reloc   24 offset  15c [c15c] HIGHLOW
+	reloc   25 offset  160 [c160] HIGHLOW
+	reloc   26 offset  164 [c164] HIGHLOW
+	reloc   27 offset  168 [c168] HIGHLOW
+	reloc   28 offset  16c [c16c] HIGHLOW
+	reloc   29 offset  170 [c170] HIGHLOW
+	reloc   30 offset  174 [c174] HIGHLOW
+	reloc   31 offset  178 [c178] HIGHLOW
+	reloc   32 offset  17c [c17c] HIGHLOW
+	reloc   33 offset  180 [c180] HIGHLOW
+	reloc   34 offset  184 [c184] HIGHLOW
+	reloc   35 offset  188 [c188] HIGHLOW
+	reloc   36 offset  18c [c18c] HIGHLOW
+	reloc   37 offset  190 [c190] HIGHLOW
+	reloc   38 offset  194 [c194] HIGHLOW
+	reloc   39 offset  198 [c198] HIGHLOW
+
+Virtual Address: 0000d000 Chunk size 12 (0xc) Number of fixups 2
+	reloc    0 offset   20 [d020] HIGHLOW
+	reloc    1 offset    0 [d000] ABSOLUTE
+
+There is a debug directory in .rdata at 0x1000b0c0
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 0000b0dc 0000b0dc
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00006a1d  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        00003dc6  10008000  10008000  00008000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000298  1000c000  1000c000  0000c000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      00000034  1000d000  1000d000  0000d000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata       000000c8  1000e000  1000e000  0000e000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .reloc        00000aac  1000f000  1000f000  0000f000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .debug_abbrev 000013b2  10010000  10010000  00010000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_info   0000d6d9  10012000  10012000  00012000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   00004790  10020000  10020000  00020000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_loc    00005251  10025000  10025000  00025000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_ranges 00000628  1002b000  1002b000  0002b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_str    00007877  1002c000  1002c000  0002c000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000030f8 .L__wine_spec_exports
+[  1](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003134 .L__wine_spec_exp_names
+[  2](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003120 .L__wine_spec_exports_funcs
+[  3](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003124 .L__wine_spec_exp_name_ptrs
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003128 .L__wine_spec_exp_ordinals
+[  5](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004db0 _ServiceMain@8
+[  6](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[  7](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 __wine_spec_relay_entry_points
+[  8](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_entry_point_offsets
+[  9](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000004 .L__wine_spec_relay_args_string
+[ 10](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c __wine_spec_relay_entry_point_1
+[ 11](sec  5)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000008 __load_config_used
+[ 12](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000030 _get_next_runtime
+[ 13](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000100 _job_get_next_runtime
+[ 14](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000050 __xmm@00000003000000000000000180000000
+[ 15](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000060 __xmm@00000000000000000000000200000000
+[ 16](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000070 __xmm@00000000000000000000000000000004
+[ 17](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000080 __real@00000004
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000460 _add_job
+[ 19](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001450 _load_at_tasks
+[ 20](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001630 _wine_dbg_log
+[ 21](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000016b0 _update_process_status
+[ 22](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000090 __xmm@000000030000000000000001c0000000
+[ 23](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000017a0 _update_job_status
+[ 24](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000018f0 _check_task_state
+[ 25](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001c10 _check_task_time
+[ 26](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001cd0 _check_missed_task_time
+[ 27](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001d70 _remove_job
+[ 28](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000a0 __xmm@00000001000000000000000040000000
+[ 29](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000b0 __xmm@0000000000000000000a003c00000000
+[ 30](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000c0 __xmm@00041303000000000f73140000000020
+[ 31](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000d0 __xmm@00000003000000010000000000000000
+[ 32](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001e20 _NetrJobAdd
+[ 33](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002560 _swprintf
+[ 34](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002590 _NetrJobDel
+[ 35](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000026f0 _NetrJobEnum
+[ 36](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002890 _NetrJobGetInfo
+[ 37](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002990 _wine_dbg_sprintf
+[ 38](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000029e0 _wine_dbgstr_wn
+[ 39](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000e0 ??_C@_0BH@LKKKPOEN@too?5long?5file?5name?5?$CFs?6?$AA@
+[ 40](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000f7 ??_C@_0O@BGOAMDA@load_at_tasks?$AA@
+[ 41](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000105 ??_C@_0BI@NDOMDBGI@terminating?5process?5?$CFs?6?$AA@
+[ 42](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000011d ??_C@_0BB@NCANIDOO@check_task_state?$AA@
+[ 43](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000012e ??_C@_0BE@JLBCHNAP@running?5process?5?$CFs?6?$AA@
+[ 44](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000142 ??_C@_0BP@OGPMJNAP@process?5?$CFs?5is?5already?5running?6?$AA@
+[ 45](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000161 ??_C@_0BH@BDOAMIDM@executing?5?$CFs?5?$CFs?5at?5?$CFs?6?$AA@
+[ 46](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000178 ??_C@_0BG@MOOHNFCF@failed?5to?5execute?5?$CFs?6?$AA@
+[ 47](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000018e ??_C@_09HJJCNBDN@?$CFs?0?$CFp?0?$CFp?6?$AA@
+[ 48](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000198 ??_C@_0L@PDHOPGGI@NetrJobAdd?$AA@
+[ 49](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001a3 ??_C@_0CD@CGLMHLJI@couldn?8t?5find?5just?5created?5job?5?$CF@
+[ 50](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001c6 ??_C@_0BG@HKLGKLIB@create_job?5error?5?$CFlu?6?$AA@
+[ 51](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001dc ??_C@_0M@GHABKAPD@?$CFs?0?$CFlu?0?$CFlu?6?$AA@
+[ 52](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001e8 ??_C@_0L@NLLOGGF@NetrJobDel?$AA@
+[ 53](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001f3 ??_C@_0BD@IPFFPMP@job?5?$CFlu?5not?5found?6?$AA@
+[ 54](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000206 ??_C@_0BB@IFBCCDOL@deleting?5job?5?$CFs?6?$AA@
+[ 55](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000217 ??_C@_0BB@LKBCIMCM@?$CFs?0?$CFp?0?$CFlu?0?$CFp?0?$CFp?6?$AA@
+[ 56](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000228 ??_C@_0M@BEBAANJF@NetrJobEnum?$AA@
+[ 57](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000234 ??_C@_0L@IBKEOJKI@?$CFs?0?$CFlu?0?$CFp?6?$AA@
+[ 58](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000023f ??_C@_0P@JJDIFNAK@NetrJobGetInfo?$AA@
+[ 59](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000024e ??_C@_0JK@JKNFHPBB@?1home?1runner?1work?1winlator?9wine?9@
+[ 60](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002e8 ??_C@_0CA@LJDIPME@trigger?5type?5?$CFu?5is?5not?5handled?6?$AA@
+[ 61](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000308 ??_C@_0BJ@NEPLHMKO@trigger_get_next_runtime?$AA@
+[ 62](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000321 ??_C@_0BO@HJMMDEAO@Failed?5to?5open?5?$CFs?0?5error?5?$CFlu?6?$AA@
+[ 63](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000033f ??_C@_08OOFGOLKO@load_job?$AA@
+[ 64](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000348 ??_C@_0CN@HMDIPLON@Failed?5to?5create?5file?5mapping?5?$CFs@
+[ 65](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000375 ??_C@_0BL@PBOEKDNB@no?5space?5for?5FIXDLEN_DATA?6?$AA@
+[ 66](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000390 ??_C@_0O@FLELAKAN@load_job_data?$AA@
+[ 67](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000039e ??_C@_0BG@FOBNDKHO@product_version?5?$CF04x?6?$AA@
+[ 68](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003b4 ??_C@_0BD@JAKLPNAJ@file_version?5?$CF04x?6?$AA@
+[ 69](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003c7 ??_C@_08DAEMPIMO@uuid?5?$CFs?6?$AA@
+[ 70](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003d0 ??_C@_0BG@GMBMMCPC@invalid?5file?5version?6?$AA@
+[ 71](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003e6 ??_C@_0BH@GJLDOODJ@name_size_offset?5?$CF04x?6?$AA@
+[ 72](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003fd ??_C@_0BF@GOGHJHAA@trigger_offset?5?$CF04x?6?$AA@
+[ 73](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000412 ??_C@_0BG@EFHIEMBC@error_retry_count?5?$CFu?6?$AA@
+[ 74](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000428 ??_C@_0BJ@EFKCCLEI@error_retry_interval?5?$CFu?6?$AA@
+[ 75](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000441 ??_C@_0BC@CGNCFOOI@idle_deadline?5?$CFu?6?$AA@
+[ 76](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000453 ??_C@_0O@HOKHPKEO@idle_wait?5?$CFu?6?$AA@
+[ 77](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000461 ??_C@_0P@MPFCLKMK@priority?5?$CF08x?6?$AA@
+[ 78](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000470 ??_C@_0BE@KPBHKKFL@maximum_runtime?5?$CFu?6?$AA@
+[ 79](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000484 ??_C@_0P@ONONKBCJ@exit_code?5?$CF?$CDx?6?$AA@
+[ 80](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000493 ??_C@_0N@IKIFHLPM@status?5?$CF08x?6?$AA@
+[ 81](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004a0 ??_C@_0M@JBBMPFGE@flags?5?$CF08x?6?$AA@
+[ 82](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004ac ??_C@_0CN@JAKNIDOA@last_runtime?5?$CFd?1?$CFd?1?$CFd?5wday?5?$CFd?5?$CFd@
+[ 83](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004d9 ??_C@_0BN@NBJLEDBG@no?5space?5for?5instance?5count?6?$AA@
+[ 84](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004f6 ??_C@_0BD@IDAIMDJI@instance?5count?5?$CFu?6?$AA@
+[ 85](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000509 ??_C@_0BK@HNNMPINC@invalid?5name_size_offset?6?$AA@
+[ 86](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000523 ??_C@_0BN@MOIALMJJ@unicode?5strings?5end?5at?5?$CF?$CDlx?6?$AA@
+[ 87](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000540 ??_C@_0BN@FJIDNGBA@no?5space?5for?5triggers?5count?6?$AA@
+[ 88](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000055d ??_C@_0BC@OGCKLKGB@trigger_count?5?$CFu?6?$AA@
+[ 89](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000056f ??_C@_0BD@MDHFJDIM@triggers_size?5?$CFlu?6?$AA@
+[ 90](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000582 ??_C@_0BN@GDAPNCGL@no?5space?5for?5user?5data?5size?6?$AA@
+[ 91](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000059f ??_C@_0BI@BPEBBBAE@no?5space?5for?5user?5data?6?$AA@
+[ 92](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005b7 ??_C@_0BF@BKEGHDMK@User?5Data?5size?5?$CF?$CDlx?6?$AA@
+[ 93](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005cc ??_C@_0CB@MLGGDOGG@no?5space?5for?5reserved?5data?5size?6@
+[ 94](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005ed ??_C@_0BM@JOFGENEO@no?5space?5for?5reserved?5data?6?$AA@
+[ 95](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000609 ??_C@_0BJ@HNGCKCKM@Reserved?5Data?5size?5?$CF?$CDlx?6?$AA@
+[ 96](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000622 ??_C@_0CM@BCHEGOPH@trigger_offset?5?$CF04x?0?5triggers?5en@
+[ 97](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000064e ??_C@_0BM@HAFHBEJL@no?5space?5for?5triggers?5data?6?$AA@
+[ 98](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000066a ??_C@_0CE@NBIJDDCG@not?5enough?5memory?5for?5trigger?5da@
+[ 99](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000068e ??_C@_0BJ@DBAKMDMH@?$CFu?3?5cbTriggerSize?5?$DN?5?$CF?$CDx?6?$AA@
+[100](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006a7 ??_C@_0BH@NNLCJDCN@invalid?5cbTriggerSize?6?$AA@
+[101](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006be ??_C@_0BB@JKDBGAC@Reserved1?5?$DN?5?$CF?$CDx?6?$AA@
+[102](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006cf ??_C@_0BB@BDLFOOIL@wBeginYear?5?$DN?5?$CFu?6?$AA@
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006e0 ??_C@_0BC@PAEPDBGA@wBeginMonth?5?$DN?5?$CFu?6?$AA@
+[104](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006f2 ??_C@_0BA@HJPGEEJP@wBeginDay?5?$DN?5?$CFu?6?$AA@
+[105](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000702 ??_C@_0P@LHNLABOC@wEndYear?5?$DN?5?$CFu?6?$AA@
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000711 ??_C@_0BA@MEIFIGHD@wEndMonth?5?$DN?5?$CFu?6?$AA@
+[107](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000721 ??_C@_0O@MGNNEAPJ@wEndDay?5?$DN?5?$CFu?6?$AA@
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000072f ??_C@_0BB@GCDGMKMO@wStartHour?5?$DN?5?$CFu?6?$AA@
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000740 ??_C@_0BD@FFFODIEA@wStartMinute?5?$DN?5?$CFu?6?$AA@
+[110](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000753 ??_C@_0BH@EGKMPCJM@MinutesDuration?5?$DN?5?$CFlu?6?$AA@
+[111](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000076a ??_C@_0BH@PAHCFIM@MinutesInterval?5?$DN?5?$CFlu?6?$AA@
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000781 ??_C@_0P@NDPDHNNO@rgFlags?5?$DN?5?$CFlu?6?$AA@
+[113](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000790 ??_C@_0BC@JLGAHNDP@TriggerType?5?$DN?5?$CFu?6?$AA@
+[114](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007a2 ??_C@_0BA@ODIIOIH@Reserved2?5?$DN?5?$CFu?6?$AA@
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007b2 ??_C@_0BN@FILGFOKJ@wRandomMinutesInterval?5?$DN?5?$CFu?6?$AA@
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007cf ??_C@_0BI@JEDCHMJA@no?5space?5for?5signature?6?$AA@
+[117](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007e7 ??_C@_0CN@DFCHHKLG@signature?5version?5?$CF04x?0?5client?5v@
+[118](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000814 ??_C@_06OJHGLDPL@?$CInull?$CJ?$AA@
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000081b ??_C@_0P@HJIPJNEO@?$DMguid?90x?$CF04hx?$DO?$AA@
+[120](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000082a ??_C@_0DD@NKJIOCPJ@?$HL?$CF08x?9?$CF04x?9?$CF04x?9?$CF02x?$CF02x?9?$CF02x?$CF02@
+[121](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000085d ??_C@_0BL@EDBMABJL@invalid?5string?5?$CFlu?5offset?6?$AA@
+[122](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000878 ??_C@_0BF@KELHBLOP@load_unicode_strings?$AA@
+[123](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000088d ??_C@_0BJ@MDHPFEFB@invalid?5string?5?$CFlu?5size?6?$AA@
+[124](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008a6 ??_C@_0BA@LCJKHDHJ@string?5?$CFlu?3?5?$CFs?6?$AA@
+[125](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008b6 ??_C@_05PCILMPKD@?$CD?$CF04x?$AA@
+[126](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008bc ??_C@_09CIDKLGOH@?$CIinvalid?$CJ?$AA@
+[127](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008c6 ??_C@_0CA@PGHJNPAB@Failed?5to?5update?5?$CFs?0?5error?5?$CFlu?6?$AA@
+[128](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008e6 ??_C@_0BC@FOJHHBNL@update_job_status?$AA@
+[129](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008f8 ??_C@_0BJ@JGFDCBP@trying?5to?5create?5job?5?$CFs?6?$AA@
+[130](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000911 ??_C@_0L@BPMBCPNF@create_job?$AA@
+[131](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003510 __imp__GetSystemTimeAsFileTime@4
+[132](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034d8 __imp__FileTimeToLocalFileTime@8
+[133](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 _at_job_list_section
+[134](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034d4 __imp__EnterCriticalSection@4
+[135](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000030 _at_job_list
+[136](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034a4 __imp__CompareFileTime@8
+[137](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000353c __imp__LeaveCriticalSection@4
+[138](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003540 __imp__LocalFileTimeToFileTime@8
+[139](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003574 __imp__SystemTimeToFileTime@8
+[140](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034dc __imp__FileTimeToSystemTime@8
+[141](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003c ___wine_dbch_schedsvc
+[142](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003448 __imp__calloc
+[143](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034b4 __imp__CreateFileW@28
+[144](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003570 __imp__Sleep@4
+[145](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034f4 __imp__GetFileSize@8
+[146](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034b0 __imp__CreateFileMappingW@24
+[147](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003544 __imp__MapViewOfFile@20
+[148](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000357c __imp__UnmapViewOfFile@4
+[149](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034a0 __imp__CloseHandle@4
+[150](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000344c __imp__free
+[151](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003444 __imp___wcsdup
+[152](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000345c __imp__malloc
+[153](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000038 _current_jobid
+[154](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000351c __imp__GetWindowsDirectoryW@8
+[155](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000066c8 _wcslen
+[156](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000348c __imp__wcslen
+[157](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 _load_at_tasks.tasksW
+[158](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034e4 __imp__FindFirstFileW@8
+[159](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034e8 __imp__FindNextFileW@8
+[160](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034e0 __imp__FindClose@4
+[161](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006130 ___wine_dbg_header
+[162](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003438 __imp____stdio_common_vsprintf
+[163](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005c50 ___wine_dbg_output
+[164](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004c _running_job_list
+[165](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034ec __imp__GetExitCodeProcess@8
+[166](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003564 __imp__SetFilePointer@16
+[167](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000358c __imp__WriteFile@20
+[168](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000054 _check_task_state.winsta0
+[169](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034c0 __imp__CreateProcessW@40
+[170](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034f8 __imp__GetLocalTime@4
+[171](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004ae0 _add_process_to_queue
+[172](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003578 __imp__TerminateProcess@8
+[173](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003590 __imp__lstrcmpiW@8
+[174](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003518 __imp__GetVersion@0
+[175](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033f4 __imp__UuidCreate@4
+[176](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000084 _create_job.authorW
+[177](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000008e _create_job.commentW
+[178](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000040 _write_reserved_data.user
+[179](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000350c __imp__GetSystemTime@4
+[180](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034cc __imp__DeleteFileW@4
+[181](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000010 _NetrJobAdd.fmtW
+[182](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000343c __imp____stdio_common_vswprintf
+[183](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000346c __imp__realloc
+[184](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005bb0 ___wine_dbg_strdup
+[185](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003538 __imp__IsBadStringPtrW@8
+[186](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000030 _wine_dbgstr_wn.hex
+[187](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000064 _cs_debug
+[188](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002bb0 _SchRpcHighestVersion
+[189](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002c00 _wine_dbg_log
+[190](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cb0 __xmm@000000000000000000000000ffffffff
+[191](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cc0 __real@ffffffff
+[192](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00002c80 _SchRpcRegisterTask
+[193](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003000 _debugstr_w
+[194](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000031b0 _get_full_name
+[195](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003280 _create_directory
+[196](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003380 _SchRpcRetrieveTask
+[197](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003420 _read_xml
+[198](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000035b0 _SchRpcCreateFolder
+[199](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003650 _SchRpcSetSecurity
+[200](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000036c0 _SchRpcGetSecurity
+[201](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003720 _SchRpcEnumFolders
+[202](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003a60 _SchRpcEnumTasks
+[203](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003d80 _SchRpcEnumInstances
+[204](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003df0 _SchRpcGetInstanceInfo
+[205](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003f00 _SchRpcStopInstance
+[206](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003fe0 _SchRpcStop
+[207](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004030 _SchRpcRun
+[208](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000040b0 _SchRpcDelete
+[209](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000041c0 _SchRpcRename
+[210](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004230 _SchRpcScheduledRuntimes
+[211](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000042b0 _SchRpcGetLastRunInfo
+[212](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004310 _SchRpcGetTaskInfo
+[213](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000049f0 _SchRpcGetNumberOfMissedRuns
+[214](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004a40 _SchRpcEnableTask
+[215](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00004a90 _wine_dbg_sprintf
+[216](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cc4 ??_C@_03OHEJPPDF@?$CFp?6?$AA@
+[217](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cc8 ??_C@_0BF@NKLGCHCJ@SchRpcHighestVersion?$AA@
+[218](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cdd ??_C@_0CA@MLBFGMGF@?$CFs?0?$CFs?0?$CF?$CDlx?0?$CFs?0?$CFlu?0?$CFlu?0?$CFp?0?$CFp?0?$CFp?6?$AA@
+[219](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cfd ??_C@_0BD@JEJHPADJ@SchRpcRegisterTask?$AA@
+[220](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d10 ??_C@_0N@OEGPEJDL@?$CFs?0?$CFs?0?$CFp?0?$CFp?6?$AA@
+[221](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d1d ??_C@_0BD@LNNHGFMG@SchRpcRetrieveTask?$AA@
+[222](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d30 ??_C@_0M@NEEABICL@?$CFs?0?$CFs?0?$CF?$CDlx?6?$AA@
+[223](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d3c ??_C@_0BD@HOHEGJLH@SchRpcCreateFolder?$AA@
+[224](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d4f ??_C@_0BC@KKGBIIM@?$CFs?0?$CFs?0?$CF?$CDlx?3?5stub?6?$AA@
+[225](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d61 ??_C@_0BC@DMLAAIIL@SchRpcSetSecurity?$AA@
+[226](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d73 ??_C@_0BC@HIHLGDOM@?$CFs?0?$CF?$CDlx?0?$CFp?3?5stub?6?$AA@
+[227](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d85 ??_C@_0BC@DDKONOAI@SchRpcGetSecurity?$AA@
+[228](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d97 ??_C@_0BH@DPDEPNOB@?$CFs?0?$CF?$CDlx?0?$CFlu?0?$CFlu?0?$CFp?0?$CFp?6?$AA@
+[229](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dae ??_C@_0BC@DKBBKCJN@SchRpcEnumFolders?$AA@
+[230](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dc0 ??_C@_0L@CHAIIOAI@adding?5?$CFs?6?$AA@
+[231](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dcb ??_C@_0BA@HCAMLENH@SchRpcEnumTasks?$AA@
+[232](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ddb ??_C@_0BF@JONHHOFA@?$CFs?0?$CF?$CDlx?0?$CFp?0?$CFp?3?5stub?6?$AA@
+[233](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001df0 ??_C@_0BE@PMJELAPB@SchRpcEnumInstances?$AA@
+[234](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e04 ??_C@_0BP@KANCILOL@?$CFs?0?$CFp?0?$CFp?0?$CFp?0?$CFp?0?$CFp?0?$CFp?0?$CFp?3?5stub?6?$AA@
+[235](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e23 ??_C@_0BG@BKMJGGFM@SchRpcGetInstanceInfo?$AA@
+[236](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e39 ??_C@_0P@IEOBDALD@?$CFs?0?$CF?$CDlx?3?5stub?6?$AA@
+[237](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e48 ??_C@_0BD@IIPAEHFA@SchRpcStopInstance?$AA@
+[238](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e5b ??_C@_0L@CKBOEHKG@SchRpcStop?$AA@
+[239](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e66 ??_C@_0CB@KKFPDHNL@?$CFs?0?$CFlu?0?$CFp?0?$CF?$CDlx?0?$CF?$CDlx?0?$CFs?0?$CFp?3?5stub?6@
+[240](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e87 ??_C@_09IBAMHPNE@SchRpcRun?$AA@
+[241](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e91 ??_C@_08PLKPLBKO@?$CFs?0?$CF?$CDlx?6?$AA@
+[242](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e9a ??_C@_0N@BBADBECP@SchRpcDelete?$AA@
+[243](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ea7 ??_C@_0N@PDFIOBBD@SchRpcRename?$AA@
+[244](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001eb4 ??_C@_0BP@BBLDCGBO@?$CFs?0?$CFp?0?$CFp?0?$CF?$CDlx?0?$CFlu?0?$CFp?0?$CFp?3?5stub?6?$AA@
+[245](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ed3 ??_C@_0BI@OMBJEIDI@SchRpcScheduledRuntimes?$AA@
+[246](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001eeb ??_C@_0BA@GGNBMMIB@?$CFs?0?$CFp?0?$CFp?3?5stub?6?$AA@
+[247](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001efb ??_C@_0BF@PBOEOOAM@SchRpcGetLastRunInfo?$AA@
+[248](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f10 ??_C@_0BC@MFJLDBPJ@SchRpcGetTaskInfo?$AA@
+[249](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f22 ??_C@_0N@GPFGOMON@?$CFs?0?$CFp?3?5stub?6?$AA@
+[250](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f2f ??_C@_0BM@BIOGNCIO@SchRpcGetNumberOfMissedRuns?$AA@
+[251](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f4b ??_C@_0O@EMKLLPGM@?$CFs?0?$CFlu?3?5stub?6?$AA@
+[252](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f59 ??_C@_0BB@KKIBECCN@SchRpcEnableTask?$AA@
+[253](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f6a ??_C@_05DJDIECHG@?$DM?$DPxml?$AA@
+[254](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f70 ??_C@_0N@OMMNOHOM@Element?3?5?$CFs?6?$AA@
+[255](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f7d ??_C@_0BI@CLKDOKCA@read_task_info_from_xml?$AA@
+[256](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f96 ??_C@_19NBFKBOPD@?$AAT?$AAa?$AAs?$AAk?$AA?$AA@
+[257](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fa0 ??_C@_0BO@BPDLJNE@Failed?5parsing?5xml?0?5hr?5?$CF?$CDlx?4?6?$AA@
+[258](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fbe ??_C@_0P@CJHHOFOG@Task?5is?5empty?6?$AA@
+[259](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fcd ??_C@_0P@JOBHNKJC@read_task_info?$AA@
+[260](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fdc ??_C@_1BC@PFDDLKEP@?$AAS?$AAe?$AAt?$AAt?$AAi?$AAn?$AAg?$AAs?$AA?$AA@
+[261](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fee ??_C@_0BJ@JJCOOMGP@Task?5was?5not?5terminated?6?$AA@
+[262](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002007 ??_C@_0BE@KIKIBPKM@Settings?5is?5empty?4?6?$AA@
+[263](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000201b ??_C@_0BD@HOOGGKIG@read_task_settings?$AA@
+[264](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000202e ??_C@_04EBPINBLI@?1?$CFs?6?$AA@
+[265](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002034 ??_C@_1BA@NPJPKIM@?$AAE?$AAn?$AAa?$AAb?$AAl?$AAe?$AAd?$AA?$AA@
+[266](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002044 ??_C@_0BN@PAFLFFMN@Settings?5was?5not?5terminated?6?$AA@
+[267](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002062 ??_C@_19FKLFLPMF@?$AAt?$AAr?$AAu?$AAe?$AA?$AA@
+[268](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000206c ??_C@_1M@HLGKFCJM@?$AAf?$AAa?$AAl?$AAs?$AAe?$AA?$AA@
+[269](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002078 ??_C@_0BK@JPLMMLNE@unexpected?5bool?5value?5?$CFs?6?$AA@
+[270](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002092 ??_C@_0BH@MJGLMBDJ@read_variantbool_value?$AA@
+[271](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020a9 ??_C@_03OFAPEBGM@?$CFs?6?$AA@
+[272](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020ad ??_C@_0BA@CGOMIGCN@read_text_value?$AA@
+[273](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020bd ??_C@_0BJ@MJLIGHIE@unexpected?5node?5type?5?$CFd?6?$AA@
+[274](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000b0 ___wine_dbch_schedsvc
+[275](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003484 __imp__wcschr
+[276](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003490 __imp__wcsrchr
+[277](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003424 __imp__StringFromGUID2@12
+[278](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003588 __imp__WideCharToMultiByte@32
+[279](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001c84 _bom_utf8
+[280](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001c5a _write_xml_utf8.comment
+[281](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003480 __imp__strlen
+[282](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003470 __imp__strchr
+[283](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003458 __imp__isspace
+[284](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00004bc0 _schedsvc_auto_start
+[285](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001c3a _wine_dbgstr_wn.hex
+[286](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003508 __imp__GetSystemDirectoryW@8
+[287](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001c4a _get_full_name.tasksW
+[288](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034a8 __imp__CreateDirectoryW@8
+[289](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034f0 __imp__GetFileAttributesW@4
+[290](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003558 __imp__ReadFile@20
+[291](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003404 __imp__IsTextUnicode@12
+[292](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003548 __imp__MultiByteToWideChar@24
+[293](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000355c __imp__RemoveDirectoryW@4
+[294](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003520 __imp__GlobalAlloc@8
+[295](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003528 __imp__GlobalLock@4
+[296](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000066de _memcpy
+[297](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003460 __imp__memcpy
+[298](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000352c __imp__GlobalUnlock@4
+[299](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003420 __imp__CreateStreamOnHGlobal@12
+[300](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011d4 _IID_IXmlReader
+[301](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006639 _CreateXmlReader@12
+[302](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000342c __imp__CreateXmlReader@12
+[303](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003488 __imp__wcscmp
+[304](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003524 __imp__GlobalFree@4
+[305](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009a4 _IID_IUnknown
+[306](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009b4 _IID_IClassFactory
+[307](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009c4 _IID_IMarshal
+[308](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009d4 _IID_IAgileObject
+[309](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009e4 _IID_IAgileReference
+[310](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009f4 _IID_INoMarshal
+[311](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a04 _IID_IMarshal2
+[312](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a14 _IID_IStdMarshalInfo
+[313](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a24 _IID_IExternalConnection
+[314](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a34 _IID_IMultiQI
+[315](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a44 _IID_IMalloc
+[316](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a54 _IID_IInternalUnknown
+[317](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a64 _IID_IEnumUnknown
+[318](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a74 _IID_ISurrogate
+[319](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a84 _IID_IGlobalInterfaceTable
+[320](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a94 _IID_IEnumString
+[321](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000aa4 _IID_ISequentialStream
+[322](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ab4 _IID_IStream
+[323](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ac4 _IID_IRpcChannelBuffer
+[324](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ad4 _IID_IRpcChannelBuffer2
+[325](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ae4 _IID_IRpcChannelBuffer3
+[326](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000af4 _IID_IAsyncRpcChannelBuffer
+[327](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b04 _IID_IRpcSyntaxNegotiate
+[328](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b14 _IID_IRpcProxyBuffer
+[329](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b24 _IID_IRpcStubBuffer
+[330](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b34 _IID_IPSFactoryBuffer
+[331](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b44 _IID_IChannelHook
+[332](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b54 _IID_IClientSecurity
+[333](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b64 _IID_IServerSecurity
+[334](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b74 _IID_IAsyncSetup
+[335](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b84 _IID_ISynchronize
+[336](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b94 _IID_ISynchronizeHandle
+[337](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ba4 _IID_ISynchronizeEvent
+[338](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bb4 _IID_ISynchronizeContainer
+[339](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bc4 _IID_ISynchronizeMutex
+[340](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bd4 _IID_ICancelMethodCalls
+[341](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000be4 _IID_IAsyncManager
+[342](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bf4 _IID_ICallFactory
+[343](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c04 _IID_IRpcOptions
+[344](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c14 _IID_IRpcHelper
+[345](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c24 _IID_IReleaseMarshalBuffers
+[346](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c34 _IID_IWaitMultiple
+[347](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c44 _IID_IAddrTrackingControl
+[348](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c54 _IID_IAddrExclusionControl
+[349](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c64 _IID_IComThreadingInfo
+[350](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c74 _IID_IProcessInitControl
+[351](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c84 _IID_IGlobalOptions
+[352](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c94 _IID_IMallocSpy
+[353](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ca4 _IID_IBindCtx
+[354](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cb4 _IID_IEnumMoniker
+[355](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cc4 _IID_IRunnableObject
+[356](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cd4 _IID_IRunningObjectTable
+[357](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ce4 _IID_IPersist
+[358](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cf4 _IID_IPersistStream
+[359](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d04 _IID_IMoniker
+[360](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d14 _IID_IROTData
+[361](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d24 _IID_IClassActivator
+[362](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d34 _IID_IEnumSTATSTG
+[363](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d44 _IID_IStorage
+[364](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d54 _IID_IPersistFile
+[365](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d64 _IID_IPersistStorage
+[366](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d74 _IID_IRootStorage
+[367](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d84 _IID_ILockBytes
+[368](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d94 _IID_IFillLockBytes
+[369](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000da4 _IID_IProgressNotify
+[370](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000db4 _IID_ILayoutStorage
+[371](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dc4 _IID_IBlockingLock
+[372](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dd4 _IID_ITimeAndNoticeControl
+[373](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000de4 _IID_IOplockStorage
+[374](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000df4 _IID_IEnumFORMATETC
+[375](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e04 _IID_IEnumSTATDATA
+[376](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e14 _IID_IAdviseSink
+[377](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e24 _IID_IAdviseSink2
+[378](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e34 _IID_IDataObject
+[379](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e44 _IID_IDataAdviseHolder
+[380](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e54 _IID_IMessageFilter
+[381](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e64 _IID_IDirectWriterLock
+[382](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e74 _IID_IUrlMon
+[383](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e84 _IID_IForegroundTransfer
+[384](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e94 _IID_IInitializeSpy
+[385](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ea4 _IID_IThumbnailExtractor
+[386](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eb4 _IID_IDummyHICONIncluder
+[387](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ec4 _IID_IApartmentShutdown
+[388](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ed4 _IID_IDispatch
+[389](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ee4 _IID_IEnumVARIANT
+[390](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ef4 _IID_ITypeComp
+[391](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f04 _IID_ITypeInfo
+[392](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f14 _IID_ITypeInfo2
+[393](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f24 _IID_ITypeLib
+[394](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f34 _IID_ITypeLib2
+[395](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f44 _IID_ITypeChangeEvents
+[396](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f54 _IID_IErrorInfo
+[397](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f64 _IID_ICreateErrorInfo
+[398](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f74 _IID_ISupportErrorInfo
+[399](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f84 _IID_ITypeFactory
+[400](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f94 _IID_ITypeMarshal
+[401](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fa4 _IID_IRecordInfo
+[402](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fb4 _IID_ICreateTypeInfo
+[403](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fc4 _IID_ICreateTypeInfo2
+[404](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fd4 _IID_ICreateTypeLib
+[405](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fe4 _IID_ICreateTypeLib2
+[406](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ff4 _IID_IErrorLog
+[407](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001004 _IID_IPropertyBag
+[408](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001014 _IID_StdOle
+[409](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001024 _IID_IOleWindow
+[410](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001034 _IID_IOleInPlaceObject
+[411](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001044 _IID_IOleInPlaceUIWindow
+[412](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001054 _IID_IOleInPlaceFrame
+[413](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001064 _IID_IOleInPlaceActiveObject
+[414](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001074 _IID_IOleInPlaceSite
+[415](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001084 _IID_IParseDisplayName
+[416](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001094 _IID_IOleContainer
+[417](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010a4 _IID_IOleItemContainer
+[418](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010b4 _IID_IOleLink
+[419](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010c4 _IID_IOleClientSite
+[420](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010d4 _IID_IOleCache
+[421](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010e4 _IID_IOleCache2
+[422](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010f4 _IID_IOleCacheControl
+[423](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001104 _IID_IEnumOLEVERB
+[424](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001114 _IID_IOleObject
+[425](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001124 _IID_IOleAdviseHolder
+[426](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001134 _IID_IContinue
+[427](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001144 _IID_IViewObject
+[428](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001154 _IID_IViewObject2
+[429](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001164 _IID_IDropSource
+[430](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001174 _IID_IDropTarget
+[431](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001184 _IID_IDropSourceNotify
+[432](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001194 _IID_IPropertyStorage
+[433](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011a4 _IID_IPropertySetStorage
+[434](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011b4 _IID_IEnumSTATPROPSTG
+[435](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011c4 _IID_IEnumSTATPROPSETSTG
+[436](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011e4 _IID_IXmlResolver
+[437](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011f4 _IID_IXmlWriter
+[438](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001204 _IID_IServiceProvider
+[439](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001214 _LIBID_MSXML
+[440](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001224 _IID_IXMLDOMNode
+[441](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001234 _IID_IXMLDOMDocument
+[442](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001244 _IID_IXMLDOMNodeList
+[443](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001254 _IID_IXMLDOMNamedNodeMap
+[444](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001264 _IID_IXMLDOMDocumentFragment
+[445](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001274 _IID_IXMLDOMCharacterData
+[446](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001284 _IID_IXMLDOMAttribute
+[447](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001294 _IID_IXMLDOMElement
+[448](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012a4 _IID_IXMLDOMText
+[449](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012b4 _IID_IXMLDOMComment
+[450](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012c4 _IID_IXMLDOMProcessingInstruction
+[451](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012d4 _IID_IXMLDOMCDATASection
+[452](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012e4 _IID_IXMLDOMDocumentType
+[453](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012f4 _IID_IXMLDOMNotation
+[454](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001304 _IID_IXMLDOMEntity
+[455](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001314 _IID_IXMLDOMEntityReference
+[456](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001324 _IID_IXMLDOMImplementation
+[457](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001334 _IID_IXMLDOMParseError
+[458](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001344 _DIID_XMLDOMDocumentEvents
+[459](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001354 _CLSID_DOMDocument
+[460](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001364 _CLSID_DOMFreeThreadedDocument
+[461](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001374 _IID_IXMLHttpRequest
+[462](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001384 _CLSID_XMLHTTPRequest
+[463](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001394 _IID_IXMLDSOControl
+[464](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013a4 _CLSID_XMLDSOControl
+[465](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013b4 _IID_IXMLElementCollection
+[466](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013c4 _IID_IXMLElement
+[467](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013d4 _IID_IXMLDocument
+[468](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013e4 _IID_IXMLElement2
+[469](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013f4 _IID_IXMLDocument2
+[470](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001404 _IID_IXMLAttribute
+[471](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001414 _IID_IXMLError
+[472](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001424 _IID_IXMLElementNotificationSink
+[473](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001434 _CLSID_XMLDocument
+[474](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001444 _IID_IInternet
+[475](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001454 _IID_IBinding
+[476](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001464 _IID_IBindStatusCallback
+[477](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001474 _IID_IBindStatusCallbackEx
+[478](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001484 _IID_IAuthenticate
+[479](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001494 _IID_IAuthenticateEx
+[480](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014a4 _IID_IHttpNegotiate
+[481](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014b4 _IID_IHttpNegotiate2
+[482](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014c4 _IID_IBindHost
+[483](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014d4 _IID_IWinInetInfo
+[484](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014e4 _IID_IWinInetHttpInfo
+[485](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014f4 _IID_IWinInetHttpTimeouts
+[486](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001504 _IID_IWindowForBindingUI
+[487](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001514 _IID_ICodeInstall
+[488](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001524 _IID_IHttpSecurity
+[489](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001534 _IID_IPersistMoniker
+[490](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001544 _IID_IMonikerProp
+[491](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001554 _IID_IBindProtocol
+[492](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001564 _IID_IInternetBindInfo
+[493](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001574 _IID_IInternetPriority
+[494](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001584 _IID_IInternetProtocolRoot
+[495](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001594 _IID_IInternetProtocolSink
+[496](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015a4 _IID_IInternetProtocol
+[497](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b4 _IID_IInternetProtocolInfo
+[498](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015c4 _IID_IInternetSession
+[499](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015d4 _IID_IInternetSecurityMgrSite
+[500](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015e4 _IID_IInternetSecurityManager
+[501](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015f4 _IID_IInternetSecurityManagerEx
+[502](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001604 _IID_IInternetSecurityManagerEx2
+[503](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001614 _IID_IInternetHostSecurityManager
+[504](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001624 _IID_IInternetZoneManager
+[505](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001634 _IID_IInternetZoneManagerEx
+[506](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001644 _IID_IInternetZoneManagerEx2
+[507](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001654 _IID_ISoftDistExt
+[508](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001664 _IID_IUri
+[509](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001674 _IID_IUriContainer
+[510](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001684 _IID_IUriBuilder
+[511](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001694 _IID_IUriBuilderFactory
+[512](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016a4 _IID_IInternetProtocolEx
+[513](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016b4 _IID_IGetBindHandle
+[514](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016c4 _IID_IBindCallbackRedirect
+[515](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d4 _CLSID_InternetSecurityManager
+[516](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016e4 _CLSID_InternetZoneManager
+[517](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016f4 _IID_IAsyncMoniker
+[518](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001704 _IID_IAsyncBindCtx
+[519](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001714 _CLSID_StdURLMoniker
+[520](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001724 _CLSID_DeCompMimeFilter
+[521](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001734 _CLSID_CdlProtocol
+[522](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001744 _CLSID_FileProtocol
+[523](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001754 _CLSID_FtpProtocol
+[524](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001764 _CLSID_GopherProtocol
+[525](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001774 _CLSID_HttpProtocol
+[526](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001784 _CLSID_HttpSProtocol
+[527](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001794 _CLSID_MkProtocol
+[528](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017a4 _IID_IFont
+[529](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017b4 _IID_IFontDisp
+[530](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017c4 _IID_IFontEventsDisp
+[531](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017d4 _IID_IPicture
+[532](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017e4 _IID_IPictureDisp
+[533](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017f4 _IID_IOleControl
+[534](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001804 _IID_IOleControlSite
+[535](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001814 _IID_IOleInPlaceSiteEx
+[536](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001824 _IID_IOleInPlaceSiteWindowless
+[537](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001834 _IID_IOleInPlaceObjectWindowless
+[538](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001844 _IID_IClassFactory2
+[539](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001854 _IID_IViewObjectEx
+[540](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001864 _IID_IProvideClassInfo
+[541](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001874 _IID_IProvideClassInfo2
+[542](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001884 _IID_IProvideMultipleClassInfo
+[543](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001894 _IID_IConnectionPoint
+[544](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018a4 _IID_IConnectionPointContainer
+[545](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018b4 _IID_IEnumConnections
+[546](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018c4 _IID_IEnumConnectionPoints
+[547](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018d4 _IID_IPropertyPage
+[548](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018e4 _IID_IPropertyPage2
+[549](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018f4 _IID_IPropertyPageSite
+[550](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001904 _IID_IPropertyNotifySink
+[551](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001914 _IID_ISimpleFrameSite
+[552](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001924 _IID_IPersistStreamInit
+[553](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001934 _IID_IPersistMemory
+[554](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001944 _IID_IPersistPropertyBag
+[555](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001954 _IID_IPropertyBag2
+[556](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001964 _IID_IPersistPropertyBag2
+[557](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001974 _IID_ISpecifyPropertyPages
+[558](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001984 _IID_IPerPropertyBrowsing
+[559](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001994 _IID_IAdviseSinkEx
+[560](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019a4 _IID_IPointerInactive
+[561](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019b4 _IID_IObjectWithSite
+[562](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019c4 _IID_IOleUndoUnit
+[563](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019d4 _IID_IOleParentUndoUnit
+[564](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019e4 _IID_IEnumOleUndoUnits
+[565](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019f4 _IID_IOleUndoManager
+[566](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a04 _IID_IQuickActivate
+[567](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a14 _LIBID_TaskScheduler
+[568](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a24 _IID_ITaskService
+[569](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a34 _IID_IRegisteredTask
+[570](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a44 _IID_IRegisteredTaskCollection
+[571](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a54 _IID_IRegistrationInfo
+[572](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a64 _IID_ITaskFolder
+[573](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a74 _IID_ITaskFolderCollection
+[574](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a84 _IID_ITaskDefinition
+[575](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a94 _IID_ITaskSettings
+[576](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001aa4 _IID_IIdleSettings
+[577](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ab4 _IID_IRunningTask
+[578](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ac4 _IID_IRunningTaskCollection
+[579](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ad4 _IID_ITaskNamedValuePair
+[580](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ae4 _IID_ITaskNamedValueCollection
+[581](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001af4 _IID_ITrigger
+[582](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b04 _IID_IIdleTrigger
+[583](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b14 _IID_ILogonTrigger
+[584](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b24 _IID_ISessionStateChangeTrigger
+[585](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b34 _IID_IEventTrigger
+[586](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b44 _IID_ITimeTrigger
+[587](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b54 _IID_IDailyTrigger
+[588](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b64 _IID_IWeeklyTrigger
+[589](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b74 _IID_IMonthlyTrigger
+[590](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b84 _IID_IMonthlyDOWTrigger
+[591](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b94 _IID_IBootTrigger
+[592](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ba4 _IID_IRegistrationTrigger
+[593](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bb4 _IID_ITriggerCollection
+[594](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bc4 _IID_IRepetitionPattern
+[595](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bd4 _IID_IAction
+[596](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001be4 _IID_IActionCollection
+[597](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bf4 _IID_IExecAction
+[598](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c04 _IID_INetworkSettings
+[599](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c14 _IID_IPrincipal
+[600](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c24 _CLSID_TaskScheduler
+[601](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001c34 _SchRpcEnumTasks.allW
+[602](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00004b40 _wine_dbg_log
+[603](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002180 __xmm@00000000ffffffff00000002ffffffff
+[604](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002190 __xmm@00000000000000000000000100000000
+[605](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005150 _schedsvc_handler@4
+[606](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021a0 __xmm@00000003000000000000000700000001
+[607](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021b0 __xmm@000000010000000000000000ffffffff
+[608](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021c0 __xmm@00000000000000190000000000000218
+[609](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005210 _tasks_monitor_thread@4
+[610](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005970 _MIDL_user_allocate@4
+[611](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005990 _MIDL_user_free@4
+[612](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000059b0 _debugstr_w
+[613](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005b50 _wine_dbg_sprintf
+[614](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021d0 ??_C@_0CB@KOAFINBM@AssignProcessToJobObject?5failed?6@
+[615](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021f1 ??_C@_0BF@LAOGEIJB@add_process_to_queue?$AA@
+[616](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002206 ??_C@_0DD@FPEJOJEO@changing?5service?5start?5type?5to?5S@
+[617](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002239 ??_C@_0BE@NEBLFOHO@schedsvc_auto_start?$AA@
+[618](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000224d ??_C@_0BK@LLNDMNHP@failed?5to?5open?5SCM?5?$CI?$CFlu?$CJ?6?$AA@
+[619](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002267 ??_C@_0CG@OFCKAAJO@failed?5to?5query?5service?5config?5?$CI@
+[620](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000228d ??_C@_0BO@LKHLJKGG@failed?5to?5open?5service?5?$CI?$CFlu?$CJ?6?$AA@
+[621](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022ab ??_C@_0CB@GHGCEGJB@starting?5Task?5Scheduler?5Service?6@
+[622](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022cc ??_C@_0M@CNALKNPF@ServiceMain?$AA@
+[623](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022d8 ??_C@_0CG@CNDFHCKI@RegisterServiceCtrlHandler?5error@
+[624](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022fe ??_C@_0CA@EIPPNHGI@exiting?5Task?5Scheduler?5Service?6?$AA@
+[625](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000231e ??_C@_05EOMAAGNE@?$CF?$CDlx?6?$AA@
+[626](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002324 ??_C@_0BB@NKCKJJLE@schedsvc_handler?$AA@
+[627](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002335 ??_C@_0N@FKNCKPAP@Starting?4?4?4?6?$AA@
+[628](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002342 ??_C@_0BF@FMIIBDIO@tasks_monitor_thread?$AA@
+[629](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002357 ??_C@_0BM@KKDBBCOG@CreateWaitableTimer?5failed?6?$AA@
+[630](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002373 ??_C@_0DD@JLEFKJHM@Couldn?8t?5start?5monitoring?5?$CFs?5for@
+[631](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023a6 ??_C@_0BI@HJHGPAID@CreateJobObject?5failed?6?$AA@
+[632](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023be ??_C@_0BP@KBEMOEFN@CreateIoCompletionPort?5failed?6?$AA@
+[633](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023dd ??_C@_0CA@GACGJFLH@SetInformationJobObject?5failed?6?$AA@
+[634](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023fd ??_C@_0CK@OENGKJPJ@got?5message?3?5process?5?$CF?$CDIx?5has?5te@
+[635](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002427 ??_C@_0BP@DKIAPKCD@got?5message?5?$CF?$CDlx?5from?5the?5job?6?$AA@
+[636](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002446 ??_C@_0BG@MFDDCDN@got?5multiple?5entries?6?$AA@
+[637](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000245c ??_C@_0BG@OPFGEGFO@FILE_ACTION_ADDED?5?$CFs?6?$AA@
+[638](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002472 ??_C@_0BI@GHLGIHKK@FILE_ACTION_REMOVED?5?$CFs?6?$AA@
+[639](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000248a ??_C@_0BJ@HAEDFMKA@FILE_ACTION_MODIFIED?5?$CFs?6?$AA@
+[640](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024a3 ??_C@_0BN@HKONGJGF@?$CFs?3?5action?5?$CF?$CDlx?5not?5handled?6?$AA@
+[641](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024c0 ??_C@_0BJ@KLJPJFDJ@SetWaitableTimer?5failed?6?$AA@
+[642](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024d9 ??_C@_0L@MIPPAPCL@Finished?4?6?$AA@
+[643](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024e4 ??_C@_0CA@EKJGIDFO@RpcServerRegisterIf?5error?5?$CF?$CDlx?6?$AA@
+[644](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002504 ??_C@_08NLMBHNPA@RPC_init?$AA@
+[645](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000250d ??_C@_0CC@KEILAEDD@RpcServerUseProtseqEp?5error?5?$CF?$CDlx@
+[646](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000252f ??_C@_0CB@ONBIIIFJ@RpcServerInqBindings?5error?5?$CF?$CDlx?6@
+[647](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002550 ??_C@_0BK@FPHEMONA@RpcEpRegister?5error?5?$CF?$CDlx?6?$AA@
+[648](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000256a ??_C@_0BM@MBFLGOJD@RpcServerListen?5error?5?$CF?$CDlx?6?$AA@
+[649](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001d8 _hjob_queue
+[650](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003498 __imp__AssignProcessToJobObject@8
+[651](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000c0 ___wine_dbch_schedsvc
+[652](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001dc _schedsvc_auto_start.start_type
+[653](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003408 __imp__OpenSCManagerW@12
+[654](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002140 _scheduleW
+[655](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000340c __imp__OpenServiceW@12
+[656](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003410 __imp__QueryServiceConfigW@16
+[657](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033fc __imp__ChangeServiceConfigW@44
+[658](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003400 __imp__CloseServiceHandle@4
+[659](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003414 __imp__RegisterServiceCtrlHandlerW@8
+[660](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001e0 _schedsvc_handle
+[661](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003418 __imp__SetServiceStatus@8
+[662](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034ac __imp__CreateEventW@16
+[663](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001e4 _done_event
+[664](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034c4 __imp__CreateThread@24
+[665](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000013c _ITaskSchedulerService_v1_0_s_ifspec
+[666](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033e8 __imp__RpcServerRegisterIf@12
+[667](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000118 _atsvc_v1_0_s_ifspec
+[668](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033ec __imp__RpcServerUnregisterIf@12
+[669](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000e2 _RPC_init.endpoint_npW
+[670](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000d0 _RPC_init.ncacn_npW
+[671](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033f0 __imp__RpcServerUseProtseqEpW@16
+[672](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000010a _RPC_init.endpoint_lrpcW
+[673](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000fa _RPC_init.ncalrpcW
+[674](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001e8 _sched_bindings
+[675](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033e0 __imp__RpcServerInqBindings@4
+[676](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033d4 __imp__RpcEpRegisterW@16
+[677](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033e4 __imp__RpcServerListen@12
+[678](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003584 __imp__WaitForSingleObject@8
+[679](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033dc __imp__RpcMgmtStopServerListening@4
+[680](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033d8 __imp__RpcEpUnregister@12
+[681](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033d0 __imp__RpcBindingVectorFree@4
+[682](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003560 __imp__SetEvent@4
+[683](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034c8 __imp__CreateWaitableTimerW@12
+[684](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002152 _tasks_monitor_thread@4.tasksW
+[685](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034bc __imp__CreateJobObjectW@8
+[686](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034b8 __imp__CreateIoCompletionPort@16
+[687](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003568 __imp__SetInformationJobObject@16
+[688](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000066e9 _memset
+[689](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003468 __imp__memset
+[690](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003554 __imp__ReadDirectoryChangesW@32
+[691](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003580 __imp__WaitForMultipleObjects@16
+[692](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003504 __imp__GetQueuedCompletionStatus@20
+[693](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000356c __imp__SetWaitableTimer@24
+[694](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000349c __imp__CancelWaitableTimer@4
+[695](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002162 _wine_dbgstr_wn.hex
+[696](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000025f0 _atsvc___RpcServerInterface
+[697](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000011c _atsvc_v1_0_DispatchTable
+[698](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002634 _atsvc_ServerInfo
+[699](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000128 _atsvc_table
+[700](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002654 _atsvc_StubDesc
+[701](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000026a4 _atsvc_ServerRoutineTable
+[702](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000275e ___MIDL_ProcFormatString
+[703](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000026b4 _atsvc_FormatStringOffsetTable
+[704](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006552 _NdrServerCall2@4
+[705](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033cc __imp__NdrServerCall2@4
+[706](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000026bc ___MIDL_TypeFormatString
+[707](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002848 _ITaskSchedulerService___RpcServerInterface
+[708](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000140 _ITaskSchedulerService_v1_0_DispatchTable
+[709](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000288c _ITaskSchedulerService_ServerInfo
+[710](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000014c _ITaskSchedulerService_table
+[711](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000028ac _ITaskSchedulerService_StubDesc
+[712](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000028fc _ITaskSchedulerService_ServerRoutineTable
+[713](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002bba ___MIDL_ProcFormatString
+[714](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000294c _ITaskSchedulerService_FormatStringOffsetTable
+[715](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002974 ___MIDL_TypeFormatString
+[716](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005c10 _fallback__wine_dbg_strdup
+[717](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005cb0 _fallback__wine_dbg_output
+[718](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00005d10 ___wine_dbg_get_channel_flags
+[719](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00005d70 _fallback__wine_dbg_get_channel_flags
+[720](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00006190 _fallback__wine_dbg_header
+[721](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000064a0 _sprintf
+[722](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000064d0 _snprintf
+[723](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000300c ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[724](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000301e ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[725](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003030 ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[726](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000304d ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[727](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003060 ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[728](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003074 ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[729](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000307e ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[730](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003081 ??_C@_03NFKEKGGK@all?$AA@
+[731](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003085 ??_C@_05PCLMOIMF@fixme?$AA@
+[732](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000308b ??_C@_03JIDPIAJI@err?$AA@
+[733](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000308f ??_C@_04FNLOFOEM@warn?$AA@
+[734](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003094 ??_C@_05IMBNNINJ@trace?$AA@
+[735](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000309a ??_C@_09INBMIBID@?$CF3u?4?$CF06u?3?$AA@
+[736](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030a4 ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[737](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030ae ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[738](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030b4 ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[739](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001f0 _p__wine_dbg_strdup
+[740](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034fc __imp__GetModuleHandleW@4
+[741](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003500 __imp__GetProcAddress@8
+[742](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003440 __imp___strdup
+[743](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000280 _fallback__wine_dbg_strdup.pos
+[744](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000200 _fallback__wine_dbg_strdup.list
+[745](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001f4 _p__wine_dbg_output
+[746](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000284 _partial_line_tid
+[747](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003434 __imp____acrt_iob_func
+[748](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003450 __imp__fwrite
+[749](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001f8 _p__wine_dbg_get_channel_flags
+[750](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001a0 _nb_debug_options
+[751](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003454 __imp__getenv
+[752](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001a4 _default_flags
+[753](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000347c __imp__strcspn
+[754](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003474 __imp__strcmp
+[755](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000288 _debug_options
+[756](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000028c _options_size
+[757](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003534 __imp__HeapReAlloc@16
+[758](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003530 __imp__HeapAlloc@12
+[759](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000069bf _memmove
+[760](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003464 __imp__memmove
+[761](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003478 __imp__strcpy
+[762](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001fc _p__wine_dbg_header
+[763](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001a5 ___wine_dbch_microsecs
+[764](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001b5 ___wine_dbch_timestamp
+[765](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003514 __imp__GetTickCount@0
+[766](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000290 _fallback__wine_dbg_header.frequency
+[767](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003550 __imp__QueryPerformanceFrequency@4
+[768](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000354c __imp__QueryPerformanceCounter@4
+[769](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000069f6 __alldiv
+[770](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003598 __imp___alldiv
+[771](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006a01 __allrem
+[772](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000359c __imp___allrem
+[773](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000001c5 ___wine_dbch_pid
+[774](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002ffc _debug_classes
+[775](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035a0 __imp___vsnprintf
+[776](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006510 _DllMainCRTStartup@12
+[777](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00006530 _DllMain@12
+[778](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034d0 __imp__DisableThreadLibraryCalls@4
+
+

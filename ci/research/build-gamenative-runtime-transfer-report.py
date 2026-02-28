@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build GameNative v0.7.2 -> Aero.so runtime transfer matrix."""
+"""Build GameNative v0.7.2 -> Ae.solator runtime transfer matrix."""
 
 from __future__ import annotations
 
@@ -228,7 +228,7 @@ def main() -> int:
 
     lines: list[str] = []
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    lines.append("# GameNative v0.7.2 Runtime Transfer Matrix (for Aero.so mainline)")
+    lines.append("# GameNative v0.7.2 Runtime Transfer Matrix (for Ae.solator mainline)")
     lines.append("")
     lines.append(f"- Generated (UTC): `{ts}`")
     lines.append(f"- Source APK: `{source_apk}`")
@@ -257,7 +257,7 @@ def main() -> int:
 
     lines.append("## Transfer Decisions")
     lines.append("")
-    lines.append("| Module | Decision | Methods | Edge events | Target in Aero.so | Existing anchor |")
+    lines.append("| Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |")
     lines.append("| --- | --- | ---: | ---: | --- | --- |")
     for rule in ordered:
         methods_n = len(grouped.get(rule["id"], []))

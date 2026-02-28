@@ -1,0 +1,225 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 42ae379..e8bb7b6 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1916,7 +1916,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_UPSCALE_PROTON_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
+         envVars.put("AERO_UPSCALE_PROTON_FSR_REQUESTED", UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode) ? "0" : "1");
+         envVars.put("AERO_UPSCALE_SHORTCUT_OVERRIDE", upscalerShortcutOverride ? "1" : "0");
++        envVars.put("AERO_UPSCALE_MODULES_REQUESTED", buildRequestedUpscalerModules());
+         envVars.put("AERO_UPSCALE_MODULES_ACTIVE", buildActiveUpscalerModules());
++        envVars.put("AERO_UPSCALE_VKBASALT_REQUESTED", upscalerVkbasaltEnabled ? "1" : "0");
++        envVars.put("AERO_UPSCALE_SCREENFX_REQUESTED", UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline) ? "0" : "1");
++        envVars.put("AERO_UPSCALE_SCALEFORCE_REQUESTED", UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset) ? "0" : "1");
++        envVars.put("AERO_UPSCALE_PROTON_FSR_REQUESTED", UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode) ? "0" : "1");
++        envVars.put("AERO_UPSCALE_DX8_ASSIST_REQUESTED", isDx8AssistRequested() ? "1" : "0");
+         envVars.put("AERO_UPSCALE_VKBASALT_EFFECTIVE", upscalerVkbasaltEnabled ? "1" : "0");
+         envVars.put("AERO_UPSCALE_SCREENFX_EFFECTIVE", UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline) ? "0" : "1");
+         envVars.put("AERO_UPSCALE_SCALEFORCE_EFFECTIVE", UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset) ? "0" : "1");
+@@ -1939,11 +1945,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) {
+             envVars.put("WINE_FULLSCREEN_FSR", "1");
+             envVars.put("WINE_FULLSCREEN_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
++            envVars.put("WINE_FULLSCREEN_FSR_MODE", upscalerProtonFsrMode);
+             envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "1");
+         } else {
+             envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "0");
+         }
+         traceUpscalerModuleStates();
++        populateLaunchGraphicsPacketEnv();
+ 
+         ForensicLogger.logEvent(this, "info", "UPSCALE_PROFILE_RESOLVED",
+                 forensicTraceId, "graphics_driver",
+@@ -2113,6 +2121,70 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         return sb.toString();
+     }
+ 
++    private String buildRequestedUpscalerModules() {
++        ArrayList<String> modules = new ArrayList<>();
++        if (!UPSCALE_VKBASALT_NONE.equals(upscalerVkbasaltEffect)) modules.add("vkbasalt");
++        if (!UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline)) modules.add("screenfx");
++        if (!UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset)) modules.add("scaleforce");
++        if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) modules.add("proton_fsr");
++        if (isDx8AssistRequested()) modules.add("dx8assist");
++        if (modules.isEmpty()) return "none";
++
++        StringBuilder sb = new StringBuilder();
++        for (int i = 0; i < modules.size(); i++) {
++            if (i > 0) sb.append(',');
++            sb.append(modules.get(i));
++        }
++        return sb.toString();
++    }
++
++    private String packetValue(String key) {
++        String value = envVars.get(key);
++        if (value == null || value.isEmpty()) return "none";
++        return value.replace(';', ',');
++    }
++
++    private void populateLaunchGraphicsPacketEnv() {
++        StringBuilder packet = new StringBuilder();
++        packet.append("stack=").append(packetValue("AERO_X11_GRAPHICS_STACK"));
++        packet.append(";turnip_provider=").append(packetValue("AERO_TURNIP_PROVIDER"));
++        packet.append(";turnip_channel=").append(packetValue("AERO_TURNIP_CHANNEL"));
++        packet.append(";turnip_bind=").append(packetValue("AERO_TURNIP_BIND_VERDICT"));
++        packet.append(";dx_policy=").append(packetValue("AERO_DX_POLICY_STACK"));
++        packet.append(";dx_policy_reason=").append(packetValue("AERO_DX_POLICY_REASON"));
++        packet.append(";dx_map_req=").append(packetValue("AERO_DX_DIRECT_MAP_REQUESTED"));
++        packet.append(";dx_map_eff=").append(packetValue("AERO_DX_DIRECT_MAP_EXTENDED"));
++        packet.append(";dxvk_req=").append(packetValue("AERO_DXVK_VERSION_REQUESTED"));
++        packet.append(";dxvk_sel=").append(packetValue("AERO_DXVK_VERSION_SELECTED"));
++        packet.append(";vkd3d_req=").append(packetValue("AERO_VKD3D_VERSION_REQUESTED"));
++        packet.append(";vkd3d_sel=").append(packetValue("AERO_VKD3D_VERSION_SELECTED"));
++        packet.append(";d8vk_eff=").append(packetValue("AERO_D8VK_VERSION_EFFECTIVE"));
++        packet.append(";modules_req=").append(packetValue("AERO_UPSCALE_MODULES_REQUESTED"));
++        packet.append(";modules_eff=").append(packetValue("AERO_UPSCALE_MODULES_ACTIVE"));
++        packet.append(";mem_policy=").append(packetValue("AERO_UPSCALE_MEM_POLICY_EFFECTIVE"));
++        packet.append(";proton_fsr_mode=").append(packetValue("AERO_UPSCALE_PROTON_FSR_MODE"));
++        packet.append(";proton_fsr_effective=").append(packetValue("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
++        packet.append(";proton_fsr_strength=").append(packetValue("AERO_UPSCALE_PROTON_FSR_STRENGTH"));
++        String payload = packet.toString();
++        envVars.put("AERO_LAUNCH_GRAPHICS_PACKET", payload);
++        envVars.put("AERO_LAUNCH_GRAPHICS_PACKET_SHA256", ForensicLogger.sha256Hex(payload));
++
++        ForensicLogger.logEvent(this, "info", "LAUNCH_GRAPHICS_PACKET_READY",
++                forensicTraceId, "graphics_driver",
++                "launch graphics packet prepared",
++                ForensicLogger.fields(
++                        "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK"),
++                        "turnip_provider", envVars.get("AERO_TURNIP_PROVIDER"),
++                        "turnip_bind_verdict", envVars.get("AERO_TURNIP_BIND_VERDICT"),
++                        "dx_policy_stack", envVars.get("AERO_DX_POLICY_STACK"),
++                        "dx_map_requested", envVars.get("AERO_DX_DIRECT_MAP_REQUESTED"),
++                        "dx_map_effective", envVars.get("AERO_DX_DIRECT_MAP_EXTENDED"),
++                        "upscale_modules_requested", envVars.get("AERO_UPSCALE_MODULES_REQUESTED"),
++                        "upscale_modules_active", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                        "packet_sha256", envVars.get("AERO_LAUNCH_GRAPHICS_PACKET_SHA256")
++                ));
++    }
++
+     private boolean isDx8AssistRequested() {
+         return UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy)
+                 || (UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride);
+@@ -2237,6 +2309,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         String dx8Route = "wined3d";
+         String dx9to11Route = "wined3d";
+         String dx12Route = "wined3d";
++        String requestedDx1to7Route = "none".equals(ddrawWrapperRequested) ? "wined3d" : ddrawWrapperRequested;
++        String requestedDx8Route = dx8AssistRequested ? "d8vk-requested" : "wined3d";
++        String requestedDx9to11Route = "none".equals(dxvkVersionRequested) ? "wined3d" : "dxvk-" + dxvkVersionRequested;
++        String requestedDx12Route = "none".equals(vkd3dVersionRequested) ? "wined3d" : "vkd3d-" + vkd3dVersionRequested;
+         if (dxvkWrapperSelected) {
+             dx9to11Route = "dxvk-" + dxvkVersion;
+             if (!"none".equals(vkd3dVersion)) {
+@@ -2272,26 +2348,62 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 ";dx10=" + dx9to11Route +
+                 ";dx11=" + dx9to11Route +
+                 ";dx12=" + dx12Route;
++        String directMapRequested = "dx1=" + requestedDx1to7Route +
++                ";dx2=" + requestedDx1to7Route +
++                ";dx3=" + requestedDx1to7Route +
++                ";dx4=" + requestedDx1to7Route +
++                ";dx5=" + requestedDx1to7Route +
++                ";dx6=" + requestedDx1to7Route +
++                ";dx7=" + requestedDx1to7Route +
++                ";dx8=" + requestedDx8Route +
++                ";dx9=" + requestedDx9to11Route +
++                ";dx10=" + requestedDx9to11Route +
++                ";dx11=" + requestedDx9to11Route +
++                ";dx12=" + requestedDx12Route;
+         String policyOrder = "ddraw->dx8assist->dxvk->vkd3d";
++        String d8vkVersionEffective = dx8AssistEffective ? DefaultVersion.D8VK : "none";
+         envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
+         envVars.put("AERO_DXVK_VERSION_REQUESTED", dxvkVersionRequested);
+         envVars.put("AERO_VKD3D_VERSION_REQUESTED", vkd3dVersionRequested);
+         envVars.put("AERO_DDRAW_WRAPPER_REQUESTED", ddrawWrapperRequested);
+         envVars.put("AERO_DXVK_VERSION_SELECTED", dxvkVersion);
++        envVars.put("AERO_DXVK_VERSION_EFFECTIVE", dxvkVersion);
+         envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
++        envVars.put("AERO_VKD3D_VERSION_EFFECTIVE", vkd3dVersion);
+         envVars.put("AERO_D8VK_VERSION_SELECTED", DefaultVersion.D8VK);
++        envVars.put("AERO_D8VK_VERSION_EFFECTIVE", d8vkVersionEffective);
+         envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
+         envVars.put("AERO_DX_POLICY_STACK", policyStack);
+         envVars.put("AERO_DX_POLICY_REASON", policyReason);
+         envVars.put("AERO_DX_POLICY_ORDER", policyOrder);
+         envVars.put("AERO_DX_DIRECT_MAP", directMap);
++        envVars.put("AERO_DX_DIRECT_MAP_REQUESTED", directMapRequested);
+         envVars.put("AERO_DX_DIRECT_MAP_EXTENDED", directMapExtended);
++        envVars.put("AERO_DX_ROUTE_DX1", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX2", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX3", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX4", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX5", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX6", dx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX7", dx1to7Route);
+         envVars.put("AERO_DX_ROUTE_DX1_7", dx1to7Route);
+         envVars.put("AERO_DX_ROUTE_DX8", dx8Route);
+         envVars.put("AERO_DX_ROUTE_DX9", dx9to11Route);
+         envVars.put("AERO_DX_ROUTE_DX10", dx9to11Route);
+         envVars.put("AERO_DX_ROUTE_DX11", dx9to11Route);
+         envVars.put("AERO_DX_ROUTE_DX12", dx12Route);
++        envVars.put("AERO_DX_ROUTE_DX1_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX2_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX3_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX4_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX5_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX6_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX7_REQUESTED", requestedDx1to7Route);
++        envVars.put("AERO_DX_ROUTE_DX8_REQUESTED", requestedDx8Route);
++        envVars.put("AERO_DX_ROUTE_DX9_REQUESTED", requestedDx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX10_REQUESTED", requestedDx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX11_REQUESTED", requestedDx9to11Route);
++        envVars.put("AERO_DX_ROUTE_DX12_REQUESTED", requestedDx12Route);
+         envVars.put("AERO_DX8_ASSIST_REQUESTED", dx8AssistRequested ? "1" : "0");
+         envVars.put("AERO_DX8_ASSIST_EFFECTIVE", dx8AssistEffective ? "1" : "0");
+ 
+@@ -2309,8 +2421,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "policy_stack", policyStack,
+                         "policy_reason", policyReason,
+                         "policy_order", policyOrder,
++                        "dx_map_requested", directMapRequested,
+                         "dx_map", directMap,
+                         "dx_map_extended", directMapExtended,
++                        "d8vk_version_effective", d8vkVersionEffective,
+                         "dx8_assist_requested", dx8AssistRequested ? "1" : "0",
+                         "dx8_assist_effective", dx8AssistEffective ? "1" : "0",
+                         "dx8_policy", upscalerDx8Policy
+diff --git a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+index 16c00e7..8ac1196 100644
+--- a/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
++++ b/app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java
+@@ -434,7 +434,31 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
+                             "box64_version", !isEmpty(box64VersionOverride) ? box64VersionOverride : container != null ? container.getBox64Version() : "",
+                             "fexcore_version", !isEmpty(fexcoreVersionOverride) ? fexcoreVersionOverride : container != null ? container.getFEXCoreVersion() : "",
+                             "command", command,
+-                            "env_hash", ForensicLogger.hashEnvVars(envVars)));
++                            "env_hash", ForensicLogger.hashEnvVars(envVars),
++                            "launch_graphics_packet_sha256", envVars.get("AERO_LAUNCH_GRAPHICS_PACKET_SHA256"),
++                            "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK"),
++                            "turnip_provider", envVars.get("AERO_TURNIP_PROVIDER"),
++                            "turnip_channel", envVars.get("AERO_TURNIP_CHANNEL"),
++                            "turnip_bind_verdict", envVars.get("AERO_TURNIP_BIND_VERDICT"),
++                            "dx_policy_stack", envVars.get("AERO_DX_POLICY_STACK"),
++                            "dx_policy_reason", envVars.get("AERO_DX_POLICY_REASON"),
++                            "dx_map_requested", envVars.get("AERO_DX_DIRECT_MAP_REQUESTED"),
++                            "dx_map_effective", envVars.get("AERO_DX_DIRECT_MAP_EXTENDED"),
++                            "dxvk_version_requested", envVars.get("AERO_DXVK_VERSION_REQUESTED"),
++                            "dxvk_version_selected", envVars.get("AERO_DXVK_VERSION_SELECTED"),
++                            "vkd3d_version_requested", envVars.get("AERO_VKD3D_VERSION_REQUESTED"),
++                            "vkd3d_version_selected", envVars.get("AERO_VKD3D_VERSION_SELECTED"),
++                            "d8vk_version_effective", envVars.get("AERO_D8VK_VERSION_EFFECTIVE"),
++                            "upscale_modules_requested", envVars.get("AERO_UPSCALE_MODULES_REQUESTED"),
++                            "upscale_modules_active", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                            "upscale_profile", envVars.get("AERO_UPSCALE_PROFILE"),
++                            "upscale_mem_policy_effective", envVars.get("AERO_UPSCALE_MEM_POLICY_EFFECTIVE"),
++                            "upscale_vkbasalt_effective", envVars.get("AERO_UPSCALE_VKBASALT_EFFECTIVE"),
++                            "upscale_screenfx_effective", envVars.get("AERO_UPSCALE_SCREENFX_EFFECTIVE"),
++                            "upscale_scaleforce_effective", envVars.get("AERO_UPSCALE_SCALEFORCE_EFFECTIVE"),
++                            "upscale_proton_fsr_mode", envVars.get("AERO_UPSCALE_PROTON_FSR_MODE"),
++                            "upscale_proton_fsr_effective", envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"),
++                            "upscale_dx8_assist_effective", envVars.get("AERO_DX8_ASSIST_EFFECTIVE")));
+         }
+ 
+         return ProcessHelper.exec(command, envVars.toStringArray(), rootDir, (status) -> {

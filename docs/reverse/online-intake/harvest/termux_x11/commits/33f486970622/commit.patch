@@ -1,0 +1,81 @@
+commit 33f4869706226c20915f17230619ff9631454fd7
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Feb 18 12:43:35 2026 +0200
+
+    build(deps): bump actions/upload-artifact from 5 to 6 (#956)
+    
+    Bumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 5 to 6.
+    - [Release notes](https://github.com/actions/upload-artifact/releases)
+    - [Commits](https://github.com/actions/upload-artifact/compare/v5...v6)
+    [no ci]
+    ---
+    updated-dependencies:
+    - dependency-name: actions/upload-artifact
+      dependency-version: '6'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+    Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+---
+ .github/workflows/debug_build.yml | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/.github/workflows/debug_build.yml b/.github/workflows/debug_build.yml
+index 3cc66bc..84914ee 100644
+--- a/.github/workflows/debug_build.yml
++++ b/.github/workflows/debug_build.yml
+@@ -53,37 +53,37 @@ jobs:
+     - name: Build companion package
+       run: ./build_termux_package
+     - name: Store app-arm64-v8a-debug
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-arm64-v8a-debug
+         path: ./app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+     
+     - name: Store app-armeabi-v7a-debug
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-armeabi-v7a-debug
+         path: ./app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
+     
+     - name: Store app-universal-debug
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-universal-debug
+         path: ./app/build/outputs/apk/debug/app-universal-debug.apk
+     
+     - name: Store app-x86_64-debug
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-x86_64-debug
+         path: ./app/build/outputs/apk/debug/app-x86_64-debug.apk
+     
+     - name: Store app-x86-debug
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-x86-debug
+         path: ./app/build/outputs/apk/debug/app-x86-debug.apk
+     
+     - name: Store companion package
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-companion packages
+         path: |
+@@ -91,7 +91,7 @@ jobs:
+           ./app/build/outputs/apk/debug/termux-x11-*-any.pkg.tar.xz
+         
+     - name: Store unstripped libraries with debug symbols
+-      uses: actions/upload-artifact@v5
++      uses: actions/upload-artifact@v6
+       with:
+         name: termux-x11-unstripped-libraries-for-ndk-stack
+         path: ./app/build/intermediates/cxx/Debug/*

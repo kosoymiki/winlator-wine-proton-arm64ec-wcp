@@ -1,0 +1,74 @@
+commit af92a5e0dd05df6b1116545efce9d4de1603abe9
+Author: Jeremy Bernstein <jeremy.d.bernstein@googlemail.com>
+Date:   Wed Feb 25 00:38:21 2026 +0100
+
+    sqlite queries can't use true and false as identifiers (either 1 and 0 or the strings 'True' and 'False' [since 3.23.0]) (#629)
+---
+ app/src/main/java/app/gamenative/db/dao/EpicGameDao.kt |  8 ++++----
+ app/src/main/java/app/gamenative/db/dao/GOGGameDao.kt  | 12 ++++++------
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/app/src/main/java/app/gamenative/db/dao/EpicGameDao.kt b/app/src/main/java/app/gamenative/db/dao/EpicGameDao.kt
+index 6ec5df7..a929af5 100644
+--- a/app/src/main/java/app/gamenative/db/dao/EpicGameDao.kt
++++ b/app/src/main/java/app/gamenative/db/dao/EpicGameDao.kt
+@@ -49,7 +49,7 @@ interface EpicGameDao {
+     @Query("SELECT * FROM epic_games WHERE app_name = :appName")
+     suspend fun getByAppName(appName: String): EpicGame?
+ 
+-    @Query("SELECT * FROM epic_games WHERE is_dlc = false AND namespace != 'ue' ORDER BY title ASC")
++    @Query("SELECT * FROM epic_games WHERE is_dlc = 0 AND namespace != 'ue' ORDER BY title ASC")
+     fun getAll(): Flow<List<EpicGame>>
+ 
+     @Query("SELECT * FROM epic_games WHERE is_installed = :isInstalled ORDER BY title ASC")
+@@ -58,14 +58,14 @@ interface EpicGameDao {
+     @Query("SELECT * FROM epic_games WHERE base_game_app_name = (SELECT catalog_id FROM epic_games WHERE id = :appId)")
+     fun getDLCForTitle(appId: Int): Flow<List<EpicGame>>
+ 
+-    @Query("SELECT * FROM epic_games WHERE base_game_app_name IS NOT NULL AND is_dlc = true")
++    @Query("SELECT * FROM epic_games WHERE base_game_app_name IS NOT NULL AND is_dlc = 1")
+     fun getAllDlcTitles(): Flow<List<EpicGame>>
+ 
+-    @Query("SELECT * FROM epic_games WHERE is_dlc = false AND namespace != 'ue' AND title LIKE '%' || :searchQuery || '%' ORDER BY title ASC")
++    @Query("SELECT * FROM epic_games WHERE is_dlc = 0 AND namespace != 'ue' AND title LIKE '%' || :searchQuery || '%' ORDER BY title ASC")
+     fun searchByTitle(searchQuery: String): Flow<List<EpicGame>>
+ 
+     // Only delete non-installed games from DB - Need to preserve any currently installed games.
+-    @Query("DELETE FROM epic_games WHERE is_installed = false")
++    @Query("DELETE FROM epic_games WHERE is_installed = 0")
+     suspend fun deleteAllNonInstalledGames()
+ 
+     @Query("SELECT COUNT(*) FROM epic_games")
+diff --git a/app/src/main/java/app/gamenative/db/dao/GOGGameDao.kt b/app/src/main/java/app/gamenative/db/dao/GOGGameDao.kt
+index 237ebfe..16918b1 100644
+--- a/app/src/main/java/app/gamenative/db/dao/GOGGameDao.kt
++++ b/app/src/main/java/app/gamenative/db/dao/GOGGameDao.kt
+@@ -34,22 +34,22 @@ interface GOGGameDao {
+     @Query("SELECT * FROM gog_games WHERE id = :gameId")
+     suspend fun getById(gameId: String): GOGGame?
+ 
+-    @Query("SELECT * FROM gog_games WHERE exclude = false ORDER BY title ASC")
++    @Query("SELECT * FROM gog_games WHERE exclude = 0 ORDER BY title ASC")
+     fun getAll(): Flow<List<GOGGame>>
+ 
+-    @Query("SELECT * FROM gog_games WHERE exclude = false ORDER BY title ASC")
++    @Query("SELECT * FROM gog_games WHERE exclude = 0 ORDER BY title ASC")
+     suspend fun getAllAsList(): List<GOGGame>
+ 
+-    @Query("SELECT * FROM gog_games WHERE is_installed = :isInstalled AND exclude = false ORDER BY title ASC")
++    @Query("SELECT * FROM gog_games WHERE is_installed = :isInstalled AND exclude = 0 ORDER BY title ASC")
+     fun getByInstallStatus(isInstalled: Boolean): Flow<List<GOGGame>>
+ 
+-    @Query("SELECT * FROM gog_games WHERE exclude = false AND title LIKE '%' || :searchQuery || '%' ORDER BY title ASC")
++    @Query("SELECT * FROM gog_games WHERE exclude = 0 AND title LIKE '%' || :searchQuery || '%' ORDER BY title ASC")
+     fun searchByTitle(searchQuery: String): Flow<List<GOGGame>>
+ 
+-    @Query("DELETE FROM gog_games WHERE is_installed = false")
++    @Query("DELETE FROM gog_games WHERE is_installed = 0")
+     suspend fun deleteAllNonInstalledGames()
+ 
+-    @Query("SELECT COUNT(*) FROM gog_games WHERE exclude = false")
++    @Query("SELECT COUNT(*) FROM gog_games WHERE exclude = 0")
+     fun getCount(): Flow<Int>
+ 
+     @Query("SELECT id FROM gog_games")

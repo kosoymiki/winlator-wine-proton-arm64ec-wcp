@@ -183,6 +183,16 @@ runtime_contract_patterns = [
     r"missing bionic ntdll marker",
     r"contains glibc-unix modules in strict bionic mode",
     r"runtime class mismatch",
+    r"Strict gamenative check failed",
+    r"Strict bionic check failed",
+    r"Runpath contract failed",
+    r"bionic-source-entry\.json contract violation",
+    r"missing baseline symbols",
+    r"mouse\.c WM_INPUT fix not applied",
+    r"\[winlator-patch\]\[error\] Failed to apply .*\.patch",
+    r"error: patch failed:",
+    r"Rejected hunk #\d+",
+    r"llvm-readobj(?:/readelf)? unavailable",
 ]
 infra_patterns = [
     r"The operation was canceled",

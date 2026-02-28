@@ -1,0 +1,49 @@
+commit 3376f0ed5f5c7cf4ba960df218a00c6cc053ffb7
+Author: Twaik Yont <9674930+twaik@users.noreply.github.com>
+Date:   Wed Feb 18 23:09:24 2026 +0200
+
+    fix(shell-loader): keep Loader in debug build
+    
+    Add explicit ProGuard config for debug and keep com.termux.x11.Loader to prevent it from being stripped after recent changes.
+    
+    Signed-off-by: Twaik Yont <9674930+twaik@users.noreply.github.com>
+---
+ shell-loader/build.gradle       | 3 +++
+ shell-loader/proguard-rules.pro | 7 +++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/shell-loader/build.gradle b/shell-loader/build.gradle
+index c03f75b..f3d881e 100755
+--- a/shell-loader/build.gradle
++++ b/shell-loader/build.gradle
+@@ -12,6 +12,7 @@ android.compileSdkVersion 34
+ android.buildTypes.debug.signingConfig null
+ android.buildTypes.debug.minifyEnabled true
+ android.buildTypes.debug.shrinkResources true
++android.buildTypes.debug.proguardFiles 'proguard-rules.pro'
+ android.buildFeatures.buildConfig true
+ android.compileOptions.sourceCompatibility JavaVersion.VERSION_1_8
+ android.compileOptions.targetCompatibility JavaVersion.VERSION_1_8
+@@ -20,6 +21,8 @@ dependencies.compileOnly project(':shell-loader:stub')
+ if (!gradle.startParameter.taskNames.isEmpty())
+     androidComponents { onVariants(selector().all()) { outputs.forEach { it.outputFileName.set("shell-loader-debug.apk") } } }
+ 
++configurations.configureEach { exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib" }
++
+ def signingConfig = project(':app').android.signingConfigs.debug
+ def keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType())
+ keyStore.load(new FileInputStream(signingConfig.storeFile), signingConfig.keyPassword.toCharArray())
+diff --git a/shell-loader/proguard-rules.pro b/shell-loader/proguard-rules.pro
+new file mode 100644
+index 0000000..f043ccc
+--- /dev/null
++++ b/shell-loader/proguard-rules.pro
+@@ -0,0 +1,7 @@
++-keepattributes SourceFile,LineNumberTable
++
++-dontobfuscate
++
++-keep class com.termux.x11.Loader {
++    public static void main(java.lang.String[]);
++}
+\ No newline at end of file

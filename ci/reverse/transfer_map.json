@@ -1,0 +1,97 @@
+{
+  "repos": [
+    {
+      "alias": "gamenative_protonwine",
+      "enabled": true,
+      "harvest_paths": [
+        "android/patches",
+        "build-scripts/build-step-arm64ec.sh",
+        "build-scripts/build-step0.sh",
+        ".github/workflows/build-proton.yml"
+      ],
+      "commit_markers": [
+        "x11drv_xinput2_enable",
+        "xinput2_available",
+        "NtUserSendHardwareInput",
+        "SEND_HWMSG_NO_RAW",
+        "get_send_mouse_flags",
+        "WINE_OPEN_WITH_ANDROID_BROWSER",
+        "RtlWow64SuspendThread",
+        "Wow64SuspendLocalThread",
+        "WRAPPER_VK_VERSION"
+      ],
+      "sync_rules": [
+        {
+          "kind": "changed_path_sync",
+          "source_prefix": "android/patches",
+          "target_prefix": "ci/gamenative/patchsets/28c3a06/android/patches",
+          "include_suffixes": [
+            ".patch"
+          ],
+          "exclude_substrings": [
+            "/test-bylaws/"
+          ]
+        },
+        {
+          "kind": "path_copy",
+          "source": "android/patches/dlls_winex11_drv_mouse_c_wm_input_fix.patch",
+          "target": "ci/gamenative/patchsets/28c3a06/android/patches/dlls_winex11_drv_mouse_c_wm_input_fix.patch",
+          "ref": "head",
+          "allow_missing": true
+        },
+        {
+          "kind": "path_copy",
+          "source": "android/patches/programs_winebrowser_main_c.patch",
+          "target": "ci/gamenative/patchsets/28c3a06/android/patches/programs_winebrowser_main_c.patch",
+          "ref": "head",
+          "allow_missing": true
+        },
+        {
+          "kind": "path_copy",
+          "source": "android/patches/programs_winebrowser_makefile_in.patch",
+          "target": "ci/gamenative/patchsets/28c3a06/android/patches/programs_winebrowser_makefile_in.patch",
+          "ref": "head",
+          "allow_missing": true
+        }
+      ]
+    },
+    {
+      "alias": "coffin_wine",
+      "enabled": true,
+      "harvest_paths": [
+        "dlls/winex11.drv/mouse.c",
+        "programs/winebrowser/main.c",
+        "programs/wineboot/wineboot.c",
+        "dlls/ntdll/unix/loader.c"
+      ],
+      "commit_markers": [
+        "NtUserSendHardwareInput",
+        "SEND_HWMSG_NO_RAW",
+        "get_send_mouse_flags",
+        "WINE_OPEN_WITH_ANDROID_BROWSER",
+        "RtlWow64SuspendThread",
+        "Wow64SuspendLocalThread"
+      ],
+      "sync_rules": []
+    },
+    {
+      "alias": "coffin_winlator",
+      "enabled": true,
+      "harvest_paths": [
+        "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+        "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+        "app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java",
+        "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+        "app/src/main/java/com/winlator/cmod/contents/Downloader.java"
+      ],
+      "commit_markers": [
+        "WRAPPER_VK_VERSION",
+        "ContentProfile",
+        "REMOTE_PROFILES",
+        "WINEDEBUG",
+        "MESA_VK_WSI_PRESENT_MODE"
+      ],
+      "sync_rules": []
+    }
+  ]
+}

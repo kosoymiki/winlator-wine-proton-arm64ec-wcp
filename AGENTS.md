@@ -42,6 +42,15 @@ This file is an **operational guide** for contributors/agents working in this re
 4. Commit with focused scope and clear message.
 5. Push only when requested or when task explicitly includes delivery.
 
+### Runtime Conflict Board (Required for multi-agent handoff)
+
+- Before starting runtime/loader/graphics tasks, read `docs/HARVARD_RUNTIME_CONFLICT_BOARD.md`.
+- Keep card flow strict: `Inbox -> Ready -> Doing -> Done`.
+- When taking work, move exactly one card to `Doing` and set owner/date.
+- On completion, move card to `Done` and attach validation evidence commands.
+- Add every new request as a new `RC-XXX` line in `Inbox`; do not overwrite prior history.
+- If behavior changes runtime contracts, update `docs/UNIFIED_RUNTIME_CONTRACT.md` and the board in the same change.
+
 ---
 
 ## 5) Validation Matrix

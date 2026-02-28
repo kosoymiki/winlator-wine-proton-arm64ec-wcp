@@ -1,0 +1,19 @@
+commit 479096dbd21f7d0b2a7235a7d0865b412de0ed9c
+Author: Ilya114 <93242944+Ilya114@users.noreply.github.com>
+Date:   Thu Jan 16 12:59:31 2025 +0200
+
+    Update box64droid.py
+
+diff --git a/scripts/native/box64droid.py b/scripts/native/box64droid.py
+index d9b9886..77aca01 100644
+--- a/scripts/native/box64droid.py
++++ b/scripts/native/box64droid.py
+@@ -228,7 +228,7 @@ def start():
+         os.system("rm $PREFIX/bin/box64droid")
+         os.system("rm $PREFIX/bin/box64droid.py")
+         os.system("rm $PREFIX/bin/start-box64.py")
+-        os.system("rm -r $PREFIX/.shortcuts")
++        os.system("rm -r $HOME/.shortcuts")
+     elif sys.argv[1] == "--reinstall":
+         os.system("curl -o install https://raw.githubusercontent.com/Ilya114/Box64Droid/main/installers/install.sh && chmod +x install && ./install")
+     elif sys.argv[1] == "--version":

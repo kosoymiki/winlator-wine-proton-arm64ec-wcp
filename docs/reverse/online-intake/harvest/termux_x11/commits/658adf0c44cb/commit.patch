@@ -1,0 +1,24 @@
+commit 658adf0c44cbfd8a38474008bd4a487b06dbf635
+Author: Twaik Yont <9674930+twaik@users.noreply.github.com>
+Date:   Wed Feb 18 22:11:39 2026 +0200
+
+    Fix resource shrinker removing runtime-resolved strings
+    
+    Prevent resource shrinker from stripping lorie_* string resources accessed dynamically via getIdentifier.
+    Add keep.xml to retain prefixed strings while allowing other unused resources to be shrunk.
+    
+    Signed-off-by: Twaik Yont <9674930+twaik@users.noreply.github.com>
+
+diff --git a/app/src/main/java/com/termux/x11/MainActivity.java b/app/src/main/java/com/termux/x11/MainActivity.java
+index 40cb0cc..e7b3ed8 100644
+--- a/app/src/main/java/com/termux/x11/MainActivity.java
++++ b/app/src/main/java/com/termux/x11/MainActivity.java
+@@ -697,7 +697,7 @@ public class MainActivity extends AppCompatActivity {
+         NotificationCompat.Builder builder =  new NotificationCompat.Builder(this, getNotificationChannel(mNotificationManager))
+                 .setContentTitle("Termux:X11")
+                 .setSmallIcon(R.drawable.ic_x11_icon)
+-                .setContentText(getResources().getText(R.string.notification_content_text))
++                .setContentText(getResources().getText(R.string.lorie_notification_content_text))
+                 .setOngoing(true)
+                 .setPriority(Notification.PRIORITY_MAX)
+                 .setSilent(true)

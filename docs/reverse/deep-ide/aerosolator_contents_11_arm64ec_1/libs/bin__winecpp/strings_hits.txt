@@ -1,0 +1,29 @@
+winegcc: 
+Could not find winebuild
+winegcc
+/home/runner/work/winlator-wine-proton-arm64ec-wcp/winlator-wine-proton-arm64ec-wcp/wine-src/tools/winegcc/winegcc.c
+-DWINE_UNICODE_NATIVE
+-D__WINE__
+%s%s/wine/msvcrt
+%s%s%s/wine/msvcrt
+%s%s/wine/windows
+%s%s%s/wine/windows
+    WINEDLLPATH="$appdir:$WINEDLLPATH"
+    export WINEDLLPATH
+# determine the WINELOADER
+if [ ! -x "$WINELOADER" ]; then WINELOADER="wine"; fi
+exec "$WINELOADER" "$apppath" "$@"
+/wine%s/libwinecrt0.a
+%s/wine%s
+winecrt0
+kernel32
+ntdll
+libntdll.a
+winecpp
+--wine-objdir
+--winebuild
+--wine-builtin
+%s/tools/winebuild/winebuild%s
+WINEBUILD
+%s/winebuild%s
+winebuild

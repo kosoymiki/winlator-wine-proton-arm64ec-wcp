@@ -1,0 +1,988 @@
+
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/amdxc64.dll:     file format pei-i386
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/amdxc64.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10002460
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Wed Feb 25 04:47:51 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00002000
+SizeOfInitializedData	0001c000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00002460
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		0001f000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 000049c8 000000d3 Export Directory [.edata (or where ever we found it)]
+Entry 1 00004a9c 00000050 Import Directory [parts of .idata]
+Entry 2 00008000 000000cc Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00009000 00000250 Base Relocation Directory [.reloc]
+Entry 6 00004990 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000705c 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 00004b64 00000078 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x10004a9c
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 00004a9c	00004aec 00000000 00000000 00004d6e 00004b64
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	4bdc	   74  __acrt_iob_func
+	4bee	  158  __stdio_common_vsprintf
+	4c08	 1894  _strdup
+	4c12	 2155  calloc
+	4c1c	 2284  free
+	4c24	 2291  fwrite
+	4c2e	 2294  getenv
+	4c38	 2382  memmove
+	4c42	 2449  strchr
+	4c4c	 2450  strcmp
+	4c56	 2452  strcpy
+	4c60	 2454  strcspn
+	4c6a	 2458  strlen
+
+ 00004ab0	00004b24 00000000 00000000 00004d7b 00004b9c
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	4c74	  323  DisableThreadLibraryCalls
+	4c90	  641  GetModuleHandleA
+	4ca4	  644  GetModuleHandleW
+	4cb8	  694  GetProcAddress
+	4cca	  781  GetTickCount
+	4cda	  837  HeapAlloc
+	4ce6	  847  HeapReAlloc
+	4cf4	  958  LoadLibraryA
+	4d04	 1074  QueryPerformanceCounter
+	4d1e	 1075  QueryPerformanceFrequency
+	4d3a	 1083  RaiseException
+
+ 00004ac4	00004b54 00000000 00000000 00004d88 00004bcc
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	4d4c	 1236  _alldiv
+	4d56	 1240  _allrem
+	4d60	 1296  _vsnprintf
+
+ 00004ad8	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x100049c8
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		3925da12
+Major/Minor 			0/0
+Name 				00004a2c amdxc64.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000005
+	[Name Pointer/Ordinal] Table	00000005
+Table Addresses
+	Export Address Table 		000049f0
+	Name Pointer Table 		00004a04
+	Ordinal Table 			00004a18
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 1820 Export RVA
+	[   1] +base[   2] 1a50 Export RVA
+	[   2] +base[   3] 1000 Export RVA
+	[   3] +base[   4] 1020 Export RVA
+	[   4] +base[   5] 1040 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[   0] AmdExtD3DCreateInterface
+	[   1] AmdGetDxcModuleHandle
+	[   2] GetSettingsBlobsAll
+	[   3] OpenAdapter12
+	[   4] OpenShimInterface
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 308 (0x134) Number of fixups 150
+	reloc    0 offset   10 [1010] HIGHLOW
+	reloc    1 offset   17 [1017] HIGHLOW
+	reloc    2 offset   30 [1030] HIGHLOW
+	reloc    3 offset   37 [1037] HIGHLOW
+	reloc    4 offset   50 [1050] HIGHLOW
+	reloc    5 offset   57 [1057] HIGHLOW
+	reloc    6 offset   75 [1075] HIGHLOW
+	reloc    7 offset   94 [1094] HIGHLOW
+	reloc    8 offset   e9 [10e9] HIGHLOW
+	reloc    9 offset  102 [1102] HIGHLOW
+	reloc   10 offset  12f [112f] HIGHLOW
+	reloc   11 offset  13e [113e] HIGHLOW
+	reloc   12 offset  19d [119d] HIGHLOW
+	reloc   13 offset  1bc [11bc] HIGHLOW
+	reloc   14 offset  1c4 [11c4] HIGHLOW
+	reloc   15 offset  219 [1219] HIGHLOW
+	reloc   16 offset  24b [124b] HIGHLOW
+	reloc   17 offset  283 [1283] HIGHLOW
+	reloc   18 offset  29d [129d] HIGHLOW
+	reloc   19 offset  2a5 [12a5] HIGHLOW
+	reloc   20 offset  2b8 [12b8] HIGHLOW
+	reloc   21 offset  2be [12be] HIGHLOW
+	reloc   22 offset  2e3 [12e3] HIGHLOW
+	reloc   23 offset  2e9 [12e9] HIGHLOW
+	reloc   24 offset  2fb [12fb] HIGHLOW
+	reloc   25 offset  301 [1301] HIGHLOW
+	reloc   26 offset  30e [130e] HIGHLOW
+	reloc   27 offset  317 [1317] HIGHLOW
+	reloc   28 offset  321 [1321] HIGHLOW
+	reloc   29 offset  32c [132c] HIGHLOW
+	reloc   30 offset  334 [1334] HIGHLOW
+	reloc   31 offset  358 [1358] HIGHLOW
+	reloc   32 offset  367 [1367] HIGHLOW
+	reloc   33 offset  36f [136f] HIGHLOW
+	reloc   34 offset  3d9 [13d9] HIGHLOW
+	reloc   35 offset  3f2 [13f2] HIGHLOW
+	reloc   36 offset  41f [141f] HIGHLOW
+	reloc   37 offset  42e [142e] HIGHLOW
+	reloc   38 offset  48d [148d] HIGHLOW
+	reloc   39 offset  4ac [14ac] HIGHLOW
+	reloc   40 offset  4b4 [14b4] HIGHLOW
+	reloc   41 offset  4e2 [14e2] HIGHLOW
+	reloc   42 offset  4fa [14fa] HIGHLOW
+	reloc   43 offset  502 [1502] HIGHLOW
+	reloc   44 offset  522 [1522] HIGHLOW
+	reloc   45 offset  541 [1541] HIGHLOW
+	reloc   46 offset  549 [1549] HIGHLOW
+	reloc   47 offset  572 [1572] HIGHLOW
+	reloc   48 offset  58a [158a] HIGHLOW
+	reloc   49 offset  592 [1592] HIGHLOW
+	reloc   50 offset  5f9 [15f9] HIGHLOW
+	reloc   51 offset  623 [1623] HIGHLOW
+	reloc   52 offset  645 [1645] HIGHLOW
+	reloc   53 offset  654 [1654] HIGHLOW
+	reloc   54 offset  6b3 [16b3] HIGHLOW
+	reloc   55 offset  6d9 [16d9] HIGHLOW
+	reloc   56 offset  6e1 [16e1] HIGHLOW
+	reloc   57 offset  6fc [16fc] HIGHLOW
+	reloc   58 offset  712 [1712] HIGHLOW
+	reloc   59 offset  72a [172a] HIGHLOW
+	reloc   60 offset  741 [1741] HIGHLOW
+	reloc   61 offset  74a [174a] HIGHLOW
+	reloc   62 offset  7b1 [17b1] HIGHLOW
+	reloc   63 offset  7c8 [17c8] HIGHLOW
+	reloc   64 offset  7d0 [17d0] HIGHLOW
+	reloc   65 offset  836 [1836] HIGHLOW
+	reloc   66 offset  852 [1852] HIGHLOW
+	reloc   67 offset  861 [1861] HIGHLOW
+	reloc   68 offset  8c0 [18c0] HIGHLOW
+	reloc   69 offset  8df [18df] HIGHLOW
+	reloc   70 offset  8e7 [18e7] HIGHLOW
+	reloc   71 offset  902 [1902] HIGHLOW
+	reloc   72 offset  919 [1919] HIGHLOW
+	reloc   73 offset  930 [1930] HIGHLOW
+	reloc   74 offset  946 [1946] HIGHLOW
+	reloc   75 offset  95a [195a] HIGHLOW
+	reloc   76 offset  971 [1971] HIGHLOW
+	reloc   77 offset  97a [197a] HIGHLOW
+	reloc   78 offset  984 [1984] HIGHLOW
+	reloc   79 offset  993 [1993] HIGHLOW
+	reloc   80 offset  99c [199c] HIGHLOW
+	reloc   81 offset  a06 [1a06] HIGHLOW
+	reloc   82 offset  a1d [1a1d] HIGHLOW
+	reloc   83 offset  a25 [1a25] HIGHLOW
+	reloc   84 offset  a59 [1a59] HIGHLOW
+	reloc   85 offset  a9b [1a9b] HIGHLOW
+	reloc   86 offset  ac1 [1ac1] HIGHLOW
+	reloc   87 offset  adb [1adb] HIGHLOW
+	reloc   88 offset  ae1 [1ae1] HIGHLOW
+	reloc   89 offset  ae6 [1ae6] HIGHLOW
+	reloc   90 offset  aed [1aed] HIGHLOW
+	reloc   91 offset  af4 [1af4] HIGHLOW
+	reloc   92 offset  afd [1afd] HIGHLOW
+	reloc   93 offset  b05 [1b05] HIGHLOW
+	reloc   94 offset  b2b [1b2b] HIGHLOW
+	reloc   95 offset  b3b [1b3b] HIGHLOW
+	reloc   96 offset  b48 [1b48] HIGHLOW
+	reloc   97 offset  b4f [1b4f] HIGHLOW
+	reloc   98 offset  b61 [1b61] HIGHLOW
+	reloc   99 offset  b7b [1b7b] HIGHLOW
+	reloc  100 offset  b81 [1b81] HIGHLOW
+	reloc  101 offset  b86 [1b86] HIGHLOW
+	reloc  102 offset  b8d [1b8d] HIGHLOW
+	reloc  103 offset  b94 [1b94] HIGHLOW
+	reloc  104 offset  b9d [1b9d] HIGHLOW
+	reloc  105 offset  ba5 [1ba5] HIGHLOW
+	reloc  106 offset  bcd [1bcd] HIGHLOW
+	reloc  107 offset  bee [1bee] HIGHLOW
+	reloc  108 offset  bf6 [1bf6] HIGHLOW
+	reloc  109 offset  c04 [1c04] HIGHLOW
+	reloc  110 offset  c21 [1c21] HIGHLOW
+	reloc  111 offset  c3b [1c3b] HIGHLOW
+	reloc  112 offset  c41 [1c41] HIGHLOW
+	reloc  113 offset  c46 [1c46] HIGHLOW
+	reloc  114 offset  c4d [1c4d] HIGHLOW
+	reloc  115 offset  c54 [1c54] HIGHLOW
+	reloc  116 offset  c5d [1c5d] HIGHLOW
+	reloc  117 offset  c65 [1c65] HIGHLOW
+	reloc  118 offset  c8d [1c8d] HIGHLOW
+	reloc  119 offset  ca4 [1ca4] HIGHLOW
+	reloc  120 offset  caa [1caa] HIGHLOW
+	reloc  121 offset  cb3 [1cb3] HIGHLOW
+	reloc  122 offset  cc6 [1cc6] HIGHLOW
+	reloc  123 offset  cd7 [1cd7] HIGHLOW
+	reloc  124 offset  ce9 [1ce9] HIGHLOW
+	reloc  125 offset  cf1 [1cf1] HIGHLOW
+	reloc  126 offset  d26 [1d26] HIGHLOW
+	reloc  127 offset  d2d [1d2d] HIGHLOW
+	reloc  128 offset  e1c [1e1c] HIGHLOW
+	reloc  129 offset  e25 [1e25] HIGHLOW
+	reloc  130 offset  e36 [1e36] HIGHLOW
+	reloc  131 offset  e3d [1e3d] HIGHLOW
+	reloc  132 offset  e50 [1e50] HIGHLOW
+	reloc  133 offset  e89 [1e89] HIGHLOW
+	reloc  134 offset  eb1 [1eb1] HIGHLOW
+	reloc  135 offset  ec1 [1ec1] HIGHLOW
+	reloc  136 offset  edc [1edc] HIGHLOW
+	reloc  137 offset  ef7 [1ef7] HIGHLOW
+	reloc  138 offset  f04 [1f04] HIGHLOW
+	reloc  139 offset  f1d [1f1d] HIGHLOW
+	reloc  140 offset  f2c [1f2c] HIGHLOW
+	reloc  141 offset  f33 [1f33] HIGHLOW
+	reloc  142 offset  f38 [1f38] HIGHLOW
+	reloc  143 offset  f75 [1f75] HIGHLOW
+	reloc  144 offset  f83 [1f83] HIGHLOW
+	reloc  145 offset  f92 [1f92] HIGHLOW
+	reloc  146 offset  fa0 [1fa0] HIGHLOW
+	reloc  147 offset  fa9 [1fa9] HIGHLOW
+	reloc  148 offset  fb3 [1fb3] HIGHLOW
+	reloc  149 offset  fe9 [1fe9] HIGHLOW
+
+Virtual Address: 00002000 Chunk size 204 (0xcc) Number of fixups 98
+	reloc    0 offset    c [200c] HIGHLOW
+	reloc    1 offset   1b [201b] HIGHLOW
+	reloc    2 offset   41 [2041] HIGHLOW
+	reloc    3 offset   5b [205b] HIGHLOW
+	reloc    4 offset   61 [2061] HIGHLOW
+	reloc    5 offset   66 [2066] HIGHLOW
+	reloc    6 offset   6d [206d] HIGHLOW
+	reloc    7 offset   74 [2074] HIGHLOW
+	reloc    8 offset   7d [207d] HIGHLOW
+	reloc    9 offset   85 [2085] HIGHLOW
+	reloc   10 offset   b8 [20b8] HIGHLOW
+	reloc   11 offset   cb [20cb] HIGHLOW
+	reloc   12 offset   d1 [20d1] HIGHLOW
+	reloc   13 offset   d6 [20d6] HIGHLOW
+	reloc   14 offset   dd [20dd] HIGHLOW
+	reloc   15 offset   e4 [20e4] HIGHLOW
+	reloc   16 offset   ed [20ed] HIGHLOW
+	reloc   17 offset   f8 [20f8] HIGHLOW
+	reloc   18 offset  110 [2110] HIGHLOW
+	reloc   19 offset  128 [2128] HIGHLOW
+	reloc   20 offset  130 [2130] HIGHLOW
+	reloc   21 offset  13c [213c] HIGHLOW
+	reloc   22 offset  142 [2142] HIGHLOW
+	reloc   23 offset  147 [2147] HIGHLOW
+	reloc   24 offset  14e [214e] HIGHLOW
+	reloc   25 offset  155 [2155] HIGHLOW
+	reloc   26 offset  15e [215e] HIGHLOW
+	reloc   27 offset  166 [2166] HIGHLOW
+	reloc   28 offset  16b [216b] HIGHLOW
+	reloc   29 offset  182 [2182] HIGHLOW
+	reloc   30 offset  18e [218e] HIGHLOW
+	reloc   31 offset  19a [219a] HIGHLOW
+	reloc   32 offset  1a0 [21a0] HIGHLOW
+	reloc   33 offset  1a5 [21a5] HIGHLOW
+	reloc   34 offset  1ac [21ac] HIGHLOW
+	reloc   35 offset  1b3 [21b3] HIGHLOW
+	reloc   36 offset  1bc [21bc] HIGHLOW
+	reloc   37 offset  1c4 [21c4] HIGHLOW
+	reloc   38 offset  1c9 [21c9] HIGHLOW
+	reloc   39 offset  1dc [21dc] HIGHLOW
+	reloc   40 offset  1fb [21fb] HIGHLOW
+	reloc   41 offset  210 [2210] HIGHLOW
+	reloc   42 offset  216 [2216] HIGHLOW
+	reloc   43 offset  21d [221d] HIGHLOW
+	reloc   44 offset  223 [2223] HIGHLOW
+	reloc   45 offset  22e [222e] HIGHLOW
+	reloc   46 offset  253 [2253] HIGHLOW
+	reloc   47 offset  259 [2259] HIGHLOW
+	reloc   48 offset  291 [2291] HIGHLOW
+	reloc   49 offset  2a9 [22a9] HIGHLOW
+	reloc   50 offset  2b1 [22b1] HIGHLOW
+	reloc   51 offset  2c1 [22c1] HIGHLOW
+	reloc   52 offset  2c7 [22c7] HIGHLOW
+	reloc   53 offset  2cc [22cc] HIGHLOW
+	reloc   54 offset  2d3 [22d3] HIGHLOW
+	reloc   55 offset  2da [22da] HIGHLOW
+	reloc   56 offset  2e3 [22e3] HIGHLOW
+	reloc   57 offset  2ef [22ef] HIGHLOW
+	reloc   58 offset  2f4 [22f4] HIGHLOW
+	reloc   59 offset  305 [2305] HIGHLOW
+	reloc   60 offset  318 [2318] HIGHLOW
+	reloc   61 offset  342 [2342] HIGHLOW
+	reloc   62 offset  374 [2374] HIGHLOW
+	reloc   63 offset  384 [2384] HIGHLOW
+	reloc   64 offset  392 [2392] HIGHLOW
+	reloc   65 offset  3cc [23cc] HIGHLOW
+	reloc   66 offset  3f4 [23f4] HIGHLOW
+	reloc   67 offset  3fc [23fc] HIGHLOW
+	reloc   68 offset  43b [243b] HIGHLOW
+	reloc   69 offset  490 [2490] HIGHLOW
+	reloc   70 offset  4a4 [24a4] HIGHLOW
+	reloc   71 offset  4af [24af] HIGHLOW
+	reloc   72 offset  4ba [24ba] HIGHLOW
+	reloc   73 offset  4c5 [24c5] HIGHLOW
+	reloc   74 offset  4d0 [24d0] HIGHLOW
+	reloc   75 offset  4db [24db] HIGHLOW
+	reloc   76 offset  4e6 [24e6] HIGHLOW
+	reloc   77 offset  4f1 [24f1] HIGHLOW
+	reloc   78 offset  4fc [24fc] HIGHLOW
+	reloc   79 offset  507 [2507] HIGHLOW
+	reloc   80 offset  512 [2512] HIGHLOW
+	reloc   81 offset  51d [251d] HIGHLOW
+	reloc   82 offset  528 [2528] HIGHLOW
+	reloc   83 offset  533 [2533] HIGHLOW
+	reloc   84 offset  53e [253e] HIGHLOW
+	reloc   85 offset  549 [2549] HIGHLOW
+	reloc   86 offset  554 [2554] HIGHLOW
+	reloc   87 offset  55f [255f] HIGHLOW
+	reloc   88 offset  56a [256a] HIGHLOW
+	reloc   89 offset  575 [2575] HIGHLOW
+	reloc   90 offset  580 [2580] HIGHLOW
+	reloc   91 offset  58b [258b] HIGHLOW
+	reloc   92 offset  596 [2596] HIGHLOW
+	reloc   93 offset  5a1 [25a1] HIGHLOW
+	reloc   94 offset  5ac [25ac] HIGHLOW
+	reloc   95 offset  5b7 [25b7] HIGHLOW
+	reloc   96 offset  5c2 [25c2] HIGHLOW
+	reloc   97 offset    0 [2000] ABSOLUTE
+
+Virtual Address: 00004000 Chunk size 44 (0x2c) Number of fixups 18
+	reloc    0 offset  650 [4650] HIGHLOW
+	reloc    1 offset  654 [4654] HIGHLOW
+	reloc    2 offset  658 [4658] HIGHLOW
+	reloc    3 offset  65c [465c] HIGHLOW
+	reloc    4 offset  660 [4660] HIGHLOW
+	reloc    5 offset  664 [4664] HIGHLOW
+	reloc    6 offset  668 [4668] HIGHLOW
+	reloc    7 offset  66c [466c] HIGHLOW
+	reloc    8 offset  670 [4670] HIGHLOW
+	reloc    9 offset  674 [4674] HIGHLOW
+	reloc   10 offset  678 [4678] HIGHLOW
+	reloc   11 offset  67c [467c] HIGHLOW
+	reloc   12 offset  680 [4680] HIGHLOW
+	reloc   13 offset  684 [4684] HIGHLOW
+	reloc   14 offset  8cc [48cc] HIGHLOW
+	reloc   15 offset  8d0 [48d0] HIGHLOW
+	reloc   16 offset  8d4 [48d4] HIGHLOW
+	reloc   17 offset  8d8 [48d8] HIGHLOW
+
+Virtual Address: 00005000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [500c] HIGHLOW
+	reloc    1 offset   10 [5010] HIGHLOW
+	reloc    2 offset   14 [5014] HIGHLOW
+	reloc    3 offset    0 [5000] ABSOLUTE
+
+Virtual Address: 00006000 Chunk size 20 (0x14) Number of fixups 6
+	reloc    0 offset   20 [6020] HIGHLOW
+	reloc    1 offset   34 [6034] HIGHLOW
+	reloc    2 offset   48 [6048] HIGHLOW
+	reloc    3 offset   5c [605c] HIGHLOW
+	reloc    4 offset   78 [6078] HIGHLOW
+	reloc    5 offset    0 [6000] ABSOLUTE
+
+There is a debug directory in .rdata at 0x10004990
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 000049ac 000049ac
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 1, IDs: 0
+010   Entry: name: [val: 80000058 len 13]: WINE_REGISTRY, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 1, IDs: 0
+028     Entry: name: [val: 80000074 len 22]: AMDXC_INTERFACES_R_RES, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 00000000, Value: 0x000048
+048        Leaf: Addr: 0x0080a4, Size: 0x000028, Codepage: 0
+ String table starts at offset: 0x58
+ Resources start at offset: 0xa4
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000015c6  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        00001d92  10003000  10003000  00003000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000110  10005000  10005000  00005000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      0000008c  10006000  10006000  00006000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata       0000011c  10007000  10007000  00007000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .rsrc         000000cc  10008000  10008000  00008000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .reloc        00000250  10009000  10009000  00009000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 .debug_abbrev 00000856  1000a000  1000a000  0000a000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_info   00007720  1000b000  1000b000  0000b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   0000101c  10013000  10013000  00013000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    00000d2d  10015000  10015000  00015000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000220  10016000  10016000  00016000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_str    00007aef  10017000  10017000  00017000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000000 ___wine_stub_GetSettingsBlobsAll
+[  1](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c .L__wine_stub_GetSettingsBlobsAll_string
+[  2](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_file_name
+[  3](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001420 ___wine_spec_unimplemented_stub
+[  4](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000020 ___wine_stub_OpenAdapter12
+[  5](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000020 .L__wine_stub_OpenAdapter12_string
+[  6](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000040 ___wine_stub_OpenShimInterface
+[  7](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002e .L__wine_stub_OpenShimInterface_string
+[  8](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000019c8 .L__wine_spec_exports
+[  9](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001a2c .L__wine_spec_exp_names
+[ 10](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000019f0 .L__wine_spec_exports_funcs
+[ 11](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001a04 .L__wine_spec_exp_name_ptrs
+[ 12](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001a18 .L__wine_spec_exp_ordinals
+[ 13](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000820 _AmdExtD3DCreateInterface
+[ 14](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000a50 _AmdGetDxcModuleHandle@0
+[ 15](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[ 16](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 __wine_spec_relay_entry_points
+[ 17](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000040 .L__wine_spec_relay_entry_point_offsets
+[ 18](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000054 .L__wine_spec_relay_args_string
+[ 19](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c __wine_spec_relay_entry_point_1
+[ 20](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000088 __wine_spec_relay_entry_point_2
+[ 21](sec  5)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000005c __load_config_used
+[ 22](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[ 23](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000a4 .L__wine_spec_res_0
+[ 24](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000b0 _AMDFSR4FFX_AddRef@4
+[ 25](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000d0 _AMDFSR4FFX_Release@4
+[ 26](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000100 _AMDFSR4FFX_QueryInterface@12
+[ 27](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000001f0 _wine_dbg_log
+[ 28](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000270 _AMDFSR4FFX_UpdateFfxApiProvider@12
+[ 29](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000390 _impl_from_IAMDExtStub2
+[ 30](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000003a0 _AMDExtStub2_AddRef@4
+[ 31](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000003c0 _AMDExtStub2_Release@4
+[ 32](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000003f0 _AMDExtStub2_QueryInterface@12
+[ 33](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000004e0 _AMDExtStub2_stub1@4
+[ 34](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000520 _AMDExtStub2_stub2@8
+[ 35](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000570 _AMDExtStub2_stub3@4
+[ 36](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000005b0 _impl_from_IAMDExtStub1
+[ 37](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000005c0 _AMDExtStub1_AddRef@4
+[ 38](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000005e0 _AMDExtStub1_Release@4
+[ 39](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001690 __xmm@ad3043ed30726ab54cbdccabba019d53
+[ 40](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000610 _AmdExtStub1_QueryInterface2@16
+[ 41](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000800 _AmdExtStub1_QueryInterface@12
+[ 42](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016a0 __xmm@4c480efceb6f808142347401b58d6601
+[ 43](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016b0 __xmm@a6d0b45abc0e38bf40c5e83944085fbe
+[ 44](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016c0 __xmm@4f983a8e5ad7aca9446f9288014937ec
+[ 45](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000a70 _wine_dbg_sprintf
+[ 46](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d0 ??_C@_08OKOFNIOI@?$CFp?5?$CFs?5?$CFp?$AA@
+[ 47](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d9 ??_C@_0BK@KHLHMGCI@AMDFSR4FFX_QueryInterface?$AA@
+[ 48](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016f3 ??_C@_09NEILNHFN@?$CFp?5?$CFp?5?$CFu?6?$AA@
+[ 49](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016fd ??_C@_0CA@OOIDGOBB@AMDFSR4FFX_UpdateFfxApiProvider?$AA@
+[ 50](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000171d ??_C@_0N@PNIPKEJJ@FSR4_UPGRADE?$AA@
+[ 51](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000172a ??_C@_0L@BIMHAINC@amdxcffx64?$AA@
+[ 52](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001735 ??_C@_0CF@KPPJPPGE@Failed?5to?5load?5FSR4?5dll?5?$CIamdxcff@
+[ 53](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000175a ??_C@_0BF@NGOIMJIF@UpdateFfxApiProvider?$AA@
+[ 54](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000176f ??_C@_0BK@NIIHPNKD@Replaced?5FSR3?5with?5FSR4?$CB?6?$AA@
+[ 55](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001789 ??_C@_0BA@EAOMOMJM@?$CFp?5?$CFs?5?$CFp?5stub?$CB?6?$AA@
+[ 56](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001799 ??_C@_0BL@IBCBFPFE@AMDExtStub2_QueryInterface?$AA@
+[ 57](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017b4 ??_C@_09JCJKOPJF@?$CFp?5stub?$CB?6?$AA@
+[ 58](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017be ??_C@_0BC@HBOAGCA@AMDExtStub2_stub1?$AA@
+[ 59](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017d0 ??_C@_0N@DIHEHCOL@?$CFp?5?$CFu?5stub?$CB?6?$AA@
+[ 60](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017dd ??_C@_0BC@CMDDFFOD@AMDExtStub2_stub2?$AA@
+[ 61](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017ef ??_C@_0BC@DFCIGEKC@AMDExtStub2_stub3?$AA@
+[ 62](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001801 ??_C@_0N@LEKNLPCJ@?$CFp?5?$CFp?5?$CFs?5?$CFp?6?$AA@
+[ 63](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000180e ??_C@_0BM@FIENNLLK@AmdExtStub1_QueryInterface2?$AA@
+[ 64](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000182a ??_C@_0BB@PLGHMOLD@unknown?5guid?5?$CFs?6?$AA@
+[ 65](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000183b ??_C@_0BK@DPKMMGAG@outer?5?$CFp?0?5iid?5?$CFs?0?5obj?5?$CFp?6?$AA@
+[ 66](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001855 ??_C@_0BJ@BGAJFCO@AmdExtD3DCreateInterface?$AA@
+[ 67](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000186e ??_C@_0BC@HHJHMAFO@unknown?5guid?3?5?$CFs?6?$AA@
+[ 68](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001880 ??_C@_06OJHGLDPL@?$CInull?$CJ?$AA@
+[ 69](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001887 ??_C@_0P@HJIPJNEO@?$DMguid?90x?$CF04hx?$DO?$AA@
+[ 70](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001896 ??_C@_0DD@NKJIOCPJ@?$HL?$CF08x?9?$CF04x?9?$CF04x?9?$CF02x?$CF02x?9?$CF02x?$CF02@
+[ 71](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b74 __imp__free
+[ 72](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 ___wine_dbch_amdxc
+[ 73](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001040 ___wine_dbg_header
+[ 74](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b68 __imp____stdio_common_vsprintf
+[ 75](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000b60 ___wine_dbg_output
+[ 76](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b7c __imp__getenv
+[ 77](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bb8 __imp__LoadLibraryA@4
+[ 78](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ba8 __imp__GetProcAddress@8
+[ 79](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 _AMDFSR4FFX_UpdateFfxApiProvider@12.once
+[ 80](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b70 __imp__calloc
+[ 81](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001650 _AMDSTUB2_vtable
+[ 82](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001668 _AMDFSR4FFX_vtable
+[ 83](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001620 _IID_IAmdExtAntiLagApi
+[ 84](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001678 _AMDSTUB1_vtable
+[ 85](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ba0 __imp__GetModuleHandleA@4
+[ 86](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000ac0 ___wine_dbg_strdup
+[ 87](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000000 _IID_IUnknown
+[ 88](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000010 _IID_IClassFactory
+[ 89](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000020 _IID_IMarshal
+[ 90](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000030 _IID_IAgileObject
+[ 91](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000040 _IID_IAgileReference
+[ 92](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000050 _IID_INoMarshal
+[ 93](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000060 _IID_IMarshal2
+[ 94](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000070 _IID_IStdMarshalInfo
+[ 95](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000080 _IID_IExternalConnection
+[ 96](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000090 _IID_IMultiQI
+[ 97](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000a0 _IID_IMalloc
+[ 98](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000b0 _IID_IInternalUnknown
+[ 99](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000c0 _IID_IEnumUnknown
+[100](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000d0 _IID_ISurrogate
+[101](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000e0 _IID_IGlobalInterfaceTable
+[102](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000f0 _IID_IEnumString
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000100 _IID_ISequentialStream
+[104](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000110 _IID_IStream
+[105](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000120 _IID_IRpcChannelBuffer
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000130 _IID_IRpcChannelBuffer2
+[107](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000140 _IID_IRpcChannelBuffer3
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000150 _IID_IAsyncRpcChannelBuffer
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000160 _IID_IRpcSyntaxNegotiate
+[110](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000170 _IID_IRpcProxyBuffer
+[111](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000180 _IID_IRpcStubBuffer
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000190 _IID_IPSFactoryBuffer
+[113](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001a0 _IID_IChannelHook
+[114](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001b0 _IID_IClientSecurity
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001c0 _IID_IServerSecurity
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001d0 _IID_IAsyncSetup
+[117](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001e0 _IID_ISynchronize
+[118](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001f0 _IID_ISynchronizeHandle
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000200 _IID_ISynchronizeEvent
+[120](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000210 _IID_ISynchronizeContainer
+[121](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000220 _IID_ISynchronizeMutex
+[122](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000230 _IID_ICancelMethodCalls
+[123](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000240 _IID_IAsyncManager
+[124](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000250 _IID_ICallFactory
+[125](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000260 _IID_IRpcOptions
+[126](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000270 _IID_IRpcHelper
+[127](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000280 _IID_IReleaseMarshalBuffers
+[128](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000290 _IID_IWaitMultiple
+[129](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002a0 _IID_IAddrTrackingControl
+[130](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002b0 _IID_IAddrExclusionControl
+[131](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002c0 _IID_IComThreadingInfo
+[132](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002d0 _IID_IProcessInitControl
+[133](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002e0 _IID_IGlobalOptions
+[134](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002f0 _IID_IMallocSpy
+[135](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000300 _IID_IBindCtx
+[136](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000310 _IID_IEnumMoniker
+[137](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000320 _IID_IRunnableObject
+[138](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000330 _IID_IRunningObjectTable
+[139](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000340 _IID_IPersist
+[140](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000350 _IID_IPersistStream
+[141](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000360 _IID_IMoniker
+[142](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000370 _IID_IROTData
+[143](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000380 _IID_IClassActivator
+[144](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000390 _IID_IEnumSTATSTG
+[145](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003a0 _IID_IStorage
+[146](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003b0 _IID_IPersistFile
+[147](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003c0 _IID_IPersistStorage
+[148](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003d0 _IID_IRootStorage
+[149](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003e0 _IID_ILockBytes
+[150](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003f0 _IID_IFillLockBytes
+[151](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000400 _IID_IProgressNotify
+[152](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000410 _IID_ILayoutStorage
+[153](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000420 _IID_IBlockingLock
+[154](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000430 _IID_ITimeAndNoticeControl
+[155](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000440 _IID_IOplockStorage
+[156](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000450 _IID_IEnumFORMATETC
+[157](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000460 _IID_IEnumSTATDATA
+[158](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000470 _IID_IAdviseSink
+[159](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000480 _IID_IAdviseSink2
+[160](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000490 _IID_IDataObject
+[161](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004a0 _IID_IDataAdviseHolder
+[162](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004b0 _IID_IMessageFilter
+[163](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004c0 _IID_IDirectWriterLock
+[164](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004d0 _IID_IUrlMon
+[165](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004e0 _IID_IForegroundTransfer
+[166](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004f0 _IID_IInitializeSpy
+[167](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000500 _IID_IThumbnailExtractor
+[168](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000510 _IID_IDummyHICONIncluder
+[169](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000520 _IID_IApartmentShutdown
+[170](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000530 _IID_IDispatch
+[171](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000540 _IID_IEnumVARIANT
+[172](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000550 _IID_ITypeComp
+[173](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000560 _IID_ITypeInfo
+[174](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000570 _IID_ITypeInfo2
+[175](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000580 _IID_ITypeLib
+[176](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000590 _IID_ITypeLib2
+[177](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005a0 _IID_ITypeChangeEvents
+[178](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005b0 _IID_IErrorInfo
+[179](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005c0 _IID_ICreateErrorInfo
+[180](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005d0 _IID_ISupportErrorInfo
+[181](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005e0 _IID_ITypeFactory
+[182](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005f0 _IID_ITypeMarshal
+[183](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000600 _IID_IRecordInfo
+[184](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000610 _IID_ICreateTypeInfo
+[185](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000620 _IID_ICreateTypeInfo2
+[186](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000630 _IID_ICreateTypeLib
+[187](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000640 _IID_ICreateTypeLib2
+[188](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000650 _IID_IErrorLog
+[189](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000660 _IID_IPropertyBag
+[190](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000670 _IID_IPropertyStorage
+[191](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000680 _IID_IPropertySetStorage
+[192](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000690 _IID_IEnumSTATPROPSTG
+[193](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006a0 _IID_IEnumSTATPROPSETSTG
+[194](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006b0 _IID_StdOle
+[195](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006c0 _IID_IOleWindow
+[196](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006d0 _IID_IOleInPlaceObject
+[197](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006e0 _IID_IOleInPlaceUIWindow
+[198](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006f0 _IID_IOleInPlaceFrame
+[199](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000700 _IID_IOleInPlaceActiveObject
+[200](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000710 _IID_IOleInPlaceSite
+[201](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000720 _IID_IParseDisplayName
+[202](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000730 _IID_IOleContainer
+[203](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000740 _IID_IOleItemContainer
+[204](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000750 _IID_IOleLink
+[205](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000760 _IID_IOleClientSite
+[206](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000770 _IID_IOleCache
+[207](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000780 _IID_IOleCache2
+[208](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000790 _IID_IOleCacheControl
+[209](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007a0 _IID_IEnumOLEVERB
+[210](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007b0 _IID_IOleObject
+[211](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007c0 _IID_IOleAdviseHolder
+[212](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007d0 _IID_IContinue
+[213](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007e0 _IID_IViewObject
+[214](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007f0 _IID_IViewObject2
+[215](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000800 _IID_IDropSource
+[216](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000810 _IID_IDropTarget
+[217](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000820 _IID_IDropSourceNotify
+[218](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000830 _IID_IServiceProvider
+[219](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000840 _LIBID_MSXML
+[220](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000850 _IID_IXMLDOMNode
+[221](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000860 _IID_IXMLDOMDocument
+[222](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000870 _IID_IXMLDOMNodeList
+[223](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000880 _IID_IXMLDOMNamedNodeMap
+[224](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000890 _IID_IXMLDOMDocumentFragment
+[225](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008a0 _IID_IXMLDOMCharacterData
+[226](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008b0 _IID_IXMLDOMAttribute
+[227](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008c0 _IID_IXMLDOMElement
+[228](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008d0 _IID_IXMLDOMText
+[229](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008e0 _IID_IXMLDOMComment
+[230](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008f0 _IID_IXMLDOMProcessingInstruction
+[231](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000900 _IID_IXMLDOMCDATASection
+[232](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000910 _IID_IXMLDOMDocumentType
+[233](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000920 _IID_IXMLDOMNotation
+[234](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000930 _IID_IXMLDOMEntity
+[235](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000940 _IID_IXMLDOMEntityReference
+[236](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000950 _IID_IXMLDOMImplementation
+[237](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000960 _IID_IXMLDOMParseError
+[238](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000970 _DIID_XMLDOMDocumentEvents
+[239](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000980 _CLSID_DOMDocument
+[240](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000990 _CLSID_DOMFreeThreadedDocument
+[241](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009a0 _IID_IXMLHttpRequest
+[242](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009b0 _CLSID_XMLHTTPRequest
+[243](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009c0 _IID_IXMLDSOControl
+[244](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009d0 _CLSID_XMLDSOControl
+[245](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009e0 _IID_IXMLElementCollection
+[246](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009f0 _IID_IXMLElement
+[247](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a00 _IID_IXMLDocument
+[248](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a10 _IID_IXMLElement2
+[249](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a20 _IID_IXMLDocument2
+[250](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a30 _IID_IXMLAttribute
+[251](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a40 _IID_IXMLError
+[252](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a50 _IID_IXMLElementNotificationSink
+[253](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a60 _CLSID_XMLDocument
+[254](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a70 _IID_IInternet
+[255](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a80 _IID_IBinding
+[256](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a90 _IID_IBindStatusCallback
+[257](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000aa0 _IID_IBindStatusCallbackEx
+[258](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ab0 _IID_IAuthenticate
+[259](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ac0 _IID_IAuthenticateEx
+[260](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ad0 _IID_IHttpNegotiate
+[261](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ae0 _IID_IHttpNegotiate2
+[262](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000af0 _IID_IBindHost
+[263](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b00 _IID_IWinInetInfo
+[264](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b10 _IID_IWinInetHttpInfo
+[265](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b20 _IID_IWinInetHttpTimeouts
+[266](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b30 _IID_IWindowForBindingUI
+[267](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b40 _IID_ICodeInstall
+[268](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b50 _IID_IHttpSecurity
+[269](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b60 _IID_IPersistMoniker
+[270](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b70 _IID_IMonikerProp
+[271](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b80 _IID_IBindProtocol
+[272](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b90 _IID_IInternetBindInfo
+[273](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ba0 _IID_IInternetPriority
+[274](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bb0 _IID_IInternetProtocolRoot
+[275](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bc0 _IID_IInternetProtocolSink
+[276](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bd0 _IID_IInternetProtocol
+[277](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000be0 _IID_IInternetProtocolInfo
+[278](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bf0 _IID_IInternetSession
+[279](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c00 _IID_IInternetSecurityMgrSite
+[280](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c10 _IID_IInternetSecurityManager
+[281](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c20 _IID_IInternetSecurityManagerEx
+[282](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c30 _IID_IInternetSecurityManagerEx2
+[283](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c40 _IID_IInternetHostSecurityManager
+[284](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c50 _IID_IInternetZoneManager
+[285](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c60 _IID_IInternetZoneManagerEx
+[286](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c70 _IID_IInternetZoneManagerEx2
+[287](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c80 _IID_ISoftDistExt
+[288](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c90 _IID_IUri
+[289](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ca0 _IID_IUriContainer
+[290](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cb0 _IID_IUriBuilder
+[291](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cc0 _IID_IUriBuilderFactory
+[292](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cd0 _IID_IInternetProtocolEx
+[293](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ce0 _IID_IGetBindHandle
+[294](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cf0 _IID_IBindCallbackRedirect
+[295](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d00 _CLSID_InternetSecurityManager
+[296](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d10 _CLSID_InternetZoneManager
+[297](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d20 _IID_IAsyncMoniker
+[298](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d30 _IID_IAsyncBindCtx
+[299](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d40 _CLSID_StdURLMoniker
+[300](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d50 _CLSID_DeCompMimeFilter
+[301](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d60 _CLSID_CdlProtocol
+[302](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d70 _CLSID_FileProtocol
+[303](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d80 _CLSID_FtpProtocol
+[304](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d90 _CLSID_GopherProtocol
+[305](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000da0 _CLSID_HttpProtocol
+[306](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000db0 _CLSID_HttpSProtocol
+[307](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dc0 _CLSID_MkProtocol
+[308](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dd0 _IID_IFont
+[309](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000de0 _IID_IFontDisp
+[310](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000df0 _IID_IFontEventsDisp
+[311](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e00 _IID_IPicture
+[312](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e10 _IID_IPictureDisp
+[313](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e20 _IID_IOleControl
+[314](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e30 _IID_IOleControlSite
+[315](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e40 _IID_IOleInPlaceSiteEx
+[316](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e50 _IID_IOleInPlaceSiteWindowless
+[317](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e60 _IID_IOleInPlaceObjectWindowless
+[318](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e70 _IID_IClassFactory2
+[319](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e80 _IID_IViewObjectEx
+[320](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e90 _IID_IProvideClassInfo
+[321](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ea0 _IID_IProvideClassInfo2
+[322](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eb0 _IID_IProvideMultipleClassInfo
+[323](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ec0 _IID_IConnectionPoint
+[324](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ed0 _IID_IConnectionPointContainer
+[325](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ee0 _IID_IEnumConnections
+[326](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ef0 _IID_IEnumConnectionPoints
+[327](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f00 _IID_IPropertyPage
+[328](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f10 _IID_IPropertyPage2
+[329](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f20 _IID_IPropertyPageSite
+[330](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f30 _IID_IPropertyNotifySink
+[331](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f40 _IID_ISimpleFrameSite
+[332](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f50 _IID_IPersistStreamInit
+[333](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f60 _IID_IPersistMemory
+[334](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f70 _IID_IPersistPropertyBag
+[335](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f80 _IID_IPropertyBag2
+[336](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f90 _IID_IPersistPropertyBag2
+[337](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fa0 _IID_ISpecifyPropertyPages
+[338](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fb0 _IID_IPerPropertyBrowsing
+[339](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fc0 _IID_IAdviseSinkEx
+[340](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fd0 _IID_IPointerInactive
+[341](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fe0 _IID_IObjectWithSite
+[342](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ff0 _IID_IOleUndoUnit
+[343](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001000 _IID_IOleParentUndoUnit
+[344](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001010 _IID_IEnumOleUndoUnits
+[345](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001020 _IID_IOleUndoManager
+[346](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001030 _IID_IQuickActivate
+[347](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001040 _IID_IDXGIObject
+[348](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001050 _IID_IDXGIDeviceSubObject
+[349](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001060 _IID_IDXGIResource
+[350](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001070 _IID_IDXGIKeyedMutex
+[351](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001080 _IID_IDXGISurface
+[352](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001090 _IID_IDXGISurface1
+[353](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010a0 _IID_IDXGIOutput
+[354](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010b0 _IID_IDXGIAdapter
+[355](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010c0 _IID_IDXGISwapChain
+[356](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010d0 _IID_IDXGIFactory
+[357](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010e0 _IID_IDXGIDevice
+[358](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010f0 _IID_IDXGIAdapter1
+[359](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001100 _IID_IDXGIDevice1
+[360](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001110 _IID_IDXGIFactory1
+[361](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001120 _IID_ID3D10Blob
+[362](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001130 _IID_ID3DDestructionNotifier
+[363](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001140 _WKPDID_D3DDebugObjectName
+[364](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001150 _IID_ID3D12Object
+[365](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001160 _IID_ID3D12DeviceChild
+[366](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001170 _IID_ID3D12Pageable
+[367](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001180 _IID_ID3D12Heap
+[368](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001190 _IID_ID3D12Resource
+[369](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011a0 _IID_ID3D12CommandList
+[370](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011b0 _IID_ID3D12DescriptorHeap
+[371](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011c0 _IID_ID3D12QueryHeap
+[372](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011d0 _IID_ID3D12CommandSignature
+[373](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011e0 _IID_ID3D12GraphicsCommandList
+[374](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011f0 _IID_ID3D12GraphicsCommandList1
+[375](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001200 _IID_ID3D12GraphicsCommandList2
+[376](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001210 _IID_ID3D12ProtectedSession
+[377](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001220 _IID_ID3D12ProtectedResourceSession
+[378](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001230 _IID_ID3D12GraphicsCommandList3
+[379](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001240 _IID_ID3D12CommandQueue
+[380](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001250 _IID_ID3D12RootSignature
+[381](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001260 _IID_ID3D12PipelineState
+[382](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001270 _IID_ID3D12Fence
+[383](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001280 _IID_ID3D12Fence1
+[384](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001290 _IID_ID3D12CommandAllocator
+[385](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012a0 _IID_ID3D12Device
+[386](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012b0 _IID_ID3D12PipelineLibrary
+[387](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012c0 _IID_ID3D12PipelineLibrary1
+[388](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012d0 _IID_ID3D12Device1
+[389](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012e0 _IID_ID3D12Device2
+[390](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012f0 _IID_ID3D12Device3
+[391](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001300 _IID_ID3D12RootSignatureDeserializer
+[392](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001310 _IID_ID3D12VersionedRootSignatureDeserializer
+[393](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001320 _IID_ID3D12Device4
+[394](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001330 _IID_ID3D12LifetimeOwner
+[395](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001340 _IID_ID3D12SwapChainAssistant
+[396](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001350 _IID_ID3D12LifetimeTracker
+[397](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001360 _IID_ID3D12StateObject
+[398](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001370 _IID_ID3D12StateObjectProperties
+[399](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001380 _IID_ID3D12Device5
+[400](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001390 _IID_ID3D12DeviceRemovedExtendedDataSettings
+[401](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013a0 _IID_ID3D12DeviceRemovedExtendedDataSettings1
+[402](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013b0 _IID_ID3D12DeviceRemovedExtendedData
+[403](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013c0 _IID_ID3D12DeviceRemovedExtendedData1
+[404](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013d0 _IID_ID3D12DeviceRemovedExtendedData2
+[405](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013e0 _IID_ID3D12Device6
+[406](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013f0 _D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED
+[407](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001400 _IID_ID3D12ProtectedResourceSession1
+[408](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001410 _IID_ID3D12Device7
+[409](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001420 _IID_ID3D12Device8
+[410](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001430 _IID_ID3D12Resource1
+[411](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001440 _IID_ID3D12Resource2
+[412](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001450 _IID_ID3D12Heap1
+[413](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001460 _IID_ID3D12MetaCommand
+[414](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001470 _IID_ID3D12GraphicsCommandList4
+[415](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001480 _IID_ID3D12ShaderCacheSession
+[416](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001490 _IID_ID3D12Device9
+[417](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014a0 _IID_ID3D12Device10
+[418](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014b0 _IID_ID3D12VirtualizationGuestDevice
+[419](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014c0 _IID_ID3D12Tools
+[420](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014d0 _CLSID_D3D12Debug
+[421](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014e0 _CLSID_D3D12Tools
+[422](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014f0 _CLSID_D3D12DeviceRemovedExtendedData
+[423](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001500 _CLSID_D3D12SDKConfiguration
+[424](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001510 _IID_ID3D12SDKConfiguration
+[425](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001520 _IID_ID3D12GraphicsCommandList5
+[426](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001530 _IID_ID3D12GraphicsCommandList6
+[427](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001540 _IID_ID3D12GraphicsCommandList7
+[428](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001550 _IID_ID3D12Debug
+[429](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001560 _IID_ID3D12Debug1
+[430](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001570 _IID_ID3D12Debug2
+[431](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001580 _IID_ID3D12Debug3
+[432](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001590 _IID_ID3D12Debug4
+[433](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015a0 _IID_ID3D12Debug5
+[434](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b0 _IID_ID3D12DebugDevice
+[435](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015c0 _IID_ID3D12DebugDevice1
+[436](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015d0 _IID_ID3D12DebugDevice2
+[437](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015e0 _IID_ID3D12SharingContract
+[438](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015f0 _IID_ID3D12InfoQueue
+[439](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001600 _IID_ID3D12InfoQueue1
+[440](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001610 _IID_IAmdExtFfxApi
+[441](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001630 _IID_IAmdExtStub1
+[442](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001640 _IID_IAmdExtStub2
+[443](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000b20 _fallback__wine_dbg_strdup
+[444](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000bc0 _fallback__wine_dbg_output
+[445](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000c20 ___wine_dbg_get_channel_flags
+[446](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000c80 _fallback__wine_dbg_get_channel_flags
+[447](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000010a0 _fallback__wine_dbg_header
+[448](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000013b0 _sprintf
+[449](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000013e0 _snprintf
+[450](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018dc ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[451](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018ee ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[452](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001900 ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[453](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000191d ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[454](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001930 ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[455](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001944 ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[456](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000194e ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[457](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001951 ??_C@_03NFKEKGGK@all?$AA@
+[458](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001955 ??_C@_05PCLMOIMF@fixme?$AA@
+[459](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000195b ??_C@_03JIDPIAJI@err?$AA@
+[460](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000195f ??_C@_04FNLOFOEM@warn?$AA@
+[461](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001964 ??_C@_05IMBNNINJ@trace?$AA@
+[462](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000196a ??_C@_09INBMIBID@?$CF3u?4?$CF06u?3?$AA@
+[463](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001974 ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[464](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000197e ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[465](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001984 ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[466](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 _p__wine_dbg_strdup
+[467](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ba4 __imp__GetModuleHandleW@4
+[468](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b6c __imp___strdup
+[469](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 _fallback__wine_dbg_strdup.pos
+[470](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000078 _fallback__wine_dbg_strdup.list
+[471](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c _p__wine_dbg_output
+[472](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b94 __imp__strlen
+[473](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000fc _partial_line_tid
+[474](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b64 __imp____acrt_iob_func
+[475](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b78 __imp__fwrite
+[476](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000070 _p__wine_dbg_get_channel_flags
+[477](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 _nb_debug_options
+[478](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b84 __imp__strchr
+[479](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002c _default_flags
+[480](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b90 __imp__strcspn
+[481](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b88 __imp__strcmp
+[482](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000100 _debug_options
+[483](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000104 _options_size
+[484](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bb4 __imp__HeapReAlloc@16
+[485](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bb0 __imp__HeapAlloc@12
+[486](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000155d _memmove
+[487](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b80 
+[488](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b8c __imp__strcpy
+[489](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000074 _p__wine_dbg_header
+[490](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002d ___wine_dbch_microsecs
+[491](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003d ___wine_dbch_timestamp
+[492](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bac __imp__GetTickCount@0
+[493](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000108 _fallback__wine_dbg_header.frequency
+[494](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bc0 __imp__QueryPerformanceFrequency@4
+[495](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bbc __imp__QueryPerformanceCounter@4
+[496](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001594 __alldiv
+[497](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bcc 
+[498](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000159f __allrem
+[499](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bd0 
+[500](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004d ___wine_dbch_pid
+[501](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000018cc _debug_classes
+[502](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bd4 __imp___vsnprintf
+[503](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bc4 __imp__RaiseException@16
+[504](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001460 _DllMainCRTStartup@12
+[505](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001480 _DllMain@12
+[506](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b9c __imp__DisableThreadLibraryCalls@4
+
+

@@ -55,7 +55,7 @@ for apk in "${ROOT_DIR}/out/winlator"/*.apk; do
   apk_base="$(basename -- "${apk}")"
   apk_suffix="${apk_base#by.aero.so.benchmark-}"
   [[ "${apk_suffix}" != "${apk_base}" ]] || apk_suffix="${apk_base}"
-  cp -f "${apk}" "${STAGE_DIR}/winlator-v0.9c/Aero.solator-${apk_suffix}"
+  cp -f "${apk}" "${STAGE_DIR}/winlator-v0.9c/Ae.solator-${apk_suffix}"
 done
 cp -f "${ROOT_DIR}/out/winlator/SHA256SUMS" "${STAGE_DIR}/winlator-v0.9c/SHA256SUMS.txt"
 WINLATOR_ASSETS=("${STAGE_DIR}/winlator-v0.9c"/*.apk "${STAGE_DIR}/winlator-v0.9c/SHA256SUMS.txt")
@@ -94,9 +94,9 @@ fi
 gh release upload "${WCP_TAG}" --repo "${REPO}" --clobber "${WCP_ASSETS[@]}"
 
 if gh release view "${WINLATOR_TAG}" --repo "${REPO}" >/dev/null 2>&1; then
-  gh release edit "${WINLATOR_TAG}" --repo "${REPO}" --title "Aero.solator 0.9c+" --notes-file "${WINLATOR_NOTES}"
+  gh release edit "${WINLATOR_TAG}" --repo "${REPO}" --title "Ae.solator 0.9c+" --notes-file "${WINLATOR_NOTES}"
 else
-  gh release create "${WINLATOR_TAG}" --repo "${REPO}" --title "Aero.solator 0.9c+" --notes-file "${WINLATOR_NOTES}"
+  gh release create "${WINLATOR_TAG}" --repo "${REPO}" --title "Ae.solator 0.9c+" --notes-file "${WINLATOR_NOTES}"
 fi
 gh release upload "${WINLATOR_TAG}" --repo "${REPO}" --clobber "${WINLATOR_ASSETS[@]}"
 

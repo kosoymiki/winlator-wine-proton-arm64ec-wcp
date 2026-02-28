@@ -1,0 +1,19 @@
+commit e8d0c5724d15b8c2cf5b72106c665e4b3026dc5e
+Author: Ilya114 <93242944+Ilya114@users.noreply.github.com>
+Date:   Tue Dec 31 18:35:01 2024 +0200
+
+    Update box64droid.py
+
+diff --git a/scripts/native/box64droid.py b/scripts/native/box64droid.py
+index aec6a70..d9b9886 100644
+--- a/scripts/native/box64droid.py
++++ b/scripts/native/box64droid.py
+@@ -215,6 +215,8 @@ def start():
+         change_wine_version()
+         exit()
+     elif sys.argv[1] == "--recreateprefix":
++        start_box64droid()
++        check_config()
+         recreate_prefix()
+         exit()
+     elif sys.argv[1] == "--uninstall":

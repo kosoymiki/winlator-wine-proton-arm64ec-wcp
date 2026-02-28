@@ -1,0 +1,567 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index 424b249..dc296ac 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -34,6 +34,7 @@ import com.winlator.cmod.contents.Downloader;
+ import com.winlator.cmod.core.AppUtils;
+ import com.winlator.cmod.core.DownloadProgressDialog;
+ import com.winlator.cmod.core.FileUtils;
++import com.winlator.cmod.core.ForensicLogger;
+ 
+ import org.json.JSONArray;
+ import org.json.JSONObject;
+@@ -67,37 +68,59 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final String TURNIP_SOURCE_MODE_PRIMARY = "primary";
+     private static final String TURNIP_CHANNEL_MODE_STABLE = "stable";
+     private static final String TURNIP_CHANNEL_MODE_ALL = "all";
++    private static final String TURNIP_PROVIDER_AETURNIP = "aeturnip";
++    private static final String TURNIP_PROVIDER_STEVEN = "stevenmxz";
++    private static final String TURNIP_PROVIDER_WHITEBELYASH = "whitebelyash";
++    private static final String TURNIP_PROVIDER_WEAB = "weabchan";
++    private static final String TURNIP_PROVIDER_MRPURPLE = "mrpurple";
+ 
+     private static final int DEFAULT_TURNIP_RELEASE_LIMIT = 30;
+ 
+     private static final TurnipSource[] TURNIP_SOURCES = {
+             new TurnipSource(
+-                    "stevenmxz",
++                    TURNIP_PROVIDER_AETURNIP,
++                    "AeTurnip (curated lane)",
++                    "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases?per_page=40",
++                    "https://github.com/StevenMXZ/freedreno_turnip-CI/releases",
++                    true,
++                    true,
++                    100
++            ),
++            new TurnipSource(
++                    TURNIP_PROVIDER_STEVEN,
+                     "StevenMXZ",
+                     "https://api.github.com/repos/StevenMXZ/freedreno_turnip-CI/releases?per_page=40",
+                     "https://github.com/StevenMXZ/freedreno_turnip-CI/releases",
+-                    true
++                    false,
++                    false,
++                    95
+             ),
+             new TurnipSource(
+-                    "whitebelyash",
++                    TURNIP_PROVIDER_WHITEBELYASH,
+                     "whitebelyash",
+                     "https://api.github.com/repos/whitebelyash/freedreno_turnip-CI/releases?per_page=40",
+                     "https://github.com/whitebelyash/freedreno_turnip-CI/releases",
+-                    false
++                    false,
++                    false,
++                    90
+             ),
+             new TurnipSource(
+-                    "weabchan",
++                    TURNIP_PROVIDER_WEAB,
+                     "Weab-chan",
+                     "https://api.github.com/repos/Weab-chan/freedreno_turnip-CI/releases?per_page=40",
+                     "https://github.com/Weab-chan/freedreno_turnip-CI/releases",
+-                    false
++                    false,
++                    false,
++                    85
+             ),
+             new TurnipSource(
+-                    "mrpurple",
++                    TURNIP_PROVIDER_MRPURPLE,
+                     "MrPurple666",
+                     "https://api.github.com/repos/MrPurple666/purple-turnip/releases?per_page=40",
+                     "https://github.com/MrPurple666/purple-turnip/releases",
+-                    false
++                    false,
++                    false,
++                    80
+             )
+     };
+ 
+@@ -370,11 +393,15 @@ public class AdrenotoolsFragment extends Fragment {
+ 
+         String channelMode = getTurnipChannelMode();
+         boolean includeNightly = TURNIP_CHANNEL_MODE_ALL.equals(channelMode);
++        String sourceMode = getTurnipSourceMode();
++        int releaseLimit = getTurnipReleaseLimit();
++        int fetchedSources = 0;
+ 
+         for (TurnipSource source : getActiveTurnipSources()) {
+             try {
+                 String json = loadTurnipReleasesJson(source, forceRefresh);
+                 JSONArray releases = new JSONArray(json);
++                fetchedSources++;
+                 for (int i = 0; i < releases.length(); i++) {
+                     JSONObject release = releases.getJSONObject(i);
+                     String releaseName = release.optString("name", release.optString("tag_name", "release"));
+@@ -401,14 +428,40 @@ public class AdrenotoolsFragment extends Fragment {
+                         item.downloadUrl = url;
+                         item.publishedAt = publishedAt;
+                         item.prerelease = prerelease;
++                        item.sourceKey = source.key;
+                         item.sourceName = source.label;
+                         item.sourceUrl = source.releasesUrl;
++                        item.integratedProvider = source.integrated;
++                        item.trustRank = source.trustRank;
+                         item.label = buildTurnipLabel(item);
+                         items.add(item);
+                     }
+                 }
++
++                if (isAdded() && getContext() != null) {
++                    ForensicLogger.logEvent(getContext(), "info", "TURNIP_SOURCE_FETCHED",
++                            "", "adrenotools_turnip",
++                            "turnip source fetched",
++                            ForensicLogger.fields(
++                                    "source_key", source.key,
++                                    "source_label", source.label,
++                                    "source_integrated", source.integrated ? "1" : "0",
++                                    "source_primary", source.primary ? "1" : "0",
++                                    "source_trust_rank", source.trustRank
++                            ));
++                }
+             } catch (Exception e) {
+                 failures.add(source.label);
++                if (isAdded() && getContext() != null) {
++                    ForensicLogger.logEvent(getContext(), "warn", "TURNIP_SOURCE_FAILED",
++                            "", "adrenotools_turnip",
++                            "turnip source fetch failed",
++                            ForensicLogger.fields(
++                                    "source_key", source.key,
++                                    "source_label", source.label,
++                                    "error_detail", e.getMessage() == null ? "" : e.getMessage()
++                            ));
++                }
+             }
+         }
+ 
+@@ -421,16 +474,34 @@ public class AdrenotoolsFragment extends Fragment {
+             String rightDate = right.publishedAt == null ? "" : right.publishedAt;
+             int dateCmp = rightDate.compareTo(leftDate);
+             if (dateCmp != 0) return dateCmp;
++            int trustCmp = Integer.compare(right.trustRank, left.trustRank);
++            if (trustCmp != 0) return trustCmp;
+             int sourceCmp = left.sourceName.compareToIgnoreCase(right.sourceName);
+             if (sourceCmp != 0) return sourceCmp;
+             return left.assetName.compareToIgnoreCase(right.assetName);
+         });
+ 
+-        int limit = getTurnipReleaseLimit();
++        int limit = releaseLimit;
++        ArrayList<TurnipAssetItem> limitedItems = items;
+         if (items.size() > limit) {
+-            return new ArrayList<>(items.subList(0, limit));
++            limitedItems = new ArrayList<>(items.subList(0, limit));
++        }
++
++        if (isAdded() && getContext() != null) {
++            ForensicLogger.logEvent(getContext(), "info", "TURNIP_CATALOG_READY",
++                    "", "adrenotools_turnip",
++                    "turnip catalog prepared",
++                    ForensicLogger.fields(
++                            "source_mode", sourceMode,
++                            "channel_mode", channelMode,
++                            "source_count_ok", fetchedSources,
++                            "source_count_failed", failures.size(),
++                            "items_total", items.size(),
++                            "items_visible", limitedItems.size(),
++                            "release_limit", releaseLimit
++                    ));
+         }
+-        return items;
++        return limitedItems;
+     }
+ 
+     private String loadTurnipReleasesJson(TurnipSource source, boolean forceRefresh) throws Exception {
+@@ -467,7 +538,8 @@ public class AdrenotoolsFragment extends Fragment {
+         }
+ 
+         String releaseLabel = !item.releaseName.isEmpty() ? item.releaseName : item.tagName;
+-        return "[" + item.sourceName + "] " + channel + " • " + date + " • " + releaseLabel + "\n" + item.assetName;
++        String lane = item.integratedProvider ? "integrated" : "mirror";
++        return "[" + item.sourceName + " • " + lane + "] " + channel + " • " + date + " • " + releaseLabel + "\n" + item.assetName;
+     }
+ 
+     private void downloadAndInstall(TurnipAssetItem item) {
+@@ -493,10 +565,37 @@ public class AdrenotoolsFragment extends Fragment {
+                 getActivity().runOnUiThread(() -> {
+                     progressDialog.close();
+                     if (!installedDriver.isEmpty()) {
++                        adrenotoolsManager.rememberDriverOrigin(
++                                installedDriver,
++                                item.sourceKey,
++                                item.prerelease ? "nightly" : "stable",
++                                item.sourceUrl,
++                                item.tagName,
++                                item.assetName
++                        );
++                        ForensicLogger.logEvent(getContext(), "info", "TURNIP_INSTALL_APPLIED",
++                                "", "adrenotools_turnip",
++                                "turnip driver installed",
++                                ForensicLogger.fields(
++                                        "driver_id", installedDriver,
++                                        "provider", item.sourceKey,
++                                        "channel", item.prerelease ? "nightly" : "stable",
++                                        "source_url", item.sourceUrl,
++                                        "asset_name", item.assetName,
++                                        "integrated_provider", item.integratedProvider ? "1" : "0"
++                                ));
+                         DriversAdapter adapter = (DriversAdapter) recyclerView.getAdapter();
+                         if (adapter != null) adapter.addItem(installedDriver);
+                         AppUtils.showToast(getContext(), R.string.content_installed_success);
+                     } else {
++                        ForensicLogger.logEvent(getContext(), "warn", "TURNIP_INSTALL_REJECTED",
++                                "", "adrenotools_turnip",
++                                "turnip driver install rejected or duplicate",
++                                ForensicLogger.fields(
++                                        "provider", item.sourceKey,
++                                        "asset_name", item.assetName,
++                                        "source_url", item.sourceUrl
++                                ));
+                         AppUtils.showToast(getContext(), R.string.turnip_install_failed_or_exists);
+                     }
+                 });
+@@ -504,6 +603,15 @@ public class AdrenotoolsFragment extends Fragment {
+                 if (!isAdded() || getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> {
+                     progressDialog.close();
++                    ForensicLogger.logEvent(getContext(), "warn", "TURNIP_DOWNLOAD_FAILED",
++                            "", "adrenotools_turnip",
++                            "turnip download failed",
++                            ForensicLogger.fields(
++                                    "provider", item.sourceKey,
++                                    "asset_name", item.assetName,
++                                    "source_url", item.sourceUrl,
++                                    "error_detail", e.getMessage() == null ? "" : e.getMessage()
++                            ));
+                     AppUtils.showToast(getContext(), R.string.turnip_download_failed);
+                 });
+             } finally {
+@@ -657,7 +765,7 @@ public class AdrenotoolsFragment extends Fragment {
+     private String buildDriverCatalogHtml(ArrayList<DriverCatalogLink> hubLinks) {
+         StringBuilder sb = new StringBuilder();
+         sb.append("<b>").append(getString(R.string.driver_catalog_authors_header)).append("</b><br/><br/>");
+-        appendLinkLine(sb, "StevenMXZ", "Mesa Turnip driver",
++        appendLinkLine(sb, "AeTurnip", "Curated integrated Turnip lane",
+                 "https://github.com/StevenMXZ/freedreno_turnip-CI/releases");
+         sb.append("<b>K11MCH1</b> — ")
+                 .append(linkHtml("Qualcomm proprietary",
+@@ -673,7 +781,9 @@ public class AdrenotoolsFragment extends Fragment {
+         sb.append("<br/>");
+ 
+         sb.append("<b>").append(getString(R.string.driver_catalog_community_turnip_header)).append("</b><br/><br/>");
++        HashSet<String> seenTurnipLinks = new HashSet<>();
+         for (TurnipSource source : TURNIP_SOURCES) {
++            if (!seenTurnipLinks.add(source.releasesUrl)) continue;
+             appendLinkLine(sb, source.label, source.releasesUrl.replace("https://github.com/", "") + " releases", source.releasesUrl);
+         }
+         sb.append("<br/>");
+@@ -773,13 +883,17 @@ public class AdrenotoolsFragment extends Fragment {
+         final String apiUrl;
+         final String releasesUrl;
+         final boolean primary;
++        final boolean integrated;
++        final int trustRank;
+ 
+-        TurnipSource(String key, String label, String apiUrl, String releasesUrl, boolean primary) {
++        TurnipSource(String key, String label, String apiUrl, String releasesUrl, boolean primary, boolean integrated, int trustRank) {
+             this.key = key;
+             this.label = label;
+             this.apiUrl = apiUrl;
+             this.releasesUrl = releasesUrl;
+             this.primary = primary;
++            this.integrated = integrated;
++            this.trustRank = trustRank;
+         }
+     }
+ 
+@@ -790,8 +904,11 @@ public class AdrenotoolsFragment extends Fragment {
+         String downloadUrl;
+         String publishedAt;
+         boolean prerelease;
++        String sourceKey;
+         String sourceName;
+         String sourceUrl;
++        boolean integratedProvider;
++        int trustRank;
+         String label;
+     }
+ 
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 453dde6..5a253cb 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -127,15 +127,16 @@ import org.json.JSONObject;
+ 
+ import java.io.BufferedReader;
+ import java.io.File;
+-import java.io.FileReader;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.Iterator;
+-import java.util.concurrent.Executors;
+-import java.util.regex.Matcher;
+-import java.util.regex.Pattern;
++import java.io.FileReader;
++import java.io.IOException;
++import java.io.InputStream;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.Iterator;
++import java.util.Locale;
++import java.util.concurrent.Executors;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
+ 
+ import cn.sherlock.com.sun.media.sound.SF2Soundbank;
+ 
+@@ -1712,6 +1713,63 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+         envVars.put("WINLATOR_DRIVER_SELECTED", driverProbe.getSelectedDriverId());
+         envVars.put("WINLATOR_DRIVER_PROBE_STATUS", driverProbe.isUsable() ? "usable" : "fallback");
++
++        String turnipBindMode = graphicsDriverConfig.get("turnipBindMode");
++        if (turnipBindMode == null || turnipBindMode.trim().isEmpty()) {
++            turnipBindMode = "strict";
++        }
++        turnipBindMode = turnipBindMode.trim().toLowerCase(Locale.ROOT);
++        if (!turnipBindMode.equals("strict") && !turnipBindMode.equals("relaxed")) {
++            turnipBindMode = "strict";
++        }
++
++        String selectedDriverId = driverProbe.getSelectedDriverId();
++        String turnipProvider = adrenotoolsManager.resolveDriverProvider(selectedDriverId);
++        String turnipChannel = adrenotoolsManager.resolveDriverChannel(selectedDriverId);
++        String turnipSource = adrenotoolsManager.resolveDriverSource(selectedDriverId);
++        boolean integratedTurnipProvider = adrenotoolsManager.isIntegratedTurnipProvider(selectedDriverId);
++
++        String turnipBindVerdict = "system";
++        if (!useSystemVulkan) {
++            if (integratedTurnipProvider) {
++                turnipBindVerdict = "integrated";
++            } else if ("strict".equals(turnipBindMode)) {
++                turnipBindVerdict = "mirror_blocked";
++                String fallbackReason = envVars.get("WINLATOR_DRIVER_FALLBACK_REASON");
++                if (fallbackReason == null || fallbackReason.isEmpty()) {
++                    envVars.put("WINLATOR_DRIVER_FALLBACK_REASON", "non_integrated_turnip_provider");
++                } else if (!fallbackReason.contains("non_integrated_turnip_provider")) {
++                    envVars.put("WINLATOR_DRIVER_FALLBACK_REASON", fallbackReason + ";non_integrated_turnip_provider");
++                }
++            } else {
++                turnipBindVerdict = "mirror_allowed";
++            }
++        }
++
++        envVars.put("AERO_TURNIP_PROVIDER", turnipProvider);
++        envVars.put("AERO_TURNIP_CHANNEL", turnipChannel);
++        envVars.put("AERO_TURNIP_SOURCE", turnipSource == null ? "" : turnipSource);
++        envVars.put("AERO_TURNIP_BIND_MODE", turnipBindMode);
++        envVars.put("AERO_TURNIP_BIND_VERDICT", turnipBindVerdict);
++        envVars.put("WINLATOR_DRIVER_SELECTED_PROVIDER", turnipProvider);
++
++        ForensicLogger.logEvent(this,
++                ("mirror_blocked".equals(turnipBindVerdict) || useSystemVulkan) ? "warn" : "info",
++                "TURNIP_RUNTIME_BOUND",
++                forensicTraceId,
++                "graphics_driver",
++                "turnip runtime binding resolved",
++                ForensicLogger.fields(
++                        "requested_driver_id", driverProbe.getRequestedDriverId(),
++                        "selected_driver_id", selectedDriverId,
++                        "turnip_provider", turnipProvider,
++                        "turnip_channel", turnipChannel,
++                        "turnip_source", turnipSource == null ? "" : turnipSource,
++                        "turnip_bind_mode", turnipBindMode,
++                        "turnip_bind_verdict", turnipBindVerdict,
++                        "integrated_provider", integratedTurnipProvider ? "1" : "0",
++                        "system_vulkan", useSystemVulkan ? "1" : "0"));
++
+         if (preferences.getBoolean("enable_turnip_logs", false)) {
+             File mesaLogFile = WinlatorLogUtils.createTimestampedLogFile(this, "turnip_mesa");
+             envVars.put("MESA_LOG_FILE", mesaLogFile.getAbsolutePath());
+diff --git a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+index fdefd24..211734c 100644
+--- a/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
++++ b/app/src/main/java/com/winlator/cmod/contents/AdrenotoolsManager.java
+@@ -25,12 +25,17 @@ import java.nio.file.Files;
+ import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.Locale;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipInputStream;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+ public class AdrenotoolsManager {
++    private static final String DRIVER_ORIGIN_FILE = "driver_origin_map.json";
++    private static final String PROVIDER_AETURNIP = "aeturnip";
++    private static final String PROVIDER_SYSTEM = "system";
++    private static final String PROVIDER_UNKNOWN = "unknown";
+     
+     private File adrenotoolsContentDir;
+     private Context mContext;
+@@ -61,6 +66,79 @@ public class AdrenotoolsManager {
+         return adrenotoolsContentDir.getAbsolutePath() + "/" + adrenotoolsDriverId + "/";
+     }
+ 
++    public void rememberDriverOrigin(
++            String adrenotoolsDriverId,
++            String provider,
++            String channel,
++            String sourceUrl,
++            String releaseTag,
++            String assetName) {
++        if (isSystemDriverId(adrenotoolsDriverId)) return;
++        try {
++            JSONObject map = readDriverOriginMap();
++            JSONObject item = new JSONObject();
++            item.put("provider", normalizeProvider(provider));
++            item.put("channel", normalizeChannel(channel));
++            item.put("source_url", sourceUrl == null ? "" : sourceUrl);
++            item.put("release_tag", releaseTag == null ? "" : releaseTag);
++            item.put("asset_name", assetName == null ? "" : assetName);
++            item.put("updated_at_ms", System.currentTimeMillis());
++            map.put(adrenotoolsDriverId, item);
++            writeDriverOriginMap(map);
++        } catch (Exception ignored) {
++        }
++    }
++
++    public String resolveDriverProvider(String adrenotoolsDriverId) {
++        if (isSystemDriverId(adrenotoolsDriverId)) return PROVIDER_SYSTEM;
++
++        String provider = "";
++        JSONObject origin = getDriverOrigin(adrenotoolsDriverId);
++        if (origin != null) provider = origin.optString("provider", "");
++        if (provider.isEmpty()) {
++            provider = readMetaField(new File(adrenotoolsContentDir, adrenotoolsDriverId), "provider");
++        }
++        if (provider.isEmpty()) {
++            provider = inferProviderFromId(adrenotoolsDriverId);
++        }
++        provider = normalizeProvider(provider);
++        return provider.isEmpty() ? PROVIDER_UNKNOWN : provider;
++    }
++
++    public String resolveDriverChannel(String adrenotoolsDriverId) {
++        if (isSystemDriverId(adrenotoolsDriverId)) return "system";
++
++        String channel = "";
++        JSONObject origin = getDriverOrigin(adrenotoolsDriverId);
++        if (origin != null) channel = origin.optString("channel", "");
++        if (channel.isEmpty()) {
++            channel = readMetaField(new File(adrenotoolsContentDir, adrenotoolsDriverId), "channel");
++        }
++        if (channel.isEmpty()) {
++            String lower = adrenotoolsDriverId == null ? "" : adrenotoolsDriverId.toLowerCase(Locale.ROOT);
++            if (lower.contains("nightly") || lower.contains("beta") || lower.contains("alpha") || lower.contains("dev")) {
++                channel = "nightly";
++            } else {
++                channel = "stable";
++            }
++        }
++        return normalizeChannel(channel);
++    }
++
++    public String resolveDriverSource(String adrenotoolsDriverId) {
++        if (isSystemDriverId(adrenotoolsDriverId)) return "";
++        JSONObject origin = getDriverOrigin(adrenotoolsDriverId);
++        if (origin != null) {
++            String source = origin.optString("source_url", "");
++            if (!source.isEmpty()) return source;
++        }
++        return readMetaField(new File(adrenotoolsContentDir, adrenotoolsDriverId), "sourceUrl");
++    }
++
++    public boolean isIntegratedTurnipProvider(String adrenotoolsDriverId) {
++        return PROVIDER_AETURNIP.equals(resolveDriverProvider(adrenotoolsDriverId));
++    }
++
+     private void reloadContainers(String adrenoToolsDriverId) {
+         ContainerManager containerManager = new ContainerManager(mContext);
+         for (Container container : containerManager.getContainers()) {
+@@ -319,4 +397,66 @@ public class AdrenotoolsManager {
+             return "";
+         }
+     }
++
++    private String inferProviderFromId(String adrenotoolsDriverId) {
++        if (adrenotoolsDriverId == null) return "";
++        String value = adrenotoolsDriverId.toLowerCase(Locale.ROOT);
++        if (value.contains("aeturnip") || value.contains("aesolator") || value.contains("ae.solator")) return PROVIDER_AETURNIP;
++        if (value.contains("steven")) return "stevenmxz";
++        if (value.contains("whitebelyash")) return "whitebelyash";
++        if (value.contains("weab")) return "weab-chan";
++        if (value.contains("mrpurple")) return "mrpurple666";
++        return PROVIDER_UNKNOWN;
++    }
++
++    private String normalizeProvider(String provider) {
++        if (provider == null) return PROVIDER_UNKNOWN;
++        String value = provider.trim().toLowerCase(Locale.ROOT);
++        if (value.isEmpty()) return PROVIDER_UNKNOWN;
++        if (value.contains("aeturnip") || value.contains("ae.solator") || value.contains("aesolator")) return PROVIDER_AETURNIP;
++        if (value.equals("system")) return PROVIDER_SYSTEM;
++        return value;
++    }
++
++    private String normalizeChannel(String channel) {
++        if (channel == null) return "stable";
++        String value = channel.trim().toLowerCase(Locale.ROOT);
++        if (value.contains("night") || value.contains("beta") || value.contains("alpha") || value.contains("dev")) return "nightly";
++        if (value.equals("system")) return "system";
++        return "stable";
++    }
++
++    private JSONObject getDriverOrigin(String adrenotoolsDriverId) {
++        if (isSystemDriverId(adrenotoolsDriverId)) return null;
++        try {
++            JSONObject map = readDriverOriginMap();
++            JSONObject row = map.optJSONObject(adrenotoolsDriverId);
++            return row != null ? row : null;
++        } catch (Exception ignored) {
++            return null;
++        }
++    }
++
++    private File getDriverOriginMapFile() {
++        return new File(adrenotoolsContentDir, DRIVER_ORIGIN_FILE);
++    }
++
++    private JSONObject readDriverOriginMap() {
++        File originFile = getDriverOriginMapFile();
++        if (!originFile.exists() || !originFile.isFile()) return new JSONObject();
++        try {
++            String text = FileUtils.readString(originFile);
++            if (text == null || text.trim().isEmpty()) return new JSONObject();
++            return new JSONObject(text);
++        } catch (Exception ignored) {
++            return new JSONObject();
++        }
++    }
++
++    private void writeDriverOriginMap(JSONObject map) {
++        try {
++            FileUtils.writeString(getDriverOriginMapFile(), map.toString(2));
++        } catch (Exception ignored) {
++        }
++    }
+  }
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 5d1ad16..b50b9b5 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -623,8 +623,8 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="turnip_pipeline_summary">Sources: %1$s • Channel: %2$s • Max rows: %3$d</string>
+     <string name="turnip_pipeline_summary_placeholder">Turnip lane is loading...</string>
+     <string name="turnip_source_mode">Source mode</string>
+-    <string name="turnip_source_mode_hybrid">Hybrid (Steven + mirrors)</string>
+-    <string name="turnip_source_mode_primary">Primary only (Steven)</string>
++    <string name="turnip_source_mode_hybrid">Hybrid (AeTurnip + mirrors)</string>
++    <string name="turnip_source_mode_primary">Primary only (AeTurnip)</string>
+     <string name="turnip_channel_mode">Release channel</string>
+     <string name="turnip_channel_mode_stable">Stable only</string>
+     <string name="turnip_channel_mode_all">Stable + nightly/beta</string>

@@ -1,0 +1,64 @@
+commit 72f0fa95d3c869bca756cbe97101859b305b583b
+Author: Twaik Yont <9674930+twaik@users.noreply.github.com>
+Date:   Wed Feb 18 13:27:50 2026 +0200
+
+    Fix build after Gradle 9 upgrade
+    
+    Resolve build failures caused by upgrading to Gradle 9 / recent AGP.
+    
+    Replace deprecated android.postprocessing with R8 configuration (minifyEnabled, shrinkResources) and disable obfuscation via -dontobfuscate.
+    
+    Migrate from removed applicationVariants API to androidComponents.onVariants for APK output renaming.
+    
+    No functional changes intended; update aligns project with current AGP APIs.
+    
+    Signed-off-by: Twaik Yont <9674930+twaik@users.noreply.github.com>
+---
+ app/build.gradle          | 9 +++------
+ app/proguard-rules.pro    | 2 ++
+ shell-loader/build.gradle | 2 +-
+ 3 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/app/build.gradle b/app/build.gradle
+index d019230..19e8c23 100644
+--- a/app/build.gradle
++++ b/app/build.gradle
+@@ -38,12 +38,9 @@ android {
+     buildFeatures.buildConfig true
+     buildTypes.debug {
+         signingConfig signingConfigs.debug
+-        postprocessing {
+-            removeUnusedCode true
+-            removeUnusedResources true
+-            obfuscate false
+-            optimizeCode true
+-        }
++        minifyEnabled true
++        shrinkResources true
++        proguardFiles 'proguard-rules.pro'
+     }
+ }
+ 
+diff --git a/app/proguard-rules.pro b/app/proguard-rules.pro
+index f1b4245..55835b3 100644
+--- a/app/proguard-rules.pro
++++ b/app/proguard-rules.pro
+@@ -19,3 +19,5 @@
+ # If you keep the line number information, uncomment this to
+ # hide the original source file name.
+ #-renamesourcefileattribute SourceFile
++
++-dontobfuscate
+diff --git a/shell-loader/build.gradle b/shell-loader/build.gradle
+index 26c1395..739aa8b 100755
+--- a/shell-loader/build.gradle
++++ b/shell-loader/build.gradle
+@@ -16,7 +16,7 @@ android.compileOptions.targetCompatibility JavaVersion.VERSION_1_8
+ dependencies.compileOnly project(':shell-loader:stub')
+ 
+ if (!gradle.startParameter.taskNames.isEmpty())
+-    android.applicationVariants.configureEach { outputs.configureEach { outputFileName = "shell-loader-debug.apk" } }
++    androidComponents { onVariants(selector().all()) { outputs.forEach { it.outputFileName.set("shell-loader-debug.apk") } } }
+ 
+ def signingConfig = project(':app').android.signingConfigs.debug
+ def keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType())

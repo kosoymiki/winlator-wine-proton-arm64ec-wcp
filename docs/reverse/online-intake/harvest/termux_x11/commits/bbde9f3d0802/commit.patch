@@ -1,0 +1,38 @@
+commit bbde9f3d080268cc08412ac52dd0526bc1a7454d
+Author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Date:   Wed Feb 18 12:43:26 2026 +0200
+
+    build(deps): bump actions/cache from 4 to 5 (#952)
+    
+    Bumps [actions/cache](https://github.com/actions/cache) from 4 to 5.
+    - [Release notes](https://github.com/actions/cache/releases)
+    - [Changelog](https://github.com/actions/cache/blob/main/RELEASES.md)
+    - [Commits](https://github.com/actions/cache/compare/v4...v5)
+    [no ci]
+    ---
+    updated-dependencies:
+    - dependency-name: actions/cache
+      dependency-version: '5'
+      dependency-type: direct:production
+      update-type: version-update:semver-major
+    ...
+    
+    Signed-off-by: dependabot[bot] <support@github.com>
+    Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+---
+ .github/workflows/debug_build.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/debug_build.yml b/.github/workflows/debug_build.yml
+index 08d96e2..3cc66bc 100644
+--- a/.github/workflows/debug_build.yml
++++ b/.github/workflows/debug_build.yml
+@@ -38,7 +38,7 @@ jobs:
+         java-version: '17'
+         
+     - name: Restore cache
+-      uses: actions/cache@v4
++      uses: actions/cache@v5
+       with:
+           path: |
+             ~/.gradle/caches

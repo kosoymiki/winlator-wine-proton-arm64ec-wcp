@@ -1,0 +1,505 @@
+commit f3051a300984b4d31c16cf17eda7ebdee6b774cf
+Author: Utkarsh Dalal <dalal.utkarsh@gmail.com>
+Date:   Tue Feb 24 18:34:22 2026 -0800
+
+    Added steam offline mode for games like N++ (#645)
+    
+    Co-authored-by: Utkarsh Dalal <utkarsh.dalal@toptal.com>
+---
+ app/src/main/java/app/gamenative/PrefManager.kt         |  7 +++++++
+ .../app/gamenative/ui/component/dialog/GeneralTab.kt    |  7 +++++++
+ .../main/java/app/gamenative/ui/model/MainViewModel.kt  |  5 +++--
+ .../ui/screen/settings/SettingsGroupEmulation.kt        |  3 ++-
+ .../main/java/app/gamenative/utils/BestConfigService.kt |  3 +++
+ .../main/java/app/gamenative/utils/ContainerUtils.kt    | 14 ++++++++++++++
+ app/src/main/java/app/gamenative/utils/SteamUtils.kt    | 17 +++++++++++------
+ app/src/main/java/com/winlator/container/Container.java | 16 ++++++++++++++++
+ .../main/java/com/winlator/container/ContainerData.kt   |  3 +++
+ app/src/main/res/values-da/strings.xml                  |  2 ++
+ app/src/main/res/values-de/strings.xml                  |  2 ++
+ app/src/main/res/values-es/strings.xml                  |  2 ++
+ app/src/main/res/values-fr/strings.xml                  |  2 ++
+ app/src/main/res/values-it/strings.xml                  |  2 ++
+ app/src/main/res/values-ko/strings.xml                  |  2 ++
+ app/src/main/res/values-pl/strings.xml                  |  2 ++
+ app/src/main/res/values-pt-rBR/strings.xml              |  2 ++
+ app/src/main/res/values-ro/strings.xml                  |  2 ++
+ app/src/main/res/values-uk/strings.xml                  |  2 ++
+ app/src/main/res/values-zh-rCN/strings.xml              |  2 ++
+ app/src/main/res/values-zh-rTW/strings.xml              |  2 ++
+ app/src/main/res/values/strings.xml                     |  2 ++
+ 22 files changed, 92 insertions(+), 9 deletions(-)
+
+diff --git a/app/src/main/java/app/gamenative/PrefManager.kt b/app/src/main/java/app/gamenative/PrefManager.kt
+index 6ba9785..63f742f 100644
+--- a/app/src/main/java/app/gamenative/PrefManager.kt
++++ b/app/src/main/java/app/gamenative/PrefManager.kt
+@@ -297,6 +297,13 @@ object PrefManager {
+             setPref(FORCE_DLC, value)
+         }
+ 
++    private val STEAM_OFFLINE_MODE = booleanPreferencesKey("steam_offline_mode")
++    var steamOfflineMode: Boolean
++        get() = getPref(STEAM_OFFLINE_MODE, false)
++        set(value) {
++            setPref(STEAM_OFFLINE_MODE, value)
++        }
++
+     private val USE_LEGACY_DRM = booleanPreferencesKey("use_legacy_drm")
+     var useLegacyDRM: Boolean
+         get() = getPref(USE_LEGACY_DRM, false)
+diff --git a/app/src/main/java/app/gamenative/ui/component/dialog/GeneralTab.kt b/app/src/main/java/app/gamenative/ui/component/dialog/GeneralTab.kt
+index 3dead19..7259d5a 100644
+--- a/app/src/main/java/app/gamenative/ui/component/dialog/GeneralTab.kt
++++ b/app/src/main/java/app/gamenative/ui/component/dialog/GeneralTab.kt
+@@ -324,6 +324,13 @@ fun GeneralTabContent(
+                 onCheckedChange = { state.config.value = config.copy(unpackFiles = it) },
+             )
+         }
++        SettingsSwitch(
++            colors = settingsTileColorsAlt(),
++            title = { Text(text = stringResource(R.string.steam_offline_mode)) },
++            subtitle = { Text(text = stringResource(R.string.steam_offline_mode_description)) },
++            state = config.steamOfflineMode,
++            onCheckedChange = { state.config.value = config.copy(steamOfflineMode = it) },
++        )
+         SettingsSwitch(
+             colors = settingsTileColorsAlt(),
+             title = { Text(text = stringResource(R.string.launch_steam_client_beta)) },
+diff --git a/app/src/main/java/app/gamenative/ui/model/MainViewModel.kt b/app/src/main/java/app/gamenative/ui/model/MainViewModel.kt
+index fcbdf30..861a703 100644
+--- a/app/src/main/java/app/gamenative/ui/model/MainViewModel.kt
++++ b/app/src/main/java/app/gamenative/ui/model/MainViewModel.kt
+@@ -260,10 +260,11 @@ class MainViewModel @Inject constructor(
+                     if (container.isLaunchRealSteam()) {
+                         SteamUtils.restoreSteamApi(context, appId)
+                     } else {
++                        val offline = _offline.value
+                         if (container.isUseLegacyDRM) {
+-                            SteamUtils.replaceSteamApi(context, appId)
++                            SteamUtils.replaceSteamApi(context, appId, offline)
+                         } else {
+-                            SteamUtils.replaceSteamclientDll(context, appId)
++                            SteamUtils.replaceSteamclientDll(context, appId, offline)
+                         }
+                     }
+                 }
+diff --git a/app/src/main/java/app/gamenative/ui/screen/settings/SettingsGroupEmulation.kt b/app/src/main/java/app/gamenative/ui/screen/settings/SettingsGroupEmulation.kt
+index 924a48f..9925535 100644
+--- a/app/src/main/java/app/gamenative/ui/screen/settings/SettingsGroupEmulation.kt
++++ b/app/src/main/java/app/gamenative/ui/screen/settings/SettingsGroupEmulation.kt
+@@ -14,6 +14,7 @@ import app.gamenative.ui.component.dialog.ContainerConfigDialog
+ import app.gamenative.ui.component.dialog.FEXCorePresetsDialog
+ import app.gamenative.ui.component.dialog.OrientationDialog
+ import app.gamenative.ui.theme.settingsTileColors
++import app.gamenative.ui.theme.settingsTileColorsAlt
+ import app.gamenative.utils.ContainerUtils
+ import com.alorma.compose.settings.ui.SettingsGroup
+ import com.alorma.compose.settings.ui.SettingsMenuLink
+@@ -85,7 +86,7 @@ fun SettingsGroupEmulation() {
+         )
+         var autoApplyKnownConfig by rememberSaveable { mutableStateOf(PrefManager.autoApplyKnownConfig) }
+         SettingsSwitch(
+-            colors = settingsTileColors(),
++            colors = settingsTileColorsAlt(),
+             state = autoApplyKnownConfig,
+             title = { Text(text = stringResource(R.string.settings_emulation_auto_apply_known_config_title)) },
+             subtitle = { Text(text = stringResource(R.string.settings_emulation_auto_apply_known_config_subtitle)) },
+diff --git a/app/src/main/java/app/gamenative/utils/BestConfigService.kt b/app/src/main/java/app/gamenative/utils/BestConfigService.kt
+index 7d0d9a4..87f6c72 100644
+--- a/app/src/main/java/app/gamenative/utils/BestConfigService.kt
++++ b/app/src/main/java/app/gamenative/utils/BestConfigService.kt
+@@ -768,6 +768,9 @@ object BestConfigService {
+                 if (filteredJson.has("useLegacyDRM") && !filteredJson.isNull("useLegacyDRM")) {
+                     resultMap["useLegacyDRM"] = filteredJson.optBoolean("useLegacyDRM", PrefManager.useLegacyDRM)
+                 }
++                if (filteredJson.has("steamOfflineMode") && !filteredJson.isNull("steamOfflineMode")) {
++                    resultMap["steamOfflineMode"] = filteredJson.optBoolean("steamOfflineMode", PrefManager.steamOfflineMode)
++                }
+                 if (filteredJson.has("envVars") && !filteredJson.isNull("envVars")) {
+                     resultMap["envVars"] = filteredJson.optString("envVars", PrefManager.envVars)
+                 }
+diff --git a/app/src/main/java/app/gamenative/utils/ContainerUtils.kt b/app/src/main/java/app/gamenative/utils/ContainerUtils.kt
+index 48ef289..eeb2571 100644
+--- a/app/src/main/java/app/gamenative/utils/ContainerUtils.kt
++++ b/app/src/main/java/app/gamenative/utils/ContainerUtils.kt
+@@ -112,6 +112,7 @@ object ContainerUtils {
+             language = PrefManager.containerLanguage,
+             containerVariant = PrefManager.containerVariant,
+             forceDlc = PrefManager.forceDlc,
++            steamOfflineMode = PrefManager.steamOfflineMode,
+             useLegacyDRM = PrefManager.useLegacyDRM,
+             unpackFiles = PrefManager.unpackFiles,
+             wineVersion = PrefManager.wineVersion,
+@@ -192,6 +193,7 @@ object ContainerUtils {
+ 		PrefManager.dinputEnabled = containerData.enableDInput
+ 		PrefManager.dinputMapperType = containerData.dinputMapperType.toInt()
+         PrefManager.forceDlc = containerData.forceDlc
++        PrefManager.steamOfflineMode = containerData.steamOfflineMode
+         PrefManager.useLegacyDRM = containerData.useLegacyDRM
+         PrefManager.unpackFiles = containerData.unpackFiles
+         PrefManager.sharpnessEffect = containerData.sharpnessEffect
+@@ -281,6 +283,7 @@ object ContainerUtils {
+             sdlControllerAPI = container.isSdlControllerAPI,
+             useSteamInput = useSteamInput,
+             forceDlc = container.isForceDlc,
++            steamOfflineMode = container.isSteamOfflineMode(),
+             useLegacyDRM = container.isUseLegacyDRM(),
+             unpackFiles = container.isUnpackFiles(),
+             enableXInput = enableX,
+@@ -362,6 +365,7 @@ object ContainerUtils {
+                 "fexcorePreset" -> value?.let { updatedData.copy(fexcorePreset = it as? String ?: updatedData.fexcorePreset) }
+                     ?: updatedData
+                 "useLegacyDRM" -> value?.let { updatedData.copy(useLegacyDRM = it as? Boolean ?: updatedData.useLegacyDRM) } ?: updatedData
++                "steamOfflineMode" -> value?.let { updatedData.copy(steamOfflineMode = it as? Boolean ?: updatedData.steamOfflineMode) } ?: updatedData
+                 "unpackFiles" -> value?.let { updatedData.copy(unpackFiles = it as? Boolean ?: updatedData.unpackFiles) } ?: updatedData
+                 "envVars" -> value?.let { updatedData.copy(envVars = it as? String ?: updatedData.envVars) } ?: updatedData
+                 "cpuList" -> value?.let { updatedData.copy(cpuList = it as? String ?: updatedData.cpuList) } ?: updatedData
+@@ -388,6 +392,7 @@ object ContainerUtils {
+             container.getExtra("language", "english")
+         }
+         val previousForceDlc: Boolean = container.isForceDlc
++        val previousSteamOfflineMode: Boolean = container.isSteamOfflineMode()
+         val previousUnpackFiles: Boolean = container.isUnpackFiles
+         val userRegFile = File(container.rootDir, ".wine/user.reg")
+         WineRegistryEditor(userRegFile).use { registryEditor ->
+@@ -449,6 +454,7 @@ object ContainerUtils {
+         container.setExternalDisplayMode(containerData.externalDisplayMode)
+         container.setExternalDisplaySwap(containerData.externalDisplaySwap)
+         container.setForceDlc(containerData.forceDlc)
++        container.setSteamOfflineMode(containerData.steamOfflineMode)
+         container.setUseLegacyDRM(containerData.useLegacyDRM)
+         container.setUnpackFiles(containerData.unpackFiles)
+         if (previousUnpackFiles != containerData.unpackFiles && containerData.unpackFiles) {
+@@ -480,6 +486,13 @@ object ContainerUtils {
+             MarkerUtils.removeMarker(appDirPath, Marker.STEAM_COLDCLIENT_USED)
+             Timber.i("forceDlc changed from '$previousForceDlc' to '${containerData.forceDlc}'. Cleared STEAM_DLL_REPLACED marker for container ${container.id}.")
+         }
++        if (previousSteamOfflineMode != containerData.steamOfflineMode) {
++            val steamAppId = extractGameIdFromContainerId(container.id)
++            val appDirPath = SteamService.getAppDirPath(steamAppId)
++            MarkerUtils.removeMarker(appDirPath, Marker.STEAM_DLL_REPLACED)
++            MarkerUtils.removeMarker(appDirPath, Marker.STEAM_COLDCLIENT_USED)
++            Timber.i("steamOfflineMode changed from '$previousSteamOfflineMode' to '${containerData.steamOfflineMode}'. Cleared STEAM_DLL_REPLACED marker for container ${container.id}.")
++        }
+ 
+         // Apply controller settings to container
+         val api = when {
+@@ -808,6 +821,7 @@ object ContainerUtils {
+                 dinputMapperType = PrefManager.dinputMapperType.toByte(),
+                 disableMouseInput = PrefManager.disableMouseInput,
+                 forceDlc = PrefManager.forceDlc,
++                steamOfflineMode = PrefManager.steamOfflineMode,
+                 useLegacyDRM = PrefManager.useLegacyDRM,
+                 unpackFiles = PrefManager.unpackFiles,
+                 externalDisplayMode = PrefManager.externalDisplayInputMode,
+diff --git a/app/src/main/java/app/gamenative/utils/SteamUtils.kt b/app/src/main/java/app/gamenative/utils/SteamUtils.kt
+index 0bcd342..59df11f 100644
+--- a/app/src/main/java/app/gamenative/utils/SteamUtils.kt
++++ b/app/src/main/java/app/gamenative/utils/SteamUtils.kt
+@@ -142,7 +142,7 @@ object SteamUtils {
+      * Replaces any existing `steam_api.dll` or `steam_api64.dll` in the app directory
+      * with our pipe dll stored in assets
+      */
+-    suspend fun replaceSteamApi(context: Context, appId: String) {
++    suspend fun replaceSteamApi(context: Context, appId: String, isOffline: Boolean = false) {
+         val steamAppId = ContainerUtils.extractGameIdFromContainerId(appId)
+         val appDirPath = SteamService.getAppDirPath(steamAppId)
+         if (MarkerUtils.hasMarker(appDirPath, Marker.STEAM_DLL_REPLACED)) {
+@@ -187,7 +187,7 @@ object SteamUtils {
+                 }
+                 Timber.i("Replaced $dllName")
+                 if (is64Bit) replaced64Count++ else replaced32Count++
+-                ensureSteamSettings(context, path, appId, ticketBase64)
++                ensureSteamSettings(context, path, appId, ticketBase64, isOffline)
+             }
+         }
+ 
+@@ -226,7 +226,7 @@ object SteamUtils {
+     /**
+      * Replaces any existing `steamclient.dll` or `steamclient64.dll` in the Steam directory
+      */
+-    suspend fun replaceSteamclientDll(context: Context, appId: String) {
++    suspend fun replaceSteamclientDll(context: Context, appId: String, isOffline: Boolean = false) {
+         val steamAppId = ContainerUtils.extractGameIdFromContainerId(appId)
+         val appDirPath = SteamService.getAppDirPath(steamAppId)
+         val container = ContainerUtils.getContainer(context, appId)
+@@ -259,7 +259,7 @@ object SteamUtils {
+ 
+         // Get ticket and pass to ensureSteamSettings
+         val ticketBase64 = SteamService.instance?.getEncryptedAppTicketBase64(steamAppId)
+-        ensureSteamSettings(context, File(container.getRootDir(), ".wine/drive_c/Program Files (x86)/Steam/steamclient.dll").toPath(), appId, ticketBase64)
++        ensureSteamSettings(context, File(container.getRootDir(), ".wine/drive_c/Program Files (x86)/Steam/steamclient.dll").toPath(), appId, ticketBase64, isOffline)
+ 
+         // Game-specific Handling
+         ensureSaveLocationsForGames(context, steamAppId)
+@@ -804,7 +804,7 @@ object SteamUtils {
+     /**
+      * Sibling folder "steam_settings" + empty "offline.txt" file, no-ops if they already exist.
+      */
+-    private fun ensureSteamSettings(context: Context, dllPath: Path, appId: String, ticketBase64: String? = null) {
++    private fun ensureSteamSettings(context: Context, dllPath: Path, appId: String, ticketBase64: String? = null, isOffline: Boolean = false) {
+         val steamAppId = ContainerUtils.extractGameIdFromContainerId(appId)
+         val steamDir = dllPath.parent
+         Files.createDirectories(steamDir)
+@@ -916,9 +916,14 @@ object SteamUtils {
+ 
+         val mainIni = settingsDir.resolve("configs.main.ini")
+ 
++        val steamOfflineMode = container.isSteamOfflineMode()
++        val useOfflineConfig = steamOfflineMode || isOffline
+         val mainIniContent = buildString {
+             appendLine("[main::connectivity]")
+-            appendLine("disable_lan_only=1")
++            appendLine("disable_lan_only=${if (useOfflineConfig) 0 else 1}")
++            if (useOfflineConfig) {
++                appendLine("offline=1")
++            }
+         }
+ 
+         if (Files.notExists(mainIni)) Files.createFile(mainIni)
+diff --git a/app/src/main/java/com/winlator/container/Container.java b/app/src/main/java/com/winlator/container/Container.java
+index 421e9ce..f18dee0 100644
+--- a/app/src/main/java/com/winlator/container/Container.java
++++ b/app/src/main/java/com/winlator/container/Container.java
+@@ -132,6 +132,8 @@ public class Container {
+ 
+     private boolean forceDlc = false;
+ 
++    private boolean steamOfflineMode = false;
++
+     private boolean useLegacyDRM = false;
+ 
+     private boolean unpackFiles = false;
+@@ -672,6 +674,9 @@ public class Container {
+             // Force DLC setting
+             data.put("forceDlc", forceDlc);
+ 
++            // Steam offline mode setting
++            data.put("steamOfflineMode", steamOfflineMode);
++
+             // Use Legacy DRM setting
+             data.put("useLegacyDRM", useLegacyDRM);
+ 
+@@ -852,6 +857,9 @@ public class Container {
+                 case "forceDlc":
+                     this.forceDlc = data.getBoolean(key);
+                     break;
++                case "steamOfflineMode":
++                    this.steamOfflineMode = data.getBoolean(key);
++                    break;
+                 case "useLegacyDRM":
+                     this.useLegacyDRM = data.getBoolean(key);
+                     break;
+@@ -921,6 +929,14 @@ public class Container {
+         this.forceDlc = forceDlc;
+     }
+ 
++    public boolean isSteamOfflineMode() {
++        return steamOfflineMode;
++    }
++
++    public void setSteamOfflineMode(boolean steamOfflineMode) {
++        this.steamOfflineMode = steamOfflineMode;
++    }
++
+     public boolean isUseLegacyDRM() {
+         return useLegacyDRM;
+     }
+diff --git a/app/src/main/java/com/winlator/container/ContainerData.kt b/app/src/main/java/com/winlator/container/ContainerData.kt
+index ac4ca7e..2701142 100644
+--- a/app/src/main/java/com/winlator/container/ContainerData.kt
++++ b/app/src/main/java/com/winlator/container/ContainerData.kt
+@@ -81,6 +81,7 @@ data class ContainerData(
+     /** Preferred game language (Goldberg) **/
+     val language: String = "english",
+     val forceDlc: Boolean = false,
++    val steamOfflineMode: Boolean = false,
+     val useLegacyDRM: Boolean = false,
+     val unpackFiles: Boolean = false,
+     val sharpnessEffect: String = "None",
+@@ -138,6 +139,7 @@ data class ContainerData(
+                     "useDRI3" to state.useDRI3,
+                     "language" to state.language,
+                     "forceDlc" to state.forceDlc,
++                    "steamOfflineMode" to state.steamOfflineMode,
+                     "useLegacyDRM" to state.useLegacyDRM,
+                     "unpackFiles" to state.unpackFiles,
+                     "sharpnessEffect" to state.sharpnessEffect,
+@@ -194,6 +196,7 @@ data class ContainerData(
+                     useDRI3 = (savedMap["useDRI3"] as? Boolean) ?: true,
+                     language = (savedMap["language"] as? String) ?: "english",
+                     forceDlc = (savedMap["forceDlc"] as? Boolean) ?: false,
++                    steamOfflineMode = (savedMap["steamOfflineMode"] as? Boolean) ?: false,
+                     useLegacyDRM = (savedMap["useLegacyDRM"] as? Boolean) ?: false,
+                     unpackFiles = (savedMap["unpackFiles"] as? Boolean) ?: false,
+                     sharpnessEffect = (savedMap["sharpnessEffect"] as? String) ?: "None",
+diff --git a/app/src/main/res/values-da/strings.xml b/app/src/main/res/values-da/strings.xml
+index fc09aff..7e9450e 100644
+--- a/app/src/main/res/values-da/strings.xml
++++ b/app/src/main/res/values-da/strings.xml
+@@ -330,6 +330,8 @@
+     <string name="force_dlc">Gennemtving DLC</string>
+     <string name="force_dlc_description">Kun aktiver hvis DLC\'er ikke opdages, eller gemfiler med DLC ikke virker</string>
+     <string name="launch_steam_client_beta">Start Steam-klient (Beta)</string>
++    <string name="steam_offline_mode">Steam Offline-tilstand</string>
++    <string name="steam_offline_mode_description">Start Steam-spil i offline-tilstand</string>
+     <string name="launch_steam_client_description">Reducerer ydelse og gør opstart langsommere\nMuliggør online-spil og løser DRM- og controllerproblemer\nIkke alle spil virker</string>
+     <string name="allow_steam_updates">Tillad Steam-opdateringer</string>
+     <string name="allow_steam_updates_description">Opdaterer Steam til nyeste version. Reducerer ydelsen markant.</string>
+diff --git a/app/src/main/res/values-de/strings.xml b/app/src/main/res/values-de/strings.xml
+index 5527c45..fe213b3 100644
+--- a/app/src/main/res/values-de/strings.xml
++++ b/app/src/main/res/values-de/strings.xml
+@@ -469,6 +469,8 @@
+     <string name="force_dlc">DLC erzwingen</string>
+     <string name="force_dlc_description">Nur aktivieren, falls DLCs nicht erkannt werden oder Spielstände mit DLC nicht funktionieren</string>
+     <string name="launch_steam_client_beta">Steam-Client starten (Beta)</string>
++    <string name="steam_offline_mode">Steam Offline-Modus</string>
++    <string name="steam_offline_mode_description">Steam-Spiele im Offlinemodus starten</string>
+     <string name="launch_steam_client_description">Reduziert Performance und verlängert den Start\nErmöglicht Online-Spiel und behebt DRM- und Controller-Probleme\nNicht alle Spiele funktionieren</string>
+     <string name="allow_steam_updates">Steam-Updates erlauben</string>
+     <string name="allow_steam_updates_description">Aktualisiert Steam auf die neueste Version. Reduziert die Leistung spürbar.</string>
+diff --git a/app/src/main/res/values-es/strings.xml b/app/src/main/res/values-es/strings.xml
+index 7f1d6b9..c5ccb75 100644
+--- a/app/src/main/res/values-es/strings.xml
++++ b/app/src/main/res/values-es/strings.xml
+@@ -484,6 +484,8 @@
+     <string name="force_dlc">Forzar DLC</string>
+     <string name="force_dlc_description">Actívalo solo si los DLC no se detectan o los archivos de guardados con DLC no funcionan.</string>
+     <string name="launch_steam_client_beta">Iniciar cliente de Steam (Beta)</string>
++    <string name="steam_offline_mode">Modo Offline de Steam</string>
++    <string name="steam_offline_mode_description">Iniciar juegos de Steam en modo offline</string>
+     <string name="launch_steam_client_description">Reduce el rendimiento y ralentiza el inicio.\nPermite el juego en línea y soluciona problemas de DRM y de mando.\nNo todos los juegos funcionan.</string>
+     <string name="allow_steam_updates">Permitir actualizaciones de Steam</string>
+     <string name="allow_steam_updates_description">Actualiza Steam a la última versión. Reduce significativamente el rendimiento.</string>
+diff --git a/app/src/main/res/values-fr/strings.xml b/app/src/main/res/values-fr/strings.xml
+index 0f4b47e..2610c53 100644
+--- a/app/src/main/res/values-fr/strings.xml
++++ b/app/src/main/res/values-fr/strings.xml
+@@ -494,6 +494,8 @@
+     <string name="force_dlc">Forcer les DLC</string>
+     <string name="force_dlc_description">N\'activer que si les DLC ne sont pas détectés ou si les sauvegardes avec DLC ne fonctionnent pas</string>
+     <string name="launch_steam_client_beta">Lancer le client Steam (Bêta)</string>
++    <string name="steam_offline_mode">Mode Hors Ligne Steam</string>
++    <string name="steam_offline_mode_description">Lancer les jeux Steam en mode hors ligne</string>
+     <string name="launch_steam_client_description">Réduit les performances et ralentit le lancement\nPermet le jeu en ligne et corrige les problèmes de DRM et de contrôleur\nTous les jeux ne fonctionnent pas</string>
+     <string name="allow_steam_updates">Autoriser les mises à jour Steam</string>
+     <string name="allow_steam_updates_description">Met à jour Steam vers la dernière version. Réduit considérablement les performances.</string>
+diff --git a/app/src/main/res/values-it/strings.xml b/app/src/main/res/values-it/strings.xml
+index d497aa9..20ec5f3 100644
+--- a/app/src/main/res/values-it/strings.xml
++++ b/app/src/main/res/values-it/strings.xml
+@@ -498,6 +498,8 @@
+     <string name="force_dlc">Forza DLC</string>
+     <string name="force_dlc_description">Abilita solo se i DLC non vengono rilevati o i salvataggi con DLC non funzionano</string>
+     <string name="launch_steam_client_beta">Avvia Client Steam (Beta)</string>
++    <string name="steam_offline_mode">Modalità Offline Steam</string>
++    <string name="steam_offline_mode_description">Avvia i giochi Steam in modalità offline</string>
+     <string name="launch_steam_client_description">Riduce le prestazioni e rallenta l\'avvio\nConsente il gioco online e corregge problemi di DRM e controller\nNon tutti i giochi funzionano</string>
+     <string name="allow_steam_updates">Consenti aggiornamenti Steam</string>
+     <string name="allow_steam_updates_description">Aggiorna Steam all\'ultima versione. Riduce significativamente le prestazioni.</string>
+diff --git a/app/src/main/res/values-ko/strings.xml b/app/src/main/res/values-ko/strings.xml
+index 03e56b1..3d0090e 100644
+--- a/app/src/main/res/values-ko/strings.xml
++++ b/app/src/main/res/values-ko/strings.xml
+@@ -507,6 +507,8 @@
+     <string name="force_dlc">DLC 강제</string>
+     <string name="force_dlc_description">DLC가 감지되지 않거나 DLC가 있는 저장 파일이 작동하지 않는 경우에만 활성화</string>
+     <string name="launch_steam_client_beta">Steam 클라이언트 실행(베타)</string>
++    <string name="steam_offline_mode">Steam 오프라인 모드</string>
++    <string name="steam_offline_mode_description">Steam 게임을 오프라인 모드로 실행</string>
+     <string name="launch_steam_client_description">성능이 저하되고 실행 속도가 느려집니다\n온라인 플레이를 허용하고 DRM 및 컨트롤러 문제를 해결합니다\n모든 게임이 작동하는 것은 아닙니다</string>
+     <string name="allow_steam_updates">Steam 업데이트 허용</string>
+     <string name="allow_steam_updates_description">Steam을 최신 버전으로 업데이트합니다. 성능이 크게 저하될 수 있습니다.</string>
+diff --git a/app/src/main/res/values-pl/strings.xml b/app/src/main/res/values-pl/strings.xml
+index 720f4ab..2e0d65f 100644
+--- a/app/src/main/res/values-pl/strings.xml
++++ b/app/src/main/res/values-pl/strings.xml
+@@ -506,6 +506,8 @@
+     <string name="force_dlc">Wymuś DLC</string>
+     <string name="force_dlc_description">Włącz tylko jeśli DLC nie są wykrywane lub zapisy z DLC nie działają</string>
+     <string name="launch_steam_client_beta">Uruchom Klienta Steam (Beta)</string>
++    <string name="steam_offline_mode">Tryb Offline Steam</string>
++    <string name="steam_offline_mode_description">Uruchamiaj gry Steam w trybie offline</string>
+     <string name="launch_steam_client_description">Zmniejsza wydajność i spowalnia uruchamianie\nPozwala na grę online i naprawia problemy z DRM oraz kontrolerem\nNie wszystkie gry działają</string>
+     <string name="allow_steam_updates">Zezwól na aktualizacje Steam</string>
+     <string name="allow_steam_updates_description">Aktualizuje Steam do najnowszej wersji. Znacząco zmniejsza wydajność.</string>
+diff --git a/app/src/main/res/values-pt-rBR/strings.xml b/app/src/main/res/values-pt-rBR/strings.xml
+index e375e81..1867b00 100644
+--- a/app/src/main/res/values-pt-rBR/strings.xml
++++ b/app/src/main/res/values-pt-rBR/strings.xml
+@@ -330,6 +330,8 @@
+     <string name="force_dlc">Forçar DLC</string>
+     <string name="force_dlc_description">Ative somente se os DLCs não forem detectados ou os saves com DLC não estiverem funcionando</string>
+     <string name="launch_steam_client_beta">Iniciar o cliente Steam (Beta)</string>
++    <string name="steam_offline_mode">Modo Offline do Steam</string>
++    <string name="steam_offline_mode_description">Iniciar jogos Steam no modo offline</string>
+     <string name="launch_steam_client_description">Reduz o desempenho e atrasa a inicialização\nPermite jogo online e corrige problemas de DRM e de controle\nNem todos os jogos funcionam</string>
+     <string name="allow_steam_updates">Permitir atualizações do Steam</string>
+     <string name="allow_steam_updates_description">Atualiza o Steam para a versão mais recente. Reduz significativamente o desempenho.</string>
+diff --git a/app/src/main/res/values-ro/strings.xml b/app/src/main/res/values-ro/strings.xml
+index 6778ed9..1d34a61 100644
+--- a/app/src/main/res/values-ro/strings.xml
++++ b/app/src/main/res/values-ro/strings.xml
+@@ -499,6 +499,8 @@
+ 	<string name="force_dlc">Forțează DLC</string>
+ 	<string name="force_dlc_description">Activează doar dacă DLC‑urile nu sunt detectate sau salvările cu DLC nu funcționează</string>
+ 	<string name="launch_steam_client_beta">Pornește Steam Client (Beta)</string>
++	<string name="steam_offline_mode">Mod Offline Steam</string>
++	<string name="steam_offline_mode_description">Pornește jocurile Steam în mod offline</string>
+ 	<string name="launch_steam_client_description">Reduce performanța și încetinește lansarea\nPermite joc online și rezolvă probleme DRM și controller\nNu toate jocurile funcționează</string>
+ 	<string name="allow_steam_updates">Permite actualizările Steam</string>
+ 	<string name="allow_steam_updates_description">Actualizează Steam la ultima versiune. Reduce semnificativ performanța.</string>
+diff --git a/app/src/main/res/values-uk/strings.xml b/app/src/main/res/values-uk/strings.xml
+index 2799bb4..d363c13 100644
+--- a/app/src/main/res/values-uk/strings.xml
++++ b/app/src/main/res/values-uk/strings.xml
+@@ -490,6 +490,8 @@
+     <string name="force_dlc">Примусити DLC</string>
+     <string name="force_dlc_description">Увімкнути лише тоді, якщо не виявлено DLC або не працюють збереження з DLC</string>
+     <string name="launch_steam_client_beta">Запустити клієнт Steam (Бета)</string>
++    <string name="steam_offline_mode">Режим Офлайн Steam</string>
++    <string name="steam_offline_mode_description">Запускати ігри Steam в офлайн режимі</string>
+     <string name="launch_steam_client_description">Зменшує продуктивність та сповільнює запуск.\nДозволяє онлайн гру, а також вирішує проблему DRM та контролеру.\nПрацює не з усіма іграми</string>
+     <string name="allow_steam_updates">Дозволити оновлення клієнту Steam</string>
+     <string name="allow_steam_updates_description">Оновлює клієнт Steam до останньої версії. Значно зменшує продуктивність.</string>
+diff --git a/app/src/main/res/values-zh-rCN/strings.xml b/app/src/main/res/values-zh-rCN/strings.xml
+index dd033a7..a3fe612 100644
+--- a/app/src/main/res/values-zh-rCN/strings.xml
++++ b/app/src/main/res/values-zh-rCN/strings.xml
+@@ -489,6 +489,8 @@
+     <string name="force_dlc">强制开启DLC</string>
+     <string name="force_dlc_description">仅在未检测到 DLC 或包含 DLC 的存档无法运作时启用</string>
+     <string name="launch_steam_client_beta">启动 Steam 客户端（Beta）</string>
++    <string name="steam_offline_mode">Steam 离线模式</string>
++    <string name="steam_offline_mode_description">以离线模式启动 Steam 游戏</string>
+     <string name="launch_steam_client_description">降低性能并减慢启动速度\n允许在线游玩并修复 DRM 和控制器问题\n并非所有游戏都适用</string>
+     <string name="allow_steam_updates">允许 Steam 更新</string>
+     <string name="allow_steam_updates_description">将 Steam 更新至最新版本，会显著降低性能</string>
+diff --git a/app/src/main/res/values-zh-rTW/strings.xml b/app/src/main/res/values-zh-rTW/strings.xml
+index 78ad526..38348e6 100644
+--- a/app/src/main/res/values-zh-rTW/strings.xml
++++ b/app/src/main/res/values-zh-rTW/strings.xml
+@@ -492,6 +492,8 @@
+     <string name="force_dlc">強制開啟DLC</string>
+     <string name="force_dlc_description">僅在未偵測到 DLC 或包含 DLC 的存檔無法運作時啟用</string>
+     <string name="launch_steam_client_beta">啟動 Steam 用戶端 (Beta)</string>
++    <string name="steam_offline_mode">Steam 離線模式</string>
++    <string name="steam_offline_mode_description">以離線模式啟動 Steam 遊戲</string>
+     <string name="launch_steam_client_description">降低效能並減慢啟動速度\n允許線上遊玩並修復 DRM 和控制器問題\n並非所有遊戲都適用</string>
+     <string name="allow_steam_updates">允許 Steam 更新</string>
+     <string name="allow_steam_updates_description">將 Steam 更新至最新版本, 會顯著降低效能</string>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 68ced6a..bddc95a 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -508,6 +508,8 @@
+     <string name="force_dlc_description">Only enable if DLCs are not detected or saves with DLC are not working</string>
+     <string name="launch_steam_client_beta">Launch Steam Client (Beta)</string>
+     <string name="launch_steam_client_description">Reduces performance and slows down launch\nAllows online play and fixes DRM and controller issues\nNot all games work</string>
++    <string name="steam_offline_mode">Steam Offline Mode</string>
++    <string name="steam_offline_mode_description">Launch Steam games in offline mode</string>
+     <string name="allow_steam_updates">Allow Steam updates</string>
+     <string name="allow_steam_updates_description">Updates Steam to the latest version. Significantly reduces performance.</string>
+     <string name="steam_type">Steam Type</string>

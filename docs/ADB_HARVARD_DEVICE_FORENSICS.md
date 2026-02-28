@@ -16,6 +16,8 @@ This runbook defines the device-side automation loop for the Winlator matrix:
   - downloads latest WCP artifacts from `ci/winlator/artifact-source-map.json` and installs into app-private `files/contents` using `run-as`.
 - `ci/winlator/forensic-adb-harvard-suite.sh`
   - orchestrates complete matrix capture, mismatch analysis, extra dumpsys/psi snapshots, and bundle export.
+- `ci/winlator/adb-network-source-diagnostics.sh`
+  - probes source endpoints (GitHub/raw/gamenative/artifact URLs) from device context and captures proxy/private-DNS/connectivity diagnostics for VPN triage.
 
 ## Quick Start
 
@@ -42,6 +44,7 @@ WLT_BASELINE_LABEL=gamenative104 \
 WLT_RUN_SEED=0 \
 WLT_RUN_ARTIFACT_REFRESH=0 \
 WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE=medium \
+WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE=medium \
 bash ci/winlator/forensic-adb-harvard-suite.sh
 ```
 
@@ -51,6 +54,8 @@ bash ci/winlator/forensic-adb-harvard-suite.sh
 
 - scenario folders (`<label>/...`) from `forensic-adb-complete-matrix.sh`,
 - `runtime-mismatch-matrix.{tsv,md,json,summary.txt}`,
+- `runtime-conflict-contour.{tsv,md,json,summary.txt}`,
+- `network/endpoint-probes.tsv` + `network/endpoint-probes.summary.json` (when `WLT_CAPTURE_NETWORK_DIAG=1`),
 - `bundles/index.tsv` + `bundles/index.json`,
 - per-scenario zips (`bundles/<label>.zip`) when `WLT_BUNDLE_MODE=per_scenario|both`,
 - optional full bundle zip when `WLT_BUNDLE_MODE=single|both`.
@@ -58,5 +63,9 @@ bash ci/winlator/forensic-adb-harvard-suite.sh
 ## Notes
 
 - `WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE` propagates mismatch classifier exit thresholds (`off|info|low|medium|high`).
+- `WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE` applies the same threshold contract to strict runtime logging contour (`RUNTIME_SUBSYSTEM_SNAPSHOT`, `RUNTIME_LOGGING_CONTRACT_SNAPSHOT`, `RUNTIME_LIBRARY_COMPONENT_*`).
+- `WLT_CAPTURE_CONFLICT_LOGS=1` (default in `forensic-adb-complete-matrix.sh`) writes per-scenario `logcat-runtime-conflict-contour.txt` + `runtime-conflict-contour.summary.txt`.
+- `WLT_CAPTURE_NETWORK_DIAG=1` runs source endpoint diagnostics before scenario launches.
+- network summary includes `problemEndpoints` (non-zero curl status / HTTP 4xx-5xx / code 000) for quick outage triage.
 - For unstable VPN/DNS conditions, run artifact refresh first and then launch suite with `WLT_RUN_ARTIFACT_REFRESH=0`.
 - Baseline should remain a known-good scenario label (default: `gamenative104`).

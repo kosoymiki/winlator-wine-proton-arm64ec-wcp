@@ -1,7 +1,7 @@
-# Content Packages Architecture (Aero.solator)
+# Content Packages Architecture (Ae.solator)
 
 ## Goal
-`Contents` in Aero.solator must clearly separate:
+`Contents` in Ae.solator must clearly separate:
 - local installed packages,
 - downloadable packages,
 - stable vs beta/nightly channels,
@@ -38,6 +38,15 @@ New/extended fields used by this fork:
 ## Turnip vs Contents
 - Turnip driver downloads remain upstream-sourced and are handled by `Adrenotools`.
 - Wine/Proton content packages are distributed from this repo releases and surfaced through `Contents`.
+
+## Graphics translation payload families
+
+Contents metadata and release notes should keep naming consistent for these
+external payload families:
+
+- `DXVK`
+- `VKD3D`
+- `D8VK`
 
 ## Packaging metadata propagation
 WCP build scripts inject the same metadata into `profile.json` (`channel`, `delivery`, `displayCategory`, `sourceRepo`, `releaseTag`) so installed packages retain provenance and channel info.

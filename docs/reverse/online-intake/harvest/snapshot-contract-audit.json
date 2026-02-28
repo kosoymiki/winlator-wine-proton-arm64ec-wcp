@@ -1,0 +1,71 @@
+{
+  "snapshot_root": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/reverse/upstream_snapshots",
+  "rows": [
+    {
+      "id": "coffin_mouse_snapshot_markers",
+      "label": "coffin wine mouse snapshot keeps no-XInput2 markers",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/reverse/upstream_snapshots/coffin_wine/dlls/winex11.drv/mouse.c",
+      "hard_fail": 0,
+      "exists": true,
+      "missing_tokens": [],
+      "status": "ready"
+    },
+    {
+      "id": "coffin_winebrowser_snapshot_markers",
+      "label": "coffin winebrowser snapshot keeps android-browser bridge marker",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/reverse/upstream_snapshots/coffin_wine/programs/winebrowser/main.c",
+      "hard_fail": 0,
+      "exists": true,
+      "missing_tokens": [
+        "WINE_OPEN_WITH_ANDROID_BROWSER",
+        "send("
+      ],
+      "status": "missing_tokens"
+    },
+    {
+      "id": "coffin_loader_snapshot_markers",
+      "label": "coffin loader snapshot keeps wow64 suspend symbol marker",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/reverse/upstream_snapshots/coffin_wine/dlls/ntdll/unix/loader.c",
+      "hard_fail": 0,
+      "exists": true,
+      "missing_tokens": [
+        "Wow64SuspendLocalThread",
+        "RtlWow64SuspendThread"
+      ],
+      "status": "missing_tokens"
+    },
+    {
+      "id": "gn_patch_mouse_contract",
+      "label": "GN patch mouse contract keeps helper-gated NO_RAW path",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/gamenative/patchsets/28c3a06/android/patches/dlls_winex11_drv_mouse_c_wm_input_fix.patch",
+      "hard_fail": 1,
+      "exists": true,
+      "missing_tokens": [],
+      "status": "ready"
+    },
+    {
+      "id": "gn_patch_winebrowser_contract",
+      "label": "GN winebrowser patch keeps canonical browser env marker",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/gamenative/patchsets/28c3a06/android/patches/programs_winebrowser_main_c.patch",
+      "hard_fail": 1,
+      "exists": true,
+      "missing_tokens": [],
+      "status": "ready"
+    },
+    {
+      "id": "gn_patch_loader_contract",
+      "label": "GN loader patch keeps wow64 suspend exports",
+      "path": "/home/mikhail/winlator-wine-proton-arm64ec-wcp/ci/gamenative/patchsets/28c3a06/android/patches/dlls_ntdll_loader_c.patch",
+      "hard_fail": 1,
+      "exists": true,
+      "missing_tokens": [],
+      "status": "ready"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "ready": 4,
+    "failed": 2,
+    "failed_hard": 0
+  }
+}

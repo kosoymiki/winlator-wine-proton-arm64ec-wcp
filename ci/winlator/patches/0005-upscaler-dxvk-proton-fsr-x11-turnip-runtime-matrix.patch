@@ -1,0 +1,556 @@
+diff --git a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+index a60bc70..4543c72 100644
+--- a/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
++++ b/app/src/main/java/com/winlator/cmod/AdrenotoolsFragment.java
+@@ -71,6 +71,8 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final String PREF_UPSCALE_VKBASALT_DENOISE = "adrenotools_upscale_vkbasalt_denoise";
+     private static final String PREF_UPSCALE_SCREENFX_PIPELINE = "adrenotools_upscale_screenfx_pipeline";
+     private static final String PREF_UPSCALE_SCALEFORCE_PRESET = "adrenotools_upscale_scaleforce_preset";
++    private static final String PREF_UPSCALE_PROTON_FSR_MODE = "adrenotools_upscale_proton_fsr_mode";
++    private static final String PREF_UPSCALE_PROTON_FSR_STRENGTH = "adrenotools_upscale_proton_fsr_strength";
+ 
+     private static final String TURNIP_SOURCE_MODE_HYBRID = "hybrid";
+     private static final String TURNIP_SOURCE_MODE_PRIMARY = "primary";
+@@ -96,6 +98,11 @@ public class AdrenotoolsFragment extends Fragment {
+     private static final String UPSCALE_SCALEFORCE_OFF = "off";
+     private static final String UPSCALE_SCALEFORCE_BALANCED = "balanced";
+     private static final String UPSCALE_SCALEFORCE_AGGRESSIVE = "aggressive";
++    private static final String UPSCALE_PROTON_FSR_OFF = "off";
++    private static final String UPSCALE_PROTON_FSR_QUALITY = "quality";
++    private static final String UPSCALE_PROTON_FSR_BALANCED = "balanced";
++    private static final String UPSCALE_PROTON_FSR_PERFORMANCE = "performance";
++    private static final String UPSCALE_PROTON_FSR_ULTRA = "ultra";
+     private static final String TURNIP_PROVIDER_AETURNIP = "aeturnip";
+     private static final String TURNIP_PROVIDER_STEVEN = "stevenmxz";
+     private static final String TURNIP_PROVIDER_WHITEBELYASH = "whitebelyash";
+@@ -415,6 +422,21 @@ public class AdrenotoolsFragment extends Fragment {
+                 getString(R.string.upscaler_scaleforce_balanced),
+                 getString(R.string.upscaler_scaleforce_aggressive),
+         };
++        final String[] protonFsrModes = {
++                UPSCALE_PROTON_FSR_OFF,
++                UPSCALE_PROTON_FSR_QUALITY,
++                UPSCALE_PROTON_FSR_BALANCED,
++                UPSCALE_PROTON_FSR_PERFORMANCE,
++                UPSCALE_PROTON_FSR_ULTRA,
++        };
++        final String[] protonFsrLabels = {
++                getString(R.string.upscaler_proton_fsr_off),
++                getString(R.string.upscaler_proton_fsr_quality),
++                getString(R.string.upscaler_proton_fsr_balanced),
++                getString(R.string.upscaler_proton_fsr_performance),
++                getString(R.string.upscaler_proton_fsr_ultra),
++        };
++        final Integer[] protonFsrStrengthOptions = {0, 1, 2, 3, 4, 5};
+ 
+         final int padding = (int) (16f * getResources().getDisplayMetrics().density);
+         LinearLayout root = new LinearLayout(getContext());
+@@ -453,6 +475,14 @@ public class AdrenotoolsFragment extends Fragment {
+                 getString(R.string.upscaler_scaleforce_preset),
+                 scaleForceLabels,
+                 findIndex(scaleForcePresets, getUpscaleScaleForcePreset()));
++        Spinner protonFsrSpinner = addSpinnerRow(root,
++                getString(R.string.upscaler_proton_fsr_mode),
++                protonFsrLabels,
++                findIndex(protonFsrModes, getUpscaleProtonFsrMode()));
++        Spinner protonFsrStrengthSpinner = addSpinnerRow(root,
++                getString(R.string.upscaler_proton_fsr_strength),
++                protonFsrStrengthOptions,
++                findIndex(protonFsrStrengthOptions, getUpscalePercent(PREF_UPSCALE_PROTON_FSR_STRENGTH, 2)));
+ 
+         new AlertDialog.Builder(getContext())
+                 .setTitle(R.string.upscaler_pipeline_config)
+@@ -468,6 +498,8 @@ public class AdrenotoolsFragment extends Fragment {
+                             .putInt(PREF_UPSCALE_VKBASALT_DENOISE, (Integer) denoiseSpinner.getSelectedItem())
+                             .putString(PREF_UPSCALE_SCREENFX_PIPELINE, screenFxPipelines[screenFxSpinner.getSelectedItemPosition()])
+                             .putString(PREF_UPSCALE_SCALEFORCE_PRESET, scaleForcePresets[scaleForceSpinner.getSelectedItemPosition()])
++                            .putString(PREF_UPSCALE_PROTON_FSR_MODE, protonFsrModes[protonFsrSpinner.getSelectedItemPosition()])
++                            .putInt(PREF_UPSCALE_PROTON_FSR_STRENGTH, (Integer) protonFsrStrengthSpinner.getSelectedItem())
+                             .apply();
+ 
+                     refreshUpscalerPipelineSummary();
+@@ -484,7 +516,9 @@ public class AdrenotoolsFragment extends Fragment {
+                                         "vkbasalt_level", (Integer) levelSpinner.getSelectedItem(),
+                                         "vkbasalt_denoise", (Integer) denoiseSpinner.getSelectedItem(),
+                                         "screenfx_pipeline", screenFxPipelines[screenFxSpinner.getSelectedItemPosition()],
+-                                        "scaleforce_preset", scaleForcePresets[scaleForceSpinner.getSelectedItemPosition()]
++                                        "scaleforce_preset", scaleForcePresets[scaleForceSpinner.getSelectedItemPosition()],
++                                        "proton_fsr_mode", protonFsrModes[protonFsrSpinner.getSelectedItemPosition()],
++                                        "proton_fsr_strength", (Integer) protonFsrStrengthSpinner.getSelectedItem()
+                                 ));
+                     }
+                 })
+@@ -502,7 +536,9 @@ public class AdrenotoolsFragment extends Fragment {
+                 getUpscaleDx8Label(getUpscaleDx8Policy()),
+                 getUpscaleVkbasaltLabel(getUpscaleVkbasaltEffect()),
+                 getUpscalePercent(PREF_UPSCALE_VKBASALT_LEVEL, 100),
+-                getUpscalePercent(PREF_UPSCALE_VKBASALT_DENOISE, 100)
++                getUpscalePercent(PREF_UPSCALE_VKBASALT_DENOISE, 100),
++                getUpscaleProtonFsrLabel(getUpscaleProtonFsrMode()),
++                getUpscalePercent(PREF_UPSCALE_PROTON_FSR_STRENGTH, 2)
+         );
+         upscalerPipelineSummary.setText(summary);
+     }
+@@ -583,10 +619,25 @@ public class AdrenotoolsFragment extends Fragment {
+                 UPSCALE_SCALEFORCE_OFF, UPSCALE_SCALEFORCE_BALANCED, UPSCALE_SCALEFORCE_AGGRESSIVE);
+     }
+ 
++    private String getUpscaleProtonFsrMode() {
++        if (!isAdded() || getContext() == null) return UPSCALE_PROTON_FSR_OFF;
++        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
++        return normalizeBySet(prefs.getString(PREF_UPSCALE_PROTON_FSR_MODE, UPSCALE_PROTON_FSR_OFF),
++                UPSCALE_PROTON_FSR_OFF,
++                UPSCALE_PROTON_FSR_OFF,
++                UPSCALE_PROTON_FSR_QUALITY,
++                UPSCALE_PROTON_FSR_BALANCED,
++                UPSCALE_PROTON_FSR_PERFORMANCE,
++                UPSCALE_PROTON_FSR_ULTRA);
++    }
++
+     private int getUpscalePercent(String key, int defaultValue) {
+         if (!isAdded() || getContext() == null) return defaultValue;
+         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+         int value = prefs.getInt(key, defaultValue);
++        if (PREF_UPSCALE_PROTON_FSR_STRENGTH.equals(key)) {
++            return clampInt(value, 0, 5);
++        }
+         return clampInt(value, 0, 200);
+     }
+ 
+@@ -643,6 +694,22 @@ public class AdrenotoolsFragment extends Fragment {
+         return getString(R.string.upscaler_vkbasalt_cas);
+     }
+ 
++    private String getUpscaleProtonFsrLabel(String value) {
++        if (UPSCALE_PROTON_FSR_QUALITY.equals(value)) {
++            return getString(R.string.upscaler_proton_fsr_quality);
++        }
++        if (UPSCALE_PROTON_FSR_BALANCED.equals(value)) {
++            return getString(R.string.upscaler_proton_fsr_balanced);
++        }
++        if (UPSCALE_PROTON_FSR_PERFORMANCE.equals(value)) {
++            return getString(R.string.upscaler_proton_fsr_performance);
++        }
++        if (UPSCALE_PROTON_FSR_ULTRA.equals(value)) {
++            return getString(R.string.upscaler_proton_fsr_ultra);
++        }
++        return getString(R.string.upscaler_proton_fsr_off);
++    }
++
+     private String getTurnipSourceMode() {
+         if (!isAdded() || getContext() == null) return TURNIP_SOURCE_MODE_HYBRID;
+         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 7ccbc17..baf09ba 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -151,6 +151,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private static final String PREF_UPSCALE_VKBASALT_DENOISE = "adrenotools_upscale_vkbasalt_denoise";
+     private static final String PREF_UPSCALE_SCREENFX_PIPELINE = "adrenotools_upscale_screenfx_pipeline";
+     private static final String PREF_UPSCALE_SCALEFORCE_PRESET = "adrenotools_upscale_scaleforce_preset";
++    private static final String PREF_UPSCALE_PROTON_FSR_MODE = "adrenotools_upscale_proton_fsr_mode";
++    private static final String PREF_UPSCALE_PROTON_FSR_STRENGTH = "adrenotools_upscale_proton_fsr_strength";
+     private static final String UPSCALE_PROFILE_AGGRESSIVE = "aggressive";
+     private static final String UPSCALE_PROFILE_BALANCED = "balanced";
+     private static final String UPSCALE_PROFILE_QUALITY = "quality";
+@@ -165,6 +167,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private static final String UPSCALE_VKBASALT_DLS = "dls";
+     private static final String UPSCALE_SCREENFX_OFF = "off";
+     private static final String UPSCALE_SCALEFORCE_OFF = "off";
++    private static final String UPSCALE_PROTON_FSR_OFF = "off";
++    private static final String UPSCALE_PROTON_FSR_QUALITY = "quality";
++    private static final String UPSCALE_PROTON_FSR_BALANCED = "balanced";
++    private static final String UPSCALE_PROTON_FSR_PERFORMANCE = "performance";
++    private static final String UPSCALE_PROTON_FSR_ULTRA = "ultra";
+     private XServerView xServerView;
+     private InputControlsView inputControlsView;
+     private TouchpadView touchpadView;
+@@ -215,6 +222,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+     private String upscalerDx8Policy = UPSCALE_DX8_AUTO;
+     private String upscalerScreenFxPipeline = UPSCALE_SCREENFX_OFF;
+     private String upscalerScaleForcePreset = UPSCALE_SCALEFORCE_OFF;
++    private String upscalerProtonFsrMode = UPSCALE_PROTON_FSR_OFF;
++    private int upscalerProtonFsrStrength = 2;
+     private String upscalerVkbasaltEffect = UPSCALE_VKBASALT_NONE;
+     private int upscalerVkbasaltLevel = 100;
+     private int upscalerVkbasaltDenoise = 100;
+@@ -1898,8 +1907,32 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_UPSCALE_DX8_POLICY", upscalerDx8Policy);
+         envVars.put("AERO_UPSCALE_SCREENFX_PIPELINE", upscalerScreenFxPipeline);
+         envVars.put("AERO_UPSCALE_SCALEFORCE_PRESET", upscalerScaleForcePreset);
++        envVars.put("AERO_UPSCALE_PROTON_FSR_MODE", upscalerProtonFsrMode);
++        envVars.put("AERO_UPSCALE_PROTON_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
+         envVars.put("AERO_UPSCALE_SHORTCUT_OVERRIDE", upscalerShortcutOverride ? "1" : "0");
+         envVars.put("AERO_UPSCALE_MODULES_ACTIVE", buildActiveUpscalerModules());
++        String renderStack = "x11";
++        String turnipVerdict = envVars.get("AERO_TURNIP_BIND_VERDICT");
++        if ("integrated".equals(turnipVerdict)) {
++            renderStack = "x11+turnip+vulkan";
++        } else if ("mirror_allowed".equals(turnipVerdict)) {
++            renderStack = "x11+turnip_mirror+vulkan";
++        } else if ("mirror_blocked".equals(turnipVerdict)) {
++            renderStack = "x11+turnip_blocked";
++        } else if ("system".equals(turnipVerdict)) {
++            renderStack = "x11+system_vulkan";
++        }
++        envVars.put("AERO_X11_GRAPHICS_STACK", renderStack);
++
++        applyDxWrapperMatrixEnv();
++
++        if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) {
++            envVars.put("WINE_FULLSCREEN_FSR", "1");
++            envVars.put("WINE_FULLSCREEN_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
++            envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "1");
++        } else {
++            envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "0");
++        }
+ 
+         ForensicLogger.logEvent(this, "info", "UPSCALE_PROFILE_RESOLVED",
+                 forensicTraceId, "graphics_driver",
+@@ -1910,11 +1943,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "dx8_policy", upscalerDx8Policy,
+                         "screenfx_pipeline", upscalerScreenFxPipeline,
+                         "scaleforce_preset", upscalerScaleForcePreset,
++                        "proton_fsr_mode", upscalerProtonFsrMode,
++                        "proton_fsr_strength", upscalerProtonFsrStrength,
+                         "vkbasalt_effect", upscalerVkbasaltEffect,
+                         "vkbasalt_level", upscalerVkbasaltLevel,
+                         "vkbasalt_denoise", upscalerVkbasaltDenoise,
+                         "shortcut_override", upscalerShortcutOverride ? "1" : "0",
+-                        "active_modules", envVars.get("AERO_UPSCALE_MODULES_ACTIVE")
++                        "active_modules", envVars.get("AERO_UPSCALE_MODULES_ACTIVE"),
++                        "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK")
+                 ));
+     }
+ 
+@@ -1939,6 +1975,15 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 preferences.getString(PREF_UPSCALE_SCALEFORCE_PRESET, UPSCALE_SCALEFORCE_OFF),
+                 UPSCALE_SCALEFORCE_OFF,
+                 UPSCALE_SCALEFORCE_OFF, "balanced", "aggressive");
++        upscalerProtonFsrMode = normalizeUpscalerValue(
++                preferences.getString(PREF_UPSCALE_PROTON_FSR_MODE, UPSCALE_PROTON_FSR_OFF),
++                UPSCALE_PROTON_FSR_OFF,
++                UPSCALE_PROTON_FSR_OFF,
++                UPSCALE_PROTON_FSR_QUALITY,
++                UPSCALE_PROTON_FSR_BALANCED,
++                UPSCALE_PROTON_FSR_PERFORMANCE,
++                UPSCALE_PROTON_FSR_ULTRA);
++        upscalerProtonFsrStrength = clampInt(preferences.getInt(PREF_UPSCALE_PROTON_FSR_STRENGTH, 2), 0, 5);
+ 
+         upscalerVkbasaltEffect = normalizeVkbasaltEffect(
+                 preferences.getString(PREF_UPSCALE_VKBASALT_EFFECT, UPSCALE_VKBASALT_CAS));
+@@ -1954,6 +1999,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+             String shortcutDx8 = shortcut.getExtra("upscalerDx8Policy", "");
+             String shortcutScreenFx = shortcut.getExtra("upscalerScreenFxPipeline", "");
+             String shortcutScaleForce = shortcut.getExtra("upscalerScaleForcePreset", "");
++            String shortcutProtonFsrMode = shortcut.getExtra("upscalerProtonFsrMode", "");
++            String shortcutProtonFsrStrength = shortcut.getExtra("upscalerProtonFsrStrength", "");
+             String shortcutEffect = shortcut.getExtra("upscalerVkbasaltEffect", "");
+             String shortcutVkbasaltEnabled = shortcut.getExtra("upscalerVkbasaltEnabled", "");
+             String shortcutLevel = shortcut.getExtra("upscalerVkbasaltLevel", "");
+@@ -1962,7 +2009,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                     && !legacyShortcutSharpnessEffect.equalsIgnoreCase("None");
+             if (!shortcutProfile.isEmpty() || !shortcutMemory.isEmpty() || !shortcutDx8.isEmpty()
+                     || !shortcutScreenFx.isEmpty() || !shortcutScaleForce.isEmpty()
+-                    || !shortcutEffect.isEmpty() || legacySharpnessOverride) {
++                    || !shortcutProtonFsrMode.isEmpty() || !shortcutEffect.isEmpty() || legacySharpnessOverride) {
+                 explicitOverride = true;
+             }
+ 
+@@ -1988,6 +2035,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                     upscalerScaleForcePreset = normalizeUpscalerValue(shortcutScaleForce, upscalerScaleForcePreset,
+                             UPSCALE_SCALEFORCE_OFF, "balanced", "aggressive");
+                 }
++                if (!shortcutProtonFsrMode.isEmpty()) {
++                    upscalerProtonFsrMode = normalizeUpscalerValue(shortcutProtonFsrMode, upscalerProtonFsrMode,
++                            UPSCALE_PROTON_FSR_OFF,
++                            UPSCALE_PROTON_FSR_QUALITY,
++                            UPSCALE_PROTON_FSR_BALANCED,
++                            UPSCALE_PROTON_FSR_PERFORMANCE,
++                            UPSCALE_PROTON_FSR_ULTRA);
++                }
++                if (!shortcutProtonFsrStrength.isEmpty()) {
++                    upscalerProtonFsrStrength = clampInt(parseIntOrDefault(shortcutProtonFsrStrength, upscalerProtonFsrStrength), 0, 5);
++                }
+                 if (!shortcutEffect.isEmpty()) {
+                     upscalerVkbasaltEffect = normalizeVkbasaltEffect(shortcutEffect);
+                 }
+@@ -2030,6 +2088,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         if (upscalerVkbasaltEnabled) modules.add("vkbasalt");
+         if (!UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline)) modules.add("screenfx");
+         if (!UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset)) modules.add("scaleforce");
++        if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) modules.add("proton_fsr");
+         if (UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy)) {
+             modules.add("dx8assist");
+         }
+@@ -2043,6 +2102,70 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         return sb.toString();
+     }
+ 
++    private void applyDxWrapperMatrixEnv() {
++        String wrapperMode = dxwrapper == null ? "" : dxwrapper.trim().toLowerCase(Locale.ROOT);
++        String dxvkVersion = normalizeDxVersion(dxwrapperConfig.get("version"));
++        String vkd3dVersion = normalizeDxVersion(dxwrapperConfig.get("vkd3dVersion"));
++        String ddrawWrapper = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
++
++        String dx1to7Route = "wined3d";
++        String dx8Route = "wined3d";
++        String dx9to11Route = "wined3d";
++        String dx12Route = "wined3d";
++        if (wrapperMode.contains("dxvk")) {
++            dx9to11Route = "dxvk-" + dxvkVersion;
++            if (!"none".equals(vkd3dVersion)) {
++                dx12Route = "vkd3d-" + vkd3dVersion;
++            }
++            if (UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy)) {
++                dx8Route = "d8vk-forced";
++            } else if (compareVersion(dxvkVersion, "2.4") < 0) {
++                dx8Route = "d8vk-bundled";
++            } else {
++                dx8Route = "dxvk-native";
++            }
++            if (!"none".equals(ddrawWrapper)) {
++                dx1to7Route = ddrawWrapper;
++            }
++        }
++
++        String directMap = "dx1-7=" + dx1to7Route +
++                ";dx8=" + dx8Route +
++                ";dx9-11=" + dx9to11Route +
++                ";dx12=" + dx12Route;
++        envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
++        envVars.put("AERO_DXVK_VERSION_SELECTED", dxvkVersion);
++        envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
++        envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
++        envVars.put("AERO_DX_DIRECT_MAP", directMap);
++
++        ForensicLogger.logEvent(this, "info", "DX_WRAPPER_GRAPH_RESOLVED",
++                forensicTraceId, "graphics_driver",
++                "dx wrapper matrix resolved",
++                ForensicLogger.fields(
++                        "wrapper_mode", wrapperMode.isEmpty() ? "unknown" : wrapperMode,
++                        "dxvk_version", dxvkVersion,
++                        "vkd3d_version", vkd3dVersion,
++                        "ddraw_wrapper", ddrawWrapper,
++                        "dx_map", directMap,
++                        "dx8_policy", upscalerDx8Policy
++                ));
++    }
++
++    private String normalizeDxVersion(String value) {
++        if (value == null || value.trim().isEmpty()) return "none";
++        String normalized = value.trim().toLowerCase(Locale.ROOT);
++        if ("none".equals(normalized)) return "none";
++        return normalized;
++    }
++
++    private String normalizeDdrawWrapper(String value) {
++        if (value == null || value.trim().isEmpty()) return "none";
++        String normalized = value.trim().toLowerCase(Locale.ROOT);
++        if (normalized.contains("none")) return "none";
++        return normalized;
++    }
++
+     private String normalizeUpscalerValue(String value, String fallback, String... allowed) {
+         if (value == null) return fallback;
+         String normalized = value.trim().toLowerCase(Locale.ROOT);
+@@ -2158,10 +2281,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 Log.d(TAG, "Extracting fallback DXVK .tzst archive: " + dxvkWrapper);
+                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + dxvkWrapper + ".tzst", windowsDir, onExtractFileListener);
+ 
+-                if (compareVersion(dxvkWrapper, "2.4") < 0) {
+-                    Log.d(TAG, "Extracting d8vk as part of DXVK version " + dxvkWrapper);
+-                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/d8vk-" + DefaultVersion.D8VK + ".tzst", windowsDir, onExtractFileListener);
+-                }
++                boolean forceD8vk = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy);
++                if (compareVersion(dxvkWrapper, "2.4") < 0 || forceD8vk) {
++                    Log.d(TAG, forceD8vk
++                            ? "Extracting forced d8vk for DX8 route, wrapper " + dxvkWrapper
++                            : "Extracting d8vk as part of DXVK version " + dxvkWrapper);
++                    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/d8vk-" + DefaultVersion.D8VK + ".tzst", windowsDir, onExtractFileListener);
++                }
+             }
+ 
+             if (vkd3dWrapper.contains("None")) {
+diff --git a/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java b/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
+index 78afdad..e193dc7 100644
+--- a/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
++++ b/app/src/main/java/com/winlator/cmod/contentdialog/DXVKConfigDialog.java
+@@ -10,22 +10,19 @@ import android.widget.ToggleButton;
+ 
+ import com.winlator.cmod.R;
+ import com.winlator.cmod.container.Container;
+-import com.winlator.cmod.contents.ContentProfile;
+-import com.winlator.cmod.contents.ContentsManager;
+-import com.winlator.cmod.core.AppUtils;
+-import com.winlator.cmod.core.DefaultVersion;
+-import com.winlator.cmod.core.EnvVars;
+-import com.winlator.cmod.core.KeyValueSet;
+-import com.winlator.cmod.core.StringUtils;
+-import com.winlator.cmod.core.VKD3DVersionItem;
+-import com.winlator.cmod.xenvironment.ImageFs;
++import com.winlator.cmod.contents.ContentProfile;
++import com.winlator.cmod.contents.ContentsManager;
++import com.winlator.cmod.core.AppUtils;
++import com.winlator.cmod.core.EnvVars;
++import com.winlator.cmod.core.KeyValueSet;
++import com.winlator.cmod.core.StringUtils;
++import com.winlator.cmod.core.VKD3DVersionItem;
++import com.winlator.cmod.xenvironment.ImageFs;
+ 
+ import java.io.File;
+-import java.util.ArrayList;
+-import java.util.Arrays;
+-import java.util.List;
+-import java.util.regex.Matcher;
+-import java.util.regex.Pattern;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
+ 
+ public class DXVKConfigDialog extends ContentDialog {
+     public static final String DEFAULT_CONFIG = Container.DEFAULT_DXWRAPPERCONFIG;
+@@ -34,23 +31,11 @@ public class DXVKConfigDialog extends ContentDialog {
+     public static final int DXVK_TYPE_GPLASYNC = 2;
+     private final ToggleButton swAsync;
+     private boolean isARM64EC = false;
+-    private final ToggleButton swAsyncCache;
+-    private final View llAsync;
+-    private final View llAsyncCache;
+-    private final Context context;
+-    private static List<String> dxvkVersions;
+-    private static final Pattern SEMVER = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+-
+-    private static Integer tryGetMajor(String s) {
+-        if (s == null) return null;
+-        Matcher m = SEMVER.matcher(s);
+-        if (!m.find()) return null;
+-        try {
+-            return Integer.parseInt(m.group(1));
+-        } catch (NumberFormatException e) {
+-            return null;
+-        }
+-    }
++    private final ToggleButton swAsyncCache;
++    private final View llAsync;
++    private final View llAsyncCache;
++    private final Context context;
++    private static List<String> dxvkVersions;
+     
+     public static final String[] VKD3D_FEATURE_LEVEL = {"12_0", "12_1", "12_2", "11_1", "11_0", "10_1", "10_0", "9_3", "9_2", "9_1"};
+ 
+@@ -123,39 +108,15 @@ public class DXVKConfigDialog extends ContentDialog {
+             }
+         });
+ 
+-        sVKD3DVersion.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+-            @Override
+-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+-                String selectedVersion = sVKD3DVersion.getSelectedItem().toString();
+-                String currentDXVKVersion = config.get("version");
+-
+-                if (!selectedVersion.equals("None")) {
+-                    ArrayList<String> versions = new ArrayList<>();
+-
+-                    for (int i = 0; i < dxvkVersions.size(); i++) {
+-                        Integer major = tryGetMajor(dxvkVersions.get(i));
+-                        if (major != null && major < 2) {
+-                            versions.add(dxvkVersions.get(i));
+-                        }
+-                    }
+-
+-                    dxvkVersions.removeAll(versions);
+-
+-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, dxvkVersions);
+-                    sDXVKVersion.setAdapter(adapter);
+-
+-                    Integer curMajor = tryGetMajor(currentDXVKVersion);
+-                    AppUtils.setSpinnerSelectionFromIdentifier(
+-                            sDXVKVersion,
+-                            (curMajor != null && curMajor >= 2) ? currentDXVKVersion : DefaultVersion.DXVK
+-                    );
+-                    updateConfigVisibility(getDXVKType(sDXVKVersion.getSelectedItemPosition()));
+-                }
+-                else {
+-                    loadDxvkVersionSpinner(contentsManager, sDXVKVersion, isARM64EC);
+-                    AppUtils.setSpinnerSelectionFromIdentifier(sDXVKVersion, config.get("version"));
+-                }
+-            }
++        sVKD3DVersion.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
++            @Override
++            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
++                String selectedVersion = sVKD3DVersion.getSelectedItem().toString();
++                loadDxvkVersionSpinner(contentsManager, sDXVKVersion, isARM64EC);
++                AppUtils.setSpinnerSelectionFromIdentifier(sDXVKVersion, config.get("version"));
++                updateConfigVisibility(getDXVKType(sDXVKVersion.getSelectedItemPosition()));
++                Log.d("DXVKConfigDialog", "VKD3D changed to " + selectedVersion + ", preserving full DXVK version matrix");
++            }
+ 
+             @Override
+             public void onNothingSelected(AdapterView<?> parent) {
+@@ -198,33 +159,11 @@ public class DXVKConfigDialog extends ContentDialog {
+         return dxvkType;
+     }
+ 
+-    private void setDXVKSpinner(Spinner sDXVKVersion, KeyValueSet config, ContentsManager contentsManager, boolean isARM64EC) {
+-        String selectedVersion = config.get("vkd3dVersion");
+-        String currentDXVKVersion = config.get("version");
+-        if (!selectedVersion.equals("None")) {
+-            ArrayList<String> versions = new ArrayList<>();
+-
+-            for (int i = 0; i < dxvkVersions.size(); i++) {
+-                Integer major = tryGetMajor(dxvkVersions.get(i));
+-                if (major != null && major < 2) {
+-                    versions.add(dxvkVersions.get(i));
+-                }
+-            }
+-
+-            dxvkVersions.removeAll(versions);
+-
+-            ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, dxvkVersions);
+-            sDXVKVersion.setAdapter(adapter);
+-
+-            Integer curMajor = tryGetMajor(currentDXVKVersion);
+-            AppUtils.setSpinnerSelectionFromIdentifier(
+-                    sDXVKVersion,
+-                    (curMajor != null && curMajor >= 2) ? currentDXVKVersion : DefaultVersion.DXVK
+-            );
+-        }
+-        else
+-            AppUtils.setSpinnerSelectionFromIdentifier(sDXVKVersion, currentDXVKVersion);
+-    }
++    private void setDXVKSpinner(Spinner sDXVKVersion, KeyValueSet config, ContentsManager contentsManager, boolean isARM64EC) {
++        String currentDXVKVersion = config.get("version");
++        loadDxvkVersionSpinner(contentsManager, sDXVKVersion, isARM64EC);
++        AppUtils.setSpinnerSelectionFromIdentifier(sDXVKVersion, currentDXVKVersion);
++    }
+ 
+     public static KeyValueSet parseConfig(Object config) {
+         String data = config != null && !config.toString().isEmpty() ? config.toString() :  DEFAULT_CONFIG;
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index d635276..6ff1667 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -632,7 +632,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="turnip_pipeline_saved">Turnip lane policy saved.</string>
+     <string name="upscaler_pipeline_config">Upscaler policy</string>
+     <string name="upscaler_pipeline_saved">Upscaler policy saved.</string>
+-    <string name="upscaler_pipeline_summary">Upscaler: %1$s • Memory: %2$s • DX8: %3$s • vkBasalt: %4$s (%5$d/%6$d)</string>
++    <string name="upscaler_pipeline_summary">Upscaler: %1$s • Memory: %2$s • DX8: %3$s • vkBasalt: %4$s (%5$d/%6$d) • Proton FSR: %7$s (%8$d)</string>
+     <string name="upscaler_pipeline_summary_placeholder">Upscaler policy is loading...</string>
+     <string name="upscaler_profile_mode">Upscaler profile</string>
+     <string name="upscaler_profile_aggressive">Aggressive</string>
+@@ -662,6 +662,13 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="upscaler_scaleforce_off">Disabled</string>
+     <string name="upscaler_scaleforce_balanced">Balanced</string>
+     <string name="upscaler_scaleforce_aggressive">Aggressive</string>
++    <string name="upscaler_proton_fsr_mode">Proton FSR hack mode</string>
++    <string name="upscaler_proton_fsr_off">Disabled</string>
++    <string name="upscaler_proton_fsr_quality">Quality</string>
++    <string name="upscaler_proton_fsr_balanced">Balanced</string>
++    <string name="upscaler_proton_fsr_performance">Performance</string>
++    <string name="upscaler_proton_fsr_ultra">Ultra performance</string>
++    <string name="upscaler_proton_fsr_strength">Proton FSR sharpness (0-5)</string>
+     <string name="turnip_choose_version">Choose Turnip version</string>
+     <string name="turnip_channel_latest">Latest</string>
+     <string name="loading_turnip_versions">Loading Turnip versions…</string>

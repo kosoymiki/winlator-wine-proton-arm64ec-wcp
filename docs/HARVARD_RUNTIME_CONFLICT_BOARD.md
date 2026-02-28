@@ -121,6 +121,30 @@ Use this board for handoff between agents and for continuous backlog intake.
   - Result: added strict audit `ci/validation/audit-turnip-strict-bind-fallback.py` for strict/relaxed bind semantics, mirror fallback reason propagation, and `turnip_bind_not_strict` conflict mapping; policy check now enforces this audit.
   - Evidence: `python3 ci/validation/audit-turnip-strict-bind-fallback.py --strict --output -`, `bash ci/validation/check-urc-mainline-policy.sh`.
 
+- [x] `RC-017` Static Contents QA contract gate.
+  - Result: added `ci/validation/check-contents-qa-contract.py` to validate `contents/contents.json` schema/parity, `0001` patch contract tokens for Wine/Proton overlay + provenance UI markers, and WCP workflow metadata parity; final-stage gates now run this check (`contents-qa`).
+  - Evidence: `python3 ci/validation/check-contents-qa-contract.py --root . --output /tmp/contents-qa.md`, `bash ci/validation/run-final-stage-gates.sh`.
+
+- [x] `RC-018` Patch-base anti-conflict contract gate.
+  - Result: added `ci/validation/check-patch-base-contract.sh` to enforce source-backed `run-patch-base-cycle` + `check-patch-stack` apply checks, auto-resolving local source dirs; final-stage gates now run this check (`patch-base-contract`) with strict failure propagation.
+  - Evidence: `bash ci/validation/check-patch-base-contract.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+
+- [x] `RC-019` WCP payload parity contract gate.
+  - Result: rewired `ci/validation/run-wcp-parity-suite.sh` into pair-driven contract execution (`ci/validation/wcp-parity-pairs.tsv`) with structured status/meta outputs, hardened `check-wcp-content-parity.py` to assert critical source payload paths, and integrated parity gate into `run-final-stage-gates.sh` (`wcp-parity`) with strict propagation.
+  - Evidence: `bash ci/validation/run-wcp-parity-suite.sh`, `python3 ci/validation/check-wcp-content-parity.py --source <wcp> --installed <dir> --out /tmp/wcp-parity.md`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+
+- [x] `RC-020` Release-prep QA/parity gate propagation.
+  - Result: propagated `contents-qa` and `wcp-parity` into `ci/validation/prepare-release-patch-base.sh` with explicit env controls and summary metadata, then wired release-prep pass-through controls in `run-final-stage-gates.sh` to keep orchestration deterministic across direct release-prep and final-stage wrappers.
+  - Evidence: `WLT_RELEASE_PREP_RUN_COMMIT_SCAN=0 WLT_RELEASE_PREP_RUN_HARVEST=0 WLT_RELEASE_PREP_RUN_PATCH_BASE=0 bash ci/validation/prepare-release-patch-base.sh`, `bash ci/validation/check-urc-mainline-policy.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+
+- [x] `RC-021` Snapshot QA/parity capture propagation.
+  - Result: propagated `contents-qa` and `wcp-parity` into `ci/validation/collect-mainline-forensic-snapshot.sh` (`WLT_CAPTURE_CONTENTS_QA`, `WLT_CAPTURE_WCP_PARITY`, required/fail knobs, parity pair controls), wired final-stage snapshot pass-through controls, and extended URC policy checks for the new snapshot contract markers.
+  - Evidence: `bash ci/validation/check-urc-mainline-policy.sh`, `WLT_FINAL_STAGE_FETCH=0 WLT_FINAL_STAGE_SCOPE=focused WLT_FINAL_STAGE_FAIL_MODE=strict WLT_FINAL_STAGE_RUN_RELEASE_PREP=0 WLT_FINAL_STAGE_RUN_SNAPSHOT=0 WLT_FINAL_STAGE_RUN_COMMIT_SCAN=0 bash ci/validation/run-final-stage-gates.sh`.
+
+- [x] `RC-022` Static Contents QA closure hardening.
+  - Result: expanded `check-contents-qa-contract.py` to enforce `REMOTE_PROFILES` WCP Hub source token, strict `*-latest` overlay tag policy, `sourceVersion=rolling-latest`, validator execution (`ci/contents/validate-contents-json.py`), and stable release lane contract (`wcp-stable` publish/notes flow); URC policy gate now executes this contract directly.
+  - Evidence: `python3 ci/validation/check-contents-qa-contract.py --root . --output /tmp/contents-qa-contract.md`, `bash ci/validation/check-urc-mainline-policy.sh`.
+
 ---
 
 ## Doing
@@ -175,6 +199,12 @@ Use this table to append incoming tasks without editing prior rows.
 | 2026-02-28 | RC-011 | user/agent | Closed NVAPI layout shim audit with strict policy hook in URC check |
 | 2026-02-28 | RC-012 | user/agent | Closed Turnip strict-bind fallback audit with strict policy hook in URC check |
 | 2026-02-28 | RC-005 | user/agent | Added device-matrix orchestrator + strict RC-005 validator/runbook; awaiting real-device execution |
+| 2026-02-28 | RC-017 | user/agent | Added static Contents QA contract gate + final-stage integration (`contents-qa`) |
+| 2026-02-28 | RC-018 | user/agent | Added patch-base anti-conflict contract gate + final-stage integration (`patch-base-contract`) |
+| 2026-02-28 | RC-019 | user/agent | Added pair-driven WCP payload parity contract gate + final-stage integration (`wcp-parity`) |
+| 2026-02-28 | RC-020 | user/agent | Propagated contents/parity gates into release-prep path + final-stage release-prep pass-through controls |
+| 2026-02-28 | RC-021 | user/agent | Propagated contents/parity capture into forensic snapshot path + final-stage snapshot pass-through controls |
+| 2026-02-28 | RC-022 | user/agent | Hardened static contents QA closure (REMOTE_PROFILES/rolling tags/validator/wcp-stable lane) and bound it into URC policy execution |
 
 ---
 
@@ -183,7 +213,7 @@ Use this table to append incoming tasks without editing prior rows.
 - [ ] Close `CONTENTS_QA_CHECKLIST.md` end-to-end.
 - [ ] Complete Harvard ADB matrix with conflict contour enabled.
 - [x] Confirm no regression in `run-final-stage-gates.sh` strict mode with updated markers.
-- [ ] Keep `0001..0010` apply-check clean after each conflict-contour change.
+- [x] Keep `0001..0010` apply-check clean after each conflict-contour change.
 - [ ] Fold slices back into consolidated mainline only after matrix + QA completion.
 
 ---

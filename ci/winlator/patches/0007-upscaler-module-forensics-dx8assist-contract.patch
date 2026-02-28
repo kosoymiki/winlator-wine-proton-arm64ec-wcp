@@ -1,0 +1,191 @@
+diff --git a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+index 650c00c..620b627 100644
+--- a/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
++++ b/app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java
+@@ -1912,6 +1912,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_UPSCALE_SCALEFORCE_PRESET", upscalerScaleForcePreset);
+         envVars.put("AERO_UPSCALE_PROTON_FSR_MODE", upscalerProtonFsrMode);
+         envVars.put("AERO_UPSCALE_PROTON_FSR_STRENGTH", String.valueOf(upscalerProtonFsrStrength));
++        envVars.put("AERO_UPSCALE_PROTON_FSR_REQUESTED", UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode) ? "0" : "1");
+         envVars.put("AERO_UPSCALE_SHORTCUT_OVERRIDE", upscalerShortcutOverride ? "1" : "0");
+         envVars.put("AERO_UPSCALE_MODULES_ACTIVE", buildActiveUpscalerModules());
+         envVars.put("AERO_UPSCALE_VKBASALT_EFFECTIVE", upscalerVkbasaltEnabled ? "1" : "0");
+@@ -1940,6 +1941,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         } else {
+             envVars.put("AERO_UPSCALE_PROTON_FSR_EFFECTIVE", "0");
+         }
++        traceUpscalerModuleStates();
+ 
+         ForensicLogger.logEvent(this, "info", "UPSCALE_PROFILE_RESOLVED",
+                 forensicTraceId, "graphics_driver",
+@@ -2096,7 +2098,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         if (!UPSCALE_SCREENFX_OFF.equals(upscalerScreenFxPipeline)) modules.add("screenfx");
+         if (!UPSCALE_SCALEFORCE_OFF.equals(upscalerScaleForcePreset)) modules.add("scaleforce");
+         if (!UPSCALE_PROTON_FSR_OFF.equals(upscalerProtonFsrMode)) modules.add("proton_fsr");
+-        if (UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy)) {
++        if (isDx8AssistRequested()) {
+             modules.add("dx8assist");
+         }
+         if (modules.isEmpty()) return "none";
+@@ -2109,6 +2111,71 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         return sb.toString();
+     }
+ 
++    private boolean isDx8AssistRequested() {
++        return UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy)
++                || (UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride);
++    }
++
++    private void traceUpscalerModuleStates() {
++        boolean vkbasaltEffective = "1".equals(envVars.get("AERO_UPSCALE_VKBASALT_EFFECTIVE"));
++        String vkbasaltReason = vkbasaltEffective ? "configured" : "disabled";
++        envVars.put("AERO_UPSCALE_VKBASALT_REASON", vkbasaltReason);
++        logUpscalerModuleState("vkbasalt", vkbasaltEffective, vkbasaltReason, upscalerVkbasaltEffect);
++
++        boolean screenfxEffective = "1".equals(envVars.get("AERO_UPSCALE_SCREENFX_EFFECTIVE"));
++        String screenfxReason = screenfxEffective ? "configured" : "pipeline_off";
++        envVars.put("AERO_UPSCALE_SCREENFX_REASON", screenfxReason);
++        logUpscalerModuleState("screenfx", screenfxEffective, screenfxReason, upscalerScreenFxPipeline);
++
++        boolean scaleforceEffective = "1".equals(envVars.get("AERO_UPSCALE_SCALEFORCE_EFFECTIVE"));
++        String scaleforceReason = scaleforceEffective ? "configured" : "preset_off";
++        envVars.put("AERO_UPSCALE_SCALEFORCE_REASON", scaleforceReason);
++        logUpscalerModuleState("scaleforce", scaleforceEffective, scaleforceReason, upscalerScaleForcePreset);
++
++        boolean protonFsrRequested = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_REQUESTED"));
++        boolean protonFsrEffective = "1".equals(envVars.get("AERO_UPSCALE_PROTON_FSR_EFFECTIVE"));
++        String protonFsrReason;
++        if (!protonFsrRequested) {
++            protonFsrReason = "policy_off";
++        } else if (protonFsrEffective) {
++            protonFsrReason = "enabled";
++        } else {
++            protonFsrReason = "disabled";
++        }
++        envVars.put("AERO_UPSCALE_PROTON_FSR_REASON", protonFsrReason);
++        logUpscalerModuleState("proton_fsr", protonFsrEffective, protonFsrReason,
++                upscalerProtonFsrMode + ":" + upscalerProtonFsrStrength);
++
++        boolean dx8AssistRequested = isDx8AssistRequested();
++        boolean dx8AssistEffective = "1".equals(envVars.get("AERO_DX8_ASSIST_EFFECTIVE"));
++        String dx8AssistReason;
++        if (!dx8AssistRequested) {
++            dx8AssistReason = "policy_off";
++        } else if (dx8AssistEffective) {
++            dx8AssistReason = "dxvk_path_ready";
++        } else {
++            dx8AssistReason = "wrapper_not_dxvk";
++        }
++        envVars.put("AERO_UPSCALE_DX8_ASSIST_REASON", dx8AssistReason);
++        logUpscalerModuleState("dx8assist", dx8AssistEffective, dx8AssistReason, envVars.get("AERO_DX_ROUTE_DX8"));
++    }
++
++    private void logUpscalerModuleState(String module, boolean applied, String reason, String value) {
++        ForensicLogger.logEvent(this, "info",
++                applied ? "UPSCALE_MODULE_APPLIED" : "UPSCALE_MODULE_SKIPPED",
++                forensicTraceId, "graphics_driver",
++                applied ? "upscaler module applied" : "upscaler module skipped",
++                ForensicLogger.fields(
++                        "module", module,
++                        "applied", applied ? "1" : "0",
++                        "reason", reason == null ? "" : reason,
++                        "value", value == null ? "" : value,
++                        "profile", upscalerProfileMode,
++                        "shortcut_override", upscalerShortcutOverride ? "1" : "0",
++                        "x11_graphics_stack", envVars.get("AERO_X11_GRAPHICS_STACK")
++                ));
++    }
++
+     private void applyUpscalerMemoryPolicyEnv() {
+         String effective = upscalerMemoryPolicy;
+         switch (upscalerMemoryPolicy) {
+@@ -2143,24 +2210,25 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     private void applyDxWrapperMatrixEnv() {
+         String wrapperMode = dxwrapper == null ? "" : dxwrapper.trim().toLowerCase(Locale.ROOT);
++        boolean dxvkWrapperSelected = wrapperMode.contains("dxvk");
+         String dxvkVersion = normalizeDxVersion(dxwrapperConfig.get("version"));
+         String vkd3dVersion = normalizeDxVersion(dxwrapperConfig.get("vkd3dVersion"));
+         String ddrawWrapper = normalizeDdrawWrapper(dxwrapperConfig.get("ddrawrapper"));
+-        boolean shortcutDx8Assist = UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride;
+-        boolean forceDx8Assist = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || shortcutDx8Assist;
++        boolean dx8AssistRequested = isDx8AssistRequested();
++        boolean dx8AssistEffective = dxvkWrapperSelected && dx8AssistRequested;
+ 
+         String dx1to7Route = "wined3d";
+         String dx8Route = "wined3d";
+         String dx9to11Route = "wined3d";
+         String dx12Route = "wined3d";
+-        if (wrapperMode.contains("dxvk")) {
++        if (dxvkWrapperSelected) {
+             dx9to11Route = "dxvk-" + dxvkVersion;
+             if (!"none".equals(vkd3dVersion)) {
+                 dx12Route = "vkd3d-" + vkd3dVersion;
+             }
+             if (UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy)) {
+                 dx8Route = "d8vk-forced";
+-            } else if (shortcutDx8Assist) {
++            } else if (UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride) {
+                 dx8Route = "d8vk-shortcut";
+             } else if (compareVersion(dxvkVersion, "2.4") < 0) {
+                 dx8Route = "d8vk-bundled";
+@@ -2191,6 +2259,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_DX_WRAPPER_MODE", wrapperMode.isEmpty() ? "unknown" : wrapperMode);
+         envVars.put("AERO_DXVK_VERSION_SELECTED", dxvkVersion);
+         envVars.put("AERO_VKD3D_VERSION_SELECTED", vkd3dVersion);
++        envVars.put("AERO_D8VK_VERSION_SELECTED", DefaultVersion.D8VK);
+         envVars.put("AERO_DDRAW_WRAPPER_SELECTED", ddrawWrapper);
+         envVars.put("AERO_DX_DIRECT_MAP", directMap);
+         envVars.put("AERO_DX_DIRECT_MAP_EXTENDED", directMapExtended);
+@@ -2200,7 +2269,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+         envVars.put("AERO_DX_ROUTE_DX10", dx9to11Route);
+         envVars.put("AERO_DX_ROUTE_DX11", dx9to11Route);
+         envVars.put("AERO_DX_ROUTE_DX12", dx12Route);
+-        envVars.put("AERO_DX8_ASSIST_EFFECTIVE", forceDx8Assist ? "1" : "0");
++        envVars.put("AERO_DX8_ASSIST_REQUESTED", dx8AssistRequested ? "1" : "0");
++        envVars.put("AERO_DX8_ASSIST_EFFECTIVE", dx8AssistEffective ? "1" : "0");
+ 
+         ForensicLogger.logEvent(this, "info", "DX_WRAPPER_GRAPH_RESOLVED",
+                 forensicTraceId, "graphics_driver",
+@@ -2212,7 +2282,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                         "ddraw_wrapper", ddrawWrapper,
+                         "dx_map", directMap,
+                         "dx_map_extended", directMapExtended,
+-                        "dx8_assist_effective", forceDx8Assist ? "1" : "0",
++                        "dx8_assist_requested", dx8AssistRequested ? "1" : "0",
++                        "dx8_assist_effective", dx8AssistEffective ? "1" : "0",
+                         "dx8_policy", upscalerDx8Policy
+                 ));
+     }
+@@ -2328,13 +2399,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+ 
+     private static final String TAG = "DXWrapperExtraction";
+ 
+-    private void extractDXWrapperFiles(String dxwrapper) {
+-        final String[] dlls = {"d3d10.dll", "d3d10_1.dll", "d3d10core.dll", "d3d11.dll", "d3d12.dll", "d3d12core.dll", "d3d8.dll", "d3d9.dll", "dxgi.dll", "ddraw.dll", "d3dimm.dll"};
+-
+-        File rootDir = imageFs.getRootDir();
+-        File windowsDir = new File(rootDir, ImageFs.WINEPREFIX + "/drive_c/windows");
+-
+-        if (dxwrapper.contains("dxvk")) {
++    private void extractDXWrapperFiles(String dxwrapper) {
++        final String[] dlls = {"d3d10.dll", "d3d10_1.dll", "d3d10core.dll", "d3d11.dll", "d3d12.dll", "d3d12core.dll", "d3d8.dll", "d3d9.dll", "dxgi.dll", "ddraw.dll", "d3dimm.dll"};
++
++        File rootDir = imageFs.getRootDir();
++        File windowsDir = new File(rootDir, ImageFs.WINEPREFIX + "/drive_c/windows");
++        envVars.put("AERO_DX8_D8VK_EXTRACTED", "0");
++
++        if (dxwrapper.contains("dxvk")) {
+             Log.d(TAG, "Extracting DXVK wrapper files, version: " + dxwrapper);
+ 
+             String dxvkWrapper = dxwrapper.split(";")[0];
+@@ -2348,8 +2420,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
+                 Log.d(TAG, "Extracting fallback DXVK .tzst archive: " + dxvkWrapper);
+                 TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "dxwrapper/" + dxvkWrapper + ".tzst", windowsDir, onExtractFileListener);
+ 
+-                boolean shortcutDx8Assist = UPSCALE_DX8_SHORTCUT_ONLY.equals(upscalerDx8Policy) && upscalerShortcutOverride;
+-                boolean forceD8vk = UPSCALE_DX8_FORCE_D8VK.equals(upscalerDx8Policy) || shortcutDx8Assist;
++                boolean forceD8vk = isDx8AssistRequested();
+                 if (compareVersion(dxvkWrapper, "2.4") < 0 || forceD8vk) {
+                     Log.d(TAG, forceD8vk
+                             ? "Extracting policy d8vk for DX8 route, wrapper " + dxvkWrapper

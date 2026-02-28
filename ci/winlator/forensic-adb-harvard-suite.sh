@@ -10,6 +10,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_BUNDLE_MODE:=per_scenario}"
 : "${WLT_FAIL_ON_MISMATCH:=0}"
 : "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE:=medium}"
+: "${WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE:=off}"
 : "${WLT_RUN_SEED:=0}"
 : "${WLT_RUN_ARTIFACT_REFRESH:=0}"
 : "${WLT_SEED_CONTAINER_ID:=1}"
@@ -21,6 +22,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_CAPTURE_PREFS:=1}"
 : "${WLT_CAPTURE_UI:=1}"
 : "${WLT_CAPTURE_RUNTIME_CONTENTS:=1}"
+: "${WLT_CAPTURE_NETWORK_DIAG:=1}"
 
 log() { printf '[forensic-harvard] %s\n' "$*"; }
 fail() { printf '[forensic-harvard][error] %s\n' "$*" >&2; exit 1; }
@@ -83,6 +85,7 @@ collect_extra_scenario_artifacts() {
 
 main() {
   local mismatch_rc=0
+  local conflict_rc=0
   local scenario_dir label container_id safe_label zip_path
 
   require_cmd adb
@@ -93,9 +96,12 @@ main() {
   [[ "${WLT_FAIL_ON_MISMATCH}" =~ ^[01]$ ]] || fail "WLT_FAIL_ON_MISMATCH must be 0 or 1"
   [[ "${WLT_RUN_SEED}" =~ ^[01]$ ]] || fail "WLT_RUN_SEED must be 0 or 1"
   [[ "${WLT_RUN_ARTIFACT_REFRESH}" =~ ^[01]$ ]] || fail "WLT_RUN_ARTIFACT_REFRESH must be 0 or 1"
+  [[ "${WLT_CAPTURE_NETWORK_DIAG}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_NETWORK_DIAG must be 0 or 1"
   [[ "${WLT_BUNDLE_MODE}" =~ ^(per_scenario|single|both)$ ]] || fail "WLT_BUNDLE_MODE must be one of: per_scenario, single, both"
   [[ "${WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE}" =~ ^(off|info|low|medium|high)$ ]] || \
     fail "WLT_FAIL_ON_SEVERITY_AT_OR_ABOVE must be one of: off, info, low, medium, high"
+  [[ "${WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE}" =~ ^(off|info|low|medium|high)$ ]] || \
+    fail "WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE must be one of: off, info, low, medium, high"
 
   mkdir -p "${WLT_OUT_DIR}"
 
@@ -125,6 +131,14 @@ main() {
       bash "${ROOT_DIR}/ci/winlator/adb-ensure-artifacts-latest.sh"
   fi
 
+  if [[ "${WLT_CAPTURE_NETWORK_DIAG}" == "1" ]]; then
+    log "capturing network source diagnostics"
+    ADB_SERIAL="${ADB_SERIAL_PICKED}" \
+    WLT_PACKAGE="${WLT_PACKAGE}" \
+    WLT_OUT_DIR="${WLT_OUT_DIR}/network" \
+      bash "${ROOT_DIR}/ci/winlator/adb-network-source-diagnostics.sh" || true
+  fi
+
   log "running complete forensic matrix"
   ADB_SERIAL="${ADB_SERIAL_PICKED}" \
   WLT_PACKAGE="${WLT_PACKAGE}" \
@@ -151,6 +165,20 @@ main() {
   python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-mismatch-matrix.py" "${mismatch_args[@]}"
   mismatch_rc=$?
   set -e
+
+  log "building runtime conflict contour matrix"
+  set +e
+  python3 "${ROOT_DIR}/ci/winlator/forensic-runtime-conflict-contour.py" \
+    --input "${WLT_OUT_DIR}" \
+    --baseline-label "${WLT_BASELINE_LABEL}" \
+    --output-prefix "${WLT_OUT_DIR}/runtime-conflict-contour" \
+    --fail-on-severity-at-or-above "${WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE}"
+  conflict_rc=$?
+  set -e
+  if [[ -f "${WLT_OUT_DIR}/runtime-conflict-contour.summary.txt" ]]; then
+    log "runtime conflict contour summary:"
+    sed 's/^/[forensic-harvard]   /' "${WLT_OUT_DIR}/runtime-conflict-contour.summary.txt"
+  fi
 
   mkdir -p "${WLT_OUT_DIR}/bundles"
   : > "${WLT_OUT_DIR}/bundles/index.tsv"
@@ -202,8 +230,8 @@ summary = {
 out.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 PY
 
-  printf 'time=%s\nserial=%s\npackage=%s\nscenarios=%s\nbaseline=%s\nmismatch_rc=%s\n' \
-    "$(date -Is)" "${ADB_SERIAL_PICKED}" "${WLT_PACKAGE}" "${WLT_SCENARIO_MATRIX}" "${WLT_BASELINE_LABEL}" "${mismatch_rc}" \
+  printf 'time=%s\nserial=%s\npackage=%s\nscenarios=%s\nbaseline=%s\nmismatch_rc=%s\nconflict_rc=%s\nconflict_threshold=%s\n' \
+    "$(date -Is)" "${ADB_SERIAL_PICKED}" "${WLT_PACKAGE}" "${WLT_SCENARIO_MATRIX}" "${WLT_BASELINE_LABEL}" "${mismatch_rc}" "${conflict_rc}" "${WLT_FAIL_ON_CONFLICT_SEVERITY_AT_OR_ABOVE}" \
     > "${WLT_OUT_DIR}/session-meta.txt"
 
   log "bundle index: ${WLT_OUT_DIR}/bundles/index.json"
@@ -211,6 +239,9 @@ PY
 
   if [[ "${mismatch_rc}" -ne 0 ]]; then
     fail "runtime mismatch threshold reached (rc=${mismatch_rc})"
+  fi
+  if [[ "${conflict_rc}" -ne 0 ]]; then
+    fail "runtime conflict contour threshold reached (rc=${conflict_rc})"
   fi
 }
 

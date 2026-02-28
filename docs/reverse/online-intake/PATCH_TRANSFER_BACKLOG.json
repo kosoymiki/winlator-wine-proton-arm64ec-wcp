@@ -1,0 +1,805 @@
+{
+  "scanned_repos": 25,
+  "intake_errors": 0,
+  "commit_scan_used": true,
+  "commit_scan_errors": 0,
+  "rows": [
+    {
+      "marker": "DXVK",
+      "hits": "27",
+      "repos": "ahmad1abbadi_darkos, coffin_winlator, gamehublite_oss, horizonemu_horizon_emu, ilya114_box64droid, kreitinn_micewine_application, olegos2_mobox, olegos2_termux_box, utkarsh_gamenative, xhyn_exagear_302",
+      "priority": "low",
+      "target": "docs/CONTENT_PACKAGES_ARCHITECTURE.md",
+      "action": "Keep DXVK path references consistent with external content packaging.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "69",
+          "code": "import com.winlator.cmod.contentdialog.DXVKConfigDialog;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java",
+          "line": "44",
+          "code": "import com.winlator.cmod.contentdialog.DXVKConfigDialog;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+          "line": "29",
+          "code": "public static final String[] DXVK_TRUST_FILES = {\"${system32}/d3d8.dll\", \"${system32}/d3d9.dll\", \"${system32}/d3d10.dll\", \"${system32}/d3d10_1.dll\",",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "87",
+          "code": "import com.winlator.core.DXVKHelper",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamehublite_oss",
+          "path": "README.md",
+          "line": "189",
+          "code": "- Component manifests (Wine, Proton, DXVK, VKD3D)",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_termux_box",
+          "path": "README.md",
+          "line": "11",
+          "code": "`Termux-box` is a script to install preconfigured rootfs with [Box86](https://github.com/ptitSeb/box86), [Box64](https://github.com/ptitSeb/box64), [Wine](https://www.winehq.org/) and [DXVK](https://github.com/doitsuj...",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:69",
+      "focus_hits": "16",
+      "commit_hits": "11",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "VKD3D",
+      "hits": "18",
+      "repos": "ahmad1abbadi_darkos, coffin_winlator, gamehublite_oss, horizonemu_horizon_emu, olegos2_mobox, olegos2_termux_box, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/CONTENT_PACKAGES_ARCHITECTURE.md",
+      "action": "Keep VKD3D path references consistent with external content packaging.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "73",
+          "code": "import com.winlator.cmod.contentdialog.VKD3DConfigDialog;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java",
+          "line": "47",
+          "code": "import com.winlator.cmod.contentdialog.VKD3DConfigDialog;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+          "line": "32",
+          "code": "public static final String[] VKD3D_TRUST_FILES = {\"${system32}/d3d12core.dll\", \"${system32}/d3d12.dll\",",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "2979",
+          "code": "// Also normalize VKD3D to include version like vkd3d-<version>",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_termux_box",
+          "path": "README.md",
+          "line": "60",
+          "code": "* `Turnip` with adreno 610 and 7xx support. `Mesa-zink-11.06.22` built from alexvorxx repo which is faster and has better compatibility. `D8VK + DXVK + VKD3D` and `WineD3D`.",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "README.md",
+          "line": "108",
+          "code": "[VKD3D](https://github.com/lutris/vkd3d)",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:73",
+      "focus_hits": "10",
+      "commit_hits": "8",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "D8VK",
+      "hits": "18",
+      "repos": "ahmad1abbadi_darkos, coffin_winlator, horizonemu_horizon_emu, ilya114_box64droid, olegos2_mobox, olegos2_termux_box, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/CONTENT_PACKAGES_ARCHITECTURE.md",
+      "action": "Track DX8 wrapper-lane hints for later patch-base reconciliation.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "2516",
+          "code": "TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, \"dxwrapper/d8vk-\" + DefaultVersion.D8VK + \".tzst\", windowsDir, onExtractFileListener);",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "3163",
+          "code": "Timber.i(\"Extracting DXVK/D8VK DLLs for dxwrapper: $dxwrapper\")",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_termux_box",
+          "path": "README.md",
+          "line": "80",
+          "code": "[D8VK](https://github.com/AlpyneDreams/d8vk) Zlib license",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "README.md",
+          "line": "110",
+          "code": "[D8VK](https://github.com/AlpyneDreams/d8vk)",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "ilya114_box64droid",
+          "path": "scripts/native/box64droid.py",
+          "line": "15",
+          "code": "dxvk_config_hud =  config_folder + \"DXVK_D8VK_HUD.conf\"",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "ilya114_box64droid",
+          "path": "README.md",
+          "line": "33",
+          "code": "- You can choose to use environment variables; there are three files: `DXVK_D8VK.conf`, `Box64Droid.conf`, and `DXVK_D8VK.conf`. These files are created and found in the /sdcard/Box64Droid/ folder after the first Box6...",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:2516",
+      "focus_hits": "10",
+      "commit_hits": "8",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "ContentProfile",
+      "hits": "12",
+      "repos": "coffin_winlator, utkarsh_gamenative",
+      "priority": "medium",
+      "target": "docs/CONTENT_PACKAGES_ARCHITECTURE.md",
+      "action": "Keep internal type canonicalization aligned with Wine-family aliases.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "74",
+          "code": "import com.winlator.cmod.contents.ContentProfile;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java",
+          "line": "48",
+          "code": "import com.winlator.cmod.contents.ContentProfile;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+          "line": "38",
+          "code": "private Map<ContentProfile.ContentType, List<String>> trustedFilesMap;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "83",
+          "code": "import com.winlator.contents.ContentProfile",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "commit:ef12a1c61bf9",
+          "line": "",
+          "code": "improve alsa client safety fixes reduce overhead, update arrays with box 3.2, update BionicProgramLauncherComponent with new evshim lib location, replace box64 with unpatched version, fix PEB log in WineRequestHandler, a",
+          "source": "commit_scan"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "commit:f1ea28a66303",
+          "line": "",
+          "code": "update version name to beta3, update containerdetailfragment gstreamer workaround values, add proton to contents manager, add auto install contents to make shipping new wcp easier",
+          "source": "commit_scan"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:74",
+      "focus_hits": "4",
+      "commit_hits": "8",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "TU_DEBUG",
+      "hits": "9",
+      "repos": "kreitinn_micewine_application, olegos2_mobox, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/UNIFIED_RUNTIME_CONTRACT.md",
+      "action": "Preserve TU_DEBUG routing for adreno device-tier diagnostics presets.",
+      "evidence": [
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "1893",
+          "code": "var tuDebug = envVars.get(\"TU_DEBUG\")",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "README.md",
+          "line": "49",
+          "code": "If you have Snapdragon 8 Gen 1, 8+ Gen 1, 7+ Gen 2, enable the second option in `select a7xx flickering fix (TU_DEBUG)` in `System settings` menu.",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "kreitinn_micewine_application",
+          "path": "app/src/main/java/com/micewine/emu/activities/GeneralSettingsActivity.java",
+          "line": "180",
+          "code": "public final static String SELECTED_TU_DEBUG_PRESET = \"selectedTuDebugPreset\";",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "commit:edf0d177c651",
+          "line": "",
+          "code": "Merge pull request #444 from NathanKanaeru/patch-2",
+          "source": "commit_scan"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "commit:8284d49b4bf1",
+          "line": "",
+          "code": "Create README-id.md",
+          "source": "commit_scan"
+        },
+        {
+          "repo_alias": "olegos2_mobox",
+          "path": "commit:6eaf2288d9a7",
+          "line": "",
+          "code": "Merge pull request #341 from Webpage-gh/main",
+          "source": "commit_scan"
+        }
+      ],
+      "first_evidence": "utkarsh_gamenative:app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt:1893",
+      "focus_hits": "3",
+      "commit_hits": "6",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "BOX64_DYNAREC",
+      "hits": "6",
+      "repos": "ahmad1abbadi_darkos, coffin_winlator, ilya114_box64droid, kreitinn_micewine_application, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Track Box64 dynarec knobs against unified runtime profile defaults.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "214",
+          "code": "envVars.put(\"BOX64_DYNAREC\", \"1\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/com/winlator/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "359",
+          "code": "envVars.put(\"BOX64_DYNAREC\", \"1\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/assets/box64_env_vars.json",
+          "line": "2",
+          "code": "{\"name\" : \"BOX64_DYNAREC_SAFEFLAGS\", \"values\" : [\"0\", \"1\", \"2\"], \"defaultValue\" : \"2\"},",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "ilya114_box64droid",
+          "path": "scripts/native/box64droid.py",
+          "line": "149",
+          "code": "os.system(\"BOX86_LOG=1 BOX86_SHOWSEGV=1 BOX86_DYNAREC_LOG=1 BOX86_DYNAREC_MISSING=1 BOX86_DLSYM_ERROR=1 BOX64_LOG=1 BOX64_SHOWSEGV=1 BOX64_DYNAREC_LOG=1 BOX64_DYNAREC_MISSING=1 BOX64_DLSYM_ERROR=1 WINEDEBUG=+err tasks...",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "ahmad1abbadi_darkos",
+          "path": "darkos.py",
+          "line": "541",
+          "code": "os.system(\"BOX86_LOG=1 BOX86_SHOWSEGV=1 BOX86_DYNAREC_LOG=1 BOX86_DYNAREC_MISSING=1 BOX86_DLSYM_ERROR=1 BOX64_LOG=1 BOX64_SHOWSEGV=1 BOX64_DYNAREC_LOG=1 BOX64_DYNAREC_MISSING=1 WINEDEBUG=warn+all BOX64_DLSYM_ERROR=1 W...",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "kreitinn_micewine_application",
+          "path": "app/src/main/java/com/micewine/emu/activities/GeneralSettingsActivity.java",
+          "line": "138",
+          "code": "public final static String BOX64_DYNAREC_BIGBLOCK = \"BOX64_DYNAREC_BIGBLOCK\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java:214",
+      "focus_hits": "6",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "WINEDEBUG",
+      "hits": "5",
+      "repos": "ahmad1abbadi_darkos, coffin_wine, coffin_winlator, ilya114_box64droid, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/UNIFIED_RUNTIME_CONTRACT.md",
+      "action": "Preserve canonical WINEDEBUG injection path and diagnostics envelope export.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "1597",
+          "code": "envVars.put(\"WINEDEBUG\", enableWineDebug && !wineDebugChannels.isEmpty()",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_wine",
+          "path": "dlls/ntdll/unix/loader.c",
+          "line": "1937",
+          "code": "else if (!strcmp( var, \"WINEDEBUGLOG\" ))",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "1825",
+          "code": "\"WINEDEBUG\",",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:1597",
+      "focus_hits": "5",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "BOX64_LOG",
+      "hits": "5",
+      "repos": "ahmad1abbadi_darkos, coffin_winlator, ilya114_box64droid, kreitinn_micewine_application, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Retain deterministic Box64 log controls for forensics capture presets.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "217",
+          "code": "envVars.put(\"BOX64_LOG\", \"1\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/com/winlator/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "364",
+          "code": "envVars.put(\"BOX64_LOG\", \"1\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "kreitinn_micewine_application",
+          "path": "app/src/main/java/com/micewine/emu/activities/GeneralSettingsActivity.java",
+          "line": "130",
+          "code": "public final static String BOX64_LOG = \"BOX64_LOG\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java:217",
+      "focus_hits": "5",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "x11drv_xinput2_enable",
+      "hits": "4",
+      "repos": "coffin_wine, gamenative_protonwine",
+      "priority": "high",
+      "target": "ci/gamenative/patchsets/28c3a06/manifest.tsv",
+      "action": "Keep no-XInput2 safeguards for X11 mouse/controller path.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_wine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "256",
+          "code": "*              x11drv_xinput2_enable",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "343",
+          "code": "*              x11drv_xinput2_enable",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "commit:2d7b60b63d0f",
+          "line": "",
+          "code": "feature: add android support",
+          "source": "commit_scan"
+        }
+      ],
+      "first_evidence": "coffin_wine:dlls/winex11.drv/mouse.c:256",
+      "focus_hits": "2",
+      "commit_hits": "2",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "MESA_VK_WSI_PRESENT_MODE",
+      "hits": "3",
+      "repos": "coffin_winlator, kreitinn_micewine_application, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/UNIFIED_RUNTIME_CONTRACT.md",
+      "action": "Keep present-mode negotiation deterministic for wrapper/upscaler integration.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "2310",
+          "code": "envVars.put(\"MESA_VK_WSI_PRESENT_MODE\", \"mailbox\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "kreitinn_micewine_application",
+          "path": "app/src/main/java/com/micewine/emu/activities/GeneralSettingsActivity.java",
+          "line": "193",
+          "code": "public final static String SELECTED_MESA_VK_WSI_PRESENT_MODE = \"MESA_VK_WSI_PRESENT_MODE\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:2310",
+      "focus_hits": "3",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "FEXCore",
+      "hits": "3",
+      "repos": "coffin_winlator, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Cross-check FEX profile surface against external-only runtime contract.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "95",
+          "code": "import com.winlator.cmod.fexcore.FEXCoreManager;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/ContainerDetailFragment.java",
+          "line": "63",
+          "code": "import com.winlator.cmod.fexcore.FEXCoreManager;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "103",
+          "code": "import com.winlator.fexcore.FEXCoreManager",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:95",
+      "focus_hits": "3",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "cnc-ddraw",
+      "hits": "2",
+      "repos": "coffin_winlator, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Keep DX8 cnc-ddraw wrapper branch wired in runtime env assembly.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java",
+          "line": "1551",
+          "code": "if (ddrawrapper.equals(\"cnc-ddraw\")) envVars.put(\"CNC_DDRAW_CONFIG_FILE\", \"C:\\\\windows\\\\syswow64\\\\ddraw.ini\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt",
+          "line": "3007",
+          "code": "if (xServerState.value.dxwrapper == \"cnc-ddraw\") envVars.put(\"CNC_DDRAW_CONFIG_FILE\", \"C:\\\\ProgramData\\\\cnc-ddraw\\\\ddraw.ini\")",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/XServerDisplayActivity.java:1551",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "BOX64_NOBANNER",
+      "hits": "2",
+      "repos": "coffin_winlator, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Keep startup-noise controls deterministic across profile presets.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "213",
+          "code": "envVars.put(\"BOX64_NOBANNER\", ProcessHelper.PRINT_DEBUG && enableLogs ? \"0\" : \"1\");",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/com/winlator/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "358",
+          "code": "envVars.put(\"BOX64_NOBANNER\", ProcessHelper.PRINT_DEBUG && enableLogs ? \"0\" : \"1\");",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java:213",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "PROOT_TMP_DIR",
+      "hits": "2",
+      "repos": "coffin_winlator, utkarsh_gamenative",
+      "priority": "low",
+      "target": "docs/EXTERNAL_SIGNAL_CONTRACT.md",
+      "action": "Capture proot/temp path assumptions as external signal inputs.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "158",
+          "code": "envVars.put(\"PROOT_TMP_DIR\", tmpDir);",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/java/com/winlator/xenvironment/components/GuestProgramLauncherComponent.java",
+          "line": "285",
+          "code": "envVars.put(\"PROOT_TMP_DIR\", tmpDir);",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/xenvironment/components/GuestProgramLauncherComponent.java:158",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "libarm64ecfex.dll",
+      "hits": "2",
+      "repos": "coffin_winlator, gamenative_protonwine",
+      "priority": "medium",
+      "target": "ci/validation/check-gamenative-patch-contract.sh",
+      "action": "Keep loader contract checks for external FEX dll naming and placement.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+          "line": "36",
+          "code": "public static final String[] FEXCORE_TRUST_FILES = {\"${system32}/libwow64fex.dll\", \"${system32}/libarm64ecfex.dll\"};",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "android/patches/dlls_ntdll_loader_c.patch",
+          "line": "10",
+          "code": "+    WCHAR module[64] = L\"C:\\\\windows\\\\system32\\\\libarm64ecfex.dll\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/contents/ContentsManager.java:36",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "NtUserSendHardwareInput",
+      "hits": "2",
+      "repos": "coffin_wine, gamenative_protonwine",
+      "priority": "high",
+      "target": "ci/gamenative/patchsets/28c3a06/android/patches/dlls_winex11_drv_mouse_c_wm_input_fix.patch",
+      "action": "Verify WM_INPUT path keeps raw-input policy compatible with no-XInput2 builds.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_wine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "546",
+          "code": "NtUserSendHardwareInput( hwnd, 0, input, 0 );",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "643",
+          "code": "NtUserSendHardwareInput( hwnd, SEND_HWMSG_NO_RAW, input, 0 );",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_wine:dlls/winex11.drv/mouse.c:546",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "xinput2_available",
+      "hits": "2",
+      "repos": "coffin_wine, gamenative_protonwine",
+      "priority": "high",
+      "target": "ci/validation/check-gamenative-patch-contract.sh",
+      "action": "Enforce helper-gated NO_RAW behavior on xinput2_available builds.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_wine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "129",
+          "code": "static BOOL xinput2_available;",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "133",
+          "code": "static BOOL xinput2_available;",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_wine:dlls/winex11.drv/mouse.c:129",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "BOX64_DYNAREC_STRONGMEM",
+      "hits": "2",
+      "repos": "kreitinn_micewine_application, utkarsh_gamenative",
+      "priority": "low",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Review strongmem toggles for device-tier overlays before promotion.",
+      "evidence": [
+        {
+          "repo_alias": "utkarsh_gamenative",
+          "path": "app/src/main/assets/box64_env_vars.json",
+          "line": "7",
+          "code": "{\"name\" : \"BOX64_DYNAREC_STRONGMEM\", \"values\" : [\"0\", \"1\", \"2\", \"3\"], \"defaultValue\" : \"0\"},",
+          "source": "focus"
+        },
+        {
+          "repo_alias": "kreitinn_micewine_application",
+          "path": "app/src/main/java/com/micewine/emu/activities/GeneralSettingsActivity.java",
+          "line": "140",
+          "code": "public final static String BOX64_DYNAREC_STRONGMEM = \"BOX64_DYNAREC_STRONGMEM\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "utkarsh_gamenative:app/src/main/assets/box64_env_vars.json:7",
+      "focus_hits": "2",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "REMOTE_PROFILES",
+      "hits": "1",
+      "repos": "coffin_winlator",
+      "priority": "medium",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Harden profile source fallback chain for VPN/DNS transient failures.",
+      "evidence": [
+        {
+          "repo_alias": "coffin_winlator",
+          "path": "app/src/main/java/com/winlator/cmod/contents/ContentsManager.java",
+          "line": "28",
+          "code": "public static final String REMOTE_PROFILES = \"contents.json\";",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "coffin_winlator:app/src/main/java/com/winlator/cmod/contents/ContentsManager.java:28",
+      "focus_hits": "1",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "SEND_HWMSG_NO_RAW",
+      "hits": "1",
+      "repos": "gamenative_protonwine",
+      "priority": "high",
+      "target": "ci/validation/check-gamenative-patch-contract.sh",
+      "action": "Reject hardcoded NO_RAW dispatch unless helper or zero-flag fallback is present.",
+      "evidence": [
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "dlls/winex11.drv/mouse.c",
+          "line": "667",
+          "code": "NtUserSendHardwareInput( hwnd, SEND_HWMSG_NO_RAW, input, 0 );",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "gamenative_protonwine:dlls/winex11.drv/mouse.c:667",
+      "focus_hits": "1",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "WINE_OPEN_WITH_ANDROID_BROWSER",
+      "hits": "1",
+      "repos": "gamenative_protonwine",
+      "priority": "low",
+      "target": "ci/validation/check-gamenative-patch-contract.sh",
+      "action": "Keep android-browser env key canonicalized in winebrowser normalization path.",
+      "evidence": [
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "android/patches/programs_winebrowser_main_c.patch",
+          "line": "134",
+          "code": "+    wine_open_with_android_browser = getenv(\"WINE_OPEN_WITH_ANDROID_BROWSER\") && atoi(getenv(\"WINE_OPEN_WITH_ANDROID_BROWSER\"));",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "gamenative_protonwine:android/patches/programs_winebrowser_main_c.patch:134",
+      "focus_hits": "1",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "Wow64SuspendLocalThread",
+      "hits": "1",
+      "repos": "gamenative_protonwine",
+      "priority": "medium",
+      "target": "ci/validation/inspect-wcp-runtime-contract.sh",
+      "action": "Preserve wow64 export checks in strict runtime contract mode.",
+      "evidence": [
+        {
+          "repo_alias": "gamenative_protonwine",
+          "path": "android/patches/dlls_ntdll_loader_c.patch",
+          "line": "18",
+          "code": "+NTSTATUS (WINAPI *pWow64SuspendLocalThread)( HANDLE thread, ULONG *count ) = NULL;",
+          "source": "focus"
+        }
+      ],
+      "first_evidence": "gamenative_protonwine:android/patches/dlls_ntdll_loader_c.patch:18",
+      "focus_hits": "1",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    },
+    {
+      "marker": "WRAPPER_VK_VERSION",
+      "hits": "1",
+      "repos": "utkarsh_gamenative",
+      "priority": "high",
+      "target": "ci/winlator/patches/0001-mainline-full-stack-consolidated.patch",
+      "action": "Track requested/detected/effective Vulkan negotiation markers and runtime env export.",
+      "evidence": [],
+      "first_evidence": "",
+      "focus_hits": "1",
+      "commit_hits": "0",
+      "status": "ready_validated"
+    }
+  ]
+}

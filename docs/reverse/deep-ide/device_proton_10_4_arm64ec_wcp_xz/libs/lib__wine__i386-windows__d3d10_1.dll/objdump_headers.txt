@@ -1,0 +1,994 @@
+
+/tmp/elf_ide_sgwesap0/tar_extract/lib/wine/i386-windows/d3d10_1.dll:     file format pei-i386
+/tmp/elf_ide_sgwesap0/tar_extract/lib/wine/i386-windows/d3d10_1.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10002330
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Sat Feb 21 22:10:05 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00002000
+SizeOfInitializedData	0001f000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00002330
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		00022000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00004914 00000777 Export Directory [.edata (or where ever we found it)]
+Entry 1 0000508c 00000078 Import Directory [parts of .idata]
+Entry 2 00009000 000003b4 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 0000a000 00000270 Base Relocation Directory [.reloc]
+Entry 6 000048dc 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 000080fc 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 00005188 00000084 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x1000508c
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 0000508c	00005104 00000000 00000000 000053ba 00005188
+
+	DLL Name: d3d10core.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	520c	    1  D3D10CoreCreateDevice
+
+ 000050a0	0000510c 00000000 00000000 000053c8 00005190
+
+	DLL Name: dxgi.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	5224	    1  CreateDXGIFactory
+
+ 000050b4	00005114 00000000 00000000 000053d1 00005198
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	5238	   74  __acrt_iob_func
+	524a	  158  __stdio_common_vsprintf
+	5264	 1894  _strdup
+	526e	 2284  free
+	5276	 2291  fwrite
+	5280	 2294  getenv
+	528a	 2382  memmove
+	5294	 2449  strchr
+	529e	 2450  strcmp
+	52a8	 2452  strcpy
+	52b2	 2454  strcspn
+	52bc	 2458  strlen
+
+ 000050c8	00005148 00000000 00000000 000053de 000051cc
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	52c6	  323  DisableThreadLibraryCalls
+	52e2	  465  FreeLibrary
+	52f0	  644  GetModuleHandleW
+	5304	  694  GetProcAddress
+	5316	  781  GetTickCount
+	5326	  837  HeapAlloc
+	5332	  847  HeapReAlloc
+	5340	  958  LoadLibraryA
+	5350	 1074  QueryPerformanceCounter
+	536a	 1075  QueryPerformanceFrequency
+	5386	 1083  RaiseException
+
+ 000050dc	00005178 00000000 00000000 000053eb 000051fc
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	5398	 1236  _alldiv
+	53a2	 1240  _allrem
+	53ac	 1296  _vsnprintf
+
+ 000050f0	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10004914
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		df548823
+Major/Minor 			0/0
+Name 				00004a70 d3d10_1.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		0000001e
+	[Name Pointer/Ordinal] Table	0000001e
+Table Addresses
+	Export Address Table 		0000493c
+	Name Pointer Table 		000049b4
+	Ordinal Table 			00004a2c
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 1000 Export RVA
+	[   1] +base[   2] 4d8d Forwarder RVA -- d3d10.D3D10CompileEffectFromMemory
+	[   2] +base[   3] 4db0 Forwarder RVA -- d3d10.D3D10CompileShader
+	[   3] +base[   4] 4dc9 Forwarder RVA -- d3d10.D3D10CreateBlob
+	[   4] +base[   5] 10f0 Export RVA
+	[   5] +base[   6] 1590 Export RVA
+	[   6] +base[   7] 4ddf Forwarder RVA -- d3d10.D3D10CreateEffectFromMemory
+	[   7] +base[   8] 4e01 Forwarder RVA -- d3d10.D3D10CreateEffectPoolFromMemory
+	[   8] +base[   9] 4e27 Forwarder RVA -- d3d10.D3D10CreateStateBlock
+	[   9] +base[  10] 1020 Export RVA
+	[  10] +base[  11] 4e43 Forwarder RVA -- d3d10.D3D10DisassembleShader
+	[  11] +base[  12] 4e60 Forwarder RVA -- d3d10.D3D10GetGeometryShaderProfile
+	[  12] +base[  13] 4e84 Forwarder RVA -- d3d10.D3D10GetInputAndOutputSignatureBlob
+	[  13] +base[  14] 4eae Forwarder RVA -- d3d10.D3D10GetInputSignatureBlob
+	[  14] +base[  15] 4ecf Forwarder RVA -- d3d10.D3D10GetOutputSignatureBlob
+	[  15] +base[  16] 4ef1 Forwarder RVA -- d3d10.D3D10GetPixelShaderProfile
+	[  16] +base[  17] 4f12 Forwarder RVA -- d3d10.D3D10GetShaderDebugInfo
+	[  17] +base[  18] 1040 Export RVA
+	[  18] +base[  19] 4f30 Forwarder RVA -- d3d10.D3D10GetVertexShaderProfile
+	[  19] +base[  20] 1060 Export RVA
+	[  20] +base[  21] 4f52 Forwarder RVA -- d3d10.D3D10ReflectShader
+	[  21] +base[  22] 1080 Export RVA
+	[  22] +base[  23] 4f6b Forwarder RVA -- d3d10.D3D10StateBlockMaskDifference
+	[  23] +base[  24] 4f8f Forwarder RVA -- d3d10.D3D10StateBlockMaskDisableAll
+	[  24] +base[  25] 4fb3 Forwarder RVA -- d3d10.D3D10StateBlockMaskDisableCapture
+	[  25] +base[  26] 4fdb Forwarder RVA -- d3d10.D3D10StateBlockMaskEnableAll
+	[  26] +base[  27] 4ffe Forwarder RVA -- d3d10.D3D10StateBlockMaskEnableCapture
+	[  27] +base[  28] 5025 Forwarder RVA -- d3d10.D3D10StateBlockMaskGetSetting
+	[  28] +base[  29] 5049 Forwarder RVA -- d3d10.D3D10StateBlockMaskIntersect
+	[  29] +base[  30] 506c Forwarder RVA -- d3d10.D3D10StateBlockMaskUnion
+
+[Ordinal/Name Pointer] Table
+	[   1] D3D10CompileEffectFromMemory
+	[   2] D3D10CompileShader
+	[   3] D3D10CreateBlob
+	[   4] D3D10CreateDevice1
+	[   5] D3D10CreateDeviceAndSwapChain1
+	[   6] D3D10CreateEffectFromMemory
+	[   7] D3D10CreateEffectPoolFromMemory
+	[   8] D3D10CreateStateBlock
+	[   9] D3D10DisassembleEffect
+	[  10] D3D10DisassembleShader
+	[  11] D3D10GetGeometryShaderProfile
+	[  12] D3D10GetInputAndOutputSignatureBlob
+	[  13] D3D10GetInputSignatureBlob
+	[  14] D3D10GetOutputSignatureBlob
+	[  15] D3D10GetPixelShaderProfile
+	[  16] D3D10GetShaderDebugInfo
+	[  17] D3D10GetVersion
+	[  18] D3D10GetVertexShaderProfile
+	[  19] D3D10PreprocessShader
+	[  20] D3D10ReflectShader
+	[  21] D3D10RegisterLayers
+	[  22] D3D10StateBlockMaskDifference
+	[  23] D3D10StateBlockMaskDisableAll
+	[  24] D3D10StateBlockMaskDisableCapture
+	[  25] D3D10StateBlockMaskEnableAll
+	[  26] D3D10StateBlockMaskEnableCapture
+	[  27] D3D10StateBlockMaskGetSetting
+	[  28] D3D10StateBlockMaskIntersect
+	[  29] D3D10StateBlockMaskUnion
+	[   0] RevertToOldImplementation
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 372 (0x174) Number of fixups 182
+	reloc    0 offset   10 [1010] HIGHLOW
+	reloc    1 offset   17 [1017] HIGHLOW
+	reloc    2 offset   30 [1030] HIGHLOW
+	reloc    3 offset   37 [1037] HIGHLOW
+	reloc    4 offset   50 [1050] HIGHLOW
+	reloc    5 offset   57 [1057] HIGHLOW
+	reloc    6 offset   70 [1070] HIGHLOW
+	reloc    7 offset   77 [1077] HIGHLOW
+	reloc    8 offset   90 [1090] HIGHLOW
+	reloc    9 offset   97 [1097] HIGHLOW
+	reloc   10 offset   b8 [10b8] HIGHLOW
+	reloc   11 offset   d5 [10d5] HIGHLOW
+	reloc   12 offset  139 [1139] HIGHLOW
+	reloc   13 offset  156 [1156] HIGHLOW
+	reloc   14 offset  16b [116b] HIGHLOW
+	reloc   15 offset  182 [1182] HIGHLOW
+	reloc   16 offset  189 [1189] HIGHLOW
+	reloc   17 offset  190 [1190] HIGHLOW
+	reloc   18 offset  197 [1197] HIGHLOW
+	reloc   19 offset  1a7 [11a7] HIGHLOW
+	reloc   20 offset  1af [11af] HIGHLOW
+	reloc   21 offset  1db [11db] HIGHLOW
+	reloc   22 offset  1e4 [11e4] HIGHLOW
+	reloc   23 offset  1ea [11ea] HIGHLOW
+	reloc   24 offset  1f9 [11f9] HIGHLOW
+	reloc   25 offset  201 [1201] HIGHLOW
+	reloc   26 offset  240 [1240] HIGHLOW
+	reloc   27 offset  248 [1248] HIGHLOW
+	reloc   28 offset  29b [129b] HIGHLOW
+	reloc   29 offset  2fa [12fa] HIGHLOW
+	reloc   30 offset  319 [1319] HIGHLOW
+	reloc   31 offset  321 [1321] HIGHLOW
+	reloc   32 offset  33a [133a] HIGHLOW
+	reloc   33 offset  35c [135c] HIGHLOW
+	reloc   34 offset  362 [1362] HIGHLOW
+	reloc   35 offset  36d [136d] HIGHLOW
+	reloc   36 offset  375 [1375] HIGHLOW
+	reloc   37 offset  388 [1388] HIGHLOW
+	reloc   38 offset  38e [138e] HIGHLOW
+	reloc   39 offset  3bf [13bf] HIGHLOW
+	reloc   40 offset  3d5 [13d5] HIGHLOW
+	reloc   41 offset  3e4 [13e4] HIGHLOW
+	reloc   42 offset  3f7 [13f7] HIGHLOW
+	reloc   43 offset  3ff [13ff] HIGHLOW
+	reloc   44 offset  40e [140e] HIGHLOW
+	reloc   45 offset  416 [1416] HIGHLOW
+	reloc   46 offset  434 [1434] HIGHLOW
+	reloc   47 offset  447 [1447] HIGHLOW
+	reloc   48 offset  44f [144f] HIGHLOW
+	reloc   49 offset  48f [148f] HIGHLOW
+	reloc   50 offset  4a2 [14a2] HIGHLOW
+	reloc   51 offset  4aa [14aa] HIGHLOW
+	reloc   52 offset  4b5 [14b5] HIGHLOW
+	reloc   53 offset  4bd [14bd] HIGHLOW
+	reloc   54 offset  4f6 [14f6] HIGHLOW
+	reloc   55 offset  505 [1505] HIGHLOW
+	reloc   56 offset  50d [150d] HIGHLOW
+	reloc   57 offset  532 [1532] HIGHLOW
+	reloc   58 offset  53d [153d] HIGHLOW
+	reloc   59 offset  545 [1545] HIGHLOW
+	reloc   60 offset  550 [1550] HIGHLOW
+	reloc   61 offset  558 [1558] HIGHLOW
+	reloc   62 offset  5aa [15aa] HIGHLOW
+	reloc   63 offset  5cd [15cd] HIGHLOW
+	reloc   64 offset  5e2 [15e2] HIGHLOW
+	reloc   65 offset  5fc [15fc] HIGHLOW
+	reloc   66 offset  603 [1603] HIGHLOW
+	reloc   67 offset  60a [160a] HIGHLOW
+	reloc   68 offset  611 [1611] HIGHLOW
+	reloc   69 offset  621 [1621] HIGHLOW
+	reloc   70 offset  629 [1629] HIGHLOW
+	reloc   71 offset  64f [164f] HIGHLOW
+	reloc   72 offset  656 [1656] HIGHLOW
+	reloc   73 offset  65c [165c] HIGHLOW
+	reloc   74 offset  66e [166e] HIGHLOW
+	reloc   75 offset  676 [1676] HIGHLOW
+	reloc   76 offset  6c0 [16c0] HIGHLOW
+	reloc   77 offset  6c8 [16c8] HIGHLOW
+	reloc   78 offset  737 [1737] HIGHLOW
+	reloc   79 offset  788 [1788] HIGHLOW
+	reloc   80 offset  7dc [17dc] HIGHLOW
+	reloc   81 offset  7f6 [17f6] HIGHLOW
+	reloc   82 offset  7fe [17fe] HIGHLOW
+	reloc   83 offset  821 [1821] HIGHLOW
+	reloc   84 offset  830 [1830] HIGHLOW
+	reloc   85 offset  838 [1838] HIGHLOW
+	reloc   86 offset  858 [1858] HIGHLOW
+	reloc   87 offset  867 [1867] HIGHLOW
+	reloc   88 offset  86f [186f] HIGHLOW
+	reloc   89 offset  87e [187e] HIGHLOW
+	reloc   90 offset  886 [1886] HIGHLOW
+	reloc   91 offset  895 [1895] HIGHLOW
+	reloc   92 offset  89d [189d] HIGHLOW
+	reloc   93 offset  8d8 [18d8] HIGHLOW
+	reloc   94 offset  8e0 [18e0] HIGHLOW
+	reloc   95 offset  929 [1929] HIGHLOW
+	reloc   96 offset  95b [195b] HIGHLOW
+	reloc   97 offset  991 [1991] HIGHLOW
+	reloc   98 offset  9ab [19ab] HIGHLOW
+	reloc   99 offset  9b1 [19b1] HIGHLOW
+	reloc  100 offset  9b6 [19b6] HIGHLOW
+	reloc  101 offset  9bd [19bd] HIGHLOW
+	reloc  102 offset  9c4 [19c4] HIGHLOW
+	reloc  103 offset  9cd [19cd] HIGHLOW
+	reloc  104 offset  9d5 [19d5] HIGHLOW
+	reloc  105 offset  9fb [19fb] HIGHLOW
+	reloc  106 offset  a0b [1a0b] HIGHLOW
+	reloc  107 offset  a18 [1a18] HIGHLOW
+	reloc  108 offset  a1f [1a1f] HIGHLOW
+	reloc  109 offset  a31 [1a31] HIGHLOW
+	reloc  110 offset  a4b [1a4b] HIGHLOW
+	reloc  111 offset  a51 [1a51] HIGHLOW
+	reloc  112 offset  a56 [1a56] HIGHLOW
+	reloc  113 offset  a5d [1a5d] HIGHLOW
+	reloc  114 offset  a64 [1a64] HIGHLOW
+	reloc  115 offset  a6d [1a6d] HIGHLOW
+	reloc  116 offset  a75 [1a75] HIGHLOW
+	reloc  117 offset  a9d [1a9d] HIGHLOW
+	reloc  118 offset  abe [1abe] HIGHLOW
+	reloc  119 offset  ac6 [1ac6] HIGHLOW
+	reloc  120 offset  ad4 [1ad4] HIGHLOW
+	reloc  121 offset  af1 [1af1] HIGHLOW
+	reloc  122 offset  b0b [1b0b] HIGHLOW
+	reloc  123 offset  b11 [1b11] HIGHLOW
+	reloc  124 offset  b16 [1b16] HIGHLOW
+	reloc  125 offset  b1d [1b1d] HIGHLOW
+	reloc  126 offset  b24 [1b24] HIGHLOW
+	reloc  127 offset  b2d [1b2d] HIGHLOW
+	reloc  128 offset  b35 [1b35] HIGHLOW
+	reloc  129 offset  b5d [1b5d] HIGHLOW
+	reloc  130 offset  b74 [1b74] HIGHLOW
+	reloc  131 offset  b7a [1b7a] HIGHLOW
+	reloc  132 offset  b83 [1b83] HIGHLOW
+	reloc  133 offset  b96 [1b96] HIGHLOW
+	reloc  134 offset  ba7 [1ba7] HIGHLOW
+	reloc  135 offset  bb9 [1bb9] HIGHLOW
+	reloc  136 offset  bc1 [1bc1] HIGHLOW
+	reloc  137 offset  bf6 [1bf6] HIGHLOW
+	reloc  138 offset  bfd [1bfd] HIGHLOW
+	reloc  139 offset  cec [1cec] HIGHLOW
+	reloc  140 offset  cf5 [1cf5] HIGHLOW
+	reloc  141 offset  d06 [1d06] HIGHLOW
+	reloc  142 offset  d0d [1d0d] HIGHLOW
+	reloc  143 offset  d20 [1d20] HIGHLOW
+	reloc  144 offset  d59 [1d59] HIGHLOW
+	reloc  145 offset  d81 [1d81] HIGHLOW
+	reloc  146 offset  d91 [1d91] HIGHLOW
+	reloc  147 offset  dac [1dac] HIGHLOW
+	reloc  148 offset  dc7 [1dc7] HIGHLOW
+	reloc  149 offset  dd4 [1dd4] HIGHLOW
+	reloc  150 offset  ded [1ded] HIGHLOW
+	reloc  151 offset  dfc [1dfc] HIGHLOW
+	reloc  152 offset  e03 [1e03] HIGHLOW
+	reloc  153 offset  e08 [1e08] HIGHLOW
+	reloc  154 offset  e45 [1e45] HIGHLOW
+	reloc  155 offset  e53 [1e53] HIGHLOW
+	reloc  156 offset  e62 [1e62] HIGHLOW
+	reloc  157 offset  e70 [1e70] HIGHLOW
+	reloc  158 offset  e79 [1e79] HIGHLOW
+	reloc  159 offset  e83 [1e83] HIGHLOW
+	reloc  160 offset  eb9 [1eb9] HIGHLOW
+	reloc  161 offset  edc [1edc] HIGHLOW
+	reloc  162 offset  eeb [1eeb] HIGHLOW
+	reloc  163 offset  f11 [1f11] HIGHLOW
+	reloc  164 offset  f2b [1f2b] HIGHLOW
+	reloc  165 offset  f31 [1f31] HIGHLOW
+	reloc  166 offset  f36 [1f36] HIGHLOW
+	reloc  167 offset  f3d [1f3d] HIGHLOW
+	reloc  168 offset  f44 [1f44] HIGHLOW
+	reloc  169 offset  f4d [1f4d] HIGHLOW
+	reloc  170 offset  f55 [1f55] HIGHLOW
+	reloc  171 offset  f88 [1f88] HIGHLOW
+	reloc  172 offset  f9b [1f9b] HIGHLOW
+	reloc  173 offset  fa1 [1fa1] HIGHLOW
+	reloc  174 offset  fa6 [1fa6] HIGHLOW
+	reloc  175 offset  fad [1fad] HIGHLOW
+	reloc  176 offset  fb4 [1fb4] HIGHLOW
+	reloc  177 offset  fbd [1fbd] HIGHLOW
+	reloc  178 offset  fc8 [1fc8] HIGHLOW
+	reloc  179 offset  fe0 [1fe0] HIGHLOW
+	reloc  180 offset  ff8 [1ff8] HIGHLOW
+	reloc  181 offset    0 [1000] ABSOLUTE
+
+Virtual Address: 00002000 Chunk size 164 (0xa4) Number of fixups 78
+	reloc    0 offset    0 [2000] HIGHLOW
+	reloc    1 offset    c [200c] HIGHLOW
+	reloc    2 offset   12 [2012] HIGHLOW
+	reloc    3 offset   17 [2017] HIGHLOW
+	reloc    4 offset   1e [201e] HIGHLOW
+	reloc    5 offset   25 [2025] HIGHLOW
+	reloc    6 offset   2e [202e] HIGHLOW
+	reloc    7 offset   36 [2036] HIGHLOW
+	reloc    8 offset   3b [203b] HIGHLOW
+	reloc    9 offset   52 [2052] HIGHLOW
+	reloc   10 offset   5e [205e] HIGHLOW
+	reloc   11 offset   6a [206a] HIGHLOW
+	reloc   12 offset   70 [2070] HIGHLOW
+	reloc   13 offset   75 [2075] HIGHLOW
+	reloc   14 offset   7c [207c] HIGHLOW
+	reloc   15 offset   83 [2083] HIGHLOW
+	reloc   16 offset   8c [208c] HIGHLOW
+	reloc   17 offset   94 [2094] HIGHLOW
+	reloc   18 offset   99 [2099] HIGHLOW
+	reloc   19 offset   ac [20ac] HIGHLOW
+	reloc   20 offset   cb [20cb] HIGHLOW
+	reloc   21 offset   e0 [20e0] HIGHLOW
+	reloc   22 offset   e6 [20e6] HIGHLOW
+	reloc   23 offset   ed [20ed] HIGHLOW
+	reloc   24 offset   f3 [20f3] HIGHLOW
+	reloc   25 offset   fe [20fe] HIGHLOW
+	reloc   26 offset  123 [2123] HIGHLOW
+	reloc   27 offset  129 [2129] HIGHLOW
+	reloc   28 offset  161 [2161] HIGHLOW
+	reloc   29 offset  179 [2179] HIGHLOW
+	reloc   30 offset  181 [2181] HIGHLOW
+	reloc   31 offset  191 [2191] HIGHLOW
+	reloc   32 offset  197 [2197] HIGHLOW
+	reloc   33 offset  19c [219c] HIGHLOW
+	reloc   34 offset  1a3 [21a3] HIGHLOW
+	reloc   35 offset  1aa [21aa] HIGHLOW
+	reloc   36 offset  1b3 [21b3] HIGHLOW
+	reloc   37 offset  1bf [21bf] HIGHLOW
+	reloc   38 offset  1c4 [21c4] HIGHLOW
+	reloc   39 offset  1d5 [21d5] HIGHLOW
+	reloc   40 offset  1e8 [21e8] HIGHLOW
+	reloc   41 offset  212 [2212] HIGHLOW
+	reloc   42 offset  244 [2244] HIGHLOW
+	reloc   43 offset  254 [2254] HIGHLOW
+	reloc   44 offset  262 [2262] HIGHLOW
+	reloc   45 offset  29c [229c] HIGHLOW
+	reloc   46 offset  2c4 [22c4] HIGHLOW
+	reloc   47 offset  2cc [22cc] HIGHLOW
+	reloc   48 offset  30b [230b] HIGHLOW
+	reloc   49 offset  360 [2360] HIGHLOW
+	reloc   50 offset  374 [2374] HIGHLOW
+	reloc   51 offset  37f [237f] HIGHLOW
+	reloc   52 offset  38a [238a] HIGHLOW
+	reloc   53 offset  395 [2395] HIGHLOW
+	reloc   54 offset  3a0 [23a0] HIGHLOW
+	reloc   55 offset  3ab [23ab] HIGHLOW
+	reloc   56 offset  3b6 [23b6] HIGHLOW
+	reloc   57 offset  3c1 [23c1] HIGHLOW
+	reloc   58 offset  3cc [23cc] HIGHLOW
+	reloc   59 offset  3d7 [23d7] HIGHLOW
+	reloc   60 offset  3e2 [23e2] HIGHLOW
+	reloc   61 offset  3ed [23ed] HIGHLOW
+	reloc   62 offset  3f8 [23f8] HIGHLOW
+	reloc   63 offset  403 [2403] HIGHLOW
+	reloc   64 offset  40e [240e] HIGHLOW
+	reloc   65 offset  419 [2419] HIGHLOW
+	reloc   66 offset  424 [2424] HIGHLOW
+	reloc   67 offset  42f [242f] HIGHLOW
+	reloc   68 offset  43a [243a] HIGHLOW
+	reloc   69 offset  445 [2445] HIGHLOW
+	reloc   70 offset  450 [2450] HIGHLOW
+	reloc   71 offset  45b [245b] HIGHLOW
+	reloc   72 offset  466 [2466] HIGHLOW
+	reloc   73 offset  471 [2471] HIGHLOW
+	reloc   74 offset  47c [247c] HIGHLOW
+	reloc   75 offset  487 [2487] HIGHLOW
+	reloc   76 offset  492 [2492] HIGHLOW
+	reloc   77 offset  49d [249d] HIGHLOW
+
+Virtual Address: 00003000 Chunk size 32 (0x20) Number of fixups 12
+	reloc    0 offset    0 [3000] HIGHLOW
+	reloc    1 offset    4 [3004] HIGHLOW
+	reloc    2 offset    8 [3008] HIGHLOW
+	reloc    3 offset    c [300c] HIGHLOW
+	reloc    4 offset   14 [3014] HIGHLOW
+	reloc    5 offset  5b0 [35b0] HIGHLOW
+	reloc    6 offset  5b4 [35b4] HIGHLOW
+	reloc    7 offset  5b8 [35b8] HIGHLOW
+	reloc    8 offset  5bc [35bc] HIGHLOW
+	reloc    9 offset  5c0 [35c0] HIGHLOW
+	reloc   10 offset  5c4 [35c4] HIGHLOW
+	reloc   11 offset    0 [3000] ABSOLUTE
+
+Virtual Address: 00004000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset  818 [4818] HIGHLOW
+	reloc    1 offset  81c [481c] HIGHLOW
+	reloc    2 offset  820 [4820] HIGHLOW
+	reloc    3 offset  824 [4824] HIGHLOW
+
+Virtual Address: 00006000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [600c] HIGHLOW
+	reloc    1 offset   10 [6010] HIGHLOW
+	reloc    2 offset   14 [6014] HIGHLOW
+	reloc    3 offset    0 [6000] ABSOLUTE
+
+Virtual Address: 00007000 Chunk size 24 (0x18) Number of fixups 8
+	reloc    0 offset   20 [7020] HIGHLOW
+	reloc    1 offset   34 [7034] HIGHLOW
+	reloc    2 offset   48 [7048] HIGHLOW
+	reloc    3 offset   5c [705c] HIGHLOW
+	reloc    4 offset   70 [7070] HIGHLOW
+	reloc    5 offset   84 [7084] HIGHLOW
+	reloc    6 offset   a0 [70a0] HIGHLOW
+	reloc    7 offset    0 [7000] ABSOLUTE
+
+There is a debug directory in .rdata at 0x100048dc
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 000048f8 000048f8
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+010   Entry: ID: 0x000010, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+028     Entry: ID: 0x000001, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 00000000, Value: 0x000048
+048        Leaf: Addr: 0x009058, Size: 0x00035c, Codepage: 0
+ Resources start at offset: 0x58
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000014a1  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        000023f5  10003000  10003000  00003000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000108  10006000  10006000  00006000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      000000b4  10007000  10007000  00007000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata       000001bc  10008000  10008000  00008000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .rsrc         000003b4  10009000  10009000  00009000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .reloc        00000270  1000a000  1000a000  0000a000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 .debug_abbrev 00000888  1000b000  1000b000  0000b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_info   0000a662  1000c000  1000c000  0000c000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   00000fee  10017000  10017000  00017000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    00000c5f  10018000  10018000  00018000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000190  10019000  10019000  00019000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_str    00007fc5  1001a000  1001a000  0001a000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000000 ___wine_stub_RevertToOldImplementation
+[  1](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c .L__wine_stub_RevertToOldImplementation_string
+[  2](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_file_name
+[  3](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000012f0 ___wine_spec_unimplemented_stub
+[  4](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000020 ___wine_stub_D3D10DisassembleEffect
+[  5](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000026 .L__wine_stub_D3D10DisassembleEffect_string
+[  6](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000040 ___wine_stub_D3D10GetVersion
+[  7](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003d .L__wine_stub_D3D10GetVersion_string
+[  8](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000060 ___wine_stub_D3D10PreprocessShader
+[  9](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004d .L__wine_stub_D3D10PreprocessShader_string
+[ 10](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000080 ___wine_stub_D3D10RegisterLayers
+[ 11](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000063 .L__wine_stub_D3D10RegisterLayers_string
+[ 12](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001914 .L__wine_spec_exports
+[ 13](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001a70 .L__wine_spec_exp_names
+[ 14](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000193c .L__wine_spec_exports_funcs
+[ 15](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000019b4 .L__wine_spec_exp_name_ptrs
+[ 16](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001a2c .L__wine_spec_exp_ordinals
+[ 17](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001d8d .L__wine_spec_forwards
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000f0 _D3D10CreateDevice1@28
+[ 19](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000590 _D3D10CreateDeviceAndSwapChain1@36
+[ 20](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[ 21](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000a0 __wine_spec_relay_entry_points
+[ 22](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000078 .L__wine_spec_relay_entry_point_offsets
+[ 23](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f0 .L__wine_spec_relay_args_string
+[ 24](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ac __wine_spec_relay_entry_point_5
+[ 25](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000cc __wine_spec_relay_entry_point_6
+[ 26](sec  5)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000fc __load_config_used
+[ 27](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[ 28](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_res_0
+[ 29](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000120 _d3d10_create_device1
+[ 30](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000900 _wine_dbg_log
+[ 31](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000018 ??_C@_0IB@CJPEJFNG@adapter?5?$CFp?0?5driver_type?5?$CFs?0?5swra@
+[ 32](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000099 ??_C@_0BP@OEMKGIFE@D3D10CreateDeviceAndSwapChain1?$AA@
+[ 33](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000b8 ??_C@_0CM@DBKLMPNE@Failed?5to?5create?5a?5device?0?5retur@
+[ 34](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000e4 ??_C@_0EE@PFFLONHJ@Failed?5to?5get?5a?5dxgi?5device?5from@
+[ 35](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000128 ??_C@_0DD@FIMIDMMJ@Failed?5to?5get?5the?5device?5adapter@
+[ 36](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000015b ??_C@_0DE@PLCDKGNL@Failed?5to?5get?5the?5adapter?5factor@
+[ 37](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000018f ??_C@_0CP@DFAECKBA@Failed?5to?5create?5a?5swapchain?0?5re@
+[ 38](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001be ??_C@_0BM@ICBLMIEK@Created?5IDXGISwapChain?5?$CFp?4?6?$AA@
+[ 39](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001da ??_C@_0FL@JCIGDBHH@adapter?5?$CFp?0?5driver_type?5?$CFs?0?5swra@
+[ 40](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000235 ??_C@_0BF@LCLJDAAB@d3d10_create_device1?$AA@
+[ 41](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000024a ??_C@_0CG@CBLIMCML@Failed?5to?5get?5dxgi?5factory?0?5hr?5?$CF@
+[ 42](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000270 ??_C@_0CJ@OBNPPFDD@Failed?5to?5create?5dxgi?5factory?0?5h@
+[ 43](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000299 ??_C@_0DI@KPHMFGIO@WARP?5driver?5not?5implemented?0?5fal@
+[ 44](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002d1 ??_C@_0BN@NHILBGP@No?5adapters?5found?0?5hr?5?$CF?$CDlx?4?6?$AA@
+[ 45](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002ee ??_C@_0DH@CFEDAFMO@NULL?5device?5not?5implemented?0?5fal@
+[ 46](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000325 ??_C@_0N@LPBNNPBJ@d3d10ref?4dll?$AA@
+[ 47](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000332 ??_C@_0CL@HLHMDDOH@Failed?5to?5load?5refrast?0?5returnin@
+[ 48](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000035d ??_C@_0CP@GDLKJACP@Failed?5to?5create?5a?5software?5adap@
+[ 49](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000038c ??_C@_0EG@FKKJLGBK@Software?5device?5requested?0?5but?5N@
+[ 50](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003d2 ??_C@_0BM@GPHKKIDL@Unhandled?5driver?5type?5?$CF?$CDx?4?6?$AA@
+[ 51](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003ee ??_C@_0CF@FLKJDDKI@Failed?5to?5create?5a?5device?0?5hr?5?$CF?$CD@
+[ 52](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000413 ??_C@_0BE@OGLGLJCL@Created?5device?5?$CFp?4?6?$AA@
+[ 53](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000427 ??_C@_0BJ@HKAOAOAB@D3D10_FEATURE_LEVEL_10_0?$AA@
+[ 54](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000440 ??_C@_0BJ@GDBFDPEA@D3D10_FEATURE_LEVEL_10_1?$AA@
+[ 55](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000459 ??_C@_0BI@DPMMHLPM@D3D10_FEATURE_LEVEL_9_1?$AA@
+[ 56](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000471 ??_C@_0BI@BEOBCIDP@D3D10_FEATURE_LEVEL_9_2?$AA@
+[ 57](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000489 ??_C@_0BI@NPKBJHO@D3D10_FEATURE_LEVEL_9_3?$AA@
+[ 58](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004a1 ??_C@_0CI@EMNPLJCP@Unrecognized?5D3D10_FEATURE_LEVEL@
+[ 59](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004c9 ??_C@_0BK@FMCJFGJO@debug_d3d10_feature_level?$AA@
+[ 60](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004e3 ??_C@_0N@MIFEAMGB@unrecognized?$AA@
+[ 61](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004f0 ??_C@_0BL@EJGKMGJO@D3D10_DRIVER_TYPE_HARDWARE?$AA@
+[ 62](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000050b ??_C@_0BM@BCBJLIGL@D3D10_DRIVER_TYPE_REFERENCE?$AA@
+[ 63](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000527 ??_C@_0BH@MJMHHJAK@D3D10_DRIVER_TYPE_NULL?$AA@
+[ 64](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000053e ??_C@_0BL@OCDCLCEG@D3D10_DRIVER_TYPE_SOFTWARE?$AA@
+[ 65](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000559 ??_C@_0BH@ILIDJPBG@D3D10_DRIVER_TYPE_WARP?$AA@
+[ 66](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000570 ??_C@_0CF@INHCJOOH@Unrecognized?5D3D10_DRIVER_TYPE?5?$CF@
+[ 67](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000595 ??_C@_0BI@JLKIDDMO@debug_d3d10_driver_type?$AA@
+[ 68](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 ___wine_dbch_d3d10
+[ 69](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000658 _IID_IDXGIFactory
+[ 70](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001372 _D3D10CoreCreateDevice@20
+[ 71](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002188 __imp__D3D10CoreCreateDevice@20
+[ 72](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000137d _CreateDXGIFactory@8
+[ 73](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002190 __imp__CreateDXGIFactory@8
+[ 74](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021e8 __imp__LoadLibraryA@4
+[ 75](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021d0 __imp__FreeLibrary@4
+[ 76](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000668 _IID_IDXGIDevice
+[ 77](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000f10 ___wine_dbg_header
+[ 78](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000219c __imp____stdio_common_vsprintf
+[ 79](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000a30 ___wine_dbg_output
+[ 80](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005c8 _IID_IDXGIObject
+[ 81](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005d8 _IID_IDXGIDeviceSubObject
+[ 82](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005e8 _IID_IDXGIResource
+[ 83](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005f8 _IID_IDXGIKeyedMutex
+[ 84](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000608 _IID_IDXGISurface
+[ 85](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000618 _IID_IDXGISurface1
+[ 86](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000628 _IID_IDXGIOutput
+[ 87](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000638 _IID_IDXGIAdapter
+[ 88](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000648 _IID_IDXGISwapChain
+[ 89](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000678 _IID_IDXGIAdapter1
+[ 90](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000688 _IID_IDXGIDevice1
+[ 91](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000698 _IID_IDXGIFactory1
+[ 92](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006a8 _IID_IDXGIOutputDuplication
+[ 93](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006b8 _IID_IDXGISurface2
+[ 94](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006c8 _IID_IDXGIResource1
+[ 95](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006d8 _IID_IDXGIDisplayControl
+[ 96](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006e8 _IID_IDXGIDevice2
+[ 97](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006f8 _IID_IDXGISwapChain1
+[ 98](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000708 _IID_IDXGIFactory2
+[ 99](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000718 _IID_IDXGIAdapter2
+[100](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000728 _IID_IDXGIOutput1
+[101](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000738 _IID_IDXGIDevice3
+[102](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000748 _IID_IDXGISwapChain2
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000758 _IID_IDXGIOutput2
+[104](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000768 _IID_IDXGIFactory3
+[105](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000778 _IID_IDXGIDecodeSwapChain
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000788 _IID_IDXGIFactoryMedia
+[107](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000798 _IID_IDXGISwapChainMedia
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007a8 _IID_IDXGIOutput3
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007b8 _IID_IDXGISwapChain3
+[110](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007c8 _IID_IDXGIOutput4
+[111](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007d8 _IID_IDXGIFactory4
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007e8 _IID_IDXGIAdapter3
+[113](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007f8 _IID_IDXGIOutput5
+[114](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000808 _IID_IDXGISwapChain4
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000818 _IID_IDXGIDevice4
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000828 _IID_IDXGIFactory5
+[117](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000838 _IID_IDXGIAdapter4
+[118](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000848 _IID_IDXGIOutput6
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000858 _IID_IDXGIFactory6
+[120](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000868 _IID_IDXGIFactory7
+[121](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000878 _IID_ID3D10Blob
+[122](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000888 _IID_ID3DDestructionNotifier
+[123](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000898 _WKPDID_D3DDebugObjectName
+[124](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008a8 _IID_ID3D10DeviceChild
+[125](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008b8 _IID_ID3D10Resource
+[126](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008c8 _IID_ID3D10Buffer
+[127](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008d8 _IID_ID3D10Texture1D
+[128](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008e8 _IID_ID3D10Texture2D
+[129](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008f8 _IID_ID3D10Texture3D
+[130](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000908 _IID_ID3D10View
+[131](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000918 _IID_ID3D10DepthStencilView
+[132](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000928 _IID_ID3D10RenderTargetView
+[133](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000938 _IID_ID3D10ShaderResourceView
+[134](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000948 _IID_ID3D10BlendState
+[135](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000958 _IID_ID3D10DepthStencilState
+[136](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000968 _IID_ID3D10GeometryShader
+[137](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000978 _IID_ID3D10InputLayout
+[138](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000988 _IID_ID3D10PixelShader
+[139](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000998 _IID_ID3D10RasterizerState
+[140](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009a8 _IID_ID3D10SamplerState
+[141](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009b8 _IID_ID3D10VertexShader
+[142](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009c8 _IID_ID3D10Asynchronous
+[143](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009d8 _IID_ID3D10Counter
+[144](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009e8 _IID_ID3D10Query
+[145](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009f8 _IID_ID3D10Predicate
+[146](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a08 _IID_ID3D10Device
+[147](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a18 _IID_ID3D10Multithread
+[148](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a28 _IID_ID3D10Debug
+[149](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a38 _IID_ID3D10SwitchToRef
+[150](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a48 _IID_ID3D10InfoQueue
+[151](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a58 _IID_ID3D10ShaderReflectionType
+[152](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a68 _IID_ID3D10ShaderReflectionVariable
+[153](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a78 _IID_ID3D10ShaderReflectionConstantBuffer
+[154](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a88 _IID_ID3D10ShaderReflection
+[155](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a98 _IID_ID3D10EffectType
+[156](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000aa8 _IID_ID3D10EffectVariable
+[157](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ab8 _IID_ID3D10EffectConstantBuffer
+[158](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ac8 _IID_ID3D10EffectScalarVariable
+[159](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ad8 _IID_ID3D10EffectVectorVariable
+[160](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ae8 _IID_ID3D10EffectMatrixVariable
+[161](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000af8 _IID_ID3D10EffectStringVariable
+[162](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b08 _IID_ID3D10EffectShaderResourceVariable
+[163](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b18 _IID_ID3D10EffectRenderTargetViewVariable
+[164](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b28 _IID_ID3D10EffectDepthStencilViewVariable
+[165](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b38 _IID_ID3D10EffectShaderVariable
+[166](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b48 _IID_ID3D10EffectBlendVariable
+[167](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b58 _IID_ID3D10EffectDepthStencilVariable
+[168](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b68 _IID_ID3D10EffectRasterizerVariable
+[169](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b78 _IID_ID3D10EffectSamplerVariable
+[170](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b88 _IID_ID3D10EffectTechnique
+[171](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b98 _IID_ID3D10Effect
+[172](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ba8 _IID_ID3D10EffectPool
+[173](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bb8 _IID_ID3D10EffectPass
+[174](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bc8 _IID_ID3D10StateBlock
+[175](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bd8 _IID_ID3D10ShaderReflection1
+[176](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000be8 _IID_ID3D10BlendState1
+[177](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bf8 _IID_ID3D10ShaderResourceView1
+[178](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c08 _IID_ID3D10Device1
+[179](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c18 _D3D11_DECODER_PROFILE_MPEG2_MOCOMP
+[180](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c28 _D3D11_DECODER_PROFILE_MPEG2_IDCT
+[181](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c38 _D3D11_DECODER_PROFILE_MPEG2_VLD
+[182](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c48 _D3D11_DECODER_PROFILE_MPEG1_VLD
+[183](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c58 _D3D11_DECODER_PROFILE_MPEG2and1_VLD
+[184](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c68 _D3D11_DECODER_PROFILE_H264_MOCOMP_NOFGT
+[185](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c78 _D3D11_DECODER_PROFILE_H264_MOCOMP_FGT
+[186](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c88 _D3D11_DECODER_PROFILE_H264_IDCT_NOFGT
+[187](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c98 _D3D11_DECODER_PROFILE_H264_IDCT_FGT
+[188](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ca8 _D3D11_DECODER_PROFILE_H264_VLD_NOFGT
+[189](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cb8 _D3D11_DECODER_PROFILE_H264_VLD_FGT
+[190](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cc8 _D3D11_DECODER_PROFILE_H264_VLD_WITHFMOASO_NOFGT
+[191](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cd8 _D3D11_DECODER_PROFILE_H264_VLD_STEREO_PROGRESSIVE_NOFGT
+[192](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ce8 _D3D11_DECODER_PROFILE_H264_VLD_STEREO_NOFGT
+[193](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cf8 _D3D11_DECODER_PROFILE_H264_VLD_MULTIVIEW_NOFGT
+[194](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d08 _D3D11_DECODER_PROFILE_WMV8_POSTPROC
+[195](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d18 _D3D11_DECODER_PROFILE_WMV8_MOCOMP
+[196](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d28 _D3D11_DECODER_PROFILE_WMV9_POSTPROC
+[197](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d38 _D3D11_DECODER_PROFILE_WMV9_MOCOMP
+[198](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d48 _D3D11_DECODER_PROFILE_WMV9_IDCT
+[199](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d58 _D3D11_DECODER_PROFILE_VC1_POSTPROC
+[200](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d68 _D3D11_DECODER_PROFILE_VC1_MOCOMP
+[201](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d78 _D3D11_DECODER_PROFILE_VC1_IDCT
+[202](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d88 _D3D11_DECODER_PROFILE_VC1_VLD
+[203](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d98 _D3D11_DECODER_PROFILE_VC1_D2010
+[204](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000da8 _D3D11_DECODER_PROFILE_MPEG4PT2_VLD_SIMPLE
+[205](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000db8 _D3D11_DECODER_PROFILE_MPEG4PT2_VLD_ADVSIMPLE_NOGMC
+[206](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dc8 _D3D11_DECODER_PROFILE_MPEG4PT2_VLD_ADVSIMPLE_GMC
+[207](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dd8 _D3D11_DECODER_PROFILE_HEVC_VLD_MAIN
+[208](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000de8 _D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10
+[209](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000df8 _D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0
+[210](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e08 _D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2
+[211](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e18 _D3D11_DECODER_PROFILE_VP8_VLD
+[212](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e28 _IID_ID3D11DeviceChild
+[213](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e38 _IID_ID3D11Asynchronous
+[214](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e48 _IID_ID3D11Query
+[215](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e58 _IID_ID3D11Resource
+[216](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e68 _IID_ID3D11View
+[217](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e78 _IID_ID3D11BlendState
+[218](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e88 _IID_ID3D11Buffer
+[219](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e98 _IID_ID3D11ClassInstance
+[220](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ea8 _IID_ID3D11ClassLinkage
+[221](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eb8 _IID_ID3D11CommandList
+[222](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ec8 _IID_ID3D11ComputeShader
+[223](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ed8 _IID_ID3D11Counter
+[224](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ee8 _IID_ID3D11DepthStencilState
+[225](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ef8 _IID_ID3D11DepthStencilView
+[226](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f08 _IID_ID3D11DomainShader
+[227](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f18 _IID_ID3D11GeometryShader
+[228](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f28 _IID_ID3D11HullShader
+[229](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f38 _IID_ID3D11InputLayout
+[230](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f48 _IID_ID3D11PixelShader
+[231](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f58 _IID_ID3D11Predicate
+[232](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f68 _IID_ID3D11RasterizerState
+[233](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f78 _IID_ID3D11RenderTargetView
+[234](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f88 _IID_ID3D11SamplerState
+[235](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f98 _IID_ID3D11ShaderResourceView
+[236](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fa8 _IID_ID3D11Texture1D
+[237](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fb8 _IID_ID3D11Texture2D
+[238](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fc8 _IID_ID3D11Texture3D
+[239](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fd8 _IID_ID3D11UnorderedAccessView
+[240](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000fe8 _IID_ID3D11VertexShader
+[241](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ff8 _IID_ID3D11DeviceContext
+[242](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001008 _IID_ID3D11AuthenticatedChannel
+[243](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001018 _IID_ID3D11CryptoSession
+[244](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001028 _IID_ID3D11VideoDecoder
+[245](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001038 _IID_ID3D11VideoProcessorEnumerator
+[246](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001048 _IID_ID3D11VideoProcessor
+[247](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001058 _IID_ID3D11VideoDecoderOutputView
+[248](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001068 _IID_ID3D11VideoProcessorInputView
+[249](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001078 _IID_ID3D11VideoProcessorOutputView
+[250](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001088 _IID_ID3D11VideoDevice
+[251](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001098 _IID_ID3D11VideoContext
+[252](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010a8 _IID_ID3D11Device
+[253](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010b8 _DXGI_DEBUG_D3D11
+[254](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010c8 _IID_ID3D11Debug
+[255](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010d8 _IID_ID3D11SwitchToRef
+[256](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010e8 _IID_ID3D11InfoQueue
+[257](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000010f8 _IID_ID3D11BlendState1
+[258](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001108 _IID_ID3DDeviceContextState
+[259](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001118 _IID_ID3D11DeviceContext1
+[260](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001128 _IID_ID3D11VideoContext1
+[261](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001138 _IID_ID3D11VideoDevice1
+[262](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001148 _IID_ID3D11VideoProcessorEnumerator1
+[263](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001158 _IID_ID3DUserDefinedAnnotation
+[264](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001168 _IID_ID3D11RasterizerState1
+[265](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001178 _IID_ID3D11Device1
+[266](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001188 _IID_ID3D11DeviceContext2
+[267](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001198 _IID_ID3D11Device2
+[268](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011a8 _IID_ID3D11Texture2D1
+[269](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011b8 _IID_ID3D11Texture3D1
+[270](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011c8 _IID_ID3D11RasterizerState2
+[271](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011d8 _IID_ID3D11ShaderResourceView1
+[272](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011e8 _IID_ID3D11RenderTargetView1
+[273](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000011f8 _IID_ID3D11UnorderedAccessView1
+[274](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001208 _IID_ID3D11Query1
+[275](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001218 _IID_ID3D11DeviceContext3
+[276](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001228 _IID_ID3D11Fence
+[277](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001238 _IID_ID3D11DeviceContext4
+[278](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001248 _IID_ID3D11Device3
+[279](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001258 _IID_ID3D11Device4
+[280](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001268 _IID_ID3D11Device5
+[281](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001278 _IID_ID3D11Multithread
+[282](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001288 _IID_ID3D11VideoContext2
+[283](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001298 _IID_ID3D12Object
+[284](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012a8 _IID_ID3D12DeviceChild
+[285](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012b8 _IID_ID3D12Pageable
+[286](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012c8 _IID_ID3D12Heap
+[287](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012d8 _IID_ID3D12Resource
+[288](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012e8 _IID_ID3D12CommandList
+[289](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012f8 _IID_ID3D12DescriptorHeap
+[290](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001308 _IID_ID3D12QueryHeap
+[291](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001318 _IID_ID3D12CommandSignature
+[292](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001328 _IID_ID3D12GraphicsCommandList
+[293](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001338 _IID_ID3D12GraphicsCommandList1
+[294](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001348 _IID_ID3D12GraphicsCommandList2
+[295](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001358 _IID_ID3D12ProtectedSession
+[296](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001368 _IID_ID3D12ProtectedResourceSession
+[297](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001378 _IID_ID3D12GraphicsCommandList3
+[298](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001388 _IID_ID3D12CommandQueue
+[299](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001398 _IID_ID3D12RootSignature
+[300](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013a8 _IID_ID3D12PipelineState
+[301](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013b8 _IID_ID3D12Fence
+[302](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013c8 _IID_ID3D12Fence1
+[303](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013d8 _IID_ID3D12CommandAllocator
+[304](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013e8 _IID_ID3D12Device
+[305](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013f8 _IID_ID3D12PipelineLibrary
+[306](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001408 _IID_ID3D12PipelineLibrary1
+[307](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001418 _IID_ID3D12Device1
+[308](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001428 _IID_ID3D12Device2
+[309](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001438 _IID_ID3D12Device3
+[310](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001448 _IID_ID3D12RootSignatureDeserializer
+[311](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001458 _IID_ID3D12VersionedRootSignatureDeserializer
+[312](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001468 _IID_ID3D12Device4
+[313](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001478 _IID_ID3D12LifetimeOwner
+[314](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001488 _IID_ID3D12SwapChainAssistant
+[315](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001498 _IID_ID3D12LifetimeTracker
+[316](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014a8 _IID_ID3D12StateObject
+[317](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014b8 _IID_ID3D12StateObjectProperties
+[318](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014c8 _IID_ID3D12Device5
+[319](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014d8 _IID_ID3D12DeviceRemovedExtendedDataSettings
+[320](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014e8 _IID_ID3D12DeviceRemovedExtendedDataSettings1
+[321](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014f8 _IID_ID3D12DeviceRemovedExtendedData
+[322](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001508 _IID_ID3D12DeviceRemovedExtendedData1
+[323](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001518 _IID_ID3D12DeviceRemovedExtendedData2
+[324](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001528 _IID_ID3D12Device6
+[325](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001538 _D3D12_PROTECTED_RESOURCES_SESSION_HARDWARE_PROTECTED
+[326](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001548 _IID_ID3D12ProtectedResourceSession1
+[327](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001558 _IID_ID3D12Device7
+[328](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001568 _IID_ID3D12Device8
+[329](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001578 _IID_ID3D12Resource1
+[330](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001588 _IID_ID3D12Resource2
+[331](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001598 _IID_ID3D12Heap1
+[332](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015a8 _IID_ID3D12MetaCommand
+[333](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b8 _IID_ID3D12GraphicsCommandList4
+[334](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015c8 _IID_ID3D12ShaderCacheSession
+[335](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015d8 _IID_ID3D12Device9
+[336](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015e8 _IID_ID3D12Device10
+[337](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015f8 _IID_ID3D12VirtualizationGuestDevice
+[338](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001608 _IID_ID3D12Tools
+[339](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001618 _CLSID_D3D12Debug
+[340](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001628 _CLSID_D3D12Tools
+[341](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001638 _CLSID_D3D12DeviceRemovedExtendedData
+[342](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001648 _CLSID_D3D12SDKConfiguration
+[343](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001658 _IID_ID3D12SDKConfiguration
+[344](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001668 _IID_ID3D12GraphicsCommandList5
+[345](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001678 _IID_ID3D12GraphicsCommandList6
+[346](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001688 _IID_ID3D12GraphicsCommandList7
+[347](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001698 _IID_ID3D12Debug
+[348](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016a8 _IID_ID3D12Debug1
+[349](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016b8 _IID_ID3D12Debug2
+[350](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016c8 _IID_ID3D12Debug3
+[351](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d8 _IID_ID3D12Debug4
+[352](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016e8 _IID_ID3D12Debug5
+[353](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016f8 _IID_ID3D12DebugDevice
+[354](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001708 _IID_ID3D12DebugDevice1
+[355](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001718 _IID_ID3D12DebugDevice2
+[356](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001728 _IID_ID3D12SharingContract
+[357](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001738 _IID_ID3D12InfoQueue
+[358](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001748 _IID_ID3D12InfoQueue1
+[359](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001758 _IID_ID3DX10Font
+[360](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001768 _IID_ID3DX10Sprite
+[361](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001778 _IID_ID3DX10ThreadPump
+[362](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001788 _IID_ID3DX10Mesh
+[363](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001798 _IID_ID3DX10MeshBuffer
+[364](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017a8 _IID_ID3D11ShaderReflectionType
+[365](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017b8 _IID_ID3D11ShaderReflectionVariable
+[366](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017c8 _IID_ID3D11ShaderReflectionConstantBuffer
+[367](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017d8 _IID_ID3D11ShaderReflection
+[368](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017e8 _IID_ID3D11ModuleInstance
+[369](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017f8 _IID_ID3D11Module
+[370](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001808 _IID_ID3D11Linker
+[371](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000990 ___wine_dbg_strdup
+[372](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000009f0 _fallback__wine_dbg_strdup
+[373](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000a90 _fallback__wine_dbg_output
+[374](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000af0 ___wine_dbg_get_channel_flags
+[375](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000b50 _fallback__wine_dbg_get_channel_flags
+[376](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000f70 _fallback__wine_dbg_header
+[377](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001280 _sprintf
+[378](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000012b0 _snprintf
+[379](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001828 ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[380](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000183a ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[381](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000184c ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[382](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001869 ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[383](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000187c ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[384](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001890 ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[385](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000189a ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[386](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000189d ??_C@_03NFKEKGGK@all?$AA@
+[387](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018a1 ??_C@_05PCLMOIMF@fixme?$AA@
+[388](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018a7 ??_C@_03JIDPIAJI@err?$AA@
+[389](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018ab ??_C@_04FNLOFOEM@warn?$AA@
+[390](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018b0 ??_C@_05IMBNNINJ@trace?$AA@
+[391](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018b6 ??_C@_09INBMIBID@?$CF3u?4?$CF06u?3?$AA@
+[392](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018c0 ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[393](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018ca ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[394](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018d0 ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[395](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 _p__wine_dbg_strdup
+[396](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021d4 __imp__GetModuleHandleW@4
+[397](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021d8 __imp__GetProcAddress@8
+[398](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021a0 __imp___strdup
+[399](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f0 _fallback__wine_dbg_strdup.pos
+[400](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000070 _fallback__wine_dbg_strdup.list
+[401](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021a4 __imp__free
+[402](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000064 _p__wine_dbg_output
+[403](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021c4 __imp__strlen
+[404](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f4 _partial_line_tid
+[405](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002198 __imp____acrt_iob_func
+[406](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021a8 __imp__fwrite
+[407](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 _p__wine_dbg_get_channel_flags
+[408](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 _nb_debug_options
+[409](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021ac __imp__getenv
+[410](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021b4 __imp__strchr
+[411](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002c _default_flags
+[412](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021c0 __imp__strcspn
+[413](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021b8 __imp__strcmp
+[414](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 _debug_options
+[415](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000fc _options_size
+[416](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021e4 __imp__HeapReAlloc@16
+[417](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021e0 __imp__HeapAlloc@12
+[418](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001438 _memmove
+[419](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021b0 
+[420](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021bc __imp__strcpy
+[421](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c _p__wine_dbg_header
+[422](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002d ___wine_dbch_microsecs
+[423](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003d ___wine_dbch_timestamp
+[424](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021dc __imp__GetTickCount@0
+[425](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000100 _fallback__wine_dbg_header.frequency
+[426](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021f0 __imp__QueryPerformanceFrequency@4
+[427](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021ec __imp__QueryPerformanceCounter@4
+[428](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000146f __alldiv
+[429](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021fc 
+[430](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x0000147a __allrem
+[431](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002200 
+[432](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004d ___wine_dbch_pid
+[433](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00001818 _debug_classes
+[434](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002204 __imp___vsnprintf
+[435](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021f4 __imp__RaiseException@16
+[436](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001330 _DllMainCRTStartup@12
+[437](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001350 _DllMain@12
+[438](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021cc __imp__DisableThreadLibraryCalls@4
+
+

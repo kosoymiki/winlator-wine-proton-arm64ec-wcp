@@ -39,7 +39,15 @@ GROUP_RULES: Tuple[GroupRule, ...] = (
             TokenRule("fallback_guardrails", (r"fallback", r"deferred", r"guard")),
             TokenRule(
                 "external_signal_inputs",
-                (r"WINLATOR_SIGNAL_INPUT_ROUTE", r"WINLATOR_SIGNAL_INPUT_LAUNCH_KIND", r"RUNTIME_SIGNAL_INPUTS_PREPARED"),
+                (
+                    r"WINLATOR_SIGNAL_INPUT_ROUTE",
+                    r"WINLATOR_SIGNAL_INPUT_LAUNCH_KIND",
+                    r"RUNTIME_SIGNAL_INPUTS_PREPARED",
+                    r"RuntimeSignalContract\.putSignalInputMarkers",
+                    r"EVENT_SIGNAL_INPUTS_PREPARED",
+                    r"signal_input_route",
+                    r"signal_input_launch_kind",
+                ),
             ),
             TokenRule(
                 "launch_env_signal_fields",
@@ -63,7 +71,15 @@ GROUP_RULES: Tuple[GroupRule, ...] = (
             ),
             TokenRule(
                 "external_signal_markers",
-                (r"WINLATOR_SIGNAL_POLICY", r"WINLATOR_SIGNAL_SOURCES", r"RUNTIME_SIGNAL_POLICY_APPLIED"),
+                (
+                    r"WINLATOR_SIGNAL_POLICY",
+                    r"WINLATOR_SIGNAL_SOURCES",
+                    r"RUNTIME_SIGNAL_POLICY_APPLIED",
+                    r"RuntimeSignalContract\.putSignalPolicyMarkers",
+                    r"EVENT_SIGNAL_POLICY_APPLIED",
+                    r"ENV_SIGNAL_POLICY",
+                    r"ENV_SIGNAL_SOURCES",
+                ),
             ),
             TokenRule("contract_helper_usage", (r"RuntimeSignalContract\.",)),
         ),

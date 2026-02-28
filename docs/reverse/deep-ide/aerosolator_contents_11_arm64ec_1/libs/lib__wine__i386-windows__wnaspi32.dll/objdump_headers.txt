@@ -1,0 +1,575 @@
+
+out/reverse/sources/device/by_aero_so_benchmark_11-arm64ec-1/11-arm64ec-1/lib/wine/i386-windows/wnaspi32.dll:     file format pei-i386
+out/reverse/sources/device/by_aero_so_benchmark_11-arm64ec-1/11-arm64ec-1/lib/wine/i386-windows/wnaspi32.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x100021a0
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Thu Feb 26 21:38:41 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00002000
+SizeOfInitializedData	0000e000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	000021a0
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		00011000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00003428 00000124 Export Directory [.edata (or where ever we found it)]
+Entry 1 0000354c 00000064 Import Directory [parts of .idata]
+Entry 2 00000000 00000000 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00006000 00000228 Base Relocation Directory [.reloc]
+Entry 6 000033f0 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000305c 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 0000362c 0000007c Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x1000354c
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 0000354c	000035b0 00000000 00000000 0000382a 0000362c
+
+	DLL Name: advapi32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	36a8	  396  RegCloseKey
+	36b6	  423  RegEnumKeyW
+	36c4	  440  RegOpenKeyExW
+	36d4	  445  RegQueryInfoKeyW
+
+ 00003560	000035c4 00000000 00000000 00003837 00003640
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	36e8	   74  __acrt_iob_func
+	36fa	  158  __stdio_common_vsprintf
+	3714	 1894  _strdup
+	371e	 2284  free
+	3726	 2291  fwrite
+	3730	 2294  getenv
+	373a	 2382  memmove
+	3744	 2449  strchr
+	374e	 2450  strcmp
+	3758	 2452  strcpy
+	3762	 2454  strcspn
+	376c	 2458  strlen
+	3776	 2532  wcstol
+
+ 00003574	000035fc 00000000 00000000 00003844 00003678
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	3780	  324  DisableThreadLibraryCalls
+	379c	  645  GetModuleHandleW
+	37b0	  694  GetProcAddress
+	37c2	  781  GetTickCount
+	37d2	  837  HeapAlloc
+	37de	  843  HeapFree
+	37ea	  847  HeapReAlloc
+	37f8	  892  IsBadStringPtrW
+	380a	 1083  RaiseException
+
+ 00003588	00003624 00000000 00000000 00003851 000036a0
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	381c	 1344  _vsnprintf
+
+ 0000359c	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10003428
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		1f46352a
+Major/Minor 			0/0
+Name 				000034bc wnaspi32.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		0000000e
+	[Name Pointer/Ordinal] Table	00000007
+Table Addresses
+	Export Address Table 		00003450
+	Name Pointer Table 		00003488
+	Ordinal Table 			000034a4
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 16d0 Export RVA
+	[   1] +base[   2] 1700 Export RVA
+	[   3] +base[   4] 17c0 Export RVA
+	[   5] +base[   6] 1000 Export RVA
+	[   6] +base[   7] 1860 Export RVA
+	[   7] +base[   8] 17f0 Export RVA
+	[  13] +base[  14] 1830 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[  13] FreeASPI32Buffer
+	[   7] GetASPI32Buffer
+	[   3] GetASPI32DLLVersion
+	[   0] GetASPI32SupportInfo
+	[   5] RegisterWOWPost
+	[   1] SendASPI32Command
+	[   6] TranslateASPI32Address
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 356 (0x164) Number of fixups 174
+	reloc    0 offset   10 [1010] HIGHLOW
+	reloc    1 offset   17 [1017] HIGHLOW
+	reloc    2 offset   38 [1038] HIGHLOW
+	reloc    3 offset   58 [1058] HIGHLOW
+	reloc    4 offset   78 [1078] HIGHLOW
+	reloc    5 offset   98 [1098] HIGHLOW
+	reloc    6 offset   b5 [10b5] HIGHLOW
+	reloc    7 offset   d4 [10d4] HIGHLOW
+	reloc    8 offset   f4 [10f4] HIGHLOW
+	reloc    9 offset  124 [1124] HIGHLOW
+	reloc   10 offset  12f [112f] HIGHLOW
+	reloc   11 offset  13b [113b] HIGHLOW
+	reloc   12 offset  152 [1152] HIGHLOW
+	reloc   13 offset  15a [115a] HIGHLOW
+	reloc   14 offset  174 [1174] HIGHLOW
+	reloc   15 offset  183 [1183] HIGHLOW
+	reloc   16 offset  189 [1189] HIGHLOW
+	reloc   17 offset  19b [119b] HIGHLOW
+	reloc   18 offset  1a3 [11a3] HIGHLOW
+	reloc   19 offset  1d7 [11d7] HIGHLOW
+	reloc   20 offset  1e5 [11e5] HIGHLOW
+	reloc   21 offset  1fb [11fb] HIGHLOW
+	reloc   22 offset  24d [124d] HIGHLOW
+	reloc   23 offset  299 [1299] HIGHLOW
+	reloc   24 offset  2cb [12cb] HIGHLOW
+	reloc   25 offset  2ff [12ff] HIGHLOW
+	reloc   26 offset  326 [1326] HIGHLOW
+	reloc   27 offset  32c [132c] HIGHLOW
+	reloc   28 offset  336 [1336] HIGHLOW
+	reloc   29 offset  364 [1364] HIGHLOW
+	reloc   30 offset  373 [1373] HIGHLOW
+	reloc   31 offset  3b6 [13b6] HIGHLOW
+	reloc   32 offset  3c8 [13c8] HIGHLOW
+	reloc   33 offset  3de [13de] HIGHLOW
+	reloc   34 offset  3ef [13ef] HIGHLOW
+	reloc   35 offset  494 [1494] HIGHLOW
+	reloc   36 offset  49f [149f] HIGHLOW
+	reloc   37 offset  4ae [14ae] HIGHLOW
+	reloc   38 offset  4c5 [14c5] HIGHLOW
+	reloc   39 offset  4de [14de] HIGHLOW
+	reloc   40 offset  4eb [14eb] HIGHLOW
+	reloc   41 offset  4fe [14fe] HIGHLOW
+	reloc   42 offset  513 [1513] HIGHLOW
+	reloc   43 offset  51b [151b] HIGHLOW
+	reloc   44 offset  545 [1545] HIGHLOW
+	reloc   45 offset  553 [1553] HIGHLOW
+	reloc   46 offset  569 [1569] HIGHLOW
+	reloc   47 offset  5bb [15bb] HIGHLOW
+	reloc   48 offset  5d7 [15d7] HIGHLOW
+	reloc   49 offset  5e9 [15e9] HIGHLOW
+	reloc   50 offset  5f3 [15f3] HIGHLOW
+	reloc   51 offset  601 [1601] HIGHLOW
+	reloc   52 offset  609 [1609] HIGHLOW
+	reloc   53 offset  621 [1621] HIGHLOW
+	reloc   54 offset  634 [1634] HIGHLOW
+	reloc   55 offset  63d [163d] HIGHLOW
+	reloc   56 offset  68c [168c] HIGHLOW
+	reloc   57 offset  69c [169c] HIGHLOW
+	reloc   58 offset  702 [1702] HIGHLOW
+	reloc   59 offset  713 [1713] HIGHLOW
+	reloc   60 offset  71b [171b] HIGHLOW
+	reloc   61 offset  766 [1766] HIGHLOW
+	reloc   62 offset  799 [1799] HIGHLOW
+	reloc   63 offset  7c2 [17c2] HIGHLOW
+	reloc   64 offset  7d3 [17d3] HIGHLOW
+	reloc   65 offset  7db [17db] HIGHLOW
+	reloc   66 offset  818 [1818] HIGHLOW
+	reloc   67 offset  84b [184b] HIGHLOW
+	reloc   68 offset  862 [1862] HIGHLOW
+	reloc   69 offset  881 [1881] HIGHLOW
+	reloc   70 offset  889 [1889] HIGHLOW
+	reloc   71 offset  8b1 [18b1] HIGHLOW
+	reloc   72 offset  8c9 [18c9] HIGHLOW
+	reloc   73 offset  8cf [18cf] HIGHLOW
+	reloc   74 offset  8d4 [18d4] HIGHLOW
+	reloc   75 offset  8db [18db] HIGHLOW
+	reloc   76 offset  8e2 [18e2] HIGHLOW
+	reloc   77 offset  8eb [18eb] HIGHLOW
+	reloc   78 offset  8f9 [18f9] HIGHLOW
+	reloc   79 offset  91b [191b] HIGHLOW
+	reloc   80 offset  92b [192b] HIGHLOW
+	reloc   81 offset  938 [1938] HIGHLOW
+	reloc   82 offset  93f [193f] HIGHLOW
+	reloc   83 offset  951 [1951] HIGHLOW
+	reloc   84 offset  969 [1969] HIGHLOW
+	reloc   85 offset  96f [196f] HIGHLOW
+	reloc   86 offset  974 [1974] HIGHLOW
+	reloc   87 offset  97b [197b] HIGHLOW
+	reloc   88 offset  982 [1982] HIGHLOW
+	reloc   89 offset  98b [198b] HIGHLOW
+	reloc   90 offset  999 [1999] HIGHLOW
+	reloc   91 offset  9bd [19bd] HIGHLOW
+	reloc   92 offset  9de [19de] HIGHLOW
+	reloc   93 offset  9e6 [19e6] HIGHLOW
+	reloc   94 offset  9f4 [19f4] HIGHLOW
+	reloc   95 offset  a11 [1a11] HIGHLOW
+	reloc   96 offset  a29 [1a29] HIGHLOW
+	reloc   97 offset  a2f [1a2f] HIGHLOW
+	reloc   98 offset  a34 [1a34] HIGHLOW
+	reloc   99 offset  a3b [1a3b] HIGHLOW
+	reloc  100 offset  a42 [1a42] HIGHLOW
+	reloc  101 offset  a4b [1a4b] HIGHLOW
+	reloc  102 offset  a59 [1a59] HIGHLOW
+	reloc  103 offset  a7d [1a7d] HIGHLOW
+	reloc  104 offset  a94 [1a94] HIGHLOW
+	reloc  105 offset  a9a [1a9a] HIGHLOW
+	reloc  106 offset  aa3 [1aa3] HIGHLOW
+	reloc  107 offset  ab6 [1ab6] HIGHLOW
+	reloc  108 offset  ac7 [1ac7] HIGHLOW
+	reloc  109 offset  ad9 [1ad9] HIGHLOW
+	reloc  110 offset  ae1 [1ae1] HIGHLOW
+	reloc  111 offset  b18 [1b18] HIGHLOW
+	reloc  112 offset  b1f [1b1f] HIGHLOW
+	reloc  113 offset  c0c [1c0c] HIGHLOW
+	reloc  114 offset  c15 [1c15] HIGHLOW
+	reloc  115 offset  c26 [1c26] HIGHLOW
+	reloc  116 offset  c2d [1c2d] HIGHLOW
+	reloc  117 offset  c40 [1c40] HIGHLOW
+	reloc  118 offset  c79 [1c79] HIGHLOW
+	reloc  119 offset  ca1 [1ca1] HIGHLOW
+	reloc  120 offset  cb1 [1cb1] HIGHLOW
+	reloc  121 offset  ccc [1ccc] HIGHLOW
+	reloc  122 offset  ce7 [1ce7] HIGHLOW
+	reloc  123 offset  cf4 [1cf4] HIGHLOW
+	reloc  124 offset  d0d [1d0d] HIGHLOW
+	reloc  125 offset  d1c [1d1c] HIGHLOW
+	reloc  126 offset  d23 [1d23] HIGHLOW
+	reloc  127 offset  d28 [1d28] HIGHLOW
+	reloc  128 offset  d65 [1d65] HIGHLOW
+	reloc  129 offset  d73 [1d73] HIGHLOW
+	reloc  130 offset  d82 [1d82] HIGHLOW
+	reloc  131 offset  d90 [1d90] HIGHLOW
+	reloc  132 offset  d99 [1d99] HIGHLOW
+	reloc  133 offset  da3 [1da3] HIGHLOW
+	reloc  134 offset  dd9 [1dd9] HIGHLOW
+	reloc  135 offset  dfc [1dfc] HIGHLOW
+	reloc  136 offset  e0b [1e0b] HIGHLOW
+	reloc  137 offset  e31 [1e31] HIGHLOW
+	reloc  138 offset  e49 [1e49] HIGHLOW
+	reloc  139 offset  e4f [1e4f] HIGHLOW
+	reloc  140 offset  e54 [1e54] HIGHLOW
+	reloc  141 offset  e5b [1e5b] HIGHLOW
+	reloc  142 offset  e62 [1e62] HIGHLOW
+	reloc  143 offset  e6b [1e6b] HIGHLOW
+	reloc  144 offset  e79 [1e79] HIGHLOW
+	reloc  145 offset  ea2 [1ea2] HIGHLOW
+	reloc  146 offset  eb4 [1eb4] HIGHLOW
+	reloc  147 offset  eba [1eba] HIGHLOW
+	reloc  148 offset  ebf [1ebf] HIGHLOW
+	reloc  149 offset  ec6 [1ec6] HIGHLOW
+	reloc  150 offset  ecd [1ecd] HIGHLOW
+	reloc  151 offset  ed6 [1ed6] HIGHLOW
+	reloc  152 offset  ee4 [1ee4] HIGHLOW
+	reloc  153 offset  efe [1efe] HIGHLOW
+	reloc  154 offset  f1f [1f1f] HIGHLOW
+	reloc  155 offset  f2b [1f2b] HIGHLOW
+	reloc  156 offset  f3d [1f3d] HIGHLOW
+	reloc  157 offset  f43 [1f43] HIGHLOW
+	reloc  158 offset  f48 [1f48] HIGHLOW
+	reloc  159 offset  f4f [1f4f] HIGHLOW
+	reloc  160 offset  f56 [1f56] HIGHLOW
+	reloc  161 offset  f5f [1f5f] HIGHLOW
+	reloc  162 offset  f6d [1f6d] HIGHLOW
+	reloc  163 offset  f72 [1f72] HIGHLOW
+	reloc  164 offset  f81 [1f81] HIGHLOW
+	reloc  165 offset  fa2 [1fa2] HIGHLOW
+	reloc  166 offset  fbb [1fbb] HIGHLOW
+	reloc  167 offset  fc3 [1fc3] HIGHLOW
+	reloc  168 offset  fd5 [1fd5] HIGHLOW
+	reloc  169 offset  fdb [1fdb] HIGHLOW
+	reloc  170 offset  fe0 [1fe0] HIGHLOW
+	reloc  171 offset  fe7 [1fe7] HIGHLOW
+	reloc  172 offset  fee [1fee] HIGHLOW
+	reloc  173 offset  ff7 [1ff7] HIGHLOW
+
+Virtual Address: 00002000 Chunk size 88 (0x58) Number of fixups 40
+	reloc    0 offset    5 [2005] HIGHLOW
+	reloc    1 offset    a [200a] HIGHLOW
+	reloc    2 offset   34 [2034] HIGHLOW
+	reloc    3 offset   50 [2050] HIGHLOW
+	reloc    4 offset   78 [2078] HIGHLOW
+	reloc    5 offset   ac [20ac] HIGHLOW
+	reloc    6 offset   be [20be] HIGHLOW
+	reloc    7 offset   cc [20cc] HIGHLOW
+	reloc    8 offset  10c [210c] HIGHLOW
+	reloc    9 offset  134 [2134] HIGHLOW
+	reloc   10 offset  13c [213c] HIGHLOW
+	reloc   11 offset  17b [217b] HIGHLOW
+	reloc   12 offset  1d0 [21d0] HIGHLOW
+	reloc   13 offset  1e4 [21e4] HIGHLOW
+	reloc   14 offset  1ef [21ef] HIGHLOW
+	reloc   15 offset  1fa [21fa] HIGHLOW
+	reloc   16 offset  205 [2205] HIGHLOW
+	reloc   17 offset  210 [2210] HIGHLOW
+	reloc   18 offset  21b [221b] HIGHLOW
+	reloc   19 offset  226 [2226] HIGHLOW
+	reloc   20 offset  231 [2231] HIGHLOW
+	reloc   21 offset  23c [223c] HIGHLOW
+	reloc   22 offset  247 [2247] HIGHLOW
+	reloc   23 offset  252 [2252] HIGHLOW
+	reloc   24 offset  25d [225d] HIGHLOW
+	reloc   25 offset  268 [2268] HIGHLOW
+	reloc   26 offset  273 [2273] HIGHLOW
+	reloc   27 offset  27e [227e] HIGHLOW
+	reloc   28 offset  289 [2289] HIGHLOW
+	reloc   29 offset  294 [2294] HIGHLOW
+	reloc   30 offset  29f [229f] HIGHLOW
+	reloc   31 offset  2aa [22aa] HIGHLOW
+	reloc   32 offset  2b5 [22b5] HIGHLOW
+	reloc   33 offset  2c0 [22c0] HIGHLOW
+	reloc   34 offset  2cb [22cb] HIGHLOW
+	reloc   35 offset  2d6 [22d6] HIGHLOW
+	reloc   36 offset  2e1 [22e1] HIGHLOW
+	reloc   37 offset  2ec [22ec] HIGHLOW
+	reloc   38 offset  2f7 [22f7] HIGHLOW
+	reloc   39 offset  302 [2302] HIGHLOW
+
+Virtual Address: 00003000 Chunk size 68 (0x44) Number of fixups 30
+	reloc    0 offset  204 [3204] HIGHLOW
+	reloc    1 offset  208 [3208] HIGHLOW
+	reloc    2 offset  20c [320c] HIGHLOW
+	reloc    3 offset  210 [3210] HIGHLOW
+	reloc    4 offset  214 [3214] HIGHLOW
+	reloc    5 offset  218 [3218] HIGHLOW
+	reloc    6 offset  21c [321c] HIGHLOW
+	reloc    7 offset  220 [3220] HIGHLOW
+	reloc    8 offset  224 [3224] HIGHLOW
+	reloc    9 offset  228 [3228] HIGHLOW
+	reloc   10 offset  22c [322c] HIGHLOW
+	reloc   11 offset  230 [3230] HIGHLOW
+	reloc   12 offset  234 [3234] HIGHLOW
+	reloc   13 offset  238 [3238] HIGHLOW
+	reloc   14 offset  23c [323c] HIGHLOW
+	reloc   15 offset  240 [3240] HIGHLOW
+	reloc   16 offset  244 [3244] HIGHLOW
+	reloc   17 offset  248 [3248] HIGHLOW
+	reloc   18 offset  24c [324c] HIGHLOW
+	reloc   19 offset  250 [3250] HIGHLOW
+	reloc   20 offset  254 [3254] HIGHLOW
+	reloc   21 offset  258 [3258] HIGHLOW
+	reloc   22 offset  25c [325c] HIGHLOW
+	reloc   23 offset  260 [3260] HIGHLOW
+	reloc   24 offset  264 [3264] HIGHLOW
+	reloc   25 offset  268 [3268] HIGHLOW
+	reloc   26 offset  338 [3338] HIGHLOW
+	reloc   27 offset  33c [333c] HIGHLOW
+	reloc   28 offset  340 [3340] HIGHLOW
+	reloc   29 offset  344 [3344] HIGHLOW
+
+Virtual Address: 00004000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [400c] HIGHLOW
+	reloc    1 offset   10 [4010] HIGHLOW
+	reloc    2 offset   14 [4014] HIGHLOW
+	reloc    3 offset    0 [4000] ABSOLUTE
+
+Virtual Address: 00005000 Chunk size 24 (0x18) Number of fixups 8
+	reloc    0 offset   20 [5020] HIGHLOW
+	reloc    1 offset   34 [5034] HIGHLOW
+	reloc    2 offset   50 [5050] HIGHLOW
+	reloc    3 offset   6c [506c] HIGHLOW
+	reloc    4 offset   88 [5088] HIGHLOW
+	reloc    5 offset   a4 [50a4] HIGHLOW
+	reloc    6 offset   c0 [50c0] HIGHLOW
+	reloc    7 offset   dc [50dc] HIGHLOW
+
+There is a debug directory in .rdata at 0x100033f0
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 0000340c 0000340c
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00001306  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        0000085b  10003000  10003000  00003000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000100  10004000  10004000  00004000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      000000f0  10005000  10005000  00005000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .reloc        00000228  10006000  10006000  00006000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 .debug_abbrev 00000946  10007000  10007000  00007000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   00002278  10008000  10008000  00008000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_line   000012af  1000b000  1000b000  0000b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_loc    00000c11  1000d000  1000d000  0000d000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_ranges 00000170  1000e000  1000e000  0000e000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    000015b1  1000f000  1000f000  0000f000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000000 ___wine_stub_RegisterWOWPost
+[  1](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000d .L__wine_stub_RegisterWOWPost_string
+[  2](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_file_name
+[  3](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00001160 ___wine_spec_unimplemented_stub
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000428 .L__wine_spec_exports
+[  5](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000004bc .L__wine_spec_exp_names
+[  6](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000450 .L__wine_spec_exports_funcs
+[  7](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000488 .L__wine_spec_exp_name_ptrs
+[  8](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000004a4 .L__wine_spec_exp_ordinals
+[  9](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000006d0 _GetASPI32SupportInfo
+[ 10](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000700 _SendASPI32Command
+[ 11](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000007c0 _GetASPI32DLLVersion
+[ 12](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000860 _TranslateASPI32Address
+[ 13](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000007f0 _GetASPI32Buffer
+[ 14](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000830 _FreeASPI32Buffer
+[ 15](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[ 16](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000020 __wine_spec_relay_entry_points
+[ 17](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000020 .L__wine_spec_relay_entry_point_offsets
+[ 18](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_relay_args_string
+[ 19](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002c __wine_spec_relay_entry_point_1
+[ 20](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004c __wine_spec_relay_entry_point_2
+[ 21](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c __wine_spec_relay_entry_point_4
+[ 22](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000008c __wine_spec_relay_entry_point_6
+[ 23](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000ac __wine_spec_relay_entry_point_7
+[ 24](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000c8 __wine_spec_relay_entry_point_8
+[ 25](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000e8 __wine_spec_relay_entry_point_14
+[ 26](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000005c __load_config_used
+[ 27](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000110 _ASPI_GetNumControllers
+[ 28](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000270 _wine_dbg_log
+[ 29](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000002f0 _debugstr_w
+[ 30](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000480 _ASPI_GetHCforController
+[ 31](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000670 _wine_dbg_sprintf
+[ 32](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000015c ??_C@_0BI@FCBEALKC@Could?5not?5open?5HKLM?2?$CFs?6?$AA@
+[ 33](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000174 ??_C@_0BH@PIMHEKMA@ASPI_GetNumControllers?$AA@
+[ 34](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000018b ??_C@_0BN@IJFKNOCG@Returning?5?$CFld?5host?5adapters?6?$AA@
+[ 35](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001a8 ??_C@_0BI@CCHJALEN@ASPI_GetHCforController?$AA@
+[ 36](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001c0 ??_C@_0BI@BEHPDKOG@Invalid?5controller?$CI?$CFd?$CJ?6?$AA@
+[ 37](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001d8 ??_C@_0BK@NFBJLKLE@Failed?5to?5enumerate?5keys?6?$AA@
+[ 38](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001f2 ??_C@_05PCILMPKD@?$CD?$CF04x?$AA@
+[ 39](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001f8 ??_C@_09CIDKLGOH@?$CIinvalid?$CJ?$AA@
+[ 40](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000011c _wDevicemapScsi
+[ 41](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000634 __imp__RegOpenKeyExW@20
+[ 42](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 ___wine_dbch_aspi
+[ 43](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000630 __imp__RegEnumKeyW@16
+[ 44](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000062c __imp__RegCloseKey@4
+[ 45](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000638 __imp__RegQueryInfoKeyW@48
+[ 46](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000e30 ___wine_dbg_header
+[ 47](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000644 __imp____stdio_common_vsprintf
+[ 48](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000950 ___wine_dbg_output
+[ 49](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000694 __imp__IsBadStringPtrW@8
+[ 50](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000014c _wine_dbgstr_wn.hex
+[ 51](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000008b0 ___wine_dbg_strdup
+[ 52](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000670 __imp__wcstol
+[ 53](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000740 _wine_dbg_log
+[ 54](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000026c ??_C@_0DK@ECLCDALB@no?5longer?5supported?0?5should?5be?5p@
+[ 55](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002a6 ??_C@_0BC@FGLEOCC@SendASPI32Command?$AA@
+[ 56](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002b8 ??_C@_0EA@JHAPKCPM@Please?5add?5SCSI?5support?5for?5your@
+[ 57](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002f8 ??_C@_0BE@DNMDIBNM@GetASPI32DLLVersion?$AA@
+[ 58](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000030c ??_C@_0BC@JGCBLMIJ@?$CI?$CFp?0?5?$CFp?$CJ?0?5stub?5?$CB?6?$AA@
+[ 59](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000031e ??_C@_0BH@IGKKMHHI@TranslateASPI32Address?$AA@
+[ 60](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 ___wine_dbch_aspi
+[ 61](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000688 __imp__HeapAlloc@12
+[ 62](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000068c __imp__HeapFree@12
+[ 63](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000910 _fallback__wine_dbg_strdup
+[ 64](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000009b0 _fallback__wine_dbg_output
+[ 65](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000a10 ___wine_dbg_get_channel_flags
+[ 66](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000a70 _fallback__wine_dbg_get_channel_flags
+[ 67](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000e90 _fallback__wine_dbg_header
+[ 68](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000010f0 _sprintf
+[ 69](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001120 _snprintf
+[ 70](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000348 ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[ 71](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000035a ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[ 72](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000036c ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[ 73](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000389 ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[ 74](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000039c ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[ 75](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003b0 ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[ 76](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003ba ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[ 77](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003bd ??_C@_03NFKEKGGK@all?$AA@
+[ 78](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003c1 ??_C@_05PCLMOIMF@fixme?$AA@
+[ 79](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003c7 ??_C@_03JIDPIAJI@err?$AA@
+[ 80](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003cb ??_C@_04FNLOFOEM@warn?$AA@
+[ 81](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003d0 ??_C@_05IMBNNINJ@trace?$AA@
+[ 82](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003d6 ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[ 83](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003e0 ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[ 84](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003e6 ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[ 85](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 _p__wine_dbg_strdup
+[ 86](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000067c __imp__GetModuleHandleW@4
+[ 87](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000680 __imp__GetProcAddress@8
+[ 88](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000648 __imp___strdup
+[ 89](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f0 _fallback__wine_dbg_strdup.pos
+[ 90](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000070 _fallback__wine_dbg_strdup.list
+[ 91](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000064c __imp__free
+[ 92](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000064 _p__wine_dbg_output
+[ 93](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000066c __imp__strlen
+[ 94](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f4 _partial_line_tid
+[ 95](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000640 __imp____acrt_iob_func
+[ 96](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000650 __imp__fwrite
+[ 97](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 _p__wine_dbg_get_channel_flags
+[ 98](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000038 _nb_debug_options
+[ 99](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000654 __imp__getenv
+[100](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000065c __imp__strchr
+[101](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003c _default_flags
+[102](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000668 __imp__strcspn
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000660 __imp__strcmp
+[104](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 _debug_options
+[105](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000fc _options_size
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000690 __imp__HeapReAlloc@16
+[107](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000012c9 _memmove
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000658 __imp__memmove
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000664 __imp__strcpy
+[110](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c _p__wine_dbg_header
+[111](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003d ___wine_dbch_timestamp
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000684 __imp__GetTickCount@0
+[113](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004d ___wine_dbch_pid
+[114](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000338 _debug_classes
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006a0 __imp___vsnprintf
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000698 __imp__RaiseException@16
+[117](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000011a0 _DllMainCRTStartup@12
+[118](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000011c0 _DllMain@12
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000678 __imp__DisableThreadLibraryCalls@4
+
+

@@ -1,0 +1,124 @@
+commit 959b5cbe6c457e88a96dcdda3f5980bb2896ed6a
+Author: Joshua Tam <297250+joshuatam@users.noreply.github.com>
+Date:   Sat Feb 28 12:24:59 2026 +0800
+
+    Adds Wine request component for external interactions (#676)
+    
+    * Adds Wine request component for external interactions
+    
+    Introduces `WineRequestComponent` to act as an IPC server for requests from Wine. This component centralizes the handling of:
+    - URL opening: Specific Epic OAuth URLs are now handled by launching `EpicOAuthActivity`, while other web links can be opened in the Android browser based on the new `open_web_links_externally` preference.
+    - Clipboard synchronization: Provides robust server-side logic for getting and setting clipboard data between Wine and Android.
+    
+    The `BionicProgramLauncherComponent` now consistently defers URL opening to the `WineRequestComponent`. `EpicOAuthActivity` is updated to accept an initial authentication URL via intent.
+    
+    * Enhances Wine request server stability and intent handling
+    
+    Ensures graceful shutdown of the request server thread and proper resource management by closing client sockets after use.
+    
+    Adds `FLAG_ACTIVITY_NEW_TASK` to intents launched from the component, which is crucial for starting new activities (such as Epic OAuth or a browser) from a non-Activity context without crashing. This enables the feature of opening Epic URLs via the Android browser reliably.
+    
+    Improves server socket reliability by explicitly binding to localhost with a specified backlog.
+    
+    * Removes Wine clipboard integration
+    
+    Removes all code related to handling clipboard requests between the Android environment and Wine, including unused imports, request codes, and associated methods.
+    
+    Ensures proper shutdown of the executor service in the `stop()` method to release resources.
+    
+    * hide full url
+    
+    * Update app/src/main/java/com/winlator/xenvironment/components/WineRequestComponent.java
+    
+    Co-authored-by: cubic-dev-ai[bot] <191113872+cubic-dev-ai[bot]@users.noreply.github.com>
+    
+    ---------
+    
+    Co-authored-by: cubic-dev-ai[bot] <191113872+cubic-dev-ai[bot]@users.noreply.github.com>
+
+diff --git a/app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt b/app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt
+index ac309b5..665e2c9 100644
+--- a/app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt
++++ b/app/src/main/java/app/gamenative/ui/screen/xserver/XServerScreen.kt
+@@ -16,18 +16,11 @@ import android.widget.LinearLayout
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.layout.*
+ import androidx.compose.material.icons.Icons
+-import androidx.compose.material.icons.automirrored.outlined.ViewList
+ import androidx.compose.material.icons.filled.*
+-import androidx.compose.material3.Button
+ import androidx.compose.material3.DropdownMenu
+ import androidx.compose.material3.DropdownMenuItem
+ import androidx.compose.material3.ExperimentalMaterial3Api
+-import androidx.compose.material3.ExposedDropdownMenuBox
+-import androidx.compose.material3.ExposedDropdownMenuDefaults
+ import androidx.compose.material3.Icon
+-import androidx.compose.material3.IconButton
+-import androidx.compose.material3.MaterialTheme
+-import androidx.compose.material3.OutlinedTextField
+ import androidx.compose.material3.Text
+ import androidx.compose.material3.TextButton
+ import androidx.compose.runtime.Composable
+@@ -74,10 +67,7 @@ import app.gamenative.externaldisplay.SwapInputOverlayView
+ import app.gamenative.service.SteamService
+ import app.gamenative.service.epic.EpicService
+ import app.gamenative.service.gog.GOGService
+-import android.widget.Toast
+-import app.gamenative.ui.component.settings.SettingsListDropdown
+ import app.gamenative.ui.data.XServerState
+-import app.gamenative.ui.theme.settingsTileColors
+ import app.gamenative.utils.ContainerUtils
+ import app.gamenative.utils.CustomGameScanner
+ import app.gamenative.utils.ExecutableSelectionUtils
+@@ -109,7 +99,6 @@ import com.winlator.core.WineRegistryEditor
+ import com.winlator.core.WineStartMenuCreator
+ import com.winlator.core.WineThemeManager
+ import com.winlator.core.WineUtils
+-import com.winlator.core.envvars.EnvVarInfo
+ import com.winlator.core.envvars.EnvVars
+ import com.winlator.fexcore.FEXCoreManager
+ import com.winlator.inputcontrols.ControllerManager
+@@ -138,6 +127,7 @@ import com.winlator.xenvironment.components.SteamClientComponent
+ import com.winlator.xenvironment.components.SysVSharedMemoryComponent
+ import com.winlator.xenvironment.components.VirGLRendererComponent
+ import com.winlator.xenvironment.components.VortekRendererComponent
++import com.winlator.xenvironment.components.WineRequestComponent
+ import com.winlator.xenvironment.components.XServerComponent
+ import com.winlator.xserver.Keyboard
+ import com.winlator.xserver.Property
+@@ -751,7 +741,7 @@ fun XServerScreen(
+                 PluviaApp.touchpadView = TouchpadView(context, getxServer(), PrefManager.getBoolean("capture_pointer_on_external_mouse", true))
+                 frameLayout.addView(PluviaApp.touchpadView)
+                 PluviaApp.touchpadView?.setMoveCursorToTouchpoint(PrefManager.getBoolean("move_cursor_to_touchpoint", false))
+-                
++
+                 // Add invisible IME receiver to capture system keyboard input when keyboard is on external display
+                 val imeDisplayContext = context.display?.let { display ->
+                     context.createDisplayContext(display)
+@@ -771,7 +761,7 @@ fun XServerScreen(
+                 }
+                 frameLayout.addView(imeReceiver)
+                 imeInputReceiver = imeReceiver
+-                
++
+                 getxServer().winHandler = WinHandler(getxServer(), this)
+                 win32AppWorkarounds = Win32AppWorkarounds(getxServer())
+                 touchMouse = TouchMouse(getxServer())
+@@ -2011,6 +2001,8 @@ private fun setupXEnvironment(
+     }
+     environment.addComponent(guestProgramLauncherComponent)
+ 
++    environment.addComponent(WineRequestComponent())
++
+     FEXCoreManager.ensureAppConfigOverrides(context)
+ 
+     // Moved here, as guestProgramLauncherComponent.environment is setup after addComponent()
+@@ -2240,7 +2232,7 @@ private fun getWineStartCommand(
+         val installPath = if (appIdInt != null) {
+             app.gamenative.service.amazon.AmazonService.getInstallPathByAppId(appIdInt)
+         } else null
+-        
++
+         if (installPath.isNullOrEmpty()) {
+             Timber.tag("XServerScreen").e("Cannot launch: Amazon game not installed")
+             return "\"explorer.exe\""

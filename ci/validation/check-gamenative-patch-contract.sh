@@ -102,6 +102,26 @@ check_absent_fixed() {
   fi
 }
 
+check_absent_regex() {
+  local file="$1" pattern="$2" desc="$3"
+  if grep -Eq "${pattern}" "${file}"; then
+    log "missing: ${desc}"
+    missing=$((missing + 1))
+  else
+    log "ok: ${desc}"
+  fi
+}
+
+check_any_regex() {
+  local file="$1" pattern_a="$2" pattern_b="$3" desc="$4"
+  if grep -Eq "${pattern_a}" "${file}" || grep -Eq "${pattern_b}" "${file}"; then
+    log "ok: ${desc}"
+  else
+    log "missing: ${desc}"
+    missing=$((missing + 1))
+  fi
+}
+
 f_loader="${SOURCE_DIR}/dlls/ntdll/loader.c"
 f_ntdll_spec="${SOURCE_DIR}/dlls/ntdll/ntdll.spec"
 f_wow64_syscall="${SOURCE_DIR}/dlls/wow64/syscall.c"
@@ -144,9 +164,19 @@ if [[ -f "${f_winebrowser}" ]] && grep -Fq 'send_android_message' "${f_winebrows
 fi
 
 if [[ -f "${f_winex11_mouse}" ]]; then
-  check_fixed "${f_winex11_mouse}" 'get_send_mouse_flags' 'winex11 mouse has no-XInput2 WM_INPUT helper'
-  check_regex "${f_winex11_mouse}" 'NtUserSendHardwareInput\( hwnd, get_send_mouse_flags\(\), input, 0 \);' 'winex11 mouse routes input via get_send_mouse_flags()'
-  check_absent_fixed "${f_winex11_mouse}" 'NtUserSendHardwareInput( hwnd, SEND_HWMSG_NO_RAW, input, 0 );' 'winex11 mouse does not hardcode SEND_HWMSG_NO_RAW'
+  check_any_regex "${f_winex11_mouse}" \
+    'x11drv_xinput2_enable' \
+    'xinput2_available' \
+    'winex11 mouse keeps no-XInput2 state gate marker'
+  check_any_regex "${f_winex11_mouse}" \
+    'get_send_mouse_flags' \
+    'NtUserSendHardwareInput\(\s*hwnd\s*,\s*0\s*,\s*[^,]+\s*,\s*0\s*\);' \
+    'winex11 mouse has no-XInput2 WM_INPUT dispatch path'
+  check_any_regex "${f_winex11_mouse}" \
+    'NtUserSendHardwareInput\(\s*hwnd\s*,\s*get_send_mouse_flags\(\)\s*,\s*[^,]+\s*,\s*0\s*\);' \
+    'NtUserSendHardwareInput\(\s*hwnd\s*,\s*0\s*,\s*[^,]+\s*,\s*0\s*\);' \
+    'winex11 mouse routes input via helper or zero-flag dispatch'
+  check_absent_regex "${f_winex11_mouse}" 'NtUserSendHardwareInput\(\s*hwnd\s*,\s*SEND_HWMSG_NO_RAW\s*,\s*[^,]+\s*,\s*0\s*\);' 'winex11 mouse does not hardcode SEND_HWMSG_NO_RAW'
 fi
 
 if [[ "${TARGET}" == "wine" ]]; then

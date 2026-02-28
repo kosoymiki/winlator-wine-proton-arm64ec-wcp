@@ -12,6 +12,9 @@ set -euo pipefail
 : "${WLT_CAPTURE_UI:=1}"
 : "${WLT_CAPTURE_PREFS:=1}"
 : "${WLT_CAPTURE_RUNTIME_CONTENTS:=1}"
+: "${WLT_CAPTURE_CONFLICT_LOGS:=1}"
+: "${WLT_PROCESS_SAMPLES:=6}"
+: "${WLT_PROCESS_SAMPLE_SEC:=1}"
 
 log() { printf '[forensic-complete] %s\n' "$*" >&2; }
 fail() { printf '[forensic-complete][error] %s\n' "$*" >&2; exit 1; }
@@ -105,8 +108,54 @@ dump_ui() {
 collect_logcat_filtered() {
   local out_file="$1"
   adb_s logcat -d | grep -E \
-    'ForensicLogger|RUNTIME_(GRAPHICS_SUITABILITY|PERF_PRESET_DOWNGRADED|UPSCALER_GUARD_APPLIED|SWFG_EFFECTIVE_CONFIG|SWFG_DISABLED_BY_GUARD|CONTAINER_UPSCALE_CONFIG_APPLIED|UPSCALE_LAUNCH_ENV_NORMALIZED|GLIBC_COMPAT_APPLIED|GLIBC_PRELOAD_STRIPPED)|LAUNCH_EXEC_(SUBMIT|EXIT)|SESSION_EXIT_|PARSER_(LOAD_SUMMARY|CONTAINER_MISSING_CONFIG)|ROUTE_(INTENT_RECEIVED|RESOLVED)|CONTAINER_CREATE_' \
+    'ForensicLogger|RUNTIME_(GRAPHICS_SUITABILITY|PERF_PRESET_DOWNGRADED|UPSCALER_GUARD_APPLIED|SWFG_EFFECTIVE_CONFIG|SWFG_DISABLED_BY_GUARD|CONTAINER_UPSCALE_CONFIG_APPLIED|UPSCALE_LAUNCH_ENV_NORMALIZED|GLIBC_COMPAT_APPLIED|GLIBC_PRELOAD_STRIPPED|SUBSYSTEM_SNAPSHOT|LOGGING_CONTRACT_SNAPSHOT|LIBRARY_COMPONENT_SIGNAL|LIBRARY_COMPONENT_CONFLICT|LIBRARY_CONFLICT_(SNAPSHOT|DETECTED)|DX_CAPABILITY_ENVELOPE|DX_ROUTE_POLICY|UPSCALE_RUNTIME_MATRIX)|AERO_(RUNTIME|LIBRARY|DXVK|VKD3D|UPSCALE|TURNIP|X11)_|WINLATOR_SIGNAL_|LAUNCH_EXEC_(SUBMIT|EXIT)|SESSION_EXIT_|PARSER_(LOAD_SUMMARY|CONTAINER_MISSING_CONFIG)|ROUTE_(INTENT_RECEIVED|RESOLVED)|CONTAINER_CREATE_' \
     | tail -n "${WLT_LOGCAT_LINES}" > "${out_file}" || true
+}
+
+collect_runtime_conflict_contour() {
+  local out_dir="$1"
+  [[ "${WLT_CAPTURE_CONFLICT_LOGS}" == "1" ]] || return 0
+
+  local contour_file="${out_dir}/logcat-runtime-conflict-contour.txt"
+  local source_files=(
+    "${out_dir}/logcat-full.txt"
+    "${out_dir}/forensics-jsonl-tail.txt"
+    "${out_dir}/runtime-logs"
+  )
+
+  {
+    rg -n \
+      'RUNTIME_(SUBSYSTEM_SNAPSHOT|LOGGING_CONTRACT_SNAPSHOT|LIBRARY_COMPONENT_SIGNAL|LIBRARY_COMPONENT_CONFLICT|LIBRARY_CONFLICT_(SNAPSHOT|DETECTED)|DX_CAPABILITY_ENVELOPE|UPSCALE_RUNTIME_MATRIX)|AERO_(RUNTIME|LIBRARY|DXVK|VKD3D|UPSCALE|TURNIP|X11)_|WINLATOR_SIGNAL_' \
+      "${source_files[@]}" -S 2>/dev/null || true
+  } > "${contour_file}"
+
+  python3 - "${contour_file}" > "${out_dir}/runtime-conflict-contour.summary.txt" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8", errors="ignore") if path.exists() else ""
+tokens = {
+    "runtime_subsystem_snapshot": r"RUNTIME_SUBSYSTEM_SNAPSHOT",
+    "runtime_logging_contract_snapshot": r"RUNTIME_LOGGING_CONTRACT_SNAPSHOT",
+    "runtime_library_component_signal": r"RUNTIME_LIBRARY_COMPONENT_SIGNAL",
+    "runtime_library_component_conflict": r"RUNTIME_LIBRARY_COMPONENT_CONFLICT",
+    "runtime_library_conflict_snapshot": r"RUNTIME_LIBRARY_CONFLICT_SNAPSHOT",
+    "runtime_library_conflict_detected": r"RUNTIME_LIBRARY_CONFLICT_DETECTED",
+    "aero_runtime_markers": r"AERO_RUNTIME_",
+    "aero_library_markers": r"AERO_LIBRARY_",
+    "aero_dxvk_markers": r"AERO_DXVK_",
+    "aero_vkd3d_markers": r"AERO_VKD3D_",
+    "aero_upscale_markers": r"AERO_UPSCALE_",
+    "aero_turnip_markers": r"AERO_TURNIP_",
+    "aero_x11_markers": r"AERO_X11_",
+    "signal_input_markers": r"WINLATOR_SIGNAL_INPUT_",
+}
+print("runtime_conflict_contour")
+for key, pattern in tokens.items():
+    print(f"{key}={len(re.findall(pattern, text))}")
+PY
 }
 
 collect_app_snapshots() {
@@ -166,6 +215,31 @@ collect_device_state() {
   adb_s shell pidof "${WLT_PACKAGE}" > "${out_dir}/pid.txt" 2>/dev/null || true
 }
 
+collect_process_emergence() {
+  local out_dir="$1"
+  local sample_file="${out_dir}/ps-emergence-samples.txt"
+  local i
+  : > "${sample_file}"
+  for ((i=1; i<=WLT_PROCESS_SAMPLES; i++)); do
+    {
+      printf '=== sample %s ===\n' "$(iso_now)"
+      adb_s shell "ps -A -o USER,PID,PPID,NAME,ARGS | awk 'BEGIN{IGNORECASE=1} NR==1{print;next} {n=\$4; l=\$0; if (n ~ /(wine|wineserver|jwm|box64|fex|xserver|dxvk|vkd3d|linker64)/ || l ~ /${WLT_PACKAGE//./[.]}/) print}'"
+      printf '\n'
+    } >> "${sample_file}" 2>/dev/null || true
+    sleep "${WLT_PROCESS_SAMPLE_SEC}"
+  done
+  local ws_count
+  local wine_count
+  ws_count="$(grep -i -c 'wineserver' "${sample_file}" 2>/dev/null || true)"
+  wine_count="$(grep -E -i -c '\bwine\b' "${sample_file}" 2>/dev/null || true)"
+  local present=0
+  if [[ "${ws_count}" -gt 0 || "${wine_count}" -gt 0 ]]; then
+    present=1
+  fi
+  printf 'ps_wineserver_count=%s\nps_wine_count=%s\nwine_process_present=%s\n' \
+    "${ws_count}" "${wine_count}" "${present}" > "${out_dir}/process-emergence.env"
+}
+
 collect_artifact_picker_ui() {
   local out_dir="$1"
   mkdir -p "${out_dir}"
@@ -183,6 +257,8 @@ collect_artifact_picker_ui() {
 main() {
   local cid trace_id scenario_dir
   require_cmd adb
+  require_cmd python3
+  [[ "${WLT_CAPTURE_CONFLICT_LOGS}" =~ ^[01]$ ]] || fail "WLT_CAPTURE_CONFLICT_LOGS must be 0 or 1"
   mkdir -p "${WLT_OUT_DIR}"
   ADB_SERIAL_PICKED="$(pick_serial)"
   [[ -n "${ADB_SERIAL_PICKED}" ]] || fail "No active adb device"
@@ -233,8 +309,10 @@ main() {
     adb_s logcat -d > "${scenario_dir}/logcat-full.txt" || true
     collect_logcat_filtered "${scenario_dir}/logcat-filtered.txt"
     collect_device_state "${scenario_dir}"
+    collect_process_emergence "${scenario_dir}"
     dump_ui "${scenario_dir}"
     collect_app_snapshots "${scenario_dir}"
+    collect_runtime_conflict_contour "${scenario_dir}"
     collect_sdcard_runtime_logs "${scenario_dir}" "${before_runtime_index}"
   done
 

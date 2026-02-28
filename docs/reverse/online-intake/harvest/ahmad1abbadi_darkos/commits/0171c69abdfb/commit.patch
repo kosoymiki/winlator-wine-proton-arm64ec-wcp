@@ -1,0 +1,22 @@
+commit 0171c69abdfb3ac783574e0997146d8c690a8887
+Author: hisham2630 <35382590+hisham2630@users.noreply.github.com>
+Date:   Wed Jul 17 00:52:00 2024 +0300
+
+    fixed a mistake run-darkos.py
+---
+ run-darkos.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/run-darkos.py b/run-darkos.py
+index c8bef69..b165d82 100644
+--- a/run-darkos.py
++++ b/run-darkos.py
+@@ -104,7 +104,7 @@ def restart_wine():
+             time.sleep(1) 
+         os.system("box64 wineserver -k &>/dev/null")
+         print(f"{G}{BOLD} Restarting WINE {W}")
+-        os.system("pkill -9 "\.exe$"")
++        os.system("pkill -9 '.exe$'")
+         os.system(f"touch {file_path}")
+         restart_program() 
+ def update_wine():

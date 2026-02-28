@@ -1,0 +1,133 @@
+# IDE-level ELF Reflective Report
+
+- Label: `device_proton_10_0_4_arm64ec_wcp`
+- Source: `out/reverse/sources/device/proton-10.0-4-arm64ec.wcp`
+- Binary files (ELF+PE): **1596**
+- ELF files: **34**
+- PE files: **1562**
+- Critical libs: **1596**
+- Machine distribution: `{'AArch64': 34, 'unknown': 1562}`
+- Cluster distribution: `{'misc': 1197, 'wine_runtime_core': 6, 'cpu_translation': 226, 'audio': 39, 'graphics_translation': 121, 'display_windowing': 7}`
+
+## Top critical libraries
+
+- `lib/wine/aarch64-unix/winealsa.so` [audio] needed=4 defined=2 undefined=133 jni=0 vk=0
+- `lib/wine/aarch64-windows/audioses.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_0.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_1.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_2.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_3.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_4.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_5.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_6.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/x3daudio1_7.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_0.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_1.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_2.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_3.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_4.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_5.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_6.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_7.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_8.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/xaudio2_9.dll` [audio] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/audioses.dll` [audio] needed=1 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_0.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_1.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_2.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_3.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_4.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_5.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_6.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/x3daudio1_7.dll` [audio] needed=3 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_0.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_1.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_2.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_3.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_4.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_5.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_6.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_7.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_8.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/i386-windows/xaudio2_9.dll` [audio] needed=7 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-unix/opengl32.so` [cpu_translation] needed=4 defined=2 undefined=36 jni=0 vk=0
+- `lib/wine/aarch64-unix/winepulse.so` [cpu_translation] needed=5 defined=3 undefined=97 jni=0 vk=0
+- `lib/wine/aarch64-windows/advapi32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/appwiz.cpl` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/appxdeploymentclient.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/avicap32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/bcrypt.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/cabinet.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/combase.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/comdlg32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/crypt32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/cryptowinrt.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/cryptui.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/ctapi32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/dataexchange.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/dbghelp.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/dnsapi.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/dsound.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/dwrite.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/explorer.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/fltmgr.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/gdi32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/hidclass.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/http.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/ieframe.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/jscript.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/kerberos.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/kernel32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/kernelbase.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/ksecdd.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/localspl.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mfplat.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mmdevapi.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mouhid.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mountmgr.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msado15.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mscoree.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msctf.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/mshtml.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msi.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msv1_0.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcm80.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp100.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp110.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp120.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp120_app.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp140.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp60.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp70.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp71.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp80.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp90.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcp_win.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvcr120.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/msvfw32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/ndis.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/netapi32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/netio.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/notepad.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/nsiproxy.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/ntoskrnl.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/odbc32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/oledlg.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/oleview.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/opencl.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/opengl32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/progman.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/qcap.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/regedit.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/riched20.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/rpcrt4.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/rtutils.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/scrrun.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/scsiport.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/sechost.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/secur32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/services.exe` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/setupapi.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/sharedgpures.sys` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/shell32.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0
+- `lib/wine/aarch64-windows/shlwapi.dll` [cpu_translation] needed=0 defined=0 undefined=0 jni=0 vk=0

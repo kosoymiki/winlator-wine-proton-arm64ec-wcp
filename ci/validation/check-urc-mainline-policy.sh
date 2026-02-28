@@ -271,6 +271,7 @@ main() {
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameNative'
   require_contains "docs/GN_GH_BACKLOG_MATRIX.md" 'GameHub'
   require_file "ci/contents/validate-contents-json.py"
+  require_file "ci/validation/check-contents-qa-contract.py"
   require_file "ci/validation/gh-mainline-health.sh"
   require_file "ci/validation/gh-run-root-cause.sh"
   require_file "ci/validation/gh-latest-failures.sh"
@@ -293,6 +294,14 @@ main() {
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CAPTURE_ONLINE_INTAKE'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_REQUIRED'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_SNAPSHOT_FAIL_MODE'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CAPTURE_CONTENTS_QA'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CONTENTS_QA_REQUIRED'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CAPTURE_WCP_PARITY'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_REQUIRED'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_LABELS'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_USE_HIGH_CYCLE'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_PROFILE'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_FETCH'
@@ -314,6 +323,10 @@ main() {
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'run-high-priority-cycle\.sh'
   require_file "contents/contents.json"
   python3 "ci/contents/validate-contents-json.py" "contents/contents.json" >/dev/null
+  local contents_qa_report
+  contents_qa_report="$(mktemp /tmp/contents-qa-contract.XXXXXX.md)"
+  python3 "ci/validation/check-contents-qa-contract.py" --root . --output "${contents_qa_report}" >/dev/null
+  rm -f "${contents_qa_report}" "${contents_qa_report%.md}.json"
   require_file "docs/UNIFIED_RUNTIME_CONTRACT.md"
   require_file "docs/EXTERNAL_SIGNAL_CONTRACT.md"
   require_file "ci/research/reverse-wcp-package.py"
@@ -544,8 +557,15 @@ main() {
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_SYNC_BRANCH_PINS'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_ONLINE_INTAKE_HARVEST_FAIL_ON_REPO_ERRORS'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CAPTURE_URC'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'contents_qa_rc'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'wcp_parity_rc'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'commit_scan_rc'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'online-commit-scan\.sh'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'check-contents-qa-contract\.py'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'run-wcp-parity-suite\.sh'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_OUT_DIR'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_CONTENTS_QA_REQUIRED'
+  require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'WLT_WCP_PARITY_REQUIRED'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'ONLINE_COMMIT_SCAN_AUTO=0'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'ONLINE_RUN_HARVEST'
   require_contains "ci/validation/collect-mainline-forensic-snapshot.sh" 'ONLINE_RUN_SNAPSHOT_AUDIT'
@@ -1124,6 +1144,15 @@ PY
   require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_RUN_PATCH_BASE'
   require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_PATCH_BASE_PROFILE'
   require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_PATCH_BASE_PHASE'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_RUN_CONTENTS_QA'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_RUN_WCP_PARITY'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_RELEASE_PREP_WCP_PARITY_LABELS'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'check-contents-qa-contract\.py'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'run-wcp-parity-suite\.sh'
+  require_contains "ci/validation/prepare-release-patch-base.sh" 'WLT_WCP_PARITY_PAIRS_FILE'
   require_contains "ci/validation/prepare-release-patch-base.sh" 'run-patch-base-cycle\.sh'
   require_contains "ci/validation/prepare-release-patch-base.sh" 'check-patch-stack\.sh'
   require_contains "ci/validation/prepare-release-patch-base.sh" 'ONLINE_INTAKE_FETCH=0'
@@ -1162,8 +1191,64 @@ PY
   require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RUN_COMMIT_SCAN'
   require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE'
   require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_LABELS'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_LABELS'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_RUN_CONTENTS_QA='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_RUN_WCP_PARITY='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_WCP_PARITY_PAIRS_FILE='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_RELEASE_PREP_WCP_PARITY_LABELS='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_CAPTURE_CONTENTS_QA='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_CONTENTS_QA_REQUIRED='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_CAPTURE_WCP_PARITY='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_WCP_PARITY_REQUIRED='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_WCP_PARITY_REQUIRE_ANY='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_WCP_PARITY_FAIL_ON_MISSING='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_WCP_PARITY_PAIRS_FILE='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_WCP_PARITY_LABELS='
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_RUN_WCP_PARITY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'WLT_FINAL_STAGE_WCP_PARITY_LABELS'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'run-wcp-parity-suite\.sh'
+  require_contains "ci/validation/run-final-stage-gates.sh" 'wcp_parity_rc'
   require_contains "ci/validation/run-final-stage-gates.sh" 'commit_scan_rc'
   require_contains "ci/validation/run-final-stage-gates.sh" 'online-commit-scan\.sh'
+  require_file "ci/validation/check-wcp-content-parity.py"
+  [[ -x "ci/validation/check-wcp-content-parity.py" ]] || fail "check-wcp-content-parity.py must be executable"
+  require_file "ci/validation/run-wcp-parity-suite.sh"
+  [[ -x "ci/validation/run-wcp-parity-suite.sh" ]] || fail "run-wcp-parity-suite.sh must be executable"
+  require_file "ci/validation/wcp-parity-pairs.tsv"
+  require_contains "ci/validation/run-wcp-parity-suite.sh" 'WLT_WCP_PARITY_PAIRS_FILE'
+  require_contains "ci/validation/run-wcp-parity-suite.sh" 'WLT_WCP_PARITY_REQUIRE_ANY'
+  require_contains "ci/validation/run-wcp-parity-suite.sh" 'WLT_WCP_PARITY_FAIL_ON_MISSING'
+  require_contains "ci/validation/run-wcp-parity-suite.sh" 'WLT_WCP_PARITY_LABELS'
+  require_contains "ci/validation/run-wcp-parity-suite.sh" 'check-wcp-content-parity\.py'
+  require_contains "ci/validation/check-wcp-content-parity.py" 'CRITICAL_PATHS'
+  require_contains "ci/validation/check-wcp-content-parity.py" 'source payload missing critical paths'
+  require_contains "ci/validation/check-wcp-content-parity.py" 'Source scan root'
+  require_contains "ci/validation/check-contents-qa-contract.py" 'TARGET_HUB_PROFILES_URL'
+  require_contains "ci/validation/check-contents-qa-contract.py" 'check_contents_validator_contract'
+  require_contains "ci/validation/check-contents-qa-contract.py" 'check_release_publish_contract'
+  require_contains "ci/validation/check-contents-qa-contract.py" 'WCP_TAG="wcp-stable"'
+  require_contains "ci/validation/wcp-parity-pairs.tsv" '^proton104_vs_aesolator_10_0_4[[:space:]]'
+  require_contains "ci/validation/wcp-parity-pairs.tsv" '^protonwine10GN_vs_aesolator_11[[:space:]]'
+  require_contains "docs/CONTENTS_QA_CHECKLIST.md" 'run-wcp-parity-suite\.sh'
+  require_contains "docs/reverse/README.md" 'run-wcp-parity-suite\.sh'
   require_file "ci/winlator/check-patch-batches.sh"
   [[ -x "ci/winlator/check-patch-batches.sh" ]] || fail "check-patch-batches.sh must be executable"
   require_contains "ci/winlator/check-patch-batches.sh" 'WINLATOR_PATCH_BATCH_PLAN_FILE'

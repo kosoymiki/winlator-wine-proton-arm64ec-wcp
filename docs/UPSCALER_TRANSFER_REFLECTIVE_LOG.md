@@ -238,3 +238,42 @@ consolidated in the patch stack to reduce maintenance overhead:
 - No apply-order conflicts found across `0001..0030` (stack applies end-to-end).
 - High-overlap files confirmed and documented (`XServerDisplayActivity`, `GuestProgramLauncherComponent`, `Container*`, `Contents*`).
 - Only non-fatal hygiene warning observed: cached diff whitespace warning on CRLF XML lines in `container_detail_fragment.xml` touched by `0030`.
+
+## Harvard Slice Era (`0004..0010`) - X11/DXVK/Turnip/Upscaler Matrix
+
+### Before
+- Историческая линия `0025..0052` закрывала перенос SWFG/Eden-контролов, но не давала полного X11-first DX matrix контракта с единым packet-submit path.
+- Не хватало строгой связки:
+  - requested/effective DX stack для всех DirectX путей,
+  - policy-order маркера для DX chain,
+  - NVAPI capability + ARM64EC gate,
+  - Proton FSR hack gate по фактическому DXVK stack.
+
+### During
+- В рабочем слое `0004..0010` переведена логика на модульный control plane в Adrenotools:
+  - `vkbasalt` (включая FSR/NIS/CAS),
+  - `screenfx`,
+  - `scaleforce`,
+  - `dx8 assist` policy (`auto|shortcut_only|force_d8vk`).
+- Добавлены runtime/launcher инварианты:
+  - `AERO_DX_DIRECT_MAP` и по-путевые requested/effective markers (`dx1..dx12`),
+  - `AERO_DX_POLICY_ORDER=ddraw->dx8assist->dxvk->vkd3d`,
+  - `AERO_DXVK_CAPS` + `AERO_DXVK_NVAPI_REQUESTED/EFFECTIVE`,
+  - ARM64EC capability markers (`AERO_DXVK_NVAPI_ARCH_*`),
+  - `AERO_UPSCALE_RUNTIME_MATRIX`,
+  - `AERO_LAUNCH_GRAPHICS_PACKET*` с пробросом в `LAUNCH_EXEC_SUBMIT`.
+- Усилен distro/runtime контур:
+  - `AERO_RUNTIME_FLAVOR` (wine/proton family),
+  - `AERO_RUNTIME_DISTRIBUTION=ae.solator`,
+  - upscaler layout bridge через `WINEDLLOVERRIDES` с forensic-метками layout state.
+
+### After
+- Апскейлер-стек работает как часть единого X11-first графического пакета запуска, а не как набор разрозненных env-флагов.
+- Wine/Proton launch path получает одинаковую детерминированную схему:
+  - profile -> module state -> DX policy -> capability gate -> launch packet.
+- Регрессионный риск снижен за счет контрактных проверок:
+  - `validate-patch-sequence`,
+  - `check-patch-stack (0001..0010)`,
+  - `run-reflective-audits`,
+  - `check-urc-mainline-policy`,
+  - `run-final-stage-gates` (strict/no-fetch paths).

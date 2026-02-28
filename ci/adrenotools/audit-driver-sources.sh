@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-PATCH_FILE="${PATCH_FILE:-${ROOT_DIR}/ci/winlator/patches/0028-adrenotools-native-gamenative-browser-polish-and-version-sorting.patch}"
+PATCH_FILE="${PATCH_FILE:-${ROOT_DIR}/ci/winlator/patches/0001-mainline-full-stack-consolidated.patch}"
 OUT_FILE="${OUT_FILE:-${ROOT_DIR}/docs/ADRENOTOOLS_DRIVER_SOURCES_AUDIT.md}"
 TIMEOUT_SEC="${TIMEOUT_SEC:-15}"
 

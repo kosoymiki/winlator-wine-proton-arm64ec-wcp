@@ -1,7 +1,7 @@
 # Adrenotools Driver Sources Audit
 
 - Generated: 2026-02-24T22:44:42+03:00
-- Patch source: `ci/winlator/patches/0028-adrenotools-native-gamenative-browser-polish-and-version-sorting.patch`
+- Patch source: `ci/winlator/patches/0001-mainline-full-stack-consolidated.patch`
 - Timeout per URL: 15s
 
 ## Summary

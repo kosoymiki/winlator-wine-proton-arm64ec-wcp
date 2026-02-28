@@ -1,0 +1,824 @@
+# IDE Cycle Multi-source Comparison
+
+## Sources
+
+- `proton104_wcp_local`: source=`/home/mikhail/Загрузки/proton-10-4-arm64ec.wcp.xz` binary_count=**1596** (elf=34, pe=1562) critical=**1596**
+- `gamehub_apk_local`: source=`/home/mikhail/GameHub+5.3.5.Lite_RM.mod_DocProv_mod.apk` binary_count=**39** (elf=39, pe=0) critical=**12**
+- `gamenative_apk_local`: source=`/home/mikhail/gamenative-v0.7.2.apk` binary_count=**37** (elf=35, pe=2) critical=**10**
+- `app_gamenative_apk_device`: source=`out/reverse/sources/device/app_gamenative.base.apk` binary_count=**37** (elf=35, pe=2) critical=**10**
+- `com_miHoYo_GenshinImpact_apk_device`: source=`out/reverse/sources/device/com_miHoYo_GenshinImpact.base.apk` binary_count=**39** (elf=39, pe=0) critical=**12**
+- `by_aero_so_benchmark_apk_device`: source=`out/reverse/sources/device/by_aero_so_benchmark.base.apk` binary_count=**17** (elf=15, pe=2) critical=**4**
+- `device_proton_10_0_4_arm64ec_wcp`: source=`out/reverse/sources/device/proton-10.0-4-arm64ec.wcp` binary_count=**1596** (elf=34, pe=1562) critical=**1596**
+- `device_protonwine10_gamenative_arm64ec_wcp`: source=`out/reverse/sources/device/protonwine10-gamenative-arm64ec.wcp` binary_count=**1607** (elf=47, pe=1560) critical=**1604**
+- `device_vkd3d_proton_3_0b_wcp`: source=`out/reverse/sources/device/vkd3d-proton-3.0b.wcp` binary_count=**4** (elf=0, pe=4) critical=**4**
+- `device_vkd3d_proton_arm64ec_3_0b_wcp`: source=`out/reverse/sources/device/vkd3d-proton-arm64ec-3.0b.wcp` binary_count=**4** (elf=0, pe=4) critical=**4**
+- `device_proton_10_4_arm64ec_wcp_xz`: source=`out/reverse/sources/device/proton-10-4-arm64ec.wcp.xz` binary_count=**1596** (elf=34, pe=1562) critical=**1596**
+- `aerosolator_contents_10_0_4_arm64ec_1`: source=`out/reverse/sources/device/by_aero_so_benchmark_10.0-4-arm64ec-1/10.0-4-arm64ec-1` binary_count=**1604** (elf=34, pe=1570) critical=**1604**
+- `aerosolator_contents_11_arm64ec_1`: source=`out/reverse/sources/device/by_aero_so_benchmark_11-arm64ec-1/11-arm64ec-1` binary_count=**1701** (elf=60, pe=1641) critical=**1693**
+
+## Cluster distribution by source
+
+- `proton104_wcp_local`: `{'misc': 1253, 'wine_runtime_core': 6, 'cpu_translation': 166, 'audio': 43, 'graphics_translation': 121, 'display_windowing': 7}`
+- `gamehub_apk_local`: `{'misc': 28, 'cpu_translation': 9, 'display_windowing': 2}`
+- `gamenative_apk_local`: `{'misc': 21, 'cpu_translation': 10, 'audio': 6}`
+- `app_gamenative_apk_device`: `{'misc': 21, 'cpu_translation': 10, 'audio': 6}`
+- `com_miHoYo_GenshinImpact_apk_device`: `{'misc': 28, 'cpu_translation': 9, 'display_windowing': 2}`
+- `by_aero_so_benchmark_apk_device`: `{'misc': 10, 'cpu_translation': 4, 'audio': 3}`
+- `device_proton_10_0_4_arm64ec_wcp`: `{'misc': 1197, 'wine_runtime_core': 6, 'cpu_translation': 226, 'audio': 39, 'graphics_translation': 121, 'display_windowing': 7}`
+- `device_protonwine10_gamenative_arm64ec_wcp`: `{'misc': 1205, 'cpu_translation': 226, 'wine_runtime_core': 7, 'audio': 40, 'graphics_translation': 122, 'display_windowing': 7}`
+- `device_vkd3d_proton_3_0b_wcp`: `{'graphics_translation': 2, 'wine_runtime_core': 2}`
+- `device_vkd3d_proton_arm64ec_3_0b_wcp`: `{'graphics_translation': 2, 'wine_runtime_core': 2}`
+- `device_proton_10_4_arm64ec_wcp_xz`: `{'misc': 1253, 'wine_runtime_core': 6, 'cpu_translation': 166, 'audio': 43, 'graphics_translation': 121, 'display_windowing': 7}`
+- `aerosolator_contents_10_0_4_arm64ec_1`: `{'misc': 1205, 'wine_runtime_core': 6, 'cpu_translation': 226, 'audio': 39, 'graphics_translation': 121, 'display_windowing': 7}`
+- `aerosolator_contents_11_arm64ec_1`: `{'misc': 1301, 'cpu_translation': 222, 'wine_runtime_core': 7, 'audio': 42, 'graphics_translation': 122, 'display_windowing': 7}`
+
+## Pairwise overlap
+
+- `proton104_wcp_local` vs `gamehub_apk_local`: common=0, only_a=1596, only_b=39
+- `proton104_wcp_local` vs `gamenative_apk_local`: common=0, only_a=1596, only_b=37
+- `proton104_wcp_local` vs `app_gamenative_apk_device`: common=0, only_a=1596, only_b=37
+- `proton104_wcp_local` vs `com_miHoYo_GenshinImpact_apk_device`: common=0, only_a=1596, only_b=39
+- `proton104_wcp_local` vs `by_aero_so_benchmark_apk_device`: common=0, only_a=1596, only_b=17
+- `proton104_wcp_local` vs `device_proton_10_0_4_arm64ec_wcp`: common=1596, only_a=0, only_b=0
+- `proton104_wcp_local` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=1593, only_a=3, only_b=14
+- `proton104_wcp_local` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=1596, only_b=4
+- `proton104_wcp_local` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=1596, only_b=4
+- `proton104_wcp_local` vs `device_proton_10_4_arm64ec_wcp_xz`: common=1596, only_a=0, only_b=0
+- `proton104_wcp_local` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=1596, only_a=0, only_b=8
+- `proton104_wcp_local` vs `aerosolator_contents_11_arm64ec_1`: common=1562, only_a=34, only_b=139
+- `gamehub_apk_local` vs `gamenative_apk_local`: common=2, only_a=37, only_b=35
+- `gamehub_apk_local` vs `app_gamenative_apk_device`: common=2, only_a=37, only_b=35
+- `gamehub_apk_local` vs `com_miHoYo_GenshinImpact_apk_device`: common=39, only_a=0, only_b=0
+- `gamehub_apk_local` vs `by_aero_so_benchmark_apk_device`: common=0, only_a=39, only_b=17
+- `gamehub_apk_local` vs `device_proton_10_0_4_arm64ec_wcp`: common=0, only_a=39, only_b=1596
+- `gamehub_apk_local` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=0, only_a=39, only_b=1607
+- `gamehub_apk_local` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=39, only_b=4
+- `gamehub_apk_local` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=39, only_b=4
+- `gamehub_apk_local` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=39, only_b=1596
+- `gamehub_apk_local` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=39, only_b=1604
+- `gamehub_apk_local` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=39, only_b=1701
+- `gamenative_apk_local` vs `app_gamenative_apk_device`: common=37, only_a=0, only_b=0
+- `gamenative_apk_local` vs `com_miHoYo_GenshinImpact_apk_device`: common=2, only_a=35, only_b=37
+- `gamenative_apk_local` vs `by_aero_so_benchmark_apk_device`: common=12, only_a=25, only_b=5
+- `gamenative_apk_local` vs `device_proton_10_0_4_arm64ec_wcp`: common=0, only_a=37, only_b=1596
+- `gamenative_apk_local` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=0, only_a=37, only_b=1607
+- `gamenative_apk_local` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=37, only_b=4
+- `gamenative_apk_local` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=37, only_b=4
+- `gamenative_apk_local` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=37, only_b=1596
+- `gamenative_apk_local` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=37, only_b=1604
+- `gamenative_apk_local` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=37, only_b=1701
+- `app_gamenative_apk_device` vs `com_miHoYo_GenshinImpact_apk_device`: common=2, only_a=35, only_b=37
+- `app_gamenative_apk_device` vs `by_aero_so_benchmark_apk_device`: common=12, only_a=25, only_b=5
+- `app_gamenative_apk_device` vs `device_proton_10_0_4_arm64ec_wcp`: common=0, only_a=37, only_b=1596
+- `app_gamenative_apk_device` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=0, only_a=37, only_b=1607
+- `app_gamenative_apk_device` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=37, only_b=4
+- `app_gamenative_apk_device` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=37, only_b=4
+- `app_gamenative_apk_device` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=37, only_b=1596
+- `app_gamenative_apk_device` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=37, only_b=1604
+- `app_gamenative_apk_device` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=37, only_b=1701
+- `com_miHoYo_GenshinImpact_apk_device` vs `by_aero_so_benchmark_apk_device`: common=0, only_a=39, only_b=17
+- `com_miHoYo_GenshinImpact_apk_device` vs `device_proton_10_0_4_arm64ec_wcp`: common=0, only_a=39, only_b=1596
+- `com_miHoYo_GenshinImpact_apk_device` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=0, only_a=39, only_b=1607
+- `com_miHoYo_GenshinImpact_apk_device` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=39, only_b=4
+- `com_miHoYo_GenshinImpact_apk_device` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=39, only_b=4
+- `com_miHoYo_GenshinImpact_apk_device` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=39, only_b=1596
+- `com_miHoYo_GenshinImpact_apk_device` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=39, only_b=1604
+- `com_miHoYo_GenshinImpact_apk_device` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=39, only_b=1701
+- `by_aero_so_benchmark_apk_device` vs `device_proton_10_0_4_arm64ec_wcp`: common=0, only_a=17, only_b=1596
+- `by_aero_so_benchmark_apk_device` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=0, only_a=17, only_b=1607
+- `by_aero_so_benchmark_apk_device` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=17, only_b=4
+- `by_aero_so_benchmark_apk_device` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=17, only_b=4
+- `by_aero_so_benchmark_apk_device` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=17, only_b=1596
+- `by_aero_so_benchmark_apk_device` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=17, only_b=1604
+- `by_aero_so_benchmark_apk_device` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=17, only_b=1701
+- `device_proton_10_0_4_arm64ec_wcp` vs `device_protonwine10_gamenative_arm64ec_wcp`: common=1593, only_a=3, only_b=14
+- `device_proton_10_0_4_arm64ec_wcp` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=1596, only_b=4
+- `device_proton_10_0_4_arm64ec_wcp` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=1596, only_b=4
+- `device_proton_10_0_4_arm64ec_wcp` vs `device_proton_10_4_arm64ec_wcp_xz`: common=1596, only_a=0, only_b=0
+- `device_proton_10_0_4_arm64ec_wcp` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=1596, only_a=0, only_b=8
+- `device_proton_10_0_4_arm64ec_wcp` vs `aerosolator_contents_11_arm64ec_1`: common=1562, only_a=34, only_b=139
+- `device_protonwine10_gamenative_arm64ec_wcp` vs `device_vkd3d_proton_3_0b_wcp`: common=0, only_a=1607, only_b=4
+- `device_protonwine10_gamenative_arm64ec_wcp` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=0, only_a=1607, only_b=4
+- `device_protonwine10_gamenative_arm64ec_wcp` vs `device_proton_10_4_arm64ec_wcp_xz`: common=1593, only_a=14, only_b=3
+- `device_protonwine10_gamenative_arm64ec_wcp` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=1593, only_a=14, only_b=11
+- `device_protonwine10_gamenative_arm64ec_wcp` vs `aerosolator_contents_11_arm64ec_1`: common=1573, only_a=34, only_b=128
+- `device_vkd3d_proton_3_0b_wcp` vs `device_vkd3d_proton_arm64ec_3_0b_wcp`: common=4, only_a=0, only_b=0
+- `device_vkd3d_proton_3_0b_wcp` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=4, only_b=1596
+- `device_vkd3d_proton_3_0b_wcp` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=4, only_b=1604
+- `device_vkd3d_proton_3_0b_wcp` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=4, only_b=1701
+- `device_vkd3d_proton_arm64ec_3_0b_wcp` vs `device_proton_10_4_arm64ec_wcp_xz`: common=0, only_a=4, only_b=1596
+- `device_vkd3d_proton_arm64ec_3_0b_wcp` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=0, only_a=4, only_b=1604
+- `device_vkd3d_proton_arm64ec_3_0b_wcp` vs `aerosolator_contents_11_arm64ec_1`: common=0, only_a=4, only_b=1701
+- `device_proton_10_4_arm64ec_wcp_xz` vs `aerosolator_contents_10_0_4_arm64ec_1`: common=1596, only_a=0, only_b=8
+- `device_proton_10_4_arm64ec_wcp_xz` vs `aerosolator_contents_11_arm64ec_1`: common=1562, only_a=34, only_b=139
+- `aerosolator_contents_10_0_4_arm64ec_1` vs `aerosolator_contents_11_arm64ec_1`: common=1570, only_a=34, only_b=131
+
+## High-value drift candidates
+
+- `bin/widl` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=26f920092ac1 cluster=misc critical=False defined=4 undefined=78
+  - aerosolator_contents_11_arm64ec_1: sha=2d8d65d5d509 cluster=misc critical=False defined=4 undefined=77
+- `bin/wine` (soname=``)
+  - proton104_wcp_local: sha=bbb474f5fe8d cluster=misc critical=True defined=3 undefined=23
+  - device_proton_10_0_4_arm64ec_wcp: sha=bbb474f5fe8d cluster=misc critical=True defined=3 undefined=23
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6a033729202b cluster=misc critical=True defined=3 undefined=24
+  - device_proton_10_4_arm64ec_wcp_xz: sha=bbb474f5fe8d cluster=misc critical=True defined=3 undefined=23
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=bbb474f5fe8d cluster=misc critical=True defined=3 undefined=23
+  - aerosolator_contents_11_arm64ec_1: sha=6a033729202b cluster=misc critical=True defined=3 undefined=24
+- `bin/wine-preloader` (soname=``)
+  - proton104_wcp_local: sha=e92dc5b98eb6 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=e92dc5b98eb6 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=c078b1ee39cc cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=e92dc5b98eb6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e92dc5b98eb6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=c078b1ee39cc cluster=misc critical=True defined=0 undefined=0
+- `bin/wine64` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6a033729202b cluster=misc critical=True defined=3 undefined=24
+  - aerosolator_contents_11_arm64ec_1: sha=6a033729202b cluster=misc critical=True defined=3 undefined=24
+- `bin/winebuild` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=d55848635911 cluster=misc critical=True defined=4 undefined=74
+  - aerosolator_contents_11_arm64ec_1: sha=80a9e6782145 cluster=misc critical=True defined=4 undefined=74
+- `bin/winecpp` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7d189c0cf345 cluster=misc critical=True defined=4 undefined=57
+  - aerosolator_contents_11_arm64ec_1: sha=0bb7f27c03a3 cluster=misc critical=True defined=4 undefined=58
+- `bin/winedump` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=c0de3a99ad41 cluster=cpu_translation critical=True defined=4 undefined=60
+  - aerosolator_contents_11_arm64ec_1: sha=2dfcdcaf05c9 cluster=cpu_translation critical=True defined=4 undefined=60
+- `bin/wineg++` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7d189c0cf345 cluster=misc critical=True defined=4 undefined=57
+  - aerosolator_contents_11_arm64ec_1: sha=0bb7f27c03a3 cluster=misc critical=True defined=4 undefined=58
+- `bin/winegcc` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7d189c0cf345 cluster=misc critical=True defined=4 undefined=57
+  - aerosolator_contents_11_arm64ec_1: sha=0bb7f27c03a3 cluster=misc critical=True defined=4 undefined=58
+- `bin/wineserver` (soname=``)
+  - proton104_wcp_local: sha=60e2b085f0d4 cluster=wine_runtime_core critical=True defined=1 undefined=142
+  - device_proton_10_0_4_arm64ec_wcp: sha=6ce5eab44aac cluster=wine_runtime_core critical=True defined=1 undefined=142
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=3479531b766d cluster=wine_runtime_core critical=True defined=1 undefined=140
+  - device_proton_10_4_arm64ec_wcp_xz: sha=60e2b085f0d4 cluster=wine_runtime_core critical=True defined=1 undefined=142
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=6ce5eab44aac cluster=wine_runtime_core critical=True defined=1 undefined=142
+  - aerosolator_contents_11_arm64ec_1: sha=3479531b766d cluster=wine_runtime_core critical=True defined=1 undefined=140
+- `bin/wmc` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=0e7c875e77fc cluster=misc critical=False defined=4 undefined=53
+  - aerosolator_contents_11_arm64ec_1: sha=b828f0a00502 cluster=misc critical=False defined=4 undefined=53
+- `bin/wrc` (soname=``)
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=943780a3b6a6 cluster=misc critical=False defined=4 undefined=73
+  - aerosolator_contents_11_arm64ec_1: sha=8c2ba6bf504b cluster=misc critical=False defined=4 undefined=73
+- `lib/arm64-v8a/libJieLiUsbOta.so` (soname=`libJieLiUsbOta.so`)
+  - gamehub_apk_local: sha=daf4fb614e37 cluster=cpu_translation critical=True defined=1936 undefined=113
+  - com_miHoYo_GenshinImpact_apk_device: sha=daf4fb614e37 cluster=cpu_translation critical=True defined=1936 undefined=113
+- `lib/arm64-v8a/libavutil-55.so` (soname=`libavutil-55.so`)
+  - gamehub_apk_local: sha=3ae207f0ae9b cluster=cpu_translation critical=True defined=489 undefined=81
+  - com_miHoYo_GenshinImpact_apk_device: sha=3ae207f0ae9b cluster=cpu_translation critical=True defined=489 undefined=81
+- `lib/arm64-v8a/libc++_shared.so` (soname=`libc++_shared.so`)
+  - gamenative_apk_local: sha=4e2dcc0b0bea cluster=cpu_translation critical=True defined=2337 undefined=160
+  - app_gamenative_apk_device: sha=4e2dcc0b0bea cluster=cpu_translation critical=True defined=2337 undefined=160
+- `lib/arm64-v8a/libdummyvk.so` (soname=`libdummyvk.so`)
+  - gamenative_apk_local: sha=173c8c4927be cluster=cpu_translation critical=True defined=1930 undefined=127
+  - app_gamenative_apk_device: sha=173c8c4927be cluster=cpu_translation critical=True defined=1930 undefined=127
+- `lib/arm64-v8a/libextras.so` (soname=`libextras.so`)
+  - gamenative_apk_local: sha=757fa1673787 cluster=cpu_translation critical=True defined=557 undefined=93
+  - app_gamenative_apk_device: sha=757fa1673787 cluster=cpu_translation critical=True defined=557 undefined=93
+- `lib/arm64-v8a/libffmpeg-command.so` (soname=`libffmpeg-command.so`)
+  - gamehub_apk_local: sha=cb48a4c08d87 cluster=cpu_translation critical=True defined=585 undefined=409
+  - com_miHoYo_GenshinImpact_apk_device: sha=cb48a4c08d87 cluster=cpu_translation critical=True defined=585 undefined=409
+- `lib/arm64-v8a/libffmpeg-org.so` (soname=`libffmpeg-org.so`)
+  - gamehub_apk_local: sha=ed3512e282f0 cluster=cpu_translation critical=True defined=10114 undefined=248
+  - com_miHoYo_GenshinImpact_apk_device: sha=ed3512e282f0 cluster=cpu_translation critical=True defined=10114 undefined=248
+- `lib/arm64-v8a/libhook_impl.so` (soname=`libhook_impl.so`)
+  - gamenative_apk_local: sha=4c26f1528ca2 cluster=cpu_translation critical=True defined=536 undefined=77
+  - app_gamenative_apk_device: sha=4c26f1528ca2 cluster=cpu_translation critical=True defined=536 undefined=77
+  - by_aero_so_benchmark_apk_device: sha=67735469a232 cluster=misc critical=False defined=531 undefined=84
+- `lib/arm64-v8a/libijkffmpeg.so` (soname=`libijkffmpeg.so`)
+  - gamehub_apk_local: sha=526b247dd185 cluster=cpu_translation critical=True defined=8588 undefined=197
+  - com_miHoYo_GenshinImpact_apk_device: sha=526b247dd185 cluster=cpu_translation critical=True defined=8588 undefined=197
+- `lib/arm64-v8a/libijkplayer.so` (soname=`libijkplayer.so`)
+  - gamehub_apk_local: sha=16a2954c81af cluster=cpu_translation critical=True defined=831 undefined=359
+  - com_miHoYo_GenshinImpact_apk_device: sha=16a2954c81af cluster=cpu_translation critical=True defined=831 undefined=359
+- `lib/arm64-v8a/libjingle_peerconnection_so.so` (soname=`libjingle_peerconnection_so.so`)
+  - gamehub_apk_local: sha=3e5490c126a8 cluster=cpu_translation critical=True defined=183 undefined=240
+  - com_miHoYo_GenshinImpact_apk_device: sha=3e5490c126a8 cluster=cpu_translation critical=True defined=183 undefined=240
+- `lib/arm64-v8a/libmain_hook.so` (soname=`libmain_hook.so`)
+  - gamenative_apk_local: sha=661ed2bb87c3 cluster=misc critical=False defined=2 undefined=5
+  - app_gamenative_apk_device: sha=661ed2bb87c3 cluster=misc critical=False defined=2 undefined=5
+  - by_aero_so_benchmark_apk_device: sha=5c82eaf31e97 cluster=misc critical=False defined=2 undefined=5
+- `lib/arm64-v8a/libopenxr_loader.so` (soname=`libopenxr_loader.so`)
+  - gamenative_apk_local: sha=cd6c054dbc2c cluster=cpu_translation critical=True defined=58 undefined=172
+  - app_gamenative_apk_device: sha=cd6c054dbc2c cluster=cpu_translation critical=True defined=58 undefined=172
+  - by_aero_so_benchmark_apk_device: sha=5fdf03d24744 cluster=cpu_translation critical=True defined=58 undefined=171
+- `lib/arm64-v8a/libpatchelf.so` (soname=`libpatchelf.so`)
+  - gamenative_apk_local: sha=8888caf11b05 cluster=cpu_translation critical=True defined=3056 undefined=146
+  - app_gamenative_apk_device: sha=8888caf11b05 cluster=cpu_translation critical=True defined=3056 undefined=146
+  - by_aero_so_benchmark_apk_device: sha=cc8dbd58b041 cluster=cpu_translation critical=True defined=2623 undefined=127
+- `lib/arm64-v8a/libpulsecore-13.0.so` (soname=`libpulsecore-13.0.so`)
+  - gamenative_apk_local: sha=06bc87b6f725 cluster=cpu_translation critical=True defined=642 undefined=297
+  - app_gamenative_apk_device: sha=06bc87b6f725 cluster=cpu_translation critical=True defined=642 undefined=297
+  - by_aero_so_benchmark_apk_device: sha=06bc87b6f725 cluster=cpu_translation critical=True defined=642 undefined=297
+- `lib/arm64-v8a/libswscale-4.so` (soname=`libswscale-4.so`)
+  - gamehub_apk_local: sha=4e5526daab8b cluster=cpu_translation critical=True defined=35 undefined=28
+  - com_miHoYo_GenshinImpact_apk_device: sha=4e5526daab8b cluster=cpu_translation critical=True defined=35 undefined=28
+- `lib/arm64-v8a/libumonitor.so` (soname=`libumonitor.so`)
+  - gamehub_apk_local: sha=7cf3fccfd88c cluster=cpu_translation critical=True defined=1 undefined=88
+  - com_miHoYo_GenshinImpact_apk_device: sha=7cf3fccfd88c cluster=cpu_translation critical=True defined=1 undefined=88
+- `lib/arm64-v8a/libvortekrenderer.so` (soname=`libvortekrenderer.so`)
+  - gamenative_apk_local: sha=b23415f3730a cluster=cpu_translation critical=True defined=856 undefined=142
+  - app_gamenative_apk_device: sha=b23415f3730a cluster=cpu_translation critical=True defined=856 undefined=142
+- `lib/arm64-v8a/libwinemu.so` (soname=`libwinemu.so`)
+  - gamehub_apk_local: sha=a7acfc1462e7 cluster=misc critical=True defined=39 undefined=145
+  - com_miHoYo_GenshinImpact_apk_device: sha=a7acfc1462e7 cluster=misc critical=True defined=39 undefined=145
+- `lib/arm64-v8a/libwinlator.so` (soname=`libwinlator.so`)
+  - gamenative_apk_local: sha=36f8266494eb cluster=misc critical=False defined=68 undefined=61
+  - app_gamenative_apk_device: sha=36f8266494eb cluster=misc critical=False defined=68 undefined=61
+  - by_aero_so_benchmark_apk_device: sha=af70dd252b9c cluster=misc critical=False defined=655 undefined=203
+- `lib/arm64-v8a/libxjps-jni.so` (soname=`libxjps-jni.so`)
+  - gamehub_apk_local: sha=38f58ab89be2 cluster=display_windowing critical=True defined=7661 undefined=258
+  - com_miHoYo_GenshinImpact_apk_device: sha=38f58ab89be2 cluster=display_windowing critical=True defined=7661 undefined=258
+- `lib/arm64-v8a/libxserver.so` (soname=`libxserver.so`)
+  - gamehub_apk_local: sha=29be185f4a89 cluster=display_windowing critical=True defined=1 undefined=299
+  - com_miHoYo_GenshinImpact_apk_device: sha=29be185f4a89 cluster=display_windowing critical=True defined=1 undefined=299
+- `lib/armeabi-v7a/libpulsecore-13.0.so` (soname=`libpulsecore-13.0.so`)
+  - gamenative_apk_local: sha=49527e036b5c cluster=cpu_translation critical=True defined=638 undefined=322
+  - app_gamenative_apk_device: sha=49527e036b5c cluster=cpu_translation critical=True defined=638 undefined=322
+- `lib/armeabi-v7a/libsndfile.so` (soname=`libsndfile.so`)
+  - gamenative_apk_local: sha=b000ca695e55 cluster=cpu_translation critical=True defined=361 undefined=68
+  - app_gamenative_apk_device: sha=b000ca695e55 cluster=cpu_translation critical=True defined=361 undefined=68
+- `lib/wine/aarch64-unix/avicap32.so` (soname=`avicap32.so`)
+  - proton104_wcp_local: sha=5c46926075a9 cluster=misc critical=True defined=2 undefined=16
+  - device_proton_10_0_4_arm64ec_wcp: sha=5c46926075a9 cluster=misc critical=True defined=2 undefined=16
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=cadea2f24431 cluster=misc critical=True defined=2 undefined=15
+  - device_proton_10_4_arm64ec_wcp_xz: sha=5c46926075a9 cluster=misc critical=True defined=2 undefined=16
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5c46926075a9 cluster=misc critical=True defined=2 undefined=16
+  - aerosolator_contents_11_arm64ec_1: sha=cadea2f24431 cluster=misc critical=True defined=2 undefined=15
+- `lib/wine/aarch64-unix/bcrypt.so` (soname=`bcrypt.so`)
+  - proton104_wcp_local: sha=6ae6b7695b66 cluster=misc critical=True defined=2 undefined=25
+  - device_proton_10_0_4_arm64ec_wcp: sha=6ae6b7695b66 cluster=misc critical=True defined=2 undefined=25
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=36b5d44ffbf8 cluster=misc critical=True defined=2 undefined=24
+  - device_proton_10_4_arm64ec_wcp_xz: sha=6ae6b7695b66 cluster=misc critical=True defined=2 undefined=25
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=6ae6b7695b66 cluster=misc critical=True defined=2 undefined=25
+  - aerosolator_contents_11_arm64ec_1: sha=36b5d44ffbf8 cluster=misc critical=True defined=2 undefined=24
+- `lib/wine/aarch64-unix/crypt32.so` (soname=`crypt32.so`)
+  - proton104_wcp_local: sha=cae841cc9853 cluster=misc critical=True defined=2 undefined=32
+  - device_proton_10_0_4_arm64ec_wcp: sha=cae841cc9853 cluster=misc critical=True defined=2 undefined=32
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=60303ea01ca1 cluster=misc critical=True defined=2 undefined=30
+  - device_proton_10_4_arm64ec_wcp_xz: sha=cae841cc9853 cluster=misc critical=True defined=2 undefined=32
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=cae841cc9853 cluster=misc critical=True defined=2 undefined=32
+  - aerosolator_contents_11_arm64ec_1: sha=60303ea01ca1 cluster=misc critical=True defined=2 undefined=30
+- `lib/wine/aarch64-unix/ctapi32.so` (soname=`ctapi32.so`)
+  - proton104_wcp_local: sha=5e7455a91a60 cluster=misc critical=True defined=2 undefined=6
+  - device_proton_10_0_4_arm64ec_wcp: sha=5e7455a91a60 cluster=misc critical=True defined=2 undefined=6
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=fd75913543ee cluster=misc critical=True defined=2 undefined=6
+  - device_proton_10_4_arm64ec_wcp_xz: sha=5e7455a91a60 cluster=misc critical=True defined=2 undefined=6
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5e7455a91a60 cluster=misc critical=True defined=2 undefined=6
+  - aerosolator_contents_11_arm64ec_1: sha=fd75913543ee cluster=misc critical=True defined=2 undefined=6
+- `lib/wine/aarch64-unix/dnsapi.so` (soname=`dnsapi.so`)
+  - proton104_wcp_local: sha=72c321414497 cluster=misc critical=True defined=2 undefined=11
+  - device_proton_10_0_4_arm64ec_wcp: sha=72c321414497 cluster=misc critical=True defined=2 undefined=11
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=51a64078074d cluster=misc critical=True defined=2 undefined=10
+  - device_proton_10_4_arm64ec_wcp_xz: sha=72c321414497 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=72c321414497 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_11_arm64ec_1: sha=51a64078074d cluster=misc critical=True defined=2 undefined=10
+- `lib/wine/aarch64-unix/dwrite.so` (soname=`dwrite.so`)
+  - proton104_wcp_local: sha=8b9e7393b086 cluster=misc critical=True defined=2 undefined=11
+  - device_proton_10_0_4_arm64ec_wcp: sha=8b9e7393b086 cluster=misc critical=True defined=2 undefined=11
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=2d82f131c5b3 cluster=misc critical=True defined=2 undefined=10
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8b9e7393b086 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8b9e7393b086 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_11_arm64ec_1: sha=2d82f131c5b3 cluster=misc critical=True defined=2 undefined=10
+- `lib/wine/aarch64-unix/kerberos.so` (soname=`kerberos.so`)
+  - proton104_wcp_local: sha=6d77043b9ac1 cluster=misc critical=True defined=0 undefined=3
+  - device_proton_10_0_4_arm64ec_wcp: sha=6d77043b9ac1 cluster=misc critical=True defined=0 undefined=3
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=5d7cb6935d69 cluster=misc critical=True defined=0 undefined=3
+  - device_proton_10_4_arm64ec_wcp_xz: sha=6d77043b9ac1 cluster=misc critical=True defined=0 undefined=3
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=6d77043b9ac1 cluster=misc critical=True defined=0 undefined=3
+  - aerosolator_contents_11_arm64ec_1: sha=da4a4300d817 cluster=misc critical=True defined=4 undefined=0
+- `lib/wine/aarch64-unix/localspl.so` (soname=`localspl.so`)
+  - proton104_wcp_local: sha=cf57bd978b51 cluster=misc critical=True defined=2 undefined=22
+  - device_proton_10_0_4_arm64ec_wcp: sha=cf57bd978b51 cluster=misc critical=True defined=2 undefined=22
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=aba25e09fb2e cluster=misc critical=True defined=2 undefined=22
+  - device_proton_10_4_arm64ec_wcp_xz: sha=cf57bd978b51 cluster=misc critical=True defined=2 undefined=22
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=cf57bd978b51 cluster=misc critical=True defined=2 undefined=22
+  - aerosolator_contents_11_arm64ec_1: sha=aba25e09fb2e cluster=misc critical=True defined=2 undefined=22
+- `lib/wine/aarch64-unix/mountmgr.so` (soname=`mountmgr.so`)
+  - proton104_wcp_local: sha=e36ed4354a9e cluster=misc critical=True defined=1 undefined=32
+  - device_proton_10_0_4_arm64ec_wcp: sha=e36ed4354a9e cluster=misc critical=True defined=1 undefined=32
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=9748ccd39510 cluster=misc critical=True defined=1 undefined=33
+  - device_proton_10_4_arm64ec_wcp_xz: sha=e36ed4354a9e cluster=misc critical=True defined=1 undefined=32
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e36ed4354a9e cluster=misc critical=True defined=1 undefined=32
+  - aerosolator_contents_11_arm64ec_1: sha=9748ccd39510 cluster=misc critical=True defined=1 undefined=33
+- `lib/wine/aarch64-unix/msv1_0.so` (soname=`msv1_0.so`)
+  - proton104_wcp_local: sha=8cd0740b124a cluster=misc critical=True defined=2 undefined=29
+  - device_proton_10_0_4_arm64ec_wcp: sha=8cd0740b124a cluster=misc critical=True defined=2 undefined=29
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=fad5f2e7cb14 cluster=misc critical=True defined=2 undefined=29
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8cd0740b124a cluster=misc critical=True defined=2 undefined=29
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8cd0740b124a cluster=misc critical=True defined=2 undefined=29
+  - aerosolator_contents_11_arm64ec_1: sha=fad5f2e7cb14 cluster=misc critical=True defined=2 undefined=29
+- `lib/wine/aarch64-unix/netapi32.so` (soname=`netapi32.so`)
+  - proton104_wcp_local: sha=1b83fd49ecce cluster=misc critical=True defined=0 undefined=3
+  - device_proton_10_0_4_arm64ec_wcp: sha=1b83fd49ecce cluster=misc critical=True defined=0 undefined=3
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=ea21768c8568 cluster=misc critical=True defined=0 undefined=3
+  - device_proton_10_4_arm64ec_wcp_xz: sha=1b83fd49ecce cluster=misc critical=True defined=0 undefined=3
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=1b83fd49ecce cluster=misc critical=True defined=0 undefined=3
+  - aerosolator_contents_11_arm64ec_1: sha=2aa20d8b4e36 cluster=misc critical=True defined=4 undefined=0
+- `lib/wine/aarch64-unix/nsiproxy.so` (soname=`nsiproxy.so`)
+  - proton104_wcp_local: sha=2f0275953593 cluster=misc critical=True defined=2 undefined=61
+  - device_proton_10_0_4_arm64ec_wcp: sha=2f0275953593 cluster=misc critical=True defined=2 undefined=61
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=041d30ff9372 cluster=misc critical=True defined=2 undefined=56
+  - device_proton_10_4_arm64ec_wcp_xz: sha=2f0275953593 cluster=misc critical=True defined=2 undefined=61
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=2f0275953593 cluster=misc critical=True defined=2 undefined=61
+  - aerosolator_contents_11_arm64ec_1: sha=041d30ff9372 cluster=misc critical=True defined=2 undefined=56
+- `lib/wine/aarch64-unix/ntdll.so` (soname=`ntdll.so`)
+  - proton104_wcp_local: sha=a98f557871eb cluster=wine_runtime_core critical=True defined=283 undefined=207
+  - device_proton_10_0_4_arm64ec_wcp: sha=5a0d99d1ec56 cluster=wine_runtime_core critical=True defined=283 undefined=207
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=ba4f6fb5bbbe cluster=wine_runtime_core critical=True defined=275 undefined=205
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a98f557871eb cluster=wine_runtime_core critical=True defined=283 undefined=207
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5a0d99d1ec56 cluster=wine_runtime_core critical=True defined=283 undefined=207
+  - aerosolator_contents_11_arm64ec_1: sha=ba4f6fb5bbbe cluster=wine_runtime_core critical=True defined=275 undefined=205
+- `lib/wine/aarch64-unix/odbc32.so` (soname=`odbc32.so`)
+  - proton104_wcp_local: sha=b0a798be94db cluster=misc critical=True defined=2 undefined=26
+  - device_proton_10_0_4_arm64ec_wcp: sha=b0a798be94db cluster=misc critical=True defined=2 undefined=26
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=53c58cf41dd8 cluster=misc critical=True defined=1 undefined=12
+  - device_proton_10_4_arm64ec_wcp_xz: sha=b0a798be94db cluster=misc critical=True defined=2 undefined=26
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b0a798be94db cluster=misc critical=True defined=2 undefined=26
+  - aerosolator_contents_11_arm64ec_1: sha=53c58cf41dd8 cluster=misc critical=True defined=1 undefined=12
+- `lib/wine/aarch64-unix/opencl.so` (soname=`opencl.so`)
+  - proton104_wcp_local: sha=8f350373e3b0 cluster=misc critical=True defined=1 undefined=6
+  - device_proton_10_0_4_arm64ec_wcp: sha=8f350373e3b0 cluster=misc critical=True defined=1 undefined=6
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=48867dd834a2 cluster=misc critical=True defined=5 undefined=3
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8f350373e3b0 cluster=misc critical=True defined=1 undefined=6
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8f350373e3b0 cluster=misc critical=True defined=1 undefined=6
+- `lib/wine/aarch64-unix/opengl32.so` (soname=`opengl32.so`)
+  - proton104_wcp_local: sha=65b7f60ea361 cluster=cpu_translation critical=True defined=2 undefined=36
+  - device_proton_10_0_4_arm64ec_wcp: sha=65b7f60ea361 cluster=cpu_translation critical=True defined=2 undefined=36
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=c916a68e27cd cluster=cpu_translation critical=True defined=3 undefined=43
+  - device_proton_10_4_arm64ec_wcp_xz: sha=65b7f60ea361 cluster=cpu_translation critical=True defined=2 undefined=36
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=65b7f60ea361 cluster=cpu_translation critical=True defined=2 undefined=36
+  - aerosolator_contents_11_arm64ec_1: sha=c916a68e27cd cluster=cpu_translation critical=True defined=3 undefined=43
+- `lib/wine/aarch64-unix/qcap.so` (soname=`qcap.so`)
+  - proton104_wcp_local: sha=8f0495f415b6 cluster=misc critical=True defined=2 undefined=21
+  - device_proton_10_0_4_arm64ec_wcp: sha=8f0495f415b6 cluster=misc critical=True defined=2 undefined=21
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=2b23f9c6f36f cluster=misc critical=True defined=2 undefined=18
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8f0495f415b6 cluster=misc critical=True defined=2 undefined=21
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8f0495f415b6 cluster=misc critical=True defined=2 undefined=21
+  - aerosolator_contents_11_arm64ec_1: sha=2b23f9c6f36f cluster=misc critical=True defined=2 undefined=18
+- `lib/wine/aarch64-unix/secur32.so` (soname=`secur32.so`)
+  - proton104_wcp_local: sha=ea17917318b2 cluster=misc critical=True defined=2 undefined=26
+  - device_proton_10_0_4_arm64ec_wcp: sha=ea17917318b2 cluster=misc critical=True defined=2 undefined=26
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=950e79368005 cluster=misc critical=True defined=2 undefined=24
+  - device_proton_10_4_arm64ec_wcp_xz: sha=ea17917318b2 cluster=misc critical=True defined=2 undefined=26
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=ea17917318b2 cluster=misc critical=True defined=2 undefined=26
+  - aerosolator_contents_11_arm64ec_1: sha=950e79368005 cluster=misc critical=True defined=2 undefined=24
+- `lib/wine/aarch64-unix/win32u.so` (soname=`win32u.so`)
+  - proton104_wcp_local: sha=897a6b844a11 cluster=misc critical=True defined=465 undefined=121
+  - device_proton_10_0_4_arm64ec_wcp: sha=897a6b844a11 cluster=misc critical=True defined=465 undefined=121
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=bfffeeb2d204 cluster=cpu_translation critical=True defined=416 undefined=120
+  - device_proton_10_4_arm64ec_wcp_xz: sha=897a6b844a11 cluster=misc critical=True defined=465 undefined=121
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=897a6b844a11 cluster=misc critical=True defined=465 undefined=121
+  - aerosolator_contents_11_arm64ec_1: sha=bfffeeb2d204 cluster=cpu_translation critical=True defined=416 undefined=120
+- `lib/wine/aarch64-unix/windows.media.speech.so` (soname=`windows.media.speech.so`)
+  - proton104_wcp_local: sha=1a760d84cce5 cluster=misc critical=True defined=2 undefined=6
+  - device_proton_10_0_4_arm64ec_wcp: sha=1a760d84cce5 cluster=misc critical=True defined=2 undefined=6
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=ffa49cd49476 cluster=misc critical=True defined=2 undefined=6
+  - device_proton_10_4_arm64ec_wcp_xz: sha=1a760d84cce5 cluster=misc critical=True defined=2 undefined=6
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=1a760d84cce5 cluster=misc critical=True defined=2 undefined=6
+- `lib/wine/aarch64-unix/winealsa.so` (soname=`winealsa.so`)
+  - proton104_wcp_local: sha=752831ccf1c1 cluster=audio critical=True defined=2 undefined=133
+  - device_proton_10_0_4_arm64ec_wcp: sha=752831ccf1c1 cluster=audio critical=True defined=2 undefined=133
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=ecd564815806 cluster=audio critical=True defined=2 undefined=132
+  - device_proton_10_4_arm64ec_wcp_xz: sha=752831ccf1c1 cluster=audio critical=True defined=2 undefined=133
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=752831ccf1c1 cluster=audio critical=True defined=2 undefined=133
+  - aerosolator_contents_11_arm64ec_1: sha=ecd564815806 cluster=audio critical=True defined=2 undefined=132
+- `lib/wine/aarch64-unix/winebth.so` (soname=`winebth.so`)
+  - proton104_wcp_local: sha=0c0be16c6cef cluster=misc critical=True defined=1 undefined=14
+  - device_proton_10_0_4_arm64ec_wcp: sha=0c0be16c6cef cluster=misc critical=True defined=1 undefined=14
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=dc37179b478c cluster=misc critical=True defined=5 undefined=10
+  - device_proton_10_4_arm64ec_wcp_xz: sha=0c0be16c6cef cluster=misc critical=True defined=1 undefined=14
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=0c0be16c6cef cluster=misc critical=True defined=1 undefined=14
+  - aerosolator_contents_11_arm64ec_1: sha=beb8eae61998 cluster=misc critical=True defined=5 undefined=29
+- `lib/wine/aarch64-unix/winebus.so` (soname=`winebus.so`)
+  - proton104_wcp_local: sha=b8527b9be192 cluster=misc critical=True defined=2 undefined=31
+  - device_proton_10_0_4_arm64ec_wcp: sha=b8527b9be192 cluster=misc critical=True defined=2 undefined=31
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6dcc3cbbef97 cluster=misc critical=True defined=2 undefined=31
+  - device_proton_10_4_arm64ec_wcp_xz: sha=b8527b9be192 cluster=misc critical=True defined=2 undefined=31
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b8527b9be192 cluster=misc critical=True defined=2 undefined=31
+  - aerosolator_contents_11_arm64ec_1: sha=6dcc3cbbef97 cluster=misc critical=True defined=2 undefined=31
+- `lib/wine/aarch64-unix/winedmo.so` (soname=`winedmo.so`)
+  - proton104_wcp_local: sha=e37655b1dfeb cluster=misc critical=True defined=0 undefined=30
+  - device_proton_10_0_4_arm64ec_wcp: sha=e37655b1dfeb cluster=misc critical=True defined=0 undefined=30
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=1dae01524a46 cluster=misc critical=True defined=4 undefined=26
+  - device_proton_10_4_arm64ec_wcp_xz: sha=e37655b1dfeb cluster=misc critical=True defined=0 undefined=30
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e37655b1dfeb cluster=misc critical=True defined=0 undefined=30
+  - aerosolator_contents_11_arm64ec_1: sha=adc4c30cc596 cluster=misc critical=True defined=4 undefined=0
+- `lib/wine/aarch64-unix/winegstreamer.so` (soname=`winegstreamer.so`)
+  - proton104_wcp_local: sha=8139aaacdce3 cluster=misc critical=True defined=3 undefined=348
+  - device_proton_10_0_4_arm64ec_wcp: sha=8139aaacdce3 cluster=misc critical=True defined=3 undefined=348
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8139aaacdce3 cluster=misc critical=True defined=3 undefined=348
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8139aaacdce3 cluster=misc critical=True defined=3 undefined=348
+  - aerosolator_contents_11_arm64ec_1: sha=b1e8f19d3043 cluster=misc critical=True defined=3 undefined=374
+- `lib/wine/aarch64-unix/wineps.so` (soname=`wineps.so`)
+  - proton104_wcp_local: sha=4258413e029c cluster=misc critical=True defined=2 undefined=25
+  - device_proton_10_0_4_arm64ec_wcp: sha=4258413e029c cluster=misc critical=True defined=2 undefined=25
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=45ccbfe554bc cluster=misc critical=True defined=2 undefined=23
+  - device_proton_10_4_arm64ec_wcp_xz: sha=4258413e029c cluster=misc critical=True defined=2 undefined=25
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=4258413e029c cluster=misc critical=True defined=2 undefined=25
+  - aerosolator_contents_11_arm64ec_1: sha=45ccbfe554bc cluster=misc critical=True defined=2 undefined=23
+- `lib/wine/aarch64-unix/winepulse.so` (soname=`winepulse.so`)
+  - proton104_wcp_local: sha=562c67c32230 cluster=cpu_translation critical=True defined=3 undefined=97
+  - device_proton_10_0_4_arm64ec_wcp: sha=562c67c32230 cluster=cpu_translation critical=True defined=3 undefined=97
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=fa3a50c84674 cluster=audio critical=True defined=3 undefined=95
+  - device_proton_10_4_arm64ec_wcp_xz: sha=562c67c32230 cluster=cpu_translation critical=True defined=3 undefined=97
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=562c67c32230 cluster=cpu_translation critical=True defined=3 undefined=97
+  - aerosolator_contents_11_arm64ec_1: sha=fa3a50c84674 cluster=audio critical=True defined=3 undefined=95
+- `lib/wine/aarch64-unix/winevulkan.so` (soname=`winevulkan.so`)
+  - proton104_wcp_local: sha=2914989c6703 cluster=graphics_translation critical=True defined=8 undefined=67
+  - device_proton_10_0_4_arm64ec_wcp: sha=2914989c6703 cluster=graphics_translation critical=True defined=8 undefined=67
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=f2aa5c7c2a98 cluster=graphics_translation critical=True defined=8 undefined=61
+  - device_proton_10_4_arm64ec_wcp_xz: sha=2914989c6703 cluster=graphics_translation critical=True defined=8 undefined=67
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=2914989c6703 cluster=graphics_translation critical=True defined=8 undefined=67
+  - aerosolator_contents_11_arm64ec_1: sha=f2aa5c7c2a98 cluster=graphics_translation critical=True defined=8 undefined=61
+- `lib/wine/aarch64-unix/winex11.so` (soname=`winex11.so`)
+  - proton104_wcp_local: sha=3afb9d6f0179 cluster=display_windowing critical=True defined=3 undefined=353
+  - device_proton_10_0_4_arm64ec_wcp: sha=3afb9d6f0179 cluster=display_windowing critical=True defined=3 undefined=353
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=e20c4ec279dc cluster=display_windowing critical=True defined=3 undefined=362
+  - device_proton_10_4_arm64ec_wcp_xz: sha=3afb9d6f0179 cluster=display_windowing critical=True defined=3 undefined=353
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=3afb9d6f0179 cluster=display_windowing critical=True defined=3 undefined=353
+  - aerosolator_contents_11_arm64ec_1: sha=e20c4ec279dc cluster=display_windowing critical=True defined=3 undefined=362
+- `lib/wine/aarch64-unix/winspool.so` (soname=`winspool.so`)
+  - proton104_wcp_local: sha=a94f0afe8b71 cluster=misc critical=True defined=2 undefined=11
+  - device_proton_10_0_4_arm64ec_wcp: sha=a94f0afe8b71 cluster=misc critical=True defined=2 undefined=11
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=21be536f4a3c cluster=misc critical=True defined=2 undefined=11
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a94f0afe8b71 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=a94f0afe8b71 cluster=misc critical=True defined=2 undefined=11
+  - aerosolator_contents_11_arm64ec_1: sha=21be536f4a3c cluster=misc critical=True defined=2 undefined=11
+- `lib/wine/aarch64-unix/ws2_32.so` (soname=`ws2_32.so`)
+  - proton104_wcp_local: sha=b3686ffe5146 cluster=misc critical=True defined=2 undefined=27
+  - device_proton_10_0_4_arm64ec_wcp: sha=b3686ffe5146 cluster=misc critical=True defined=2 undefined=27
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=49e7ca6324df cluster=misc critical=True defined=2 undefined=27
+  - device_proton_10_4_arm64ec_wcp_xz: sha=b3686ffe5146 cluster=misc critical=True defined=2 undefined=27
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b3686ffe5146 cluster=misc critical=True defined=2 undefined=27
+  - aerosolator_contents_11_arm64ec_1: sha=49e7ca6324df cluster=misc critical=True defined=2 undefined=27
+- `lib/wine/aarch64-windows/acledit.dll` (soname=`acledit.dll`)
+  - proton104_wcp_local: sha=be1b87e4ede1 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=8fc769ce3558 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=f4dd718c4627 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=be1b87e4ede1 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8fc769ce3558 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=2ae9730e8d2a cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/aclui.dll` (soname=`aclui.dll`)
+  - proton104_wcp_local: sha=8c686422b2ac cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=1f438e7fa6a6 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=47dbc22abe5a cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8c686422b2ac cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=1f438e7fa6a6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=ff6f928d173c cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/activeds.dll` (soname=`activeds.dll`)
+  - proton104_wcp_local: sha=a644bfd42679 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=6b53f973226b cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=a90e8ebe4448 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a644bfd42679 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=6b53f973226b cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=9f9584c140e1 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/activeds.tlb` (soname=`activeds.tlb`)
+  - proton104_wcp_local: sha=94ae23cd422c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=94ae23cd422c cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=94ae23cd422c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=94ae23cd422c cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=94ae23cd422c cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=9435451a64a5 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/actxprxy.dll` (soname=`actxprxy.dll`)
+  - proton104_wcp_local: sha=aa35dac55bd6 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=9ab241ca85be cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=03ee32171387 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=aa35dac55bd6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=9ab241ca85be cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=ad0169968eb9 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/adsldp.dll` (soname=`adsldp.dll`)
+  - proton104_wcp_local: sha=42f1f3c205f6 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=d2bdff62c169 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=0e6720a9866c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=42f1f3c205f6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=d2bdff62c169 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=4a6593558b23 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/adsldpc.dll` (soname=`adsldpc.dll`)
+  - proton104_wcp_local: sha=665f76cee01c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=8c21f08bae5b cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=d939e81336f9 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=665f76cee01c cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8c21f08bae5b cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=67c2d85a0008 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/advapi32.dll` (soname=`advapi32.dll`)
+  - proton104_wcp_local: sha=d222e27a1c86 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=11eece472e66 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=1bef2157cd46 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=d222e27a1c86 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=11eece472e66 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=5fae70645de3 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/advpack.dll` (soname=`advpack.dll`)
+  - proton104_wcp_local: sha=947e1f8524d7 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=ff8b2b07a48f cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=8b60eeb9a3a2 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=947e1f8524d7 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=ff8b2b07a48f cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=cc44df5a9604 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/amdxc64.dll` (soname=`amdxc64.dll`)
+  - proton104_wcp_local: sha=c0fb16a4f4bf cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=028c4a7802a4 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=e8fcdb639537 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=c0fb16a4f4bf cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=028c4a7802a4 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/amsi.dll` (soname=`amsi.dll`)
+  - proton104_wcp_local: sha=e213a376e518 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=d95fcd27e3c2 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=dfe1febeb75c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=e213a376e518 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=d95fcd27e3c2 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=f729cacb2ee2 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/amstream.dll` (soname=`amstream.dll`)
+  - proton104_wcp_local: sha=01a787225165 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=3f371b6f7276 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=b40e1dd0efae cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=01a787225165 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=3f371b6f7276 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=953798619c48 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/apisetschema.dll` (soname=`apisetschema.dll`)
+  - proton104_wcp_local: sha=8c89e69e9725 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=8c89e69e9725 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=8c89e69e9725 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8c89e69e9725 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8c89e69e9725 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=678533718e81 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/apphelp.dll` (soname=`apphelp.dll`)
+  - proton104_wcp_local: sha=c7436dd4b428 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=f97a0f0540f4 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7538724cf13d cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=c7436dd4b428 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=f97a0f0540f4 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=6eb4d53b6f7d cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/appwiz.cpl` (soname=`appwiz.cpl`)
+  - proton104_wcp_local: sha=5fed0f9ab5ef cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=70eaad957983 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=9dc814df27cc cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=5fed0f9ab5ef cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=70eaad957983 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=bf4e535d5e57 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/appxdeploymentclient.dll` (soname=`appxdeploymentclient.dll`)
+  - proton104_wcp_local: sha=8eae4227cf6e cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=b3dc79209538 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=d9fb5866345a cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=8eae4227cf6e cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b3dc79209538 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=71cb2e376496 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/arp.exe` (soname=`arp.exe`)
+  - proton104_wcp_local: sha=3638f1877e99 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=a46a6588cc68 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=965982217aec cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=3638f1877e99 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=a46a6588cc68 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=19623eb208ed cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/aspnet_regiis.exe` (soname=`aspnet_regiis.exe`)
+  - proton104_wcp_local: sha=62ef9a3d1d96 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=ed6ef9e300f6 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=63bfeaf5d862 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=62ef9a3d1d96 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=ed6ef9e300f6 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=77f4070926ce cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atiadlxx.dll` (soname=`atiadlxx.dll`)
+  - proton104_wcp_local: sha=cf4f9f836be2 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=851f7fdd8354 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=69835475bee7 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=cf4f9f836be2 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=851f7fdd8354 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atl.dll` (soname=`atl.dll`)
+  - proton104_wcp_local: sha=95b2593692ad cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=c7ac81774643 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=1d525cd7db48 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=95b2593692ad cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=c7ac81774643 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=be26186d661d cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atl100.dll` (soname=`atl100.dll`)
+  - proton104_wcp_local: sha=a142628a8990 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=878e843d5dbb cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=395858d2528d cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a142628a8990 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=878e843d5dbb cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=d036ad0a6b74 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atl110.dll` (soname=`atl110.dll`)
+  - proton104_wcp_local: sha=26399d67b6c1 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=1d982ae61ae1 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=f87381e7be33 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=26399d67b6c1 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=1d982ae61ae1 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=bfa947f3f660 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atl80.dll` (soname=`atl80.dll`)
+  - proton104_wcp_local: sha=26f6daa70cc7 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=2c95cec7bd2c cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=67d49eb219c5 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=26f6daa70cc7 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=2c95cec7bd2c cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=45a37ed6c6fa cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atl90.dll` (soname=`atl90.dll`)
+  - proton104_wcp_local: sha=65f29b549500 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=5f5e517327db cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=9ebca23716cc cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=65f29b549500 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5f5e517327db cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=a431fe2a0acc cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atlthunk.dll` (soname=`atlthunk.dll`)
+  - proton104_wcp_local: sha=f8699464443d cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=bea1c07b4f06 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=1c162b56abc7 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=f8699464443d cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=bea1c07b4f06 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=0b2a484417b8 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/atmlib.dll` (soname=`atmlib.dll`)
+  - proton104_wcp_local: sha=574161341974 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=649382d244ea cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=8e47efa9e204 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=574161341974 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=649382d244ea cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=16bd8147b741 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/attrib.exe` (soname=`attrib.exe`)
+  - proton104_wcp_local: sha=dd91112f7626 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=239ae2fd45e3 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=4e5b0e72bcd2 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=dd91112f7626 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=239ae2fd45e3 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=6737813f8a27 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/audioses.dll` (soname=`audioses.dll`)
+  - proton104_wcp_local: sha=f712246c3c47 cluster=audio critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=0f76f025d54b cluster=audio critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=18f3a2f182fc cluster=audio critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=f712246c3c47 cluster=audio critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=0f76f025d54b cluster=audio critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/authz.dll` (soname=`authz.dll`)
+  - proton104_wcp_local: sha=f5e861db9b74 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=990b709a1b78 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6befc9ebdf31 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=f5e861db9b74 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=990b709a1b78 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=abdbc01b9ad1 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/avicap32.dll` (soname=`avicap32.dll`)
+  - proton104_wcp_local: sha=468e5b8c19db cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=96fb761ea65d cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=e06e56294dc3 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=468e5b8c19db cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=96fb761ea65d cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=a5d400f2ef50 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/avifil32.dll` (soname=`avifil32.dll`)
+  - proton104_wcp_local: sha=4f2e7accf3db cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=5d70f501a53d cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=a4b85d74e614 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=4f2e7accf3db cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5d70f501a53d cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=aa35ffc419b3 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/avrt.dll` (soname=`avrt.dll`)
+  - proton104_wcp_local: sha=94e799c3a909 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=e300ba8e6bba cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6d0bf92b460a cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=94e799c3a909 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e300ba8e6bba cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=b4253841f2e3 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/bcp47langs.dll` (soname=`bcp47langs.dll`)
+  - proton104_wcp_local: sha=f0838a8f1194 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=bc2d1037e7a5 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=50ae7d90ec42 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=f0838a8f1194 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=bc2d1037e7a5 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=bbc943d88a1a cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/bcrypt.dll` (soname=`bcrypt.dll`)
+  - proton104_wcp_local: sha=226111315d80 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=593baef528b6 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=afcff0f562de cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=226111315d80 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=593baef528b6 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=484094be155b cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/bcryptprimitives.dll` (soname=`bcryptprimitives.dll`)
+  - proton104_wcp_local: sha=d8b3c80ff554 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=2227ce0906ed cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=6847dd648643 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=d8b3c80ff554 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=2227ce0906ed cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=ae1be5dfd5f7 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/belauncher.exe` (soname=`belauncher.exe`)
+  - proton104_wcp_local: sha=0efe970b9332 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=7361f925c5e0 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=3c6f0ef492bb cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=0efe970b9332 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=7361f925c5e0 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/bluetoothapis.dll` (soname=`bluetoothapis.dll`)
+  - proton104_wcp_local: sha=13077d36e280 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=e13b65c4011a cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=d839f2d665da cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=13077d36e280 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e13b65c4011a cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=1597f7f0b56b cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/browseui.dll` (soname=`browseui.dll`)
+  - proton104_wcp_local: sha=6ccfa4435c5a cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=fc94e2521070 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7a971b40bbbf cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=6ccfa4435c5a cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=fc94e2521070 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=64ab5cd16804 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/bthprops.cpl` (soname=`bthprops.cpl`)
+  - proton104_wcp_local: sha=058fcee05f3e cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=bcd09a8432cb cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=b56738369ac9 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=058fcee05f3e cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=bcd09a8432cb cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=732d68ee8261 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cabarc.exe` (soname=`cabarc.exe`)
+  - proton104_wcp_local: sha=10c26f570959 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=8ee149fc91ed cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=9d40f9a0b83a cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=10c26f570959 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=8ee149fc91ed cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=5c6c52f04b51 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cabinet.dll` (soname=`cabinet.dll`)
+  - proton104_wcp_local: sha=4cfca53b7067 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=ecdf48e7c0e7 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=41ceff5f860d cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=4cfca53b7067 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=ecdf48e7c0e7 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=b3a83c85c571 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cacls.exe` (soname=`cacls.exe`)
+  - proton104_wcp_local: sha=29449aeffcff cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=5602d384ccb5 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=52a27c939172 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=29449aeffcff cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=5602d384ccb5 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=5ae1cbbc2204 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cards.dll` (soname=`cards.dll`)
+  - proton104_wcp_local: sha=cd9123a6bb88 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=9235e172440d cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7685c46ed8e1 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=cd9123a6bb88 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=9235e172440d cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=59e6557ac690 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cdosys.dll` (soname=`cdosys.dll`)
+  - proton104_wcp_local: sha=4cec5e4f4ff1 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=dd06e36f18cb cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=c4002576b719 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=4cec5e4f4ff1 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=dd06e36f18cb cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=586c9649b2ed cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/certutil.exe` (soname=`certutil.exe`)
+  - proton104_wcp_local: sha=15c836d2d3a7 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=b916b3cb67e3 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=4eeef64575a2 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=15c836d2d3a7 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b916b3cb67e3 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=9d09aad35753 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cfgmgr32.dll` (soname=`cfgmgr32.dll`)
+  - proton104_wcp_local: sha=6864d47baf82 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=83161c57a6e1 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=4ac74c238834 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=6864d47baf82 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=83161c57a6e1 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=89b236556d04 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/chcp.com` (soname=`chcp.com`)
+  - proton104_wcp_local: sha=d3528fda6ac9 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=e901211fef4a cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7975ee980f67 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=d3528fda6ac9 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=e901211fef4a cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=b76b3fa47ef1 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/clock.exe` (soname=`clock.exe`)
+  - proton104_wcp_local: sha=a67ce13422be cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=50e0b9a80540 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=a64101c23b5a cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a67ce13422be cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=50e0b9a80540 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=a5a182bb0548 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/clusapi.dll` (soname=`clusapi.dll`)
+  - proton104_wcp_local: sha=b6e115856ef0 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=45069e22d5b3 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=927fe7f42881 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=b6e115856ef0 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=45069e22d5b3 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=4dbc0b31f782 cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cmd.exe` (soname=`cmd.exe`)
+  - proton104_wcp_local: sha=0235f0b7b770 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=b8ad2f0d82d0 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=19e52e79b3ac cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=0235f0b7b770 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=b8ad2f0d82d0 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=05351b8efd5b cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/cng.sys` (soname=`cng.sys`)
+  - proton104_wcp_local: sha=a4c37499df68 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=494115214b89 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=7d497d9198f5 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=a4c37499df68 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=494115214b89 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=b55dea689a25 cluster=cpu_translation critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/colorcnv.dll` (soname=`colorcnv.dll`)
+  - proton104_wcp_local: sha=c753a3b03114 cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=943e12d44f07 cluster=misc critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=9db2dc88987c cluster=misc critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=c753a3b03114 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=943e12d44f07 cluster=misc critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=e2eefe8d72fd cluster=misc critical=True defined=0 undefined=0
+- `lib/wine/aarch64-windows/combase.dll` (soname=`combase.dll`)
+  - proton104_wcp_local: sha=60c2d4c24203 cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_0_4_arm64ec_wcp: sha=72ab9b0e4ddd cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_protonwine10_gamenative_arm64ec_wcp: sha=90fd0128ce9e cluster=cpu_translation critical=True defined=0 undefined=0
+  - device_proton_10_4_arm64ec_wcp_xz: sha=60c2d4c24203 cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_10_0_4_arm64ec_1: sha=72ab9b0e4ddd cluster=cpu_translation critical=True defined=0 undefined=0
+  - aerosolator_contents_11_arm64ec_1: sha=0d17ae94f6fb cluster=cpu_translation critical=True defined=0 undefined=0

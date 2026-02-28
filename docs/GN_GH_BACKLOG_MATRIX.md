@@ -1,7 +1,7 @@
 # GN + GH Unified Backlog Matrix
 
 - Generated (UTC): `2026-02-25 13:36:50`
-- Purpose: anti-conflict migration matrix for GameNative + GameHub signals into Aero.so mainline
+- Purpose: anti-conflict migration matrix for GameNative + GameHub signals into Ae.solator mainline
 - Mainline policy: `bionic-native` + `external-only runtime`
 
 ## GameNative branch coverage

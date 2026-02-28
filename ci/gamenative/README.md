@@ -15,6 +15,7 @@ The integration model is manifest-driven:
 - `apply-android-patchset.sh` — applies/validates/backports according to the manifest
 - `PATCHSET_PIPELINE.md` — pipeline policy and mode semantics
 - `patchset-conflict-audit.py` — ownership overlap audit tool
+- `check-manifest-contract.py` — strict schema/action contract validation for `manifest.tsv`
 
 Supported per-target actions:
 

@@ -1,0 +1,753 @@
+
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/vulkan-1.dll:     file format pei-i386
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/vulkan-1.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x100011c0
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Wed Feb 25 04:47:20 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00001000
+SizeOfInitializedData	0000d000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	000011c0
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		0000f000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00002038 00004634 Export Directory [.edata (or where ever we found it)]
+Entry 1 0000666c 0000003c Import Directory [parts of .idata]
+Entry 2 00009000 000003a8 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 0000a000 00000058 Base Relocation Directory [.reloc]
+Entry 6 00002000 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000814c 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 000066bc 00000014 Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x1000666c
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 0000666c	000066a8 00000000 00000000 00006710 000066bc
+
+	DLL Name: user32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	66d0	 1802  GetDpiForSystem
+
+ 00006680	000066b0 00000000 00000000 0000671b 000066c4
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	66e2	  323  DisableThreadLibraryCalls
+	66fe	 1083  RaiseException
+
+ 00006694	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10002038
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		c7627108
+Major/Minor 			0/0
+Name 				00002ab0 vulkan-1.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000108
+	[Name Pointer/Ordinal] Table	00000108
+Table Addresses
+	Export Address Table 		00002060
+	Name Pointer Table 		00002480
+	Ordinal Table 			000028a0
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 43be Forwarder RVA -- winevulkan.vkAcquireNextImage2KHR
+	[   1] +base[   2] 43e0 Forwarder RVA -- winevulkan.vkAcquireNextImageKHR
+	[   2] +base[   3] 4401 Forwarder RVA -- winevulkan.vkAllocateCommandBuffers
+	[   3] +base[   4] 4425 Forwarder RVA -- winevulkan.vkAllocateDescriptorSets
+	[   4] +base[   5] 4449 Forwarder RVA -- winevulkan.vkAllocateMemory
+	[   5] +base[   6] 4465 Forwarder RVA -- winevulkan.vkBeginCommandBuffer
+	[   6] +base[   7] 4485 Forwarder RVA -- winevulkan.vkBindBufferMemory
+	[   7] +base[   8] 44a3 Forwarder RVA -- winevulkan.vkBindBufferMemory2
+	[   8] +base[   9] 44c2 Forwarder RVA -- winevulkan.vkBindImageMemory
+	[   9] +base[  10] 44df Forwarder RVA -- winevulkan.vkBindImageMemory2
+	[  10] +base[  11] 44fd Forwarder RVA -- winevulkan.vkCmdBeginQuery
+	[  11] +base[  12] 4518 Forwarder RVA -- winevulkan.vkCmdBeginRenderPass
+	[  12] +base[  13] 4538 Forwarder RVA -- winevulkan.vkCmdBeginRenderPass2
+	[  13] +base[  14] 4559 Forwarder RVA -- winevulkan.vkCmdBeginRendering
+	[  14] +base[  15] 4578 Forwarder RVA -- winevulkan.vkCmdBindDescriptorSets
+	[  15] +base[  16] 459b Forwarder RVA -- winevulkan.vkCmdBindDescriptorSets2
+	[  16] +base[  17] 45bf Forwarder RVA -- winevulkan.vkCmdBindIndexBuffer
+	[  17] +base[  18] 45df Forwarder RVA -- winevulkan.vkCmdBindIndexBuffer2
+	[  18] +base[  19] 4600 Forwarder RVA -- winevulkan.vkCmdBindPipeline
+	[  19] +base[  20] 461d Forwarder RVA -- winevulkan.vkCmdBindVertexBuffers
+	[  20] +base[  21] 463f Forwarder RVA -- winevulkan.vkCmdBindVertexBuffers2
+	[  21] +base[  22] 4662 Forwarder RVA -- winevulkan.vkCmdBlitImage
+	[  22] +base[  23] 467c Forwarder RVA -- winevulkan.vkCmdBlitImage2
+	[  23] +base[  24] 4697 Forwarder RVA -- winevulkan.vkCmdClearAttachments
+	[  24] +base[  25] 46b8 Forwarder RVA -- winevulkan.vkCmdClearColorImage
+	[  25] +base[  26] 46d8 Forwarder RVA -- winevulkan.vkCmdClearDepthStencilImage
+	[  26] +base[  27] 46ff Forwarder RVA -- winevulkan.vkCmdCopyBuffer
+	[  27] +base[  28] 471a Forwarder RVA -- winevulkan.vkCmdCopyBuffer2
+	[  28] +base[  29] 4736 Forwarder RVA -- winevulkan.vkCmdCopyBufferToImage
+	[  29] +base[  30] 4758 Forwarder RVA -- winevulkan.vkCmdCopyBufferToImage2
+	[  30] +base[  31] 477b Forwarder RVA -- winevulkan.vkCmdCopyImage
+	[  31] +base[  32] 4795 Forwarder RVA -- winevulkan.vkCmdCopyImage2
+	[  32] +base[  33] 47b0 Forwarder RVA -- winevulkan.vkCmdCopyImageToBuffer
+	[  33] +base[  34] 47d2 Forwarder RVA -- winevulkan.vkCmdCopyImageToBuffer2
+	[  34] +base[  35] 47f5 Forwarder RVA -- winevulkan.vkCmdCopyQueryPoolResults
+	[  35] +base[  36] 481a Forwarder RVA -- winevulkan.vkCmdDispatch
+	[  36] +base[  37] 4833 Forwarder RVA -- winevulkan.vkCmdDispatchBase
+	[  37] +base[  38] 4850 Forwarder RVA -- winevulkan.vkCmdDispatchIndirect
+	[  38] +base[  39] 4871 Forwarder RVA -- winevulkan.vkCmdDraw
+	[  39] +base[  40] 4886 Forwarder RVA -- winevulkan.vkCmdDrawIndexed
+	[  40] +base[  41] 48a2 Forwarder RVA -- winevulkan.vkCmdDrawIndexedIndirect
+	[  41] +base[  42] 48c6 Forwarder RVA -- winevulkan.vkCmdDrawIndexedIndirectCount
+	[  42] +base[  43] 48ef Forwarder RVA -- winevulkan.vkCmdDrawIndirect
+	[  43] +base[  44] 490c Forwarder RVA -- winevulkan.vkCmdDrawIndirectCount
+	[  44] +base[  45] 492e Forwarder RVA -- winevulkan.vkCmdEndQuery
+	[  45] +base[  46] 4947 Forwarder RVA -- winevulkan.vkCmdEndRenderPass
+	[  46] +base[  47] 4965 Forwarder RVA -- winevulkan.vkCmdEndRenderPass2
+	[  47] +base[  48] 4984 Forwarder RVA -- winevulkan.vkCmdEndRendering
+	[  48] +base[  49] 49a1 Forwarder RVA -- winevulkan.vkCmdExecuteCommands
+	[  49] +base[  50] 49c1 Forwarder RVA -- winevulkan.vkCmdFillBuffer
+	[  50] +base[  51] 49dc Forwarder RVA -- winevulkan.vkCmdNextSubpass
+	[  51] +base[  52] 49f8 Forwarder RVA -- winevulkan.vkCmdNextSubpass2
+	[  52] +base[  53] 4a15 Forwarder RVA -- winevulkan.vkCmdPipelineBarrier
+	[  53] +base[  54] 4a35 Forwarder RVA -- winevulkan.vkCmdPipelineBarrier2
+	[  54] +base[  55] 4a56 Forwarder RVA -- winevulkan.vkCmdPushConstants
+	[  55] +base[  56] 4a74 Forwarder RVA -- winevulkan.vkCmdPushConstants2
+	[  56] +base[  57] 4a93 Forwarder RVA -- winevulkan.vkCmdPushDescriptorSet
+	[  57] +base[  58] 4ab5 Forwarder RVA -- winevulkan.vkCmdPushDescriptorSet2
+	[  58] +base[  59] 4ad8 Forwarder RVA -- winevulkan.vkCmdPushDescriptorSetWithTemplate
+	[  59] +base[  60] 4b06 Forwarder RVA -- winevulkan.vkCmdPushDescriptorSetWithTemplate2
+	[  60] +base[  61] 4b35 Forwarder RVA -- winevulkan.vkCmdResetEvent
+	[  61] +base[  62] 4b50 Forwarder RVA -- winevulkan.vkCmdResetEvent2
+	[  62] +base[  63] 4b6c Forwarder RVA -- winevulkan.vkCmdResetQueryPool
+	[  63] +base[  64] 4b8b Forwarder RVA -- winevulkan.vkCmdResolveImage
+	[  64] +base[  65] 4ba8 Forwarder RVA -- winevulkan.vkCmdResolveImage2
+	[  65] +base[  66] 4bc6 Forwarder RVA -- winevulkan.vkCmdSetBlendConstants
+	[  66] +base[  67] 4be8 Forwarder RVA -- winevulkan.vkCmdSetCullMode
+	[  67] +base[  68] 4c04 Forwarder RVA -- winevulkan.vkCmdSetDepthBias
+	[  68] +base[  69] 4c21 Forwarder RVA -- winevulkan.vkCmdSetDepthBiasEnable
+	[  69] +base[  70] 4c44 Forwarder RVA -- winevulkan.vkCmdSetDepthBounds
+	[  70] +base[  71] 4c63 Forwarder RVA -- winevulkan.vkCmdSetDepthBoundsTestEnable
+	[  71] +base[  72] 4c8c Forwarder RVA -- winevulkan.vkCmdSetDepthCompareOp
+	[  72] +base[  73] 4cae Forwarder RVA -- winevulkan.vkCmdSetDepthTestEnable
+	[  73] +base[  74] 4cd1 Forwarder RVA -- winevulkan.vkCmdSetDepthWriteEnable
+	[  74] +base[  75] 4cf5 Forwarder RVA -- winevulkan.vkCmdSetDeviceMask
+	[  75] +base[  76] 4d13 Forwarder RVA -- winevulkan.vkCmdSetEvent
+	[  76] +base[  77] 4d2c Forwarder RVA -- winevulkan.vkCmdSetEvent2
+	[  77] +base[  78] 4d46 Forwarder RVA -- winevulkan.vkCmdSetFrontFace
+	[  78] +base[  79] 4d63 Forwarder RVA -- winevulkan.vkCmdSetLineStipple
+	[  79] +base[  80] 4d82 Forwarder RVA -- winevulkan.vkCmdSetLineWidth
+	[  80] +base[  81] 4d9f Forwarder RVA -- winevulkan.vkCmdSetPrimitiveRestartEnable
+	[  81] +base[  82] 4dc9 Forwarder RVA -- winevulkan.vkCmdSetPrimitiveTopology
+	[  82] +base[  83] 4dee Forwarder RVA -- winevulkan.vkCmdSetRasterizerDiscardEnable
+	[  83] +base[  84] 4e19 Forwarder RVA -- winevulkan.vkCmdSetRenderingAttachmentLocations
+	[  84] +base[  85] 4e49 Forwarder RVA -- winevulkan.vkCmdSetRenderingInputAttachmentIndices
+	[  85] +base[  86] 4e7c Forwarder RVA -- winevulkan.vkCmdSetScissor
+	[  86] +base[  87] 4e97 Forwarder RVA -- winevulkan.vkCmdSetScissorWithCount
+	[  87] +base[  88] 4ebb Forwarder RVA -- winevulkan.vkCmdSetStencilCompareMask
+	[  88] +base[  89] 4ee1 Forwarder RVA -- winevulkan.vkCmdSetStencilOp
+	[  89] +base[  90] 4efe Forwarder RVA -- winevulkan.vkCmdSetStencilReference
+	[  90] +base[  91] 4f22 Forwarder RVA -- winevulkan.vkCmdSetStencilTestEnable
+	[  91] +base[  92] 4f47 Forwarder RVA -- winevulkan.vkCmdSetStencilWriteMask
+	[  92] +base[  93] 4f6b Forwarder RVA -- winevulkan.vkCmdSetViewport
+	[  93] +base[  94] 4f87 Forwarder RVA -- winevulkan.vkCmdSetViewportWithCount
+	[  94] +base[  95] 4fac Forwarder RVA -- winevulkan.vkCmdUpdateBuffer
+	[  95] +base[  96] 4fc9 Forwarder RVA -- winevulkan.vkCmdWaitEvents
+	[  96] +base[  97] 4fe4 Forwarder RVA -- winevulkan.vkCmdWaitEvents2
+	[  97] +base[  98] 5000 Forwarder RVA -- winevulkan.vkCmdWriteTimestamp
+	[  98] +base[  99] 501f Forwarder RVA -- winevulkan.vkCmdWriteTimestamp2
+	[  99] +base[ 100] 503f Forwarder RVA -- winevulkan.vkCopyImageToImage
+	[ 100] +base[ 101] 505d Forwarder RVA -- winevulkan.vkCopyImageToMemory
+	[ 101] +base[ 102] 507c Forwarder RVA -- winevulkan.vkCopyMemoryToImage
+	[ 102] +base[ 103] 509b Forwarder RVA -- winevulkan.vkCreateBuffer
+	[ 103] +base[ 104] 50b5 Forwarder RVA -- winevulkan.vkCreateBufferView
+	[ 104] +base[ 105] 50d3 Forwarder RVA -- winevulkan.vkCreateCommandPool
+	[ 105] +base[ 106] 50f2 Forwarder RVA -- winevulkan.vkCreateComputePipelines
+	[ 106] +base[ 107] 5116 Forwarder RVA -- winevulkan.vkCreateDescriptorPool
+	[ 107] +base[ 108] 5138 Forwarder RVA -- winevulkan.vkCreateDescriptorSetLayout
+	[ 108] +base[ 109] 515f Forwarder RVA -- winevulkan.vkCreateDescriptorUpdateTemplate
+	[ 109] +base[ 110] 518b Forwarder RVA -- winevulkan.vkCreateDevice
+	[ 110] +base[ 111] 1000 Export RVA
+	[ 111] +base[ 112] 1020 Export RVA
+	[ 112] +base[ 113] 51a5 Forwarder RVA -- winevulkan.vkCreateEvent
+	[ 113] +base[ 114] 51be Forwarder RVA -- winevulkan.vkCreateFence
+	[ 114] +base[ 115] 51d7 Forwarder RVA -- winevulkan.vkCreateFramebuffer
+	[ 115] +base[ 116] 51f6 Forwarder RVA -- winevulkan.vkCreateGraphicsPipelines
+	[ 116] +base[ 117] 521b Forwarder RVA -- winevulkan.vkCreateImage
+	[ 117] +base[ 118] 5234 Forwarder RVA -- winevulkan.vkCreateImageView
+	[ 118] +base[ 119] 5251 Forwarder RVA -- winevulkan.vkCreateInstance
+	[ 119] +base[ 120] 526d Forwarder RVA -- winevulkan.vkCreatePipelineCache
+	[ 120] +base[ 121] 528e Forwarder RVA -- winevulkan.vkCreatePipelineLayout
+	[ 121] +base[ 122] 52b0 Forwarder RVA -- winevulkan.vkCreatePrivateDataSlot
+	[ 122] +base[ 123] 52d3 Forwarder RVA -- winevulkan.vkCreateQueryPool
+	[ 123] +base[ 124] 52f0 Forwarder RVA -- winevulkan.vkCreateRenderPass
+	[ 124] +base[ 125] 530e Forwarder RVA -- winevulkan.vkCreateRenderPass2
+	[ 125] +base[ 126] 532d Forwarder RVA -- winevulkan.vkCreateSampler
+	[ 126] +base[ 127] 5348 Forwarder RVA -- winevulkan.vkCreateSamplerYcbcrConversion
+	[ 127] +base[ 128] 5372 Forwarder RVA -- winevulkan.vkCreateSemaphore
+	[ 128] +base[ 129] 538f Forwarder RVA -- winevulkan.vkCreateShaderModule
+	[ 129] +base[ 130] 1040 Export RVA
+	[ 130] +base[ 131] 53af Forwarder RVA -- winevulkan.vkCreateSwapchainKHR
+	[ 131] +base[ 132] 53cf Forwarder RVA -- winevulkan.vkCreateWin32SurfaceKHR
+	[ 132] +base[ 133] 53f2 Forwarder RVA -- winevulkan.vkDestroyBuffer
+	[ 133] +base[ 134] 540d Forwarder RVA -- winevulkan.vkDestroyBufferView
+	[ 134] +base[ 135] 542c Forwarder RVA -- winevulkan.vkDestroyCommandPool
+	[ 135] +base[ 136] 544c Forwarder RVA -- winevulkan.vkDestroyDescriptorPool
+	[ 136] +base[ 137] 546f Forwarder RVA -- winevulkan.vkDestroyDescriptorSetLayout
+	[ 137] +base[ 138] 5497 Forwarder RVA -- winevulkan.vkDestroyDescriptorUpdateTemplate
+	[ 138] +base[ 139] 54c4 Forwarder RVA -- winevulkan.vkDestroyDevice
+	[ 139] +base[ 140] 54df Forwarder RVA -- winevulkan.vkDestroyEvent
+	[ 140] +base[ 141] 54f9 Forwarder RVA -- winevulkan.vkDestroyFence
+	[ 141] +base[ 142] 5513 Forwarder RVA -- winevulkan.vkDestroyFramebuffer
+	[ 142] +base[ 143] 5533 Forwarder RVA -- winevulkan.vkDestroyImage
+	[ 143] +base[ 144] 554d Forwarder RVA -- winevulkan.vkDestroyImageView
+	[ 144] +base[ 145] 556b Forwarder RVA -- winevulkan.vkDestroyInstance
+	[ 145] +base[ 146] 5588 Forwarder RVA -- winevulkan.vkDestroyPipeline
+	[ 146] +base[ 147] 55a5 Forwarder RVA -- winevulkan.vkDestroyPipelineCache
+	[ 147] +base[ 148] 55c7 Forwarder RVA -- winevulkan.vkDestroyPipelineLayout
+	[ 148] +base[ 149] 55ea Forwarder RVA -- winevulkan.vkDestroyPrivateDataSlot
+	[ 149] +base[ 150] 560e Forwarder RVA -- winevulkan.vkDestroyQueryPool
+	[ 150] +base[ 151] 562c Forwarder RVA -- winevulkan.vkDestroyRenderPass
+	[ 151] +base[ 152] 564b Forwarder RVA -- winevulkan.vkDestroySampler
+	[ 152] +base[ 153] 5667 Forwarder RVA -- winevulkan.vkDestroySamplerYcbcrConversion
+	[ 153] +base[ 154] 5692 Forwarder RVA -- winevulkan.vkDestroySemaphore
+	[ 154] +base[ 155] 56b0 Forwarder RVA -- winevulkan.vkDestroyShaderModule
+	[ 155] +base[ 156] 56d1 Forwarder RVA -- winevulkan.vkDestroySurfaceKHR
+	[ 156] +base[ 157] 56f0 Forwarder RVA -- winevulkan.vkDestroySwapchainKHR
+	[ 157] +base[ 158] 5711 Forwarder RVA -- winevulkan.vkDeviceWaitIdle
+	[ 158] +base[ 159] 572d Forwarder RVA -- winevulkan.vkEndCommandBuffer
+	[ 159] +base[ 160] 574b Forwarder RVA -- winevulkan.vkEnumerateDeviceExtensionProperties
+	[ 160] +base[ 161] 577b Forwarder RVA -- winevulkan.vkEnumerateDeviceLayerProperties
+	[ 161] +base[ 162] 57a7 Forwarder RVA -- winevulkan.vkEnumerateInstanceExtensionProperties
+	[ 162] +base[ 163] 57d9 Forwarder RVA -- winevulkan.vkEnumerateInstanceLayerProperties
+	[ 163] +base[ 164] 5807 Forwarder RVA -- winevulkan.vkEnumerateInstanceVersion
+	[ 164] +base[ 165] 582d Forwarder RVA -- winevulkan.vkEnumeratePhysicalDeviceGroups
+	[ 165] +base[ 166] 5858 Forwarder RVA -- winevulkan.vkEnumeratePhysicalDevices
+	[ 166] +base[ 167] 587e Forwarder RVA -- winevulkan.vkFlushMappedMemoryRanges
+	[ 167] +base[ 168] 58a3 Forwarder RVA -- winevulkan.vkFreeCommandBuffers
+	[ 168] +base[ 169] 58c3 Forwarder RVA -- winevulkan.vkFreeDescriptorSets
+	[ 169] +base[ 170] 58e3 Forwarder RVA -- winevulkan.vkFreeMemory
+	[ 170] +base[ 171] 58fb Forwarder RVA -- winevulkan.vkGetBufferDeviceAddress
+	[ 171] +base[ 172] 591f Forwarder RVA -- winevulkan.vkGetBufferMemoryRequirements
+	[ 172] +base[ 173] 5948 Forwarder RVA -- winevulkan.vkGetBufferMemoryRequirements2
+	[ 173] +base[ 174] 5972 Forwarder RVA -- winevulkan.vkGetBufferOpaqueCaptureAddress
+	[ 174] +base[ 175] 1060 Export RVA
+	[ 175] +base[ 176] 599d Forwarder RVA -- winevulkan.vkGetDescriptorSetLayoutSupport
+	[ 176] +base[ 177] 59c8 Forwarder RVA -- winevulkan.vkGetDeviceBufferMemoryRequirements
+	[ 177] +base[ 178] 59f7 Forwarder RVA -- winevulkan.vkGetDeviceGroupPeerMemoryFeatures
+	[ 178] +base[ 179] 5a25 Forwarder RVA -- winevulkan.vkGetDeviceGroupPresentCapabilitiesKHR
+	[ 179] +base[ 180] 5a57 Forwarder RVA -- winevulkan.vkGetDeviceGroupSurfacePresentModesKHR
+	[ 180] +base[ 181] 5a89 Forwarder RVA -- winevulkan.vkGetDeviceImageMemoryRequirements
+	[ 181] +base[ 182] 5ab7 Forwarder RVA -- winevulkan.vkGetDeviceImageSparseMemoryRequirements
+	[ 182] +base[ 183] 5aeb Forwarder RVA -- winevulkan.vkGetDeviceImageSubresourceLayout
+	[ 183] +base[ 184] 5b18 Forwarder RVA -- winevulkan.vkGetDeviceMemoryCommitment
+	[ 184] +base[ 185] 5b3f Forwarder RVA -- winevulkan.vkGetDeviceMemoryOpaqueCaptureAddress
+	[ 185] +base[ 186] 5b70 Forwarder RVA -- winevulkan.vkGetDeviceProcAddr
+	[ 186] +base[ 187] 5b8f Forwarder RVA -- winevulkan.vkGetDeviceQueue
+	[ 187] +base[ 188] 5bab Forwarder RVA -- winevulkan.vkGetDeviceQueue2
+	[ 188] +base[ 189] 1080 Export RVA
+	[ 189] +base[ 190] 10a0 Export RVA
+	[ 190] +base[ 191] 10c0 Export RVA
+	[ 191] +base[ 192] 5bc8 Forwarder RVA -- winevulkan.vkGetEventStatus
+	[ 192] +base[ 193] 10e0 Export RVA
+	[ 193] +base[ 194] 5be4 Forwarder RVA -- winevulkan.vkGetFenceStatus
+	[ 194] +base[ 195] 5c00 Forwarder RVA -- winevulkan.vkGetImageMemoryRequirements
+	[ 195] +base[ 196] 5c28 Forwarder RVA -- winevulkan.vkGetImageMemoryRequirements2
+	[ 196] +base[ 197] 5c51 Forwarder RVA -- winevulkan.vkGetImageSparseMemoryRequirements
+	[ 197] +base[ 198] 5c7f Forwarder RVA -- winevulkan.vkGetImageSparseMemoryRequirements2
+	[ 198] +base[ 199] 5cae Forwarder RVA -- winevulkan.vkGetImageSubresourceLayout
+	[ 199] +base[ 200] 5cd5 Forwarder RVA -- winevulkan.vkGetImageSubresourceLayout2
+	[ 200] +base[ 201] 5cfd Forwarder RVA -- winevulkan.vkGetInstanceProcAddr
+	[ 201] +base[ 202] 1100 Export RVA
+	[ 202] +base[ 203] 1120 Export RVA
+	[ 203] +base[ 204] 5d1e Forwarder RVA -- winevulkan.vkGetPhysicalDeviceExternalBufferProperties
+	[ 204] +base[ 205] 5d55 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceExternalFenceProperties
+	[ 205] +base[ 206] 5d8b Forwarder RVA -- winevulkan.vkGetPhysicalDeviceExternalSemaphoreProperties
+	[ 206] +base[ 207] 5dc5 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceFeatures
+	[ 207] +base[ 208] 5dec Forwarder RVA -- winevulkan.vkGetPhysicalDeviceFeatures2
+	[ 208] +base[ 209] 5e14 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceFormatProperties
+	[ 209] +base[ 210] 5e43 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceFormatProperties2
+	[ 210] +base[ 211] 5e73 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceImageFormatProperties
+	[ 211] +base[ 212] 5ea7 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceImageFormatProperties2
+	[ 212] +base[ 213] 5edc Forwarder RVA -- winevulkan.vkGetPhysicalDeviceMemoryProperties
+	[ 213] +base[ 214] 5f0b Forwarder RVA -- winevulkan.vkGetPhysicalDeviceMemoryProperties2
+	[ 214] +base[ 215] 5f3b Forwarder RVA -- winevulkan.vkGetPhysicalDevicePresentRectanglesKHR
+	[ 215] +base[ 216] 5f6e Forwarder RVA -- winevulkan.vkGetPhysicalDeviceProperties
+	[ 216] +base[ 217] 5f97 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceProperties2
+	[ 217] +base[ 218] 5fc1 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceQueueFamilyProperties
+	[ 218] +base[ 219] 5ff5 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceQueueFamilyProperties2
+	[ 219] +base[ 220] 602a Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSparseImageFormatProperties
+	[ 220] +base[ 221] 6064 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSparseImageFormatProperties2
+	[ 221] +base[ 222] 609f Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfaceCapabilities2KHR
+	[ 222] +base[ 223] 60d5 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+	[ 223] +base[ 224] 610a Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfaceFormats2KHR
+	[ 224] +base[ 225] 613b Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfaceFormatsKHR
+	[ 225] +base[ 226] 616b Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfacePresentModesKHR
+	[ 226] +base[ 227] 61a0 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceSurfaceSupportKHR
+	[ 227] +base[ 228] 61d0 Forwarder RVA -- winevulkan.vkGetPhysicalDeviceToolProperties
+	[ 228] +base[ 229] 61fd Forwarder RVA -- winevulkan.vkGetPhysicalDeviceWin32PresentationSupportKHR
+	[ 229] +base[ 230] 6237 Forwarder RVA -- winevulkan.vkGetPipelineCacheData
+	[ 230] +base[ 231] 6259 Forwarder RVA -- winevulkan.vkGetPrivateData
+	[ 231] +base[ 232] 6275 Forwarder RVA -- winevulkan.vkGetQueryPoolResults
+	[ 232] +base[ 233] 6296 Forwarder RVA -- winevulkan.vkGetRenderAreaGranularity
+	[ 233] +base[ 234] 62bc Forwarder RVA -- winevulkan.vkGetRenderingAreaGranularity
+	[ 234] +base[ 235] 62e5 Forwarder RVA -- winevulkan.vkGetSemaphoreCounterValue
+	[ 235] +base[ 236] 630b Forwarder RVA -- winevulkan.vkGetSwapchainImagesKHR
+	[ 236] +base[ 237] 632e Forwarder RVA -- winevulkan.vkInvalidateMappedMemoryRanges
+	[ 237] +base[ 238] 6358 Forwarder RVA -- winevulkan.vkMapMemory
+	[ 238] +base[ 239] 636f Forwarder RVA -- winevulkan.vkMapMemory2
+	[ 239] +base[ 240] 6387 Forwarder RVA -- winevulkan.vkMergePipelineCaches
+	[ 240] +base[ 241] 63a8 Forwarder RVA -- winevulkan.vkQueueBindSparse
+	[ 241] +base[ 242] 63c5 Forwarder RVA -- winevulkan.vkQueuePresentKHR
+	[ 242] +base[ 243] 63e2 Forwarder RVA -- winevulkan.vkQueueSubmit
+	[ 243] +base[ 244] 63fb Forwarder RVA -- winevulkan.vkQueueSubmit2
+	[ 244] +base[ 245] 6415 Forwarder RVA -- winevulkan.vkQueueWaitIdle
+	[ 245] +base[ 246] 6430 Forwarder RVA -- winevulkan.vkResetCommandBuffer
+	[ 246] +base[ 247] 6450 Forwarder RVA -- winevulkan.vkResetCommandPool
+	[ 247] +base[ 248] 646e Forwarder RVA -- winevulkan.vkResetDescriptorPool
+	[ 248] +base[ 249] 648f Forwarder RVA -- winevulkan.vkResetEvent
+	[ 249] +base[ 250] 64a7 Forwarder RVA -- winevulkan.vkResetFences
+	[ 250] +base[ 251] 64c0 Forwarder RVA -- winevulkan.vkResetQueryPool
+	[ 251] +base[ 252] 64dc Forwarder RVA -- winevulkan.vkSetEvent
+	[ 252] +base[ 253] 64f2 Forwarder RVA -- winevulkan.vkSetPrivateData
+	[ 253] +base[ 254] 650e Forwarder RVA -- winevulkan.vkSignalSemaphore
+	[ 254] +base[ 255] 652b Forwarder RVA -- winevulkan.vkTransitionImageLayout
+	[ 255] +base[ 256] 654e Forwarder RVA -- winevulkan.vkTrimCommandPool
+	[ 256] +base[ 257] 656b Forwarder RVA -- winevulkan.vkUnmapMemory
+	[ 257] +base[ 258] 6584 Forwarder RVA -- winevulkan.vkUnmapMemory2
+	[ 258] +base[ 259] 659e Forwarder RVA -- winevulkan.vkUpdateDescriptorSetWithTemplate
+	[ 259] +base[ 260] 65cb Forwarder RVA -- winevulkan.vkUpdateDescriptorSets
+	[ 260] +base[ 261] 65ed Forwarder RVA -- winevulkan.vkWaitForFences
+	[ 261] +base[ 262] 6608 Forwarder RVA -- winevulkan.vkWaitSemaphores
+	[ 262] +base[ 263] 6624 Forwarder RVA -- winevulkan.wine_vkAcquireKeyedMutex
+	[ 263] +base[ 264] 6648 Forwarder RVA -- winevulkan.wine_vkReleaseKeyedMutex
+
+[Ordinal/Name Pointer] Table
+	[   0] vkAcquireNextImage2KHR
+	[   1] vkAcquireNextImageKHR
+	[   2] vkAllocateCommandBuffers
+	[   3] vkAllocateDescriptorSets
+	[   4] vkAllocateMemory
+	[   5] vkBeginCommandBuffer
+	[   6] vkBindBufferMemory
+	[   7] vkBindBufferMemory2
+	[   8] vkBindImageMemory
+	[   9] vkBindImageMemory2
+	[  10] vkCmdBeginQuery
+	[  11] vkCmdBeginRenderPass
+	[  12] vkCmdBeginRenderPass2
+	[  13] vkCmdBeginRendering
+	[  14] vkCmdBindDescriptorSets
+	[  15] vkCmdBindDescriptorSets2
+	[  16] vkCmdBindIndexBuffer
+	[  17] vkCmdBindIndexBuffer2
+	[  18] vkCmdBindPipeline
+	[  19] vkCmdBindVertexBuffers
+	[  20] vkCmdBindVertexBuffers2
+	[  21] vkCmdBlitImage
+	[  22] vkCmdBlitImage2
+	[  23] vkCmdClearAttachments
+	[  24] vkCmdClearColorImage
+	[  25] vkCmdClearDepthStencilImage
+	[  26] vkCmdCopyBuffer
+	[  27] vkCmdCopyBuffer2
+	[  28] vkCmdCopyBufferToImage
+	[  29] vkCmdCopyBufferToImage2
+	[  30] vkCmdCopyImage
+	[  31] vkCmdCopyImage2
+	[  32] vkCmdCopyImageToBuffer
+	[  33] vkCmdCopyImageToBuffer2
+	[  34] vkCmdCopyQueryPoolResults
+	[  35] vkCmdDispatch
+	[  36] vkCmdDispatchBase
+	[  37] vkCmdDispatchIndirect
+	[  38] vkCmdDraw
+	[  39] vkCmdDrawIndexed
+	[  40] vkCmdDrawIndexedIndirect
+	[  41] vkCmdDrawIndexedIndirectCount
+	[  42] vkCmdDrawIndirect
+	[  43] vkCmdDrawIndirectCount
+	[  44] vkCmdEndQuery
+	[  45] vkCmdEndRenderPass
+	[  46] vkCmdEndRenderPass2
+	[  47] vkCmdEndRendering
+	[  48] vkCmdExecuteCommands
+	[  49] vkCmdFillBuffer
+	[  50] vkCmdNextSubpass
+	[  51] vkCmdNextSubpass2
+	[  52] vkCmdPipelineBarrier
+	[  53] vkCmdPipelineBarrier2
+	[  54] vkCmdPushConstants
+	[  55] vkCmdPushConstants2
+	[  56] vkCmdPushDescriptorSet
+	[  57] vkCmdPushDescriptorSet2
+	[  58] vkCmdPushDescriptorSetWithTemplate
+	[  59] vkCmdPushDescriptorSetWithTemplate2
+	[  60] vkCmdResetEvent
+	[  61] vkCmdResetEvent2
+	[  62] vkCmdResetQueryPool
+	[  63] vkCmdResolveImage
+	[  64] vkCmdResolveImage2
+	[  65] vkCmdSetBlendConstants
+	[  66] vkCmdSetCullMode
+	[  67] vkCmdSetDepthBias
+	[  68] vkCmdSetDepthBiasEnable
+	[  69] vkCmdSetDepthBounds
+	[  70] vkCmdSetDepthBoundsTestEnable
+	[  71] vkCmdSetDepthCompareOp
+	[  72] vkCmdSetDepthTestEnable
+	[  73] vkCmdSetDepthWriteEnable
+	[  74] vkCmdSetDeviceMask
+	[  75] vkCmdSetEvent
+	[  76] vkCmdSetEvent2
+	[  77] vkCmdSetFrontFace
+	[  78] vkCmdSetLineStipple
+	[  79] vkCmdSetLineWidth
+	[  80] vkCmdSetPrimitiveRestartEnable
+	[  81] vkCmdSetPrimitiveTopology
+	[  82] vkCmdSetRasterizerDiscardEnable
+	[  83] vkCmdSetRenderingAttachmentLocations
+	[  84] vkCmdSetRenderingInputAttachmentIndices
+	[  85] vkCmdSetScissor
+	[  86] vkCmdSetScissorWithCount
+	[  87] vkCmdSetStencilCompareMask
+	[  88] vkCmdSetStencilOp
+	[  89] vkCmdSetStencilReference
+	[  90] vkCmdSetStencilTestEnable
+	[  91] vkCmdSetStencilWriteMask
+	[  92] vkCmdSetViewport
+	[  93] vkCmdSetViewportWithCount
+	[  94] vkCmdUpdateBuffer
+	[  95] vkCmdWaitEvents
+	[  96] vkCmdWaitEvents2
+	[  97] vkCmdWriteTimestamp
+	[  98] vkCmdWriteTimestamp2
+	[  99] vkCopyImageToImage
+	[ 100] vkCopyImageToMemory
+	[ 101] vkCopyMemoryToImage
+	[ 102] vkCreateBuffer
+	[ 103] vkCreateBufferView
+	[ 104] vkCreateCommandPool
+	[ 105] vkCreateComputePipelines
+	[ 106] vkCreateDescriptorPool
+	[ 107] vkCreateDescriptorSetLayout
+	[ 108] vkCreateDescriptorUpdateTemplate
+	[ 109] vkCreateDevice
+	[ 110] vkCreateDisplayModeKHR
+	[ 111] vkCreateDisplayPlaneSurfaceKHR
+	[ 112] vkCreateEvent
+	[ 113] vkCreateFence
+	[ 114] vkCreateFramebuffer
+	[ 115] vkCreateGraphicsPipelines
+	[ 116] vkCreateImage
+	[ 117] vkCreateImageView
+	[ 118] vkCreateInstance
+	[ 119] vkCreatePipelineCache
+	[ 120] vkCreatePipelineLayout
+	[ 121] vkCreatePrivateDataSlot
+	[ 122] vkCreateQueryPool
+	[ 123] vkCreateRenderPass
+	[ 124] vkCreateRenderPass2
+	[ 125] vkCreateSampler
+	[ 126] vkCreateSamplerYcbcrConversion
+	[ 127] vkCreateSemaphore
+	[ 128] vkCreateShaderModule
+	[ 129] vkCreateSharedSwapchainsKHR
+	[ 130] vkCreateSwapchainKHR
+	[ 131] vkCreateWin32SurfaceKHR
+	[ 132] vkDestroyBuffer
+	[ 133] vkDestroyBufferView
+	[ 134] vkDestroyCommandPool
+	[ 135] vkDestroyDescriptorPool
+	[ 136] vkDestroyDescriptorSetLayout
+	[ 137] vkDestroyDescriptorUpdateTemplate
+	[ 138] vkDestroyDevice
+	[ 139] vkDestroyEvent
+	[ 140] vkDestroyFence
+	[ 141] vkDestroyFramebuffer
+	[ 142] vkDestroyImage
+	[ 143] vkDestroyImageView
+	[ 144] vkDestroyInstance
+	[ 145] vkDestroyPipeline
+	[ 146] vkDestroyPipelineCache
+	[ 147] vkDestroyPipelineLayout
+	[ 148] vkDestroyPrivateDataSlot
+	[ 149] vkDestroyQueryPool
+	[ 150] vkDestroyRenderPass
+	[ 151] vkDestroySampler
+	[ 152] vkDestroySamplerYcbcrConversion
+	[ 153] vkDestroySemaphore
+	[ 154] vkDestroyShaderModule
+	[ 155] vkDestroySurfaceKHR
+	[ 156] vkDestroySwapchainKHR
+	[ 157] vkDeviceWaitIdle
+	[ 158] vkEndCommandBuffer
+	[ 159] vkEnumerateDeviceExtensionProperties
+	[ 160] vkEnumerateDeviceLayerProperties
+	[ 161] vkEnumerateInstanceExtensionProperties
+	[ 162] vkEnumerateInstanceLayerProperties
+	[ 163] vkEnumerateInstanceVersion
+	[ 164] vkEnumeratePhysicalDeviceGroups
+	[ 165] vkEnumeratePhysicalDevices
+	[ 166] vkFlushMappedMemoryRanges
+	[ 167] vkFreeCommandBuffers
+	[ 168] vkFreeDescriptorSets
+	[ 169] vkFreeMemory
+	[ 170] vkGetBufferDeviceAddress
+	[ 171] vkGetBufferMemoryRequirements
+	[ 172] vkGetBufferMemoryRequirements2
+	[ 173] vkGetBufferOpaqueCaptureAddress
+	[ 174] vkGetCommandPoolMemoryConsumption
+	[ 175] vkGetDescriptorSetLayoutSupport
+	[ 176] vkGetDeviceBufferMemoryRequirements
+	[ 177] vkGetDeviceGroupPeerMemoryFeatures
+	[ 178] vkGetDeviceGroupPresentCapabilitiesKHR
+	[ 179] vkGetDeviceGroupSurfacePresentModesKHR
+	[ 180] vkGetDeviceImageMemoryRequirements
+	[ 181] vkGetDeviceImageSparseMemoryRequirements
+	[ 182] vkGetDeviceImageSubresourceLayout
+	[ 183] vkGetDeviceMemoryCommitment
+	[ 184] vkGetDeviceMemoryOpaqueCaptureAddress
+	[ 185] vkGetDeviceProcAddr
+	[ 186] vkGetDeviceQueue
+	[ 187] vkGetDeviceQueue2
+	[ 188] vkGetDisplayModePropertiesKHR
+	[ 189] vkGetDisplayPlaneCapabilitiesKHR
+	[ 190] vkGetDisplayPlaneSupportedDisplaysKHR
+	[ 191] vkGetEventStatus
+	[ 192] vkGetFaultData
+	[ 193] vkGetFenceStatus
+	[ 194] vkGetImageMemoryRequirements
+	[ 195] vkGetImageMemoryRequirements2
+	[ 196] vkGetImageSparseMemoryRequirements
+	[ 197] vkGetImageSparseMemoryRequirements2
+	[ 198] vkGetImageSubresourceLayout
+	[ 199] vkGetImageSubresourceLayout2
+	[ 200] vkGetInstanceProcAddr
+	[ 201] vkGetPhysicalDeviceDisplayPlanePropertiesKHR
+	[ 202] vkGetPhysicalDeviceDisplayPropertiesKHR
+	[ 203] vkGetPhysicalDeviceExternalBufferProperties
+	[ 204] vkGetPhysicalDeviceExternalFenceProperties
+	[ 205] vkGetPhysicalDeviceExternalSemaphoreProperties
+	[ 206] vkGetPhysicalDeviceFeatures
+	[ 207] vkGetPhysicalDeviceFeatures2
+	[ 208] vkGetPhysicalDeviceFormatProperties
+	[ 209] vkGetPhysicalDeviceFormatProperties2
+	[ 210] vkGetPhysicalDeviceImageFormatProperties
+	[ 211] vkGetPhysicalDeviceImageFormatProperties2
+	[ 212] vkGetPhysicalDeviceMemoryProperties
+	[ 213] vkGetPhysicalDeviceMemoryProperties2
+	[ 214] vkGetPhysicalDevicePresentRectanglesKHR
+	[ 215] vkGetPhysicalDeviceProperties
+	[ 216] vkGetPhysicalDeviceProperties2
+	[ 217] vkGetPhysicalDeviceQueueFamilyProperties
+	[ 218] vkGetPhysicalDeviceQueueFamilyProperties2
+	[ 219] vkGetPhysicalDeviceSparseImageFormatProperties
+	[ 220] vkGetPhysicalDeviceSparseImageFormatProperties2
+	[ 221] vkGetPhysicalDeviceSurfaceCapabilities2KHR
+	[ 222] vkGetPhysicalDeviceSurfaceCapabilitiesKHR
+	[ 223] vkGetPhysicalDeviceSurfaceFormats2KHR
+	[ 224] vkGetPhysicalDeviceSurfaceFormatsKHR
+	[ 225] vkGetPhysicalDeviceSurfacePresentModesKHR
+	[ 226] vkGetPhysicalDeviceSurfaceSupportKHR
+	[ 227] vkGetPhysicalDeviceToolProperties
+	[ 228] vkGetPhysicalDeviceWin32PresentationSupportKHR
+	[ 229] vkGetPipelineCacheData
+	[ 230] vkGetPrivateData
+	[ 231] vkGetQueryPoolResults
+	[ 232] vkGetRenderAreaGranularity
+	[ 233] vkGetRenderingAreaGranularity
+	[ 234] vkGetSemaphoreCounterValue
+	[ 235] vkGetSwapchainImagesKHR
+	[ 236] vkInvalidateMappedMemoryRanges
+	[ 237] vkMapMemory
+	[ 238] vkMapMemory2
+	[ 239] vkMergePipelineCaches
+	[ 240] vkQueueBindSparse
+	[ 241] vkQueuePresentKHR
+	[ 242] vkQueueSubmit
+	[ 243] vkQueueSubmit2
+	[ 244] vkQueueWaitIdle
+	[ 245] vkResetCommandBuffer
+	[ 246] vkResetCommandPool
+	[ 247] vkResetDescriptorPool
+	[ 248] vkResetEvent
+	[ 249] vkResetFences
+	[ 250] vkResetQueryPool
+	[ 251] vkSetEvent
+	[ 252] vkSetPrivateData
+	[ 253] vkSignalSemaphore
+	[ 254] vkTransitionImageLayout
+	[ 255] vkTrimCommandPool
+	[ 256] vkUnmapMemory
+	[ 257] vkUnmapMemory2
+	[ 258] vkUpdateDescriptorSetWithTemplate
+	[ 259] vkUpdateDescriptorSets
+	[ 260] vkWaitForFences
+	[ 261] vkWaitSemaphores
+	[ 262] wine_vkAcquireKeyedMutex
+	[ 263] wine_vkReleaseKeyedMutex
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 60 (0x3c) Number of fixups 26
+	reloc    0 offset   10 [1010] HIGHLOW
+	reloc    1 offset   17 [1017] HIGHLOW
+	reloc    2 offset   30 [1030] HIGHLOW
+	reloc    3 offset   37 [1037] HIGHLOW
+	reloc    4 offset   50 [1050] HIGHLOW
+	reloc    5 offset   57 [1057] HIGHLOW
+	reloc    6 offset   70 [1070] HIGHLOW
+	reloc    7 offset   77 [1077] HIGHLOW
+	reloc    8 offset   90 [1090] HIGHLOW
+	reloc    9 offset   97 [1097] HIGHLOW
+	reloc   10 offset   b0 [10b0] HIGHLOW
+	reloc   11 offset   b7 [10b7] HIGHLOW
+	reloc   12 offset   d0 [10d0] HIGHLOW
+	reloc   13 offset   d7 [10d7] HIGHLOW
+	reloc   14 offset   f0 [10f0] HIGHLOW
+	reloc   15 offset   f7 [10f7] HIGHLOW
+	reloc   16 offset  110 [1110] HIGHLOW
+	reloc   17 offset  117 [1117] HIGHLOW
+	reloc   18 offset  130 [1130] HIGHLOW
+	reloc   19 offset  137 [1137] HIGHLOW
+	reloc   20 offset  160 [1160] HIGHLOW
+	reloc   21 offset  166 [1166] HIGHLOW
+	reloc   22 offset  19b [119b] HIGHLOW
+	reloc   23 offset  1d2 [11d2] HIGHLOW
+	reloc   24 offset  1dd [11dd] HIGHLOW
+	reloc   25 offset  1e8 [11e8] HIGHLOW
+
+Virtual Address: 00007000 Chunk size 28 (0x1c) Number of fixups 10
+	reloc    0 offset   20 [7020] HIGHLOW
+	reloc    1 offset   34 [7034] HIGHLOW
+	reloc    2 offset   48 [7048] HIGHLOW
+	reloc    3 offset   5c [705c] HIGHLOW
+	reloc    4 offset   70 [7070] HIGHLOW
+	reloc    5 offset   84 [7084] HIGHLOW
+	reloc    6 offset   98 [7098] HIGHLOW
+	reloc    7 offset   ac [70ac] HIGHLOW
+	reloc    8 offset   c0 [70c0] HIGHLOW
+	reloc    9 offset   d4 [70d4] HIGHLOW
+
+There is a debug directory in .rdata at 0x10002000
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 0000201c 0000201c
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+010   Entry: ID: 0x000010, Value: 0x80000018
+018    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+028     Entry: ID: 0x000001, Value: 0x80000030
+030      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+040       Entry: ID: 00000000, Value: 0x000048
+048        Leaf: Addr: 0x009058, Size: 0x000350, Codepage: 0
+ Resources start at offset: 0x58
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000001ec  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        00004728  10002000  10002000  00002000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .eh_fram      000000e0  10007000  10007000  00007000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  3 .rodata       0000020c  10008000  10008000  00008000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  4 .rsrc         000003a8  10009000  10009000  00009000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 .reloc        00000058  1000a000  1000a000  0000a000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .debug_abbrev 0000019e  1000b000  1000b000  0000b000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_info   0000020b  1000c000  1000c000  0000c000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   0000013d  1000d000  1000d000  0000d000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_str    00000346  1000e000  1000e000  0000e000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000000 ___wine_stub_vkCreateDisplayModeKHR
+[  1](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000d .L__wine_stub_vkCreateDisplayModeKHR_string
+[  2](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_file_name
+[  3](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000180 ___wine_spec_unimplemented_stub
+[  4](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000020 ___wine_stub_vkCreateDisplayPlaneSurfaceKHR
+[  5](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000024 .L__wine_stub_vkCreateDisplayPlaneSurfaceKHR_string
+[  6](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000040 ___wine_stub_vkCreateSharedSwapchainsKHR
+[  7](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000043 .L__wine_stub_vkCreateSharedSwapchainsKHR_string
+[  8](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000060 ___wine_stub_vkGetCommandPoolMemoryConsumption
+[  9](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000005f .L__wine_stub_vkGetCommandPoolMemoryConsumption_string
+[ 10](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000080 ___wine_stub_vkGetDisplayModePropertiesKHR
+[ 11](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000081 .L__wine_stub_vkGetDisplayModePropertiesKHR_string
+[ 12](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000a0 ___wine_stub_vkGetDisplayPlaneCapabilitiesKHR
+[ 13](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000009f .L__wine_stub_vkGetDisplayPlaneCapabilitiesKHR_string
+[ 14](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000c0 ___wine_stub_vkGetDisplayPlaneSupportedDisplaysKHR
+[ 15](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000c0 .L__wine_stub_vkGetDisplayPlaneSupportedDisplaysKHR_string
+[ 16](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000e0 ___wine_stub_vkGetFaultData
+[ 17](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000e6 .L__wine_stub_vkGetFaultData_string
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000100 ___wine_stub_vkGetPhysicalDeviceDisplayPlanePropertiesKHR
+[ 19](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f5 .L__wine_stub_vkGetPhysicalDeviceDisplayPlanePropertiesKHR_string
+[ 20](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000120 ___wine_stub_vkGetPhysicalDeviceDisplayPropertiesKHR
+[ 21](sec  4)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000122 .L__wine_stub_vkGetPhysicalDeviceDisplayPropertiesKHR_string
+[ 22](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000038 .L__wine_spec_exports
+[ 23](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000ab0 .L__wine_spec_exp_names
+[ 24](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 .L__wine_spec_exports_funcs
+[ 25](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000480 .L__wine_spec_exp_name_ptrs
+[ 26](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000008a0 .L__wine_spec_exp_ordinals
+[ 27](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000023be .L__wine_spec_forwards
+[ 28](sec  4)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000014c __load_config_used
+[ 29](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[ 30](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000058 .L__wine_spec_res_0
+[ 31](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000150 _DllMain@12
+[ 32](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000046c4 __imp__DisableThreadLibraryCalls@4
+[ 33](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000046bc __imp__GetDpiForSystem@0
+[ 34](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000046c8 __imp__RaiseException@16
+[ 35](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000001c0 _DllMainCRTStartup@12
+
+

@@ -1,0 +1,30 @@
+commit 1a0cdb5ed18a5f9c3ae1af3e34bccd2817f88784
+Author: Huggo2 <137641537+Huggo2@users.noreply.github.com>
+Date:   Mon Feb 26 01:21:39 2024 +0500
+
+    xz workaround try 2
+---
+ install | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/install b/install
+index 2b8f95f..bad3f6b 100644
+--- a/install
++++ b/install
+@@ -33,6 +33,16 @@ pkg install ncurses-utils -y &>/dev/null
+ pkg install hashdeep -y &>/dev/null
+ pkg install termux-x11-nightly -y &>/dev/null
+ 
++wget https://raw.githubusercontent.com/olegos2/mobox/main/components/liblzma_5.6.0-1_aarch64.deb &>/dev/null
++wget https://raw.githubusercontent.com/olegos2/mobox/main/components/liblzma-static_5.6.0-1_aarch64.deb &>/dev/null
++wget https://raw.githubusercontent.com/olegos2/mobox/main/components/xz-utils_5.6.0-1_aarch64.deb &>/dev/null
++dpkg -i liblzma_5.6.0-1_aarch64.deb &>/dev/null
++dpkg -i liblzma-static_5.6.0-1_aarch64.deb &>/dev/null
++dpkg -i xz-utils_5.6.0-1_aarch64.deb &>/dev/null
++rm liblzma_5.6.0-1_aarch64.deb &>/dev/null
++rm liblzma-static_5.6.0-1_aarch64.deb &>/dev/null
++rm xz-utils_5.6.0-1_aarch64.deb &>/dev/null
++
+ if [ -e $PREFIX/glibc ]; then
+     echo -n "Removing previous glibc. Continue? (Y/n) "
+     read i

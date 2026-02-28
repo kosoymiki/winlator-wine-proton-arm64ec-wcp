@@ -1,0 +1,2031 @@
+
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/mciqtz32.dll:     file format pei-i386
+/tmp/elf_ide_or_j7fuj/tar_extract/lib/wine/i386-windows/mciqtz32.dll
+architecture: i386, flags 0x0000013f:
+HAS_RELOC, EXEC_P, HAS_LINENO, HAS_DEBUG, HAS_SYMS, HAS_LOCALS, D_PAGED
+start address 0x10004c70
+
+Characteristics 0x2102
+	executable
+	32 bit words
+	DLL
+
+Time/Date		Wed Feb 25 04:45:50 2026
+Magic			010b	(PE32)
+MajorLinkerVersion	14
+MinorLinkerVersion	0
+SizeOfCode		00004000
+SizeOfInitializedData	00027000
+SizeOfUninitializedData	00000000
+AddressOfEntryPoint	00004c70
+BaseOfCode		00001000
+BaseOfData		00000000
+ImageBase		10000000
+SectionAlignment	00001000
+FileAlignment		00001000
+MajorOSystemVersion	6
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	6
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		0002c000
+SizeOfHeaders		00001000
+CheckSum		00000000
+Subsystem		00000003	(Windows CUI)
+DllCharacteristics	00000540
+					DYNAMIC_BASE
+					NX_COMPAT
+					NO_SEH
+SizeOfStackReserve	00100000
+SizeOfStackCommit	00001000
+SizeOfHeapReserve	00100000
+SizeOfHeapCommit	00001000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000010
+
+The Data Directory
+Entry 0 00008b80 00000054 Export Directory [.edata (or where ever we found it)]
+Entry 1 00008bd4 000000a0 Import Directory [parts of .idata]
+Entry 2 0000d000 00002e54 Resource Directory [.rsrc]
+Entry 3 00000000 00000000 Exception Directory [.pdata]
+Entry 4 00000000 00000000 Security Directory
+Entry 5 00010000 000006c0 Base Relocation Directory [.reloc]
+Entry 6 00008b48 0000001c Debug Directory
+Entry 7 00000000 00000000 Description Directory
+Entry 8 00000000 00000000 Special Directory
+Entry 9 00000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000c00c 000000c0 Load Configuration Directory
+Entry b 00000000 00000000 Bound Import Directory
+Entry c 00008d80 0000010c Import Address Table Directory
+Entry d 00000000 00000000 Delay Import Directory
+Entry e 00000000 00000000 CLR Runtime Header
+Entry f 00000000 00000000 Reserved
+
+There is an import table in .rdata at 0x10008bd4
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 00008bd4	00008c74 00000000 00000000 00009256 00008d80
+
+	DLL Name: ole32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	8e8c	   15  CoCreateInstance
+	8ea0	   54  CoInitializeEx
+	8eb2	   91  CoUninitialize
+
+ 00008be8	00008c84 00000000 00000000 00009260 00008d90
+
+	DLL Name: winmm.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	8ec4	    6  DefDriverProc
+	8ed4	   38  mciDriverNotify
+	8ee6	   41  mciFreeCommandResource
+	8f00	   47  mciGetDriverData
+	8f14	   51  mciLoadCommandResource
+	8f2e	   56  mciSetDriverData
+
+ 00008bfc	00008ca0 00000000 00000000 0000926a 00008dac
+
+	DLL Name: user32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	8f42	 1505  AdjustWindowRect
+	8f56	 1613  CreateWindowExW
+	8f68	 1657  DefWindowProcW
+	8f7a	 1666  DestroyWindow
+	8f8a	 1774  GetClientRect
+	8f9a	 1790  GetDesktopWindow
+	8fae	 1889  GetSystemMetrics
+	8fc2	 1919  GetWindowRect
+	8fd2	 1970  IsWindow
+	8fde	 1986  LoadCursorW
+	8fec	 2025  MessageBoxA
+	8ffa	 2084  RegisterClassW
+	900c	 2212  SetWindowTextW
+	901e	 2223  ShowWindow
+	902c	 2258  UnregisterClassW
+
+ 00008c10	00008ce0 00000000 00000000 00009275 00008dec
+
+	DLL Name: gdi32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	9040	 1518  StretchDIBits
+
+ 00008c24	00008ce8 00000000 00000000 0000927f 00008df4
+
+	DLL Name: ucrtbase.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	9050	   74  __acrt_iob_func
+	9062	  158  __stdio_common_vsprintf
+	907c	 1894  _strdup
+	9086	 2284  free
+	908e	 2291  fwrite
+	9098	 2294  getenv
+	90a2	 2350  log10
+	90aa	 2382  memmove
+	90b4	 2449  strchr
+	90be	 2450  strcmp
+	90c8	 2452  strcpy
+	90d2	 2454  strcspn
+	90dc	 2458  strlen
+	90e6	 2514  wcslen
+
+ 00008c38	00008d24 00000000 00000000 0000928c 00008e30
+
+	DLL Name: kernel32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	90f0	  184  CloseHandle
+	90fe	  232  CreateEventW
+	910e	  279  CreateThread
+	911e	  323  DisableThreadLibraryCalls
+	913a	  644  GetModuleHandleW
+	914e	  694  GetProcAddress
+	9160	  781  GetTickCount
+	9170	  837  HeapAlloc
+	917c	  843  HeapFree
+	9188	  847  HeapReAlloc
+	9196	  892  IsBadStringPtrW
+	91a8	 1074  QueryPerformanceCounter
+	91c2	 1075  QueryPerformanceFrequency
+	91de	 1173  ResetEvent
+	91ec	 1272  SetEvent
+	91f8	 1433  WaitForMultipleObjects
+	9212	 1435  WaitForSingleObject
+
+ 00008c4c	00008d6c 00000000 00000000 00009299 00008e78
+
+	DLL Name: ntdll.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	9228	 1236  _alldiv
+	9232	 1240  _allrem
+	923c	 1244  _aulldiv
+	9248	 1296  _vsnprintf
+
+ 00008c60	00000000 00000000 00000000 00000000 00000000
+
+There is an export table in .rdata at 0x10008b80
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		fb081600
+Major/Minor 			0/0
+Name 				00008bbc mciqtz32.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000001
+	[Name Pointer/Ordinal] Table	00000001
+Table Addresses
+	Export Address Table 		00008ba8
+	Name Pointer Table 		00008bac
+	Ordinal Table 			00008bb0
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 1060 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[   0] DriverProc
+
+
+PE File Base Relocations (interpreted .reloc section contents)
+
+Virtual Address: 00001000 Chunk size 264 (0x108) Number of fixups 128
+	reloc    0 offset   15 [1015] HIGHLOW
+	reloc    1 offset   42 [1042] HIGHLOW
+	reloc    2 offset   48 [1048] HIGHLOW
+	reloc    3 offset   79 [1079] HIGHLOW
+	reloc    4 offset   9b [109b] HIGHLOW
+	reloc    5 offset   a3 [10a3] HIGHLOW
+	reloc    6 offset   d9 [10d9] HIGHLOW
+	reloc    7 offset   e9 [10e9] HIGHLOW
+	reloc    8 offset  105 [1105] HIGHLOW
+	reloc    9 offset  10d [110d] HIGHLOW
+	reloc   10 offset  13c [113c] HIGHLOW
+	reloc   11 offset  14b [114b] HIGHLOW
+	reloc   12 offset  163 [1163] HIGHLOW
+	reloc   13 offset  170 [1170] HIGHLOW
+	reloc   14 offset  17c [117c] HIGHLOW
+	reloc   15 offset  1bc [11bc] HIGHLOW
+	reloc   16 offset  1d6 [11d6] HIGHLOW
+	reloc   17 offset  1ec [11ec] HIGHLOW
+	reloc   18 offset  1ff [11ff] HIGHLOW
+	reloc   19 offset  22b [122b] HIGHLOW
+	reloc   20 offset  23a [123a] HIGHLOW
+	reloc   21 offset  242 [1242] HIGHLOW
+	reloc   22 offset  284 [1284] HIGHLOW
+	reloc   23 offset  28c [128c] HIGHLOW
+	reloc   24 offset  299 [1299] HIGHLOW
+	reloc   25 offset  2c5 [12c5] HIGHLOW
+	reloc   26 offset  2d0 [12d0] HIGHLOW
+	reloc   27 offset  2e3 [12e3] HIGHLOW
+	reloc   28 offset  2eb [12eb] HIGHLOW
+	reloc   29 offset  307 [1307] HIGHLOW
+	reloc   30 offset  316 [1316] HIGHLOW
+	reloc   31 offset  31e [131e] HIGHLOW
+	reloc   32 offset  357 [1357] HIGHLOW
+	reloc   33 offset  362 [1362] HIGHLOW
+	reloc   34 offset  368 [1368] HIGHLOW
+	reloc   35 offset  398 [1398] HIGHLOW
+	reloc   36 offset  3bc [13bc] HIGHLOW
+	reloc   37 offset  3d5 [13d5] HIGHLOW
+	reloc   38 offset  3e4 [13e4] HIGHLOW
+	reloc   39 offset  3ec [13ec] HIGHLOW
+	reloc   40 offset  402 [1402] HIGHLOW
+	reloc   41 offset  411 [1411] HIGHLOW
+	reloc   42 offset  419 [1419] HIGHLOW
+	reloc   43 offset  442 [1442] HIGHLOW
+	reloc   44 offset  44d [144d] HIGHLOW
+	reloc   45 offset  45d [145d] HIGHLOW
+	reloc   46 offset  46c [146c] HIGHLOW
+	reloc   47 offset  474 [1474] HIGHLOW
+	reloc   48 offset  57c [157c] HIGHLOW
+	reloc   49 offset  58b [158b] HIGHLOW
+	reloc   50 offset  593 [1593] HIGHLOW
+	reloc   51 offset  5ac [15ac] HIGHLOW
+	reloc   52 offset  5e9 [15e9] HIGHLOW
+	reloc   53 offset  61b [161b] HIGHLOW
+	reloc   54 offset  654 [1654] HIGHLOW
+	reloc   55 offset  66b [166b] HIGHLOW
+	reloc   56 offset  673 [1673] HIGHLOW
+	reloc   57 offset  6c4 [16c4] HIGHLOW
+	reloc   58 offset  6e1 [16e1] HIGHLOW
+	reloc   59 offset  6f8 [16f8] HIGHLOW
+	reloc   60 offset  6fe [16fe] HIGHLOW
+	reloc   61 offset  720 [1720] HIGHLOW
+	reloc   62 offset  744 [1744] HIGHLOW
+	reloc   63 offset  768 [1768] HIGHLOW
+	reloc   64 offset  78c [178c] HIGHLOW
+	reloc   65 offset  7b0 [17b0] HIGHLOW
+	reloc   66 offset  7d6 [17d6] HIGHLOW
+	reloc   67 offset  813 [1813] HIGHLOW
+	reloc   68 offset  827 [1827] HIGHLOW
+	reloc   69 offset  82f [182f] HIGHLOW
+	reloc   70 offset  8c7 [18c7] HIGHLOW
+	reloc   71 offset  8da [18da] HIGHLOW
+	reloc   72 offset  8e2 [18e2] HIGHLOW
+	reloc   73 offset  8fe [18fe] HIGHLOW
+	reloc   74 offset  911 [1911] HIGHLOW
+	reloc   75 offset  91c [191c] HIGHLOW
+	reloc   76 offset  92f [192f] HIGHLOW
+	reloc   77 offset  93a [193a] HIGHLOW
+	reloc   78 offset  94d [194d] HIGHLOW
+	reloc   79 offset  958 [1958] HIGHLOW
+	reloc   80 offset  96b [196b] HIGHLOW
+	reloc   81 offset  973 [1973] HIGHLOW
+	reloc   82 offset  982 [1982] HIGHLOW
+	reloc   83 offset  98a [198a] HIGHLOW
+	reloc   84 offset  999 [1999] HIGHLOW
+	reloc   85 offset  9a1 [19a1] HIGHLOW
+	reloc   86 offset  9b0 [19b0] HIGHLOW
+	reloc   87 offset  9b8 [19b8] HIGHLOW
+	reloc   88 offset  9c7 [19c7] HIGHLOW
+	reloc   89 offset  9cf [19cf] HIGHLOW
+	reloc   90 offset  9da [19da] HIGHLOW
+	reloc   91 offset  9e2 [19e2] HIGHLOW
+	reloc   92 offset  aa9 [1aa9] HIGHLOW
+	reloc   93 offset  ac3 [1ac3] HIGHLOW
+	reloc   94 offset  ad6 [1ad6] HIGHLOW
+	reloc   95 offset  aff [1aff] HIGHLOW
+	reloc   96 offset  b19 [1b19] HIGHLOW
+	reloc   97 offset  b21 [1b21] HIGHLOW
+	reloc   98 offset  b9f [1b9f] HIGHLOW
+	reloc   99 offset  c17 [1c17] HIGHLOW
+	reloc  100 offset  c2b [1c2b] HIGHLOW
+	reloc  101 offset  c3a [1c3a] HIGHLOW
+	reloc  102 offset  c42 [1c42] HIGHLOW
+	reloc  103 offset  c84 [1c84] HIGHLOW
+	reloc  104 offset  c9e [1c9e] HIGHLOW
+	reloc  105 offset  ca6 [1ca6] HIGHLOW
+	reloc  106 offset  cd6 [1cd6] HIGHLOW
+	reloc  107 offset  d42 [1d42] HIGHLOW
+	reloc  108 offset  d7d [1d7d] HIGHLOW
+	reloc  109 offset  d93 [1d93] HIGHLOW
+	reloc  110 offset  d9b [1d9b] HIGHLOW
+	reloc  111 offset  dce [1dce] HIGHLOW
+	reloc  112 offset  e3e [1e3e] HIGHLOW
+	reloc  113 offset  e54 [1e54] HIGHLOW
+	reloc  114 offset  e5e [1e5e] HIGHLOW
+	reloc  115 offset  e74 [1e74] HIGHLOW
+	reloc  116 offset  e82 [1e82] HIGHLOW
+	reloc  117 offset  e8a [1e8a] HIGHLOW
+	reloc  118 offset  ead [1ead] HIGHLOW
+	reloc  119 offset  ebf [1ebf] HIGHLOW
+	reloc  120 offset  ec7 [1ec7] HIGHLOW
+	reloc  121 offset  f27 [1f27] HIGHLOW
+	reloc  122 offset  f3e [1f3e] HIGHLOW
+	reloc  123 offset  f46 [1f46] HIGHLOW
+	reloc  124 offset  f9d [1f9d] HIGHLOW
+	reloc  125 offset  fbc [1fbc] HIGHLOW
+	reloc  126 offset  fc4 [1fc4] HIGHLOW
+	reloc  127 offset  fef [1fef] HIGHLOW
+
+Virtual Address: 00002000 Chunk size 328 (0x148) Number of fixups 160
+	reloc    0 offset    2 [2002] HIGHLOW
+	reloc    1 offset    a [200a] HIGHLOW
+	reloc    2 offset   bc [20bc] HIGHLOW
+	reloc    3 offset   c7 [20c7] HIGHLOW
+	reloc    4 offset   d6 [20d6] HIGHLOW
+	reloc    5 offset   e5 [20e5] HIGHLOW
+	reloc    6 offset   f9 [20f9] HIGHLOW
+	reloc    7 offset  101 [2101] HIGHLOW
+	reloc    8 offset  13e [213e] HIGHLOW
+	reloc    9 offset  158 [2158] HIGHLOW
+	reloc   10 offset  160 [2160] HIGHLOW
+	reloc   11 offset  197 [2197] HIGHLOW
+	reloc   12 offset  1ae [21ae] HIGHLOW
+	reloc   13 offset  1bd [21bd] HIGHLOW
+	reloc   14 offset  1d4 [21d4] HIGHLOW
+	reloc   15 offset  1e3 [21e3] HIGHLOW
+	reloc   16 offset  1eb [21eb] HIGHLOW
+	reloc   17 offset  21d [221d] HIGHLOW
+	reloc   18 offset  237 [2237] HIGHLOW
+	reloc   19 offset  23f [223f] HIGHLOW
+	reloc   20 offset  27b [227b] HIGHLOW
+	reloc   21 offset  28a [228a] HIGHLOW
+	reloc   22 offset  292 [2292] HIGHLOW
+	reloc   23 offset  2b0 [22b0] HIGHLOW
+	reloc   24 offset  2bf [22bf] HIGHLOW
+	reloc   25 offset  2c7 [22c7] HIGHLOW
+	reloc   26 offset  2fd [22fd] HIGHLOW
+	reloc   27 offset  317 [2317] HIGHLOW
+	reloc   28 offset  31f [231f] HIGHLOW
+	reloc   29 offset  35b [235b] HIGHLOW
+	reloc   30 offset  36a [236a] HIGHLOW
+	reloc   31 offset  372 [2372] HIGHLOW
+	reloc   32 offset  390 [2390] HIGHLOW
+	reloc   33 offset  39f [239f] HIGHLOW
+	reloc   34 offset  3a7 [23a7] HIGHLOW
+	reloc   35 offset  3e4 [23e4] HIGHLOW
+	reloc   36 offset  3fb [23fb] HIGHLOW
+	reloc   37 offset  403 [2403] HIGHLOW
+	reloc   38 offset  44d [244d] HIGHLOW
+	reloc   39 offset  45f [245f] HIGHLOW
+	reloc   40 offset  476 [2476] HIGHLOW
+	reloc   41 offset  490 [2490] HIGHLOW
+	reloc   42 offset  4a3 [24a3] HIGHLOW
+	reloc   43 offset  4ab [24ab] HIGHLOW
+	reloc   44 offset  4d0 [24d0] HIGHLOW
+	reloc   45 offset  4e2 [24e2] HIGHLOW
+	reloc   46 offset  4f9 [24f9] HIGHLOW
+	reloc   47 offset  504 [2504] HIGHLOW
+	reloc   48 offset  517 [2517] HIGHLOW
+	reloc   49 offset  51f [251f] HIGHLOW
+	reloc   50 offset  547 [2547] HIGHLOW
+	reloc   51 offset  55e [255e] HIGHLOW
+	reloc   52 offset  575 [2575] HIGHLOW
+	reloc   53 offset  58c [258c] HIGHLOW
+	reloc   54 offset  5a3 [25a3] HIGHLOW
+	reloc   55 offset  5ba [25ba] HIGHLOW
+	reloc   56 offset  5ce [25ce] HIGHLOW
+	reloc   57 offset  5e5 [25e5] HIGHLOW
+	reloc   58 offset  5ed [25ed] HIGHLOW
+	reloc   59 offset  612 [2612] HIGHLOW
+	reloc   60 offset  629 [2629] HIGHLOW
+	reloc   61 offset  640 [2640] HIGHLOW
+	reloc   62 offset  657 [2657] HIGHLOW
+	reloc   63 offset  66e [266e] HIGHLOW
+	reloc   64 offset  685 [2685] HIGHLOW
+	reloc   65 offset  69c [269c] HIGHLOW
+	reloc   66 offset  6b3 [26b3] HIGHLOW
+	reloc   67 offset  6ca [26ca] HIGHLOW
+	reloc   68 offset  6e1 [26e1] HIGHLOW
+	reloc   69 offset  6f8 [26f8] HIGHLOW
+	reloc   70 offset  70f [270f] HIGHLOW
+	reloc   71 offset  726 [2726] HIGHLOW
+	reloc   72 offset  73d [273d] HIGHLOW
+	reloc   73 offset  754 [2754] HIGHLOW
+	reloc   74 offset  76b [276b] HIGHLOW
+	reloc   75 offset  77f [277f] HIGHLOW
+	reloc   76 offset  792 [2792] HIGHLOW
+	reloc   77 offset  7a6 [27a6] HIGHLOW
+	reloc   78 offset  7b9 [27b9] HIGHLOW
+	reloc   79 offset  7cd [27cd] HIGHLOW
+	reloc   80 offset  7e0 [27e0] HIGHLOW
+	reloc   81 offset  7e8 [27e8] HIGHLOW
+	reloc   82 offset  824 [2824] HIGHLOW
+	reloc   83 offset  83b [283b] HIGHLOW
+	reloc   84 offset  843 [2843] HIGHLOW
+	reloc   85 offset  87c [287c] HIGHLOW
+	reloc   86 offset  892 [2892] HIGHLOW
+	reloc   87 offset  8a5 [28a5] HIGHLOW
+	reloc   88 offset  8c8 [28c8] HIGHLOW
+	reloc   89 offset  8d3 [28d3] HIGHLOW
+	reloc   90 offset  8db [28db] HIGHLOW
+	reloc   91 offset  8f5 [28f5] HIGHLOW
+	reloc   92 offset  900 [2900] HIGHLOW
+	reloc   93 offset  908 [2908] HIGHLOW
+	reloc   94 offset  922 [2922] HIGHLOW
+	reloc   95 offset  92d [292d] HIGHLOW
+	reloc   96 offset  935 [2935] HIGHLOW
+	reloc   97 offset  94f [294f] HIGHLOW
+	reloc   98 offset  95a [295a] HIGHLOW
+	reloc   99 offset  962 [2962] HIGHLOW
+	reloc  100 offset  97c [297c] HIGHLOW
+	reloc  101 offset  987 [2987] HIGHLOW
+	reloc  102 offset  98f [298f] HIGHLOW
+	reloc  103 offset  9a9 [29a9] HIGHLOW
+	reloc  104 offset  9b4 [29b4] HIGHLOW
+	reloc  105 offset  9bc [29bc] HIGHLOW
+	reloc  106 offset  9d3 [29d3] HIGHLOW
+	reloc  107 offset  9de [29de] HIGHLOW
+	reloc  108 offset  9e6 [29e6] HIGHLOW
+	reloc  109 offset  9fd [29fd] HIGHLOW
+	reloc  110 offset  a08 [2a08] HIGHLOW
+	reloc  111 offset  a10 [2a10] HIGHLOW
+	reloc  112 offset  a30 [2a30] HIGHLOW
+	reloc  113 offset  a43 [2a43] HIGHLOW
+	reloc  114 offset  a4b [2a4b] HIGHLOW
+	reloc  115 offset  a70 [2a70] HIGHLOW
+	reloc  116 offset  a7f [2a7f] HIGHLOW
+	reloc  117 offset  a87 [2a87] HIGHLOW
+	reloc  118 offset  a9f [2a9f] HIGHLOW
+	reloc  119 offset  ac8 [2ac8] HIGHLOW
+	reloc  120 offset  ad0 [2ad0] HIGHLOW
+	reloc  121 offset  b17 [2b17] HIGHLOW
+	reloc  122 offset  b2e [2b2e] HIGHLOW
+	reloc  123 offset  b36 [2b36] HIGHLOW
+	reloc  124 offset  b68 [2b68] HIGHLOW
+	reloc  125 offset  b77 [2b77] HIGHLOW
+	reloc  126 offset  b7f [2b7f] HIGHLOW
+	reloc  127 offset  ba0 [2ba0] HIGHLOW
+	reloc  128 offset  bb3 [2bb3] HIGHLOW
+	reloc  129 offset  bbb [2bbb] HIGHLOW
+	reloc  130 offset  be7 [2be7] HIGHLOW
+	reloc  131 offset  c12 [2c12] HIGHLOW
+	reloc  132 offset  c27 [2c27] HIGHLOW
+	reloc  133 offset  c36 [2c36] HIGHLOW
+	reloc  134 offset  c46 [2c46] HIGHLOW
+	reloc  135 offset  c55 [2c55] HIGHLOW
+	reloc  136 offset  cb2 [2cb2] HIGHLOW
+	reloc  137 offset  cc1 [2cc1] HIGHLOW
+	reloc  138 offset  d49 [2d49] HIGHLOW
+	reloc  139 offset  d58 [2d58] HIGHLOW
+	reloc  140 offset  d65 [2d65] HIGHLOW
+	reloc  141 offset  d78 [2d78] HIGHLOW
+	reloc  142 offset  d80 [2d80] HIGHLOW
+	reloc  143 offset  d9c [2d9c] HIGHLOW
+	reloc  144 offset  dab [2dab] HIGHLOW
+	reloc  145 offset  db3 [2db3] HIGHLOW
+	reloc  146 offset  dd0 [2dd0] HIGHLOW
+	reloc  147 offset  ddd [2ddd] HIGHLOW
+	reloc  148 offset  dec [2dec] HIGHLOW
+	reloc  149 offset  df4 [2df4] HIGHLOW
+	reloc  150 offset  e4e [2e4e] HIGHLOW
+	reloc  151 offset  e5d [2e5d] HIGHLOW
+	reloc  152 offset  e67 [2e67] HIGHLOW
+	reloc  153 offset  e76 [2e76] HIGHLOW
+	reloc  154 offset  e7e [2e7e] HIGHLOW
+	reloc  155 offset  f3f [2f3f] HIGHLOW
+	reloc  156 offset  f94 [2f94] HIGHLOW
+	reloc  157 offset  fab [2fab] HIGHLOW
+	reloc  158 offset  fb3 [2fb3] HIGHLOW
+	reloc  159 offset    0 [2000] ABSOLUTE
+
+Virtual Address: 00003000 Chunk size 260 (0x104) Number of fixups 126
+	reloc    0 offset   13 [3013] HIGHLOW
+	reloc    1 offset   1e [301e] HIGHLOW
+	reloc    2 offset   26 [3026] HIGHLOW
+	reloc    3 offset   62 [3062] HIGHLOW
+	reloc    4 offset   75 [3075] HIGHLOW
+	reloc    5 offset   86 [3086] HIGHLOW
+	reloc    6 offset   8e [308e] HIGHLOW
+	reloc    7 offset   b4 [30b4] HIGHLOW
+	reloc    8 offset   bf [30bf] HIGHLOW
+	reloc    9 offset   c7 [30c7] HIGHLOW
+	reloc   10 offset  106 [3106] HIGHLOW
+	reloc   11 offset  119 [3119] HIGHLOW
+	reloc   12 offset  12a [312a] HIGHLOW
+	reloc   13 offset  132 [3132] HIGHLOW
+	reloc   14 offset  17f [317f] HIGHLOW
+	reloc   15 offset  19e [319e] HIGHLOW
+	reloc   16 offset  1b8 [31b8] HIGHLOW
+	reloc   17 offset  1c9 [31c9] HIGHLOW
+	reloc   18 offset  1d1 [31d1] HIGHLOW
+	reloc   19 offset  1fc [31fc] HIGHLOW
+	reloc   20 offset  20f [320f] HIGHLOW
+	reloc   21 offset  217 [3217] HIGHLOW
+	reloc   22 offset  238 [3238] HIGHLOW
+	reloc   23 offset  247 [3247] HIGHLOW
+	reloc   24 offset  24f [324f] HIGHLOW
+	reloc   25 offset  26c [326c] HIGHLOW
+	reloc   26 offset  289 [3289] HIGHLOW
+	reloc   27 offset  292 [3292] HIGHLOW
+	reloc   28 offset  2af [32af] HIGHLOW
+	reloc   29 offset  2c1 [32c1] HIGHLOW
+	reloc   30 offset  2d3 [32d3] HIGHLOW
+	reloc   31 offset  2db [32db] HIGHLOW
+	reloc   32 offset  302 [3302] HIGHLOW
+	reloc   33 offset  312 [3312] HIGHLOW
+	reloc   34 offset  331 [3331] HIGHLOW
+	reloc   35 offset  352 [3352] HIGHLOW
+	reloc   36 offset  363 [3363] HIGHLOW
+	reloc   37 offset  36b [336b] HIGHLOW
+	reloc   38 offset  3a7 [33a7] HIGHLOW
+	reloc   39 offset  3be [33be] HIGHLOW
+	reloc   40 offset  3c6 [33c6] HIGHLOW
+	reloc   41 offset  3f5 [33f5] HIGHLOW
+	reloc   42 offset  408 [3408] HIGHLOW
+	reloc   43 offset  422 [3422] HIGHLOW
+	reloc   44 offset  435 [3435] HIGHLOW
+	reloc   45 offset  43d [343d] HIGHLOW
+	reloc   46 offset  490 [3490] HIGHLOW
+	reloc   47 offset  4a4 [34a4] HIGHLOW
+	reloc   48 offset  4ac [34ac] HIGHLOW
+	reloc   49 offset  4ba [34ba] HIGHLOW
+	reloc   50 offset  4c9 [34c9] HIGHLOW
+	reloc   51 offset  4d1 [34d1] HIGHLOW
+	reloc   52 offset  4f4 [34f4] HIGHLOW
+	reloc   53 offset  503 [3503] HIGHLOW
+	reloc   54 offset  50b [350b] HIGHLOW
+	reloc   55 offset  541 [3541] HIGHLOW
+	reloc   56 offset  550 [3550] HIGHLOW
+	reloc   57 offset  558 [3558] HIGHLOW
+	reloc   58 offset  594 [3594] HIGHLOW
+	reloc   59 offset  5ae [35ae] HIGHLOW
+	reloc   60 offset  5b6 [35b6] HIGHLOW
+	reloc   61 offset  5ef [35ef] HIGHLOW
+	reloc   62 offset  605 [3605] HIGHLOW
+	reloc   63 offset  60d [360d] HIGHLOW
+	reloc   64 offset  632 [3632] HIGHLOW
+	reloc   65 offset  648 [3648] HIGHLOW
+	reloc   66 offset  650 [3650] HIGHLOW
+	reloc   67 offset  6f7 [36f7] HIGHLOW
+	reloc   68 offset  79c [379c] HIGHLOW
+	reloc   69 offset  7ae [37ae] HIGHLOW
+	reloc   70 offset  7bf [37bf] HIGHLOW
+	reloc   71 offset  7d1 [37d1] HIGHLOW
+	reloc   72 offset  7d9 [37d9] HIGHLOW
+	reloc   73 offset  841 [3841] HIGHLOW
+	reloc   74 offset  853 [3853] HIGHLOW
+	reloc   75 offset  85b [385b] HIGHLOW
+	reloc   76 offset  873 [3873] HIGHLOW
+	reloc   77 offset  88d [388d] HIGHLOW
+	reloc   78 offset  895 [3895] HIGHLOW
+	reloc   79 offset  8d7 [38d7] HIGHLOW
+	reloc   80 offset  8f9 [38f9] HIGHLOW
+	reloc   81 offset  92c [392c] HIGHLOW
+	reloc   82 offset  93e [393e] HIGHLOW
+	reloc   83 offset  946 [3946] HIGHLOW
+	reloc   84 offset  9bc [39bc] HIGHLOW
+	reloc   85 offset  9dd [39dd] HIGHLOW
+	reloc   86 offset  9f2 [39f2] HIGHLOW
+	reloc   87 offset  9fa [39fa] HIGHLOW
+	reloc   88 offset  a1c [3a1c] HIGHLOW
+	reloc   89 offset  a35 [3a35] HIGHLOW
+	reloc   90 offset  a51 [3a51] HIGHLOW
+	reloc   91 offset  a59 [3a59] HIGHLOW
+	reloc   92 offset  a77 [3a77] HIGHLOW
+	reloc   93 offset  ac6 [3ac6] HIGHLOW
+	reloc   94 offset  ad5 [3ad5] HIGHLOW
+	reloc   95 offset  add [3add] HIGHLOW
+	reloc   96 offset  af2 [3af2] HIGHLOW
+	reloc   97 offset  b09 [3b09] HIGHLOW
+	reloc   98 offset  b11 [3b11] HIGHLOW
+	reloc   99 offset  b3c [3b3c] HIGHLOW
+	reloc  100 offset  b4b [3b4b] HIGHLOW
+	reloc  101 offset  b53 [3b53] HIGHLOW
+	reloc  102 offset  bf3 [3bf3] HIGHLOW
+	reloc  103 offset  c02 [3c02] HIGHLOW
+	reloc  104 offset  c0a [3c0a] HIGHLOW
+	reloc  105 offset  c79 [3c79] HIGHLOW
+	reloc  106 offset  c88 [3c88] HIGHLOW
+	reloc  107 offset  c90 [3c90] HIGHLOW
+	reloc  108 offset  ccf [3ccf] HIGHLOW
+	reloc  109 offset  ce4 [3ce4] HIGHLOW
+	reloc  110 offset  cf4 [3cf4] HIGHLOW
+	reloc  111 offset  cfb [3cfb] HIGHLOW
+	reloc  112 offset  d3e [3d3e] HIGHLOW
+	reloc  113 offset  d79 [3d79] HIGHLOW
+	reloc  114 offset  d8b [3d8b] HIGHLOW
+	reloc  115 offset  da4 [3da4] HIGHLOW
+	reloc  116 offset  db8 [3db8] HIGHLOW
+	reloc  117 offset  e8b [3e8b] HIGHLOW
+	reloc  118 offset  f35 [3f35] HIGHLOW
+	reloc  119 offset  f3d [3f3d] HIGHLOW
+	reloc  120 offset  f5c [3f5c] HIGHLOW
+	reloc  121 offset  f7c [3f7c] HIGHLOW
+	reloc  122 offset  f84 [3f84] HIGHLOW
+	reloc  123 offset  f8d [3f8d] HIGHLOW
+	reloc  124 offset  fce [3fce] HIGHLOW
+	reloc  125 offset  fd6 [3fd6] HIGHLOW
+
+Virtual Address: 00004000 Chunk size 436 (0x1b4) Number of fixups 214
+	reloc    0 offset   33 [4033] HIGHLOW
+	reloc    1 offset   47 [4047] HIGHLOW
+	reloc    2 offset   59 [4059] HIGHLOW
+	reloc    3 offset   61 [4061] HIGHLOW
+	reloc    4 offset   7c [407c] HIGHLOW
+	reloc    5 offset   84 [4084] HIGHLOW
+	reloc    6 offset  161 [4161] HIGHLOW
+	reloc    7 offset  18c [418c] HIGHLOW
+	reloc    8 offset  1a1 [41a1] HIGHLOW
+	reloc    9 offset  1a9 [41a9] HIGHLOW
+	reloc   10 offset  1f1 [41f1] HIGHLOW
+	reloc   11 offset  203 [4203] HIGHLOW
+	reloc   12 offset  20b [420b] HIGHLOW
+	reloc   13 offset  229 [4229] HIGHLOW
+	reloc   14 offset  237 [4237] HIGHLOW
+	reloc   15 offset  23f [423f] HIGHLOW
+	reloc   16 offset  26a [426a] HIGHLOW
+	reloc   17 offset  27c [427c] HIGHLOW
+	reloc   18 offset  284 [4284] HIGHLOW
+	reloc   19 offset  2af [42af] HIGHLOW
+	reloc   20 offset  2c1 [42c1] HIGHLOW
+	reloc   21 offset  2c9 [42c9] HIGHLOW
+	reloc   22 offset  311 [4311] HIGHLOW
+	reloc   23 offset  32b [432b] HIGHLOW
+	reloc   24 offset  331 [4331] HIGHLOW
+	reloc   25 offset  336 [4336] HIGHLOW
+	reloc   26 offset  33d [433d] HIGHLOW
+	reloc   27 offset  344 [4344] HIGHLOW
+	reloc   28 offset  34d [434d] HIGHLOW
+	reloc   29 offset  355 [4355] HIGHLOW
+	reloc   30 offset  37b [437b] HIGHLOW
+	reloc   31 offset  38b [438b] HIGHLOW
+	reloc   32 offset  398 [4398] HIGHLOW
+	reloc   33 offset  39f [439f] HIGHLOW
+	reloc   34 offset  3b1 [43b1] HIGHLOW
+	reloc   35 offset  3cb [43cb] HIGHLOW
+	reloc   36 offset  3d1 [43d1] HIGHLOW
+	reloc   37 offset  3d6 [43d6] HIGHLOW
+	reloc   38 offset  3dd [43dd] HIGHLOW
+	reloc   39 offset  3e4 [43e4] HIGHLOW
+	reloc   40 offset  3ed [43ed] HIGHLOW
+	reloc   41 offset  3f5 [43f5] HIGHLOW
+	reloc   42 offset  41d [441d] HIGHLOW
+	reloc   43 offset  43e [443e] HIGHLOW
+	reloc   44 offset  446 [4446] HIGHLOW
+	reloc   45 offset  454 [4454] HIGHLOW
+	reloc   46 offset  471 [4471] HIGHLOW
+	reloc   47 offset  48b [448b] HIGHLOW
+	reloc   48 offset  491 [4491] HIGHLOW
+	reloc   49 offset  496 [4496] HIGHLOW
+	reloc   50 offset  49d [449d] HIGHLOW
+	reloc   51 offset  4a4 [44a4] HIGHLOW
+	reloc   52 offset  4ad [44ad] HIGHLOW
+	reloc   53 offset  4b5 [44b5] HIGHLOW
+	reloc   54 offset  4dd [44dd] HIGHLOW
+	reloc   55 offset  4f4 [44f4] HIGHLOW
+	reloc   56 offset  4fa [44fa] HIGHLOW
+	reloc   57 offset  503 [4503] HIGHLOW
+	reloc   58 offset  516 [4516] HIGHLOW
+	reloc   59 offset  527 [4527] HIGHLOW
+	reloc   60 offset  539 [4539] HIGHLOW
+	reloc   61 offset  541 [4541] HIGHLOW
+	reloc   62 offset  576 [4576] HIGHLOW
+	reloc   63 offset  57d [457d] HIGHLOW
+	reloc   64 offset  66c [466c] HIGHLOW
+	reloc   65 offset  675 [4675] HIGHLOW
+	reloc   66 offset  686 [4686] HIGHLOW
+	reloc   67 offset  68d [468d] HIGHLOW
+	reloc   68 offset  6a0 [46a0] HIGHLOW
+	reloc   69 offset  6d9 [46d9] HIGHLOW
+	reloc   70 offset  701 [4701] HIGHLOW
+	reloc   71 offset  711 [4711] HIGHLOW
+	reloc   72 offset  72c [472c] HIGHLOW
+	reloc   73 offset  747 [4747] HIGHLOW
+	reloc   74 offset  754 [4754] HIGHLOW
+	reloc   75 offset  76d [476d] HIGHLOW
+	reloc   76 offset  77c [477c] HIGHLOW
+	reloc   77 offset  783 [4783] HIGHLOW
+	reloc   78 offset  788 [4788] HIGHLOW
+	reloc   79 offset  7c5 [47c5] HIGHLOW
+	reloc   80 offset  7d3 [47d3] HIGHLOW
+	reloc   81 offset  7e2 [47e2] HIGHLOW
+	reloc   82 offset  7f0 [47f0] HIGHLOW
+	reloc   83 offset  7f9 [47f9] HIGHLOW
+	reloc   84 offset  803 [4803] HIGHLOW
+	reloc   85 offset  839 [4839] HIGHLOW
+	reloc   86 offset  85c [485c] HIGHLOW
+	reloc   87 offset  86b [486b] HIGHLOW
+	reloc   88 offset  891 [4891] HIGHLOW
+	reloc   89 offset  8ab [48ab] HIGHLOW
+	reloc   90 offset  8b1 [48b1] HIGHLOW
+	reloc   91 offset  8b6 [48b6] HIGHLOW
+	reloc   92 offset  8bd [48bd] HIGHLOW
+	reloc   93 offset  8c4 [48c4] HIGHLOW
+	reloc   94 offset  8cd [48cd] HIGHLOW
+	reloc   95 offset  8d5 [48d5] HIGHLOW
+	reloc   96 offset  908 [4908] HIGHLOW
+	reloc   97 offset  91b [491b] HIGHLOW
+	reloc   98 offset  921 [4921] HIGHLOW
+	reloc   99 offset  926 [4926] HIGHLOW
+	reloc  100 offset  92d [492d] HIGHLOW
+	reloc  101 offset  934 [4934] HIGHLOW
+	reloc  102 offset  93d [493d] HIGHLOW
+	reloc  103 offset  948 [4948] HIGHLOW
+	reloc  104 offset  960 [4960] HIGHLOW
+	reloc  105 offset  978 [4978] HIGHLOW
+	reloc  106 offset  980 [4980] HIGHLOW
+	reloc  107 offset  98c [498c] HIGHLOW
+	reloc  108 offset  992 [4992] HIGHLOW
+	reloc  109 offset  997 [4997] HIGHLOW
+	reloc  110 offset  99e [499e] HIGHLOW
+	reloc  111 offset  9a5 [49a5] HIGHLOW
+	reloc  112 offset  9ae [49ae] HIGHLOW
+	reloc  113 offset  9b6 [49b6] HIGHLOW
+	reloc  114 offset  9bb [49bb] HIGHLOW
+	reloc  115 offset  9d2 [49d2] HIGHLOW
+	reloc  116 offset  9de [49de] HIGHLOW
+	reloc  117 offset  9ea [49ea] HIGHLOW
+	reloc  118 offset  9f0 [49f0] HIGHLOW
+	reloc  119 offset  9f5 [49f5] HIGHLOW
+	reloc  120 offset  9fc [49fc] HIGHLOW
+	reloc  121 offset  a03 [4a03] HIGHLOW
+	reloc  122 offset  a0c [4a0c] HIGHLOW
+	reloc  123 offset  a14 [4a14] HIGHLOW
+	reloc  124 offset  a19 [4a19] HIGHLOW
+	reloc  125 offset  a2c [4a2c] HIGHLOW
+	reloc  126 offset  a4b [4a4b] HIGHLOW
+	reloc  127 offset  a60 [4a60] HIGHLOW
+	reloc  128 offset  a66 [4a66] HIGHLOW
+	reloc  129 offset  a6d [4a6d] HIGHLOW
+	reloc  130 offset  a73 [4a73] HIGHLOW
+	reloc  131 offset  a7e [4a7e] HIGHLOW
+	reloc  132 offset  aa3 [4aa3] HIGHLOW
+	reloc  133 offset  aa9 [4aa9] HIGHLOW
+	reloc  134 offset  ae1 [4ae1] HIGHLOW
+	reloc  135 offset  af9 [4af9] HIGHLOW
+	reloc  136 offset  b01 [4b01] HIGHLOW
+	reloc  137 offset  b11 [4b11] HIGHLOW
+	reloc  138 offset  b17 [4b17] HIGHLOW
+	reloc  139 offset  b1c [4b1c] HIGHLOW
+	reloc  140 offset  b23 [4b23] HIGHLOW
+	reloc  141 offset  b2a [4b2a] HIGHLOW
+	reloc  142 offset  b33 [4b33] HIGHLOW
+	reloc  143 offset  b3f [4b3f] HIGHLOW
+	reloc  144 offset  b44 [4b44] HIGHLOW
+	reloc  145 offset  b55 [4b55] HIGHLOW
+	reloc  146 offset  b68 [4b68] HIGHLOW
+	reloc  147 offset  b92 [4b92] HIGHLOW
+	reloc  148 offset  bc4 [4bc4] HIGHLOW
+	reloc  149 offset  bd4 [4bd4] HIGHLOW
+	reloc  150 offset  be2 [4be2] HIGHLOW
+	reloc  151 offset  c1c [4c1c] HIGHLOW
+	reloc  152 offset  c44 [4c44] HIGHLOW
+	reloc  153 offset  c4c [4c4c] HIGHLOW
+	reloc  154 offset  c82 [4c82] HIGHLOW
+	reloc  155 offset  c8d [4c8d] HIGHLOW
+	reloc  156 offset  c98 [4c98] HIGHLOW
+	reloc  157 offset  ca3 [4ca3] HIGHLOW
+	reloc  158 offset  cae [4cae] HIGHLOW
+	reloc  159 offset  cb9 [4cb9] HIGHLOW
+	reloc  160 offset  cc4 [4cc4] HIGHLOW
+	reloc  161 offset  ccf [4ccf] HIGHLOW
+	reloc  162 offset  cda [4cda] HIGHLOW
+	reloc  163 offset  ce5 [4ce5] HIGHLOW
+	reloc  164 offset  cf0 [4cf0] HIGHLOW
+	reloc  165 offset  cfb [4cfb] HIGHLOW
+	reloc  166 offset  d06 [4d06] HIGHLOW
+	reloc  167 offset  d11 [4d11] HIGHLOW
+	reloc  168 offset  d1c [4d1c] HIGHLOW
+	reloc  169 offset  d27 [4d27] HIGHLOW
+	reloc  170 offset  d32 [4d32] HIGHLOW
+	reloc  171 offset  d3d [4d3d] HIGHLOW
+	reloc  172 offset  d48 [4d48] HIGHLOW
+	reloc  173 offset  d53 [4d53] HIGHLOW
+	reloc  174 offset  d5e [4d5e] HIGHLOW
+	reloc  175 offset  d69 [4d69] HIGHLOW
+	reloc  176 offset  d74 [4d74] HIGHLOW
+	reloc  177 offset  d7f [4d7f] HIGHLOW
+	reloc  178 offset  d8a [4d8a] HIGHLOW
+	reloc  179 offset  d95 [4d95] HIGHLOW
+	reloc  180 offset  da0 [4da0] HIGHLOW
+	reloc  181 offset  dab [4dab] HIGHLOW
+	reloc  182 offset  db6 [4db6] HIGHLOW
+	reloc  183 offset  dc1 [4dc1] HIGHLOW
+	reloc  184 offset  dcc [4dcc] HIGHLOW
+	reloc  185 offset  dd7 [4dd7] HIGHLOW
+	reloc  186 offset  de2 [4de2] HIGHLOW
+	reloc  187 offset  ded [4ded] HIGHLOW
+	reloc  188 offset  df8 [4df8] HIGHLOW
+	reloc  189 offset  e03 [4e03] HIGHLOW
+	reloc  190 offset  e0e [4e0e] HIGHLOW
+	reloc  191 offset  e19 [4e19] HIGHLOW
+	reloc  192 offset  e24 [4e24] HIGHLOW
+	reloc  193 offset  e2f [4e2f] HIGHLOW
+	reloc  194 offset  e3a [4e3a] HIGHLOW
+	reloc  195 offset  e45 [4e45] HIGHLOW
+	reloc  196 offset  e50 [4e50] HIGHLOW
+	reloc  197 offset  e5b [4e5b] HIGHLOW
+	reloc  198 offset  e66 [4e66] HIGHLOW
+	reloc  199 offset  e71 [4e71] HIGHLOW
+	reloc  200 offset  e7c [4e7c] HIGHLOW
+	reloc  201 offset  e87 [4e87] HIGHLOW
+	reloc  202 offset  e92 [4e92] HIGHLOW
+	reloc  203 offset  e9d [4e9d] HIGHLOW
+	reloc  204 offset  ea8 [4ea8] HIGHLOW
+	reloc  205 offset  eb3 [4eb3] HIGHLOW
+	reloc  206 offset  ebe [4ebe] HIGHLOW
+	reloc  207 offset  ec9 [4ec9] HIGHLOW
+	reloc  208 offset  ed4 [4ed4] HIGHLOW
+	reloc  209 offset  edf [4edf] HIGHLOW
+	reloc  210 offset  eea [4eea] HIGHLOW
+	reloc  211 offset  ef5 [4ef5] HIGHLOW
+	reloc  212 offset  f00 [4f00] HIGHLOW
+	reloc  213 offset  f0b [4f0b] HIGHLOW
+
+Virtual Address: 00005000 Chunk size 120 (0x78) Number of fixups 56
+	reloc    0 offset  f24 [5f24] HIGHLOW
+	reloc    1 offset  f28 [5f28] HIGHLOW
+	reloc    2 offset  f2c [5f2c] HIGHLOW
+	reloc    3 offset  f30 [5f30] HIGHLOW
+	reloc    4 offset  f34 [5f34] HIGHLOW
+	reloc    5 offset  f38 [5f38] HIGHLOW
+	reloc    6 offset  f3c [5f3c] HIGHLOW
+	reloc    7 offset  f40 [5f40] HIGHLOW
+	reloc    8 offset  f44 [5f44] HIGHLOW
+	reloc    9 offset  f48 [5f48] HIGHLOW
+	reloc   10 offset  f4c [5f4c] HIGHLOW
+	reloc   11 offset  f50 [5f50] HIGHLOW
+	reloc   12 offset  f54 [5f54] HIGHLOW
+	reloc   13 offset  f58 [5f58] HIGHLOW
+	reloc   14 offset  f5c [5f5c] HIGHLOW
+	reloc   15 offset  f60 [5f60] HIGHLOW
+	reloc   16 offset  f64 [5f64] HIGHLOW
+	reloc   17 offset  f68 [5f68] HIGHLOW
+	reloc   18 offset  f6c [5f6c] HIGHLOW
+	reloc   19 offset  f70 [5f70] HIGHLOW
+	reloc   20 offset  f74 [5f74] HIGHLOW
+	reloc   21 offset  f78 [5f78] HIGHLOW
+	reloc   22 offset  f7c [5f7c] HIGHLOW
+	reloc   23 offset  f80 [5f80] HIGHLOW
+	reloc   24 offset  f84 [5f84] HIGHLOW
+	reloc   25 offset  f88 [5f88] HIGHLOW
+	reloc   26 offset  f8c [5f8c] HIGHLOW
+	reloc   27 offset  f90 [5f90] HIGHLOW
+	reloc   28 offset  f94 [5f94] HIGHLOW
+	reloc   29 offset  f98 [5f98] HIGHLOW
+	reloc   30 offset  f9c [5f9c] HIGHLOW
+	reloc   31 offset  fa0 [5fa0] HIGHLOW
+	reloc   32 offset  fa4 [5fa4] HIGHLOW
+	reloc   33 offset  fa8 [5fa8] HIGHLOW
+	reloc   34 offset  fac [5fac] HIGHLOW
+	reloc   35 offset  fb0 [5fb0] HIGHLOW
+	reloc   36 offset  fb4 [5fb4] HIGHLOW
+	reloc   37 offset  fb8 [5fb8] HIGHLOW
+	reloc   38 offset  fbc [5fbc] HIGHLOW
+	reloc   39 offset  fc0 [5fc0] HIGHLOW
+	reloc   40 offset  fc4 [5fc4] HIGHLOW
+	reloc   41 offset  fc8 [5fc8] HIGHLOW
+	reloc   42 offset  fcc [5fcc] HIGHLOW
+	reloc   43 offset  fd0 [5fd0] HIGHLOW
+	reloc   44 offset  fd4 [5fd4] HIGHLOW
+	reloc   45 offset  fd8 [5fd8] HIGHLOW
+	reloc   46 offset  fdc [5fdc] HIGHLOW
+	reloc   47 offset  fe0 [5fe0] HIGHLOW
+	reloc   48 offset  fe4 [5fe4] HIGHLOW
+	reloc   49 offset  fe8 [5fe8] HIGHLOW
+	reloc   50 offset  fec [5fec] HIGHLOW
+	reloc   51 offset  ff0 [5ff0] HIGHLOW
+	reloc   52 offset  ff4 [5ff4] HIGHLOW
+	reloc   53 offset  ff8 [5ff8] HIGHLOW
+	reloc   54 offset  ffc [5ffc] HIGHLOW
+	reloc   55 offset    0 [5000] ABSOLUTE
+
+Virtual Address: 00006000 Chunk size 276 (0x114) Number of fixups 134
+	reloc    0 offset    0 [6000] HIGHLOW
+	reloc    1 offset    4 [6004] HIGHLOW
+	reloc    2 offset    8 [6008] HIGHLOW
+	reloc    3 offset    c [600c] HIGHLOW
+	reloc    4 offset   10 [6010] HIGHLOW
+	reloc    5 offset   14 [6014] HIGHLOW
+	reloc    6 offset   18 [6018] HIGHLOW
+	reloc    7 offset   1c [601c] HIGHLOW
+	reloc    8 offset   20 [6020] HIGHLOW
+	reloc    9 offset   24 [6024] HIGHLOW
+	reloc   10 offset   28 [6028] HIGHLOW
+	reloc   11 offset   2c [602c] HIGHLOW
+	reloc   12 offset   30 [6030] HIGHLOW
+	reloc   13 offset   34 [6034] HIGHLOW
+	reloc   14 offset   38 [6038] HIGHLOW
+	reloc   15 offset   3c [603c] HIGHLOW
+	reloc   16 offset   40 [6040] HIGHLOW
+	reloc   17 offset   44 [6044] HIGHLOW
+	reloc   18 offset   48 [6048] HIGHLOW
+	reloc   19 offset   4c [604c] HIGHLOW
+	reloc   20 offset   50 [6050] HIGHLOW
+	reloc   21 offset   54 [6054] HIGHLOW
+	reloc   22 offset   58 [6058] HIGHLOW
+	reloc   23 offset   5c [605c] HIGHLOW
+	reloc   24 offset   60 [6060] HIGHLOW
+	reloc   25 offset   64 [6064] HIGHLOW
+	reloc   26 offset   68 [6068] HIGHLOW
+	reloc   27 offset   6c [606c] HIGHLOW
+	reloc   28 offset   70 [6070] HIGHLOW
+	reloc   29 offset   74 [6074] HIGHLOW
+	reloc   30 offset   78 [6078] HIGHLOW
+	reloc   31 offset   7c [607c] HIGHLOW
+	reloc   32 offset   80 [6080] HIGHLOW
+	reloc   33 offset   84 [6084] HIGHLOW
+	reloc   34 offset   88 [6088] HIGHLOW
+	reloc   35 offset   8c [608c] HIGHLOW
+	reloc   36 offset   90 [6090] HIGHLOW
+	reloc   37 offset   94 [6094] HIGHLOW
+	reloc   38 offset   98 [6098] HIGHLOW
+	reloc   39 offset   9c [609c] HIGHLOW
+	reloc   40 offset   a0 [60a0] HIGHLOW
+	reloc   41 offset   a4 [60a4] HIGHLOW
+	reloc   42 offset   a8 [60a8] HIGHLOW
+	reloc   43 offset   ac [60ac] HIGHLOW
+	reloc   44 offset   b0 [60b0] HIGHLOW
+	reloc   45 offset   b4 [60b4] HIGHLOW
+	reloc   46 offset   b8 [60b8] HIGHLOW
+	reloc   47 offset   bc [60bc] HIGHLOW
+	reloc   48 offset   c0 [60c0] HIGHLOW
+	reloc   49 offset   c4 [60c4] HIGHLOW
+	reloc   50 offset   c8 [60c8] HIGHLOW
+	reloc   51 offset   cc [60cc] HIGHLOW
+	reloc   52 offset   d0 [60d0] HIGHLOW
+	reloc   53 offset   d4 [60d4] HIGHLOW
+	reloc   54 offset   d8 [60d8] HIGHLOW
+	reloc   55 offset   dc [60dc] HIGHLOW
+	reloc   56 offset   e0 [60e0] HIGHLOW
+	reloc   57 offset   e4 [60e4] HIGHLOW
+	reloc   58 offset   e8 [60e8] HIGHLOW
+	reloc   59 offset   ec [60ec] HIGHLOW
+	reloc   60 offset   f0 [60f0] HIGHLOW
+	reloc   61 offset   f4 [60f4] HIGHLOW
+	reloc   62 offset   f8 [60f8] HIGHLOW
+	reloc   63 offset   fc [60fc] HIGHLOW
+	reloc   64 offset  100 [6100] HIGHLOW
+	reloc   65 offset  104 [6104] HIGHLOW
+	reloc   66 offset  108 [6108] HIGHLOW
+	reloc   67 offset  10c [610c] HIGHLOW
+	reloc   68 offset  110 [6110] HIGHLOW
+	reloc   69 offset  114 [6114] HIGHLOW
+	reloc   70 offset  118 [6118] HIGHLOW
+	reloc   71 offset  11c [611c] HIGHLOW
+	reloc   72 offset  120 [6120] HIGHLOW
+	reloc   73 offset  124 [6124] HIGHLOW
+	reloc   74 offset  128 [6128] HIGHLOW
+	reloc   75 offset  12c [612c] HIGHLOW
+	reloc   76 offset  130 [6130] HIGHLOW
+	reloc   77 offset  134 [6134] HIGHLOW
+	reloc   78 offset  138 [6138] HIGHLOW
+	reloc   79 offset  13c [613c] HIGHLOW
+	reloc   80 offset  140 [6140] HIGHLOW
+	reloc   81 offset  144 [6144] HIGHLOW
+	reloc   82 offset  148 [6148] HIGHLOW
+	reloc   83 offset  14c [614c] HIGHLOW
+	reloc   84 offset  150 [6150] HIGHLOW
+	reloc   85 offset  154 [6154] HIGHLOW
+	reloc   86 offset  158 [6158] HIGHLOW
+	reloc   87 offset  15c [615c] HIGHLOW
+	reloc   88 offset  160 [6160] HIGHLOW
+	reloc   89 offset  164 [6164] HIGHLOW
+	reloc   90 offset  168 [6168] HIGHLOW
+	reloc   91 offset  16c [616c] HIGHLOW
+	reloc   92 offset  170 [6170] HIGHLOW
+	reloc   93 offset  174 [6174] HIGHLOW
+	reloc   94 offset  178 [6178] HIGHLOW
+	reloc   95 offset  17c [617c] HIGHLOW
+	reloc   96 offset  180 [6180] HIGHLOW
+	reloc   97 offset  184 [6184] HIGHLOW
+	reloc   98 offset  188 [6188] HIGHLOW
+	reloc   99 offset  18c [618c] HIGHLOW
+	reloc  100 offset  190 [6190] HIGHLOW
+	reloc  101 offset  194 [6194] HIGHLOW
+	reloc  102 offset  198 [6198] HIGHLOW
+	reloc  103 offset  19c [619c] HIGHLOW
+	reloc  104 offset  1a0 [61a0] HIGHLOW
+	reloc  105 offset  1a4 [61a4] HIGHLOW
+	reloc  106 offset  1a8 [61a8] HIGHLOW
+	reloc  107 offset  1ac [61ac] HIGHLOW
+	reloc  108 offset  1b0 [61b0] HIGHLOW
+	reloc  109 offset  1b4 [61b4] HIGHLOW
+	reloc  110 offset  1b8 [61b8] HIGHLOW
+	reloc  111 offset  1bc [61bc] HIGHLOW
+	reloc  112 offset  1c0 [61c0] HIGHLOW
+	reloc  113 offset  1c4 [61c4] HIGHLOW
+	reloc  114 offset  1c8 [61c8] HIGHLOW
+	reloc  115 offset  1cc [61cc] HIGHLOW
+	reloc  116 offset  1d0 [61d0] HIGHLOW
+	reloc  117 offset  1d4 [61d4] HIGHLOW
+	reloc  118 offset  1d8 [61d8] HIGHLOW
+	reloc  119 offset  1dc [61dc] HIGHLOW
+	reloc  120 offset  1e0 [61e0] HIGHLOW
+	reloc  121 offset  1e4 [61e4] HIGHLOW
+	reloc  122 offset  1e8 [61e8] HIGHLOW
+	reloc  123 offset  1ec [61ec] HIGHLOW
+	reloc  124 offset  1f0 [61f0] HIGHLOW
+	reloc  125 offset  1f4 [61f4] HIGHLOW
+	reloc  126 offset  1f8 [61f8] HIGHLOW
+	reloc  127 offset  1fc [61fc] HIGHLOW
+	reloc  128 offset  200 [6200] HIGHLOW
+	reloc  129 offset  204 [6204] HIGHLOW
+	reloc  130 offset  208 [6208] HIGHLOW
+	reloc  131 offset  20c [620c] HIGHLOW
+	reloc  132 offset  210 [6210] HIGHLOW
+	reloc  133 offset    0 [6000] ABSOLUTE
+
+Virtual Address: 00008000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset  a84 [8a84] HIGHLOW
+	reloc    1 offset  a88 [8a88] HIGHLOW
+	reloc    2 offset  a8c [8a8c] HIGHLOW
+	reloc    3 offset  a90 [8a90] HIGHLOW
+
+Virtual Address: 0000a000 Chunk size 16 (0x10) Number of fixups 4
+	reloc    0 offset    c [a00c] HIGHLOW
+	reloc    1 offset   10 [a010] HIGHLOW
+	reloc    2 offset   14 [a014] HIGHLOW
+	reloc    3 offset    0 [a000] ABSOLUTE
+
+Virtual Address: 0000b000 Chunk size 12 (0xc) Number of fixups 2
+	reloc    0 offset   20 [b020] HIGHLOW
+	reloc    1 offset    0 [b000] ABSOLUTE
+
+There is a debug directory in .rdata at 0x10008b48
+
+Type                Size     Rva      Offset
+  2        CodeView 00000019 00008b64 00008b64
+
+The .rsrc Resource Directory section:
+000  Type Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 3
+010   Entry: ID: 0x000006, Value: 0x80000028
+028    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+038     Entry: ID: 0x000801, Value: 0x80000040
+040      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+050       Entry: ID: 00000000, Value: 0x0000b8
+0b8        Leaf: Addr: 0x00d0f8, Size: 0x00002a, Codepage: 0
+018   Entry: ID: 0x00000a, Value: 0x80000058
+058    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 1, IDs: 0
+068     Entry: name: [val: 800000e8 len 6]: MCIAVI, Value: 0x80000070
+070      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+080       Entry: ID: 00000000, Value: 0x0000c8
+0c8        Leaf: Addr: 0x00d124, Size: 0x0029aa, Codepage: 0
+020   Entry: ID: 0x000010, Value: 0x80000088
+088    Name Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+098     Entry: ID: 0x000001, Value: 0x800000a0
+0a0      Language Table: Char: 0, Time: 00000000, Ver: 0/0, Num Names: 0, IDs: 1
+0b0       Entry: ID: 00000000, Value: 0x0000d8
+0d8        Leaf: Addr: 0x00fad0, Size: 0x000384, Codepage: 0
+ String table starts at offset: 0xe8
+ Resources start at offset: 0xf8
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00003f0f  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rdata        000042a3  10005000  10005000  00005000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .data         00000114  1000a000  1000a000  0000a000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .eh_fram      00000034  1000b000  1000b000  0000b000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .rodata       000000cc  1000c000  1000c000  0000c000  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .rsrc         00002e54  1000d000  1000d000  0000d000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .reloc        000006c0  10010000  10010000  00010000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 .debug_abbrev 00000918  10011000  10011000  00011000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_info   0000bf11  10012000  10012000  00012000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   00002547  1001e000  1001e000  0001e000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_loc    0000298e  10021000  10021000  00021000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000578  10024000  10024000  00024000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_str    00006e0d  10025000  10025000  00025000  2**0
+                  CONTENTS, READONLY, DEBUGGING
+SYMBOL TABLE:
+[  0](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003b80 .L__wine_spec_exports
+[  1](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003bbc .L__wine_spec_exp_names
+[  2](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003ba8 .L__wine_spec_exports_funcs
+[  3](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003bac .L__wine_spec_exp_name_ptrs
+[  4](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003bb0 .L__wine_spec_exp_ordinals
+[  5](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000060 _MCIQTZ_DriverProc@20
+[  6](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_descr
+[  7](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 __wine_spec_relay_entry_points
+[  8](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_relay_entry_point_offsets
+[  9](sec  5)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000004 .L__wine_spec_relay_args_string
+[ 10](sec  1)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000000c __wine_spec_relay_entry_point_1
+[ 11](sec  5)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000000c __load_config_used
+[ 12](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 .L__wine_spec_resources
+[ 13](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 .L__wine_spec_res_0
+[ 14](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000124 .L__wine_spec_res_1
+[ 15](sec  6)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00002ad0 .L__wine_spec_res_2
+[ 16](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00000030 _DllMain@12
+[ 17](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000005c0 _wine_dbg_log
+[ 18](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000640 _MCIQTZ_mciOpen
+[ 19](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000af0 _MCIQTZ_mciClose
+[ 20](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000c70 _MCIQTZ_mciPlay
+[ 21](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00000f10 _MCIQTZ_mciSeek
+[ 22](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001130 _MCIQTZ_mciStop
+[ 23](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001210 _MCIQTZ_mciPause
+[ 24](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000012f0 _MCIQTZ_mciResume
+[ 25](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000013d0 _MCIQTZ_mciGetDevCaps
+[ 26](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001810 _MCIQTZ_mciSet
+[ 27](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001b00 _MCIQTZ_mciStatus
+[ 28](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00001f80 _MCIQTZ_mciWhere
+[ 29](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000030 __real@c008000000000000
+[ 30](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000038 __real@409f400000000000
+[ 31](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002390 _MCIQTZ_mciSetAudio
+[ 32](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002580 _MCIQTZ_mciUpdate
+[ 33](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002820 _MCIQTZ_mciWindow
+[ 34](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002aa0 _MCIQTZ_mciPut
+[ 35](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002cb0 _debugstr_w
+[ 36](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002e60 _wine_dbg_sprintf
+[ 37](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00002eb0 _create_window
+[ 38](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000030f0 _MCIQTZ_notifyThread@4
+[ 39](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000040 ??_C@_0CB@IJFOJMKG@?$CI?$CF08IX?0?5?$CFp?0?5?$CF08X?0?5?$CF08IX?0?5?$CF08IX?$CJ?6@
+[ 40](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000061 ??_C@_0BC@DNCMOKBG@MCIQTZ_DriverProc?$AA@
+[ 41](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000073 ??_C@_0BO@HAJGANIN@Unimplemented?5command?5?$FL?$CF08X?$FN?6?$AA@
+[ 42](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000091 ??_C@_0BM@JKFMKGNM@Unsupported?5command?5?$FL?$CF08X?$FN?6?$AA@
+[ 43](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000ad ??_C@_0CP@JKLIJNNG@Shouldn?8t?5receive?5a?5MCI_OPEN?5or?5@
+[ 44](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000000dc ??_C@_0CL@NKNGGAMI@Sending?5msg?5?$FL?$CF08X?$FN?5to?5default?5dr@
+[ 45](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000107 ??_C@_09KJKEGOB@?$CI?$CFs?0?5?$CFp?$CJ?6?$AA@
+[ 46](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000111 ??_C@_0P@IDKODNJK@MCIQTZ_drvOpen?$AA@
+[ 47](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000120 ??_C@_1O@CEKJHGNG@?$AAM?$AAC?$AAI?$AAA?$AAV?$AAI?$AA?$AA@
+[ 48](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000012e ??_C@_06OJHGLDPL@?$CInull?$CJ?$AA@
+[ 49](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000135 ??_C@_05PCILMPKD@?$CD?$CF04x?$AA@
+[ 50](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000013b ??_C@_09CIDKLGOH@?$CIinvalid?$CJ?$AA@
+[ 51](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000145 ??_C@_08JJPLMAOL@?$CI?$CF04lx?$CJ?6?$AA@
+[ 52](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000014e ??_C@_0BA@KBECCBDK@MCIQTZ_drvClose?$AA@
+[ 53](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000015e ??_C@_0BD@PAJJKKAD@Invalid?5wDevID?$DN?$CFu?6?$AA@
+[ 54](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000171 ??_C@_0BF@FGLPHAED@MCIQTZ_mciGetOpenDev?$AA@
+[ 55](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000186 ??_C@_0BE@EKIIBNIN@MCIQTZ_drvConfigure?$AA@
+[ 56](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000019a ??_C@_0P@CANDNFGL@MM?9Wine?5Driver?$AA@
+[ 57](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001a9 ??_C@_0BJ@IAEGJFFJ@Sample?5QTZ?5Wine?5Driver?5?$CB?$AA@
+[ 58](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001c2 ??_C@_0BD@HNBLOODG@?$CI?$CF04x?0?5?$CF08lX?0?5?$CFp?$CJ?6?$AA@
+[ 59](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001d5 ??_C@_0P@KPMIABIF@MCIQTZ_mciOpen?$AA@
+[ 60](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000001e4 ??_C@_0CG@HAGOEEKJ@Cannot?5create?5filtergraph?5?$CIhr?5?$DN?5@
+[ 61](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000020a ??_C@_0CP@OKNPJOON@Cannot?5get?5IMediaControl?5interfa@
+[ 62](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000239 ??_C@_0CP@JBAGJPDH@Cannot?5get?5IMediaSeeking?5interfa@
+[ 63](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000268 ??_C@_0CN@BNGACPFI@Cannot?5get?5IMediaEvent?5interface@
+[ 64](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000295 ??_C@_0CO@GHOMEOBB@Cannot?5get?5IVideoWindow?5interfac@
+[ 65](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002c3 ??_C@_0CN@NMDFGHGL@Cannot?5get?5IBasicVideo?5interface@
+[ 66](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000002f0 ??_C@_0CN@OJGCIKDO@Cannot?5get?5IBasicAudio?5interface@
+[ 67](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000031d ??_C@_0BD@LNLIJNGN@Wrong?5dwFlags?5?$CFlx?6?$AA@
+[ 68](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000330 ??_C@_0BM@PMAAMDEL@Invalid?5filename?5specified?6?$AA@
+[ 69](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000034c ??_C@_0O@HABEKJAA@Open?5file?5?$CFs?6?$AA@
+[ 70](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000035a ??_C@_0BP@IEIAAAL@Cannot?5render?5file?5?$CIhr?5?$DN?5?$CFlx?$CJ?6?$AA@
+[ 71](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000379 ??_C@_0CE@KBKMDFLO@Failed?5to?5get?5video?5size?0?5hr?5?$CF?$CDl@
+[ 72](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000039d ??_C@_0O@PHCMMNOF@create_window?$AA@
+[ 73](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000003ab ??_C@_0FH@KGLMADCN@device?5?$CF?$CDx?0?5flags?5?$CF?$CDlx?0?5style?5?$CF?$CD@
+[ 74](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000402 ??_C@_0CF@JNPFBBPL@Failed?5to?5create?5window?0?5error?5?$CF@
+[ 75](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000427 ??_C@_0BA@CMGGEKPD@MCIQTZ_mciClose?$AA@
+[ 76](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000437 ??_C@_0P@FFDNMFLL@MCIQTZ_mciPlay?$AA@
+[ 77](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000446 ??_C@_0CD@PFMEIMOG@Cannot?5run?5filtergraph?5?$CIhr?5?$DN?5?$CFlx@
+[ 78](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000469 ??_C@_0BF@IKAADNLD@Can?8t?5create?5thread?6?$AA@
+[ 79](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000047e ??_C@_0BA@JCCIGBBD@got?5stop?5event?6?$AA@
+[ 80](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000048e ??_C@_0BE@DDGMDHND@MCIQTZ_notifyThread?$AA@
+[ 81](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004a2 ??_C@_0BK@HCOAIGBC@got?5event_code?5?$DN?50x?$CF02lx?6?$AA@
+[ 82](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004bc ??_C@_0BL@HBBCIFDF@repeat?5media?5as?5requested?6?$AA@
+[ 83](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004d7 ??_C@_0BE@NKIEBPBA@Unknown?5error?5?$CI?$CFd?$CJ?6?$AA@
+[ 84](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000004eb ??_C@_0CE@CJEDIJMO@Cannot?5stop?5filtergraph?5?$CIhr?5?$DN?5?$CFl@
+[ 85](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000050f ??_C@_0P@BAGICIOO@MCIQTZ_mciSeek?$AA@
+[ 86](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000051e ??_C@_0CF@BMGBMHLB@MCI_SEEK_TO_END?5not?5implemented?5@
+[ 87](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000543 ??_C@_0BM@EPGAACJE@MCI_TO?5not?5implemented?5yet?6?$AA@
+[ 88](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000055f ??_C@_0CJ@NOMBKDFC@dwFlag?5doesn?8t?5tell?5where?5to?5see@
+[ 89](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000588 ??_C@_0CA@DMPIEALA@Cannot?5set?5position?5?$CIhr?5?$DN?5?$CFlx?$CJ?6?$AA@
+[ 90](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005a8 ??_C@_0P@FMGMFGFI@MCIQTZ_mciStop?$AA@
+[ 91](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005b7 ??_C@_0BA@GOBAEJIM@MCIQTZ_mciPause?$AA@
+[ 92](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005c7 ??_C@_0CF@CHMAAPFB@Cannot?5pause?5filtergraph?5?$CIhr?5?$DN?5?$CF@
+[ 93](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005ec ??_C@_0BB@FENMOIFL@MCIQTZ_mciResume?$AA@
+[ 94](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000005fd ??_C@_0BF@HCFGIOCO@MCIQTZ_mciGetDevCaps?$AA@
+[ 95](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000612 ??_C@_0CD@KCEHHELA@MCI_GETDEVCAPS_CAN_RECORD?5?$DN?5?$CF08l@
+[ 96](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000635 ??_C@_0CC@LKGODDOF@MCI_GETDEVCAPS_HAS_AUDIO?5?$DN?5?$CF08lx@
+[ 97](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000657 ??_C@_0CC@CMEAEDHA@MCI_GETDEVCAPS_HAS_VIDEO?5?$DN?5?$CF08lx@
+[ 98](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000679 ??_C@_0CE@GLDACMM@MCI_GETDEVCAPS_DEVICE_TYPE?5?$DN?5?$CF08@
+[ 99](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000069d ??_C@_0CD@EBBMCPMK@MCI_GETDEVCAPS_USES_FILES?5?$DN?5?$CF08l@
+[100](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006c0 ??_C@_0CI@NHBALCOE@MCI_GETDEVCAPS_COMPOUND_DEVICE?5?$DN@
+[101](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000006e8 ??_C@_0BO@HGEODIMH@MCI_GETDEVCAPS_EJECT?5?$DN?5?$CF08lx?6?$AA@
+[102](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000706 ??_C@_0CB@FLNHGFPC@MCI_GETDEVCAPS_CAN_PLAY?5?$DN?5?$CF08lx?6@
+[103](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000727 ??_C@_0CB@LMPGHCCI@MCI_GETDEVCAPS_CAN_SAVE?5?$DN?5?$CF08lx?6@
+[104](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000748 ??_C@_0CI@HILABLHO@MCI_DGV_GETDEVCAPS_CAN_REVERSE?5?$DN@
+[105](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000770 ??_C@_0CI@FKEMGFHH@MCI_DGV_GETDEVCAPS_CAN_STRETCH?5?$DN@
+[106](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000798 ??_C@_0CF@BAHONIDF@MCI_DGV_GETDEVCAPS_CAN_LOCK?5?$DN?5?$CF0@
+[107](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007bd ??_C@_0CH@BOALIHFA@MCI_DGV_GETDEVCAPS_CAN_FREEZE?5?$DN?5@
+[108](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000007e4 ??_C@_0CO@IBHEEMGC@MCI_DGV_GETDEVCAPS_CAN_STRETCH_I@
+[109](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000812 ??_C@_0CG@HFCKKGNE@MCI_DGV_GETDEVCAPS_HAS_STILL?5?$DN?5?$CF@
+[110](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000838 ??_C@_0CF@EONMEBLI@MCI_DGV_GETDEVCAPS_CAN_TEST?5?$DN?5?$CF0@
+[111](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000085d ??_C@_0CG@PINEAC@MCI_DGV_GETDEVCAPS_MAX_WINDOWS?5?$DN@
+[112](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000883 ??_C@_0BK@HEKDLFKI@Unknown?5capability?5?$CF08lx?6?$AA@
+[113](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000089d ??_C@_0O@DLOLCPFK@MCIQTZ_mciSet?$AA@
+[114](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008ab ??_C@_0CP@IJLGHLFM@MCI_SET_TIME_FORMAT?5?$DN?5MCI_FORMAT@
+[115](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000008da ??_C@_0CJ@CGNOHLDN@MCI_SET_TIME_FORMAT?5?$DN?5MCI_FORMAT@
+[116](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000903 ??_C@_0BF@EFLEAGGD@Bad?5time?5format?5?$CFlu?6?$AA@
+[117](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000918 ??_C@_0CH@MJACMKF@MCI_SET_DOOR_OPEN?5not?5implemente@
+[118](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000093f ??_C@_0CJ@GOGDDBGL@MCI_SET_DOOR_CLOSED?5not?5implemen@
+[119](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000968 ??_C@_0CD@HIAHCGLC@MCI_SET_AUDIO?5not?5implemented?5ye@
+[120](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x0000098b ??_C@_0CD@JKECIJJK@MCI_SET_VIDEO?5not?5implemented?5ye@
+[121](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009ae ??_C@_0CA@JPPDOJNP@MCI_SET_ON?5not?5implemented?5yet?6?$AA@
+[122](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009ce ??_C@_0CB@OOMCCBEM@MCI_SET_OFF?5not?5implemented?5yet?6@
+[123](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000009ef ??_C@_0CI@NHLEAIPJ@MCI_SET_AUDIO_LEFT?5not?5implement@
+[124](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a17 ??_C@_0CJ@DMJHFMOD@MCI_SET_AUDIO_RIGHT?5not?5implemen@
+[125](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a40 ??_C@_0BF@LIEJBMLD@Unknown?5flags?5?$CF08lx?6?$AA@
+[126](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a55 ??_C@_0BB@JGBANGEJ@MCIQTZ_mciStatus?$AA@
+[127](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a66 ??_C@_0BK@BNKBEOGM@No?5status?5item?5specified?6?$AA@
+[128](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a80 ??_C@_0BG@HGKKDMDF@Unhandled?5format?5?$CFlx?6?$AA@
+[129](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000a96 ??_C@_0CD@MAIHHDEG@Cannot?5set?5time?5format?5?$CIhr?5?$DN?5?$CFlx@
+[130](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ab9 ??_C@_0CB@GMBAALHO@Cannot?5read?5duration?5?$CIhr?5?$DN?5?$CFlx?$CJ?6@
+[131](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ada ??_C@_0CA@JPFCCNCF@Cannot?5get?5position?5?$CIhr?5?$DN?5?$CFlx?$CJ?6?$AA@
+[132](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000afa ??_C@_0DB@LPIEOLPC@MCI_STATUS_NUMBER_OF_TRACKS?5not?5@
+[133](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b2b ??_C@_0CO@KCMGDCGO@MCI_STATUS_MEDIA_PRESENT?5not?5imp@
+[134](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b59 ??_C@_0CG@EIOLIPGO@MCI_STATUS_READY?5not?5implemented@
+[135](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000b7f ??_C@_0CO@JCOAPKEF@MCI_STATUS_CURRENT_TRACK?5not?5imp@
+[136](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bad ??_C@_0BH@IEICONFH@Unknown?5command?5?$CF08lX?6?$AA@
+[137](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bc4 ??_C@_0BA@CPNOCGON@MCIQTZ_mciWhere?$AA@
+[138](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000bd4 ??_C@_0CM@DIBNFDGD@No?5video?5stream?0?5returning?5no?5wi@
+[139](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c00 ??_C@_0BP@NOLJGHPA@MCI_DGV_WHERE_SOURCE_MAX?5stub?6?$AA@
+[140](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c1f ??_C@_0BJ@IEDGMDPC@MCI_DGV_WHERE_SOURCE?5?$CFs?6?$AA@
+[141](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c38 ??_C@_0CE@DPCGFKFG@MCI_DGV_WHERE_DESTINATION_MAX?5st@
+[142](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c5c ??_C@_0BO@NAABEOCP@MCI_DGV_WHERE_DESTINATION?5?$CFs?6?$AA@
+[143](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000c7a ??_C@_0CL@DGPADFAL@MCI_DGV_WHERE_FRAME_MAX?5not?5supp@
+[144](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ca5 ??_C@_0CH@KJHLCJCJ@MCI_DGV_WHERE_FRAME?5not?5supporte@
+[145](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ccc ??_C@_0CL@ECJPGOED@MCI_DGV_WHERE_VIDEO_MAX?5not?5supp@
+[146](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000cf7 ??_C@_0CH@OHEOIBKA@MCI_DGV_WHERE_VIDEO?5not?5supporte@
+[147](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d1e ??_C@_0BN@JPIAHINN@MCI_DGV_WHERE_WINDOW_MAX?5?$CFs?6?$AA@
+[148](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d3b ??_C@_0BJ@CEAOONND@MCI_DGV_WHERE_WINDOW?5?$CFs?6?$AA@
+[149](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d54 ??_C@_0BA@GMMAGFIH@?$CI?$CFd?0?$CFd?$CJ?9?$CI?$CFd?0?$CFd?$CJ?$AA@
+[150](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d64 ??_C@_0BD@IEGNIMGA@?$CI?$CF04x?0?5?$CF08lx?0?5?$CFp?$CJ?6?$AA@
+[151](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d77 ??_C@_0BD@PHOGOJJO@MCIQTZ_mciSetAudio?$AA@
+[152](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000d8a ??_C@_0BH@CDCIAJFD@Unknown?5flags?5?$CI?$CF08lx?$CJ?6?$AA@
+[153](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000da1 ??_C@_0BH@CFLIILKA@Setting?5volume?5to?5?$CFld?6?$AA@
+[154](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000db8 ??_C@_0BO@BFCAPDLM@Cannot?5set?5volume?5?$CIhr?5?$DN?5?$CFlx?$CJ?6?$AA@
+[155](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dd6 ??_C@_0BE@EGLLEOHE@Unknown?5item?5?$CF08lx?6?$AA@
+[156](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dea ??_C@_0BB@GJFCAIKA@?$CF04x?0?5?$CF08lx?0?5?$CFp?6?$AA@
+[157](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000dfb ??_C@_0BB@NMCMFGFI@MCIQTZ_mciUpdate?$AA@
+[158](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e0c ??_C@_0CF@BLENGLJF@Could?5not?5get?5image?5size?5?$CIhr?5?$DN?5?$CF@
+[159](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e31 ??_C@_0BF@DGJGNKDI@Unhandled?5flags?5?$CFlx?6?$AA@
+[160](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e46 ??_C@_0BB@HKIDMAPD@MCIQTZ_mciWindow?$AA@
+[161](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e57 ??_C@_0BO@KGIBPMM@Setting?5parent?5window?5to?5?$CFp?4?6?$AA@
+[162](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e75 ??_C@_0BI@JFDAMLEL@Setting?5nCmdShow?5to?5?$CFd?6?$AA@
+[163](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000e8d ??_C@_0BH@OAFLDHPH@Setting?5caption?5to?5?$CFs?6?$AA@
+[164](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ea4 ??_C@_0O@DFHICDME@MCIQTZ_mciPut?$AA@
+[165](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000eb2 ??_C@_0CB@MGEOOKNN@No?5support?5for?5non?9RECT?5MCI_PUT?6@
+[166](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000ed3 ??_C@_0CO@MKBFBNEK@IVideoWindow_SetWindowPosition?5f@
+[167](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000f01 ??_C@_0CC@DIFKDPPG@No?5support?5for?5some?5flags?3?50x?$CFlx@
+[168](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e3c __imp__DisableThreadLibraryCalls@4
+[169](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000060 _MCIQTZ_hInstance
+[170](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000018 ___wine_dbch_mciqtz
+[171](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003db4 __imp__DefWindowProcW@16
+[172](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dd0 __imp__LoadCursorW@8
+[173](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000010 _mciqtz_class
+[174](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dd8 __imp__RegisterClassW@4
+[175](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e4c __imp__HeapAlloc@12
+[176](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e34 __imp__CreateEventW@16
+[177](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003ccd _mciLoadCommandResource@12
+[178](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003da0 __imp__mciLoadCommandResource@12
+[179](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003cd8 _mciSetDriverData@8
+[180](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003da4 __imp__mciSetDriverData@8
+[181](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003cc2 _mciGetDriverData@4
+[182](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d9c __imp__mciGetDriverData@4
+[183](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dd4 __imp__MessageBoxA@16
+[184](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003de4 __imp__UnregisterClassW@8
+[185](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003cb7 _mciFreeCommandResource@4
+[186](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d98 __imp__mciFreeCommandResource@4
+[187](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e30 __imp__CloseHandle@4
+[188](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e50 __imp__HeapFree@12
+[189](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d90 __imp__DefDriverProc@20
+[190](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003890 ___wine_dbg_header
+[191](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003df8 __imp____stdio_common_vsprintf
+[192](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000033b0 ___wine_dbg_output
+[193](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d84 __imp__CoInitializeEx@8
+[194](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003174 _IID_IGraphBuilder
+[195](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001744 _CLSID_FilterGraph
+[196](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d80 __imp__CoCreateInstance@20
+[197](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003684 _IID_IMediaControl
+[198](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003094 _IID_IMediaSeeking
+[199](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036d4 _IID_IMediaEvent
+[200](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036a4 _IID_IVideoWindow
+[201](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036b4 _IID_IBasicVideo
+[202](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003694 _IID_IBasicAudio
+[203](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003cac _mciDriverNotify@12
+[204](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d94 __imp__mciDriverNotify@12
+[205](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003d88 __imp__CoUninitialize@0
+[206](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003db8 __imp__DestroyWindow@4
+[207](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e64 __imp__ResetEvent@4
+[208](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b74 _TIME_FORMAT_MEDIA_TIME
+[209](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003de0 __imp__ShowWindow@8
+[210](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e38 __imp__CreateThread@24
+[211](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e68 __imp__SetEvent@4
+[212](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e70 __imp__WaitForSingleObject@8
+[213](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003e2d __alldiv
+[214](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e78 
+[215](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b64 _TIME_FORMAT_FRAME
+[216](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003e38 __aulldiv
+[217](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e80 __imp___aulldiv
+[218](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dc8 __imp__GetWindowRect@8
+[219](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dc0 __imp__GetDesktopWindow@0
+[220](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e0c __imp__log10
+[221](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dec __imp__StretchDIBits@52
+[222](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dcc __imp__IsWindow@4
+[223](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003ddc __imp__SetWindowTextW@8
+[224](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e58 __imp__IsBadStringPtrW@8
+[225](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003da9 _wcslen
+[226](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e28 
+[227](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000000 _wine_dbgstr_wn.hex
+[228](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003310 ___wine_dbg_strdup
+[229](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dac __imp__AdjustWindowRect@12
+[230](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dc4 __imp__GetSystemMetrics@4
+[231](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003db0 __imp__CreateWindowExW@48
+[232](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dbc __imp__GetClientRect@8
+[233](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e6c __imp__WaitForMultipleObjects@16
+[234](sec  3)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00000110 __fltused
+[235](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001214 _AMPROPSETID_Pin
+[236](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001224 _CAPTION_FORMAT_ATSC
+[237](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001234 _CAPTION_FORMAT_DIRECTV
+[238](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001244 _CAPTION_FORMAT_DVB
+[239](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001254 _CAPTION_FORMAT_ECHOSTAR
+[240](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001264 _CLSID_ACMWrapper
+[241](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001274 _CLSID_AMovie
+[242](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001284 _CLSID_ATSCNetworkPropertyPage
+[243](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001294 _CLSID_ATSCNetworkProvider
+[244](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012a4 _CLSID_AVICo
+[245](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012b4 _CLSID_AVIDec
+[246](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012c4 _CLSID_AVIDoc
+[247](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012d4 _CLSID_AVIDocWriter
+[248](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012e4 _CLSID_AVIDraw
+[249](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000012f4 _CLSID_AVIMIDIRender
+[250](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001304 _CLSID_ActiveMovieCategories
+[251](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001314 _CLSID_AllocPresenter
+[252](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001324 _CLSID_AllocPresenterDDXclMode
+[253](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001334 _CLSID_AnalogVideoDecoderPropertyPage
+[254](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001344 _CLSID_AsfMux
+[255](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001354 _CLSID_AsyncReader
+[256](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001364 _CLSID_AudioCompressorCategory
+[257](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001374 _CLSID_AudioFileClip
+[258](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001384 _CLSID_AudioInputDeviceCategory
+[259](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001394 _CLSID_AudioInputMixerProperties
+[260](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013a4 _CLSID_AudioProperties
+[261](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013b4 _CLSID_AudioRecord
+[262](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013c4 _CLSID_AudioRender
+[263](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013d4 _CLSID_AudioRendererAdvancedProperties
+[264](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013e4 _CLSID_AudioRendererCategory
+[265](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000013f4 _CLSID_AviDest
+[266](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001404 _CLSID_AviMuxProptyPage
+[267](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001414 _CLSID_AviMuxProptyPage1
+[268](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001424 _CLSID_AviReader
+[269](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001434 _CLSID_AviSplitter
+[270](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001444 _CLSID_CAcmCoClassManager
+[271](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001454 _CLSID_CCAFilter
+[272](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001464 _CLSID_CDeviceMoniker
+[273](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001474 _CLSID_CIcmCoClassManager
+[274](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001484 _CLSID_CMidiOutClassManager
+[275](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001494 _CLSID_CMpegAudioCodec
+[276](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014a4 _CLSID_CMpegVideoCodec
+[277](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014b4 _CLSID_CQzFilterClassManager
+[278](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014c4 _CLSID_CVidCapClassManager
+[279](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014d4 _CLSID_CWaveOutClassManager
+[280](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014e4 _CLSID_CWaveinClassManager
+[281](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000014f4 _CLSID_CameraControlPropertyPage
+[282](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001504 _CLSID_CaptionsFilter
+[283](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001514 _CLSID_CaptureGraphBuilder
+[284](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001524 _CLSID_CaptureGraphBuilder2
+[285](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001534 _CLSID_CaptureProperties
+[286](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001544 _CLSID_Colour
+[287](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001554 _CLSID_CrossbarFilterPropertyPage
+[288](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001564 _CLSID_CutListCacheMemory
+[289](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001574 _CLSID_CutListGraphBuilder
+[290](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001584 _CLSID_CutListSource
+[291](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001594 _CLSID_DShowTVEFilter
+[292](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015a4 _CLSID_DSoundRender
+[293](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015b4 _CLSID_DVBCNetworkProvider
+[294](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015c4 _CLSID_DVBSNetworkProvider
+[295](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015d4 _CLSID_DVBTNetworkProvider
+[296](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015e4 _CLSID_DVDHWDecodersCategory
+[297](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000015f4 _CLSID_DVDNavigator
+[298](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001604 _CLSID_DVDState
+[299](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001614 _CLSID_DVDecPropertiesPage
+[300](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001624 _CLSID_DVEncPropertiesPage
+[301](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001634 _CLSID_DVMux
+[302](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001644 _CLSID_DVMuxPropertyPage
+[303](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001654 _CLSID_DVSplitter
+[304](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001664 _CLSID_DVVideoCodec
+[305](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001674 _CLSID_DVVideoEnc
+[306](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001684 _CLSID_DeviceControlCategory
+[307](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001694 _CLSID_DirectDrawProperties
+[308](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016a4 _CLSID_DirectShowPluginControl
+[309](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016b4 _CLSID_Dither
+[310](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016c4 _CLSID_DtvCcFilter
+[311](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016d4 _CLSID_DvdGraphBuilder
+[312](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016e4 _CLSID_EVRPlaybackPipelineOptimizer
+[313](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000016f4 _CLSID_EVRTearlessWindowPresenter9
+[314](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001704 _CLSID_EnhancedVideoRenderer
+[315](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001714 _CLSID_FGControl
+[316](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001724 _CLSID_FileSource
+[317](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001734 _CLSID_FileWriter
+[318](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001754 _CLSID_FilterGraphNoThread
+[319](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001764 _CLSID_FilterGraphPrivateThread
+[320](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001774 _CLSID_FilterMapper
+[321](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001784 _CLSID_FilterMapper2
+[322](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001794 _CLSID_ICodecAPIProxy
+[323](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017a4 _CLSID_IVideoEncoderCodecAPIProxy
+[324](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017b4 _CLSID_IVideoEncoderProxy
+[325](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017c4 _CLSID_InfTee
+[326](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017d4 _CLSID_LegacyAmFilterCategory
+[327](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017e4 _CLSID_Line21Decoder
+[328](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000017f4 _CLSID_Line21Decoder2
+[329](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001804 _CLSID_MFVideoMixer9
+[330](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001814 _CLSID_MFVideoPresenter9
+[331](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001824 _CLSID_MJPGEnc
+[332](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001834 _CLSID_MMSPLITTER
+[333](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001844 _CLSID_MOVReader
+[334](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001854 _CLSID_MPEG1Doc
+[335](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001864 _CLSID_MPEG1PacketPlayer
+[336](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001874 _CLSID_MPEG1Splitter
+[337](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001884 _CLSID_MPEG2Demultiplexer
+[338](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001894 _CLSID_MPEG2Demultiplexer_NoClock
+[339](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018a4 _CLSID_MediaEncoderCategory
+[340](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018b4 _CLSID_MediaMultiplexerCategory
+[341](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018c4 _CLSID_MediaPropertyBag
+[342](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018d4 _CLSID_MemoryAllocator
+[343](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018e4 _CLSID_MidiRendererCategory
+[344](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000018f4 _CLSID_MjpegDec
+[345](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001904 _CLSID_ModexProperties
+[346](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001914 _CLSID_ModexRenderer
+[347](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001924 _CLSID_Mpeg2VideoStreamAnalyzer
+[348](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001934 _CLSID_NetworkProvider
+[349](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001944 _CLSID_NullRenderer
+[350](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001954 _CLSID_OverlayMixer
+[351](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001964 _CLSID_PerformanceProperties
+[352](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001974 _CLSID_PersistMonikerPID
+[353](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001984 _CLSID_ProtoFilterGraph
+[354](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001994 _CLSID_QTDec
+[355](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019a4 _CLSID_QualityProperties
+[356](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019b4 _CLSID_QuickTimeParser
+[357](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019c4 _CLSID_SBE2File
+[358](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019d4 _CLSID_SBE2FileScan
+[359](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019e4 _CLSID_SBE2MediaTypeProfile
+[360](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000019f4 _CLSID_SBE2Sink
+[361](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a04 _CLSID_SeekingPassThru
+[362](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a14 _CLSID_SimpleCutList
+[363](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a24 _CLSID_SmartTee
+[364](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a34 _CLSID_StreamBufferComposeRecording
+[365](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a44 _CLSID_StreamBufferConfig
+[366](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a54 _CLSID_StreamBufferPropertyHandler
+[367](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a64 _CLSID_StreamBufferRecordingAttributes
+[368](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a74 _CLSID_StreamBufferSink
+[369](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a84 _CLSID_StreamBufferSource
+[370](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001a94 _CLSID_StreamBufferThumbnailHandler
+[371](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001aa4 _CLSID_SubtitlesFilter
+[372](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ab4 _CLSID_SystemClock
+[373](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ac4 _CLSID_SystemDeviceEnum
+[374](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ad4 _CLSID_TVAudioFilterPropertyPage
+[375](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ae4 _CLSID_TVEFilterCCProperties
+[376](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001af4 _CLSID_TVEFilterStatsProperties
+[377](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b04 _CLSID_TVEFilterTuneProperties
+[378](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b14 _CLSID_TVTunerFilterPropertyPage
+[379](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b24 _CLSID_TextRender
+[380](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b34 _CLSID_TransmitCategory
+[381](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b44 _CLSID_URLReader
+[382](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b54 _CLSID_VBISurfaces
+[383](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b64 _CLSID_VPObject
+[384](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b74 _CLSID_VPVBIObject
+[385](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b84 _CLSID_VfwCapture
+[386](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001b94 _CLSID_VideoCompressorCategory
+[387](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ba4 _CLSID_VideoFileClip
+[388](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bb4 _CLSID_VideoInputDeviceCategory
+[389](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bc4 _CLSID_VideoMixingRenderer
+[390](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bd4 _CLSID_VideoMixingRenderer9
+[391](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001be4 _CLSID_VideoPortManager
+[392](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001bf4 _CLSID_VideoProcAmpPropertyPage
+[393](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c04 _CLSID_VideoRenderer
+[394](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c14 _CLSID_VideoRendererDefault
+[395](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c24 _CLSID_VideoStreamConfigPropertyPage
+[396](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c34 _CLSID_WAVEParser
+[397](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c44 _CLSID_WMAsfReader
+[398](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c54 _CLSID_WMAsfWriter
+[399](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c64 _CLSID_WSTDecoder
+[400](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c74 _CLSID_WstDecoderPropertyPage
+[401](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c84 _CODECAPI_ALLSETTINGS
+[402](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001c94 _CODECAPI_AUDIO_ENCODER
+[403](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ca4 _CODECAPI_AVDecMmcssClass
+[404](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cb4 _CODECAPI_CHANGELISTS
+[405](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cc4 _CODECAPI_CURRENTCHANGELIST
+[406](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cd4 _CODECAPI_SETALLDEFAULTS
+[407](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ce4 _CODECAPI_SUPPORTSEVENTS
+[408](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001cf4 _CODECAPI_VIDEO_ENCODER
+[409](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d04 _DSATTRIB_CAPTURE_STREAMTIME
+[410](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d14 _DSATTRIB_CC_CONTAINER_INFO
+[411](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d24 _DSATTRIB_DSHOW_STREAM_DESC
+[412](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d34 _DSATTRIB_OptionalVideoAttributes
+[413](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d44 _DSATTRIB_PBDATAG_ATTRIBUTE
+[414](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d54 _DSATTRIB_PicSampleSeq
+[415](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d64 _DSATTRIB_SAMPLE_LIVE_STREAM_TIME
+[416](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d74 _DSATTRIB_TRANSPORT_PROPERTIES
+[417](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d84 _DSATTRIB_UDCRTag
+[418](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001d94 _ENCAPIPARAM_BITRATE
+[419](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001da4 _ENCAPIPARAM_BITRATE_MODE
+[420](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001db4 _ENCAPIPARAM_PEAK_BITRATE
+[421](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dc4 _ENCAPIPARAM_SAP_MODE
+[422](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001dd4 _EVRConfig_AllowBatching
+[423](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001de4 _EVRConfig_AllowDropToBob
+[424](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001df4 _EVRConfig_AllowDropToHalfInterlace
+[425](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e04 _EVRConfig_AllowDropToThrottle
+[426](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e14 _EVRConfig_AllowScaling
+[427](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e24 _EVRConfig_ForceBatching
+[428](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e34 _EVRConfig_ForceBob
+[429](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e44 _EVRConfig_ForceHalfInterlace
+[430](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e54 _EVRConfig_ForceScaling
+[431](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e64 _EVRConfig_ForceThrottle
+[432](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e74 _FORMAT_525WSS
+[433](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e84 _FORMAT_AnalogVideo
+[434](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001e94 _FORMAT_CAPTIONED_H264VIDEO
+[435](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ea4 _FORMAT_CAPTIONED_MPEG2VIDEO
+[436](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001eb4 _FORMAT_CC_CONTAINER
+[437](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ec4 _FORMAT_DvInfo
+[438](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ed4 _FORMAT_MPEGStreams
+[439](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ee4 _FORMAT_MPEGVideo
+[440](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ef4 _FORMAT_None
+[441](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f04 _FORMAT_VideoInfo
+[442](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f14 _FORMAT_VideoInfo2
+[443](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f24 _FORMAT_WaveFormatEx
+[444](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f34 _IID_IAMAudioCutListElement
+[445](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f44 _IID_IAMCutListElement
+[446](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f54 _IID_IAMDirectSound
+[447](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f64 _IID_IAMFileCutListElement
+[448](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f74 _IID_IAMLine21Decoder
+[449](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f84 _IID_IAMVideoCutListElement
+[450](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001f94 _IID_IAMWstDecoder
+[451](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fa4 _IID_IBaseVideoMixer
+[452](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fb4 _IID_ICutListGraphBuilder
+[453](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fc4 _IID_IDirectDrawVideo
+[454](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fd4 _IID_IFileClip
+[455](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001fe4 _IID_IFullScreenVideo
+[456](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00001ff4 _IID_IFullScreenVideoEx
+[457](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002004 _IID_IMixerPinConfig
+[458](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002014 _IID_IMixerPinConfig2
+[459](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002024 _IID_IMpegAudioDecoder
+[460](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002034 _IID_IQualProp
+[461](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002044 _IID_IStandardCutList
+[462](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002054 _IID_IVPConfig
+[463](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002064 _IID_IVPControl
+[464](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002074 _IID_IVPNotify
+[465](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002084 _IID_IVPNotify2
+[466](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002094 _IID_IVPObject
+[467](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020a4 _IID_IVPVBIConfig
+[468](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020b4 _IID_IVPVBINotify
+[469](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020c4 _IID_IVPVBIObject
+[470](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020d4 _LOOK_DOWNSTREAM_ONLY
+[471](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020e4 _LOOK_UPSTREAM_ONLY
+[472](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000020f4 _MEDIASUBTYPE_420O
+[473](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002104 _MEDIASUBTYPE_708_608Data
+[474](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002114 _MEDIASUBTYPE_A2B10G10R10
+[475](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002124 _MEDIASUBTYPE_A2R10G10B10
+[476](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002134 _MEDIASUBTYPE_AI44
+[477](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002144 _MEDIASUBTYPE_AIFF
+[478](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002154 _MEDIASUBTYPE_ARGB1555
+[479](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002164 _MEDIASUBTYPE_ARGB1555_D3D_DX7_RT
+[480](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002174 _MEDIASUBTYPE_ARGB1555_D3D_DX9_RT
+[481](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002184 _MEDIASUBTYPE_ARGB32
+[482](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002194 _MEDIASUBTYPE_ARGB32_D3D_DX7_RT
+[483](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021a4 _MEDIASUBTYPE_ARGB32_D3D_DX9_RT
+[484](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021b4 _MEDIASUBTYPE_ARGB4444
+[485](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021c4 _MEDIASUBTYPE_ARGB4444_D3D_DX7_RT
+[486](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021d4 _MEDIASUBTYPE_ARGB4444_D3D_DX9_RT
+[487](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021e4 _MEDIASUBTYPE_AU
+[488](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000021f4 _MEDIASUBTYPE_AYUV
+[489](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002204 _MEDIASUBTYPE_AnalogVideo_NTSC_M
+[490](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002214 _MEDIASUBTYPE_AnalogVideo_PAL_B
+[491](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002224 _MEDIASUBTYPE_AnalogVideo_PAL_D
+[492](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002234 _MEDIASUBTYPE_AnalogVideo_PAL_G
+[493](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002244 _MEDIASUBTYPE_AnalogVideo_PAL_H
+[494](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002254 _MEDIASUBTYPE_AnalogVideo_PAL_I
+[495](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002264 _MEDIASUBTYPE_AnalogVideo_PAL_M
+[496](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002274 _MEDIASUBTYPE_AnalogVideo_PAL_N
+[497](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002284 _MEDIASUBTYPE_AnalogVideo_PAL_N_COMBO
+[498](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002294 _MEDIASUBTYPE_AnalogVideo_SECAM_B
+[499](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022a4 _MEDIASUBTYPE_AnalogVideo_SECAM_D
+[500](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022b4 _MEDIASUBTYPE_AnalogVideo_SECAM_G
+[501](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022c4 _MEDIASUBTYPE_AnalogVideo_SECAM_H
+[502](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022d4 _MEDIASUBTYPE_AnalogVideo_SECAM_K
+[503](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022e4 _MEDIASUBTYPE_AnalogVideo_SECAM_K1
+[504](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000022f4 _MEDIASUBTYPE_AnalogVideo_SECAM_L
+[505](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002304 _MEDIASUBTYPE_Asf
+[506](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002314 _MEDIASUBTYPE_Avi
+[507](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002324 _MEDIASUBTYPE_CC_CONTAINER
+[508](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002334 _MEDIASUBTYPE_CFCC
+[509](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002344 _MEDIASUBTYPE_CLJR
+[510](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002354 _MEDIASUBTYPE_CLPL
+[511](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002364 _MEDIASUBTYPE_CPLA
+[512](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002374 _MEDIASUBTYPE_DOLBY_AC3_SPDIF
+[513](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002384 _MEDIASUBTYPE_DRM_Audio
+[514](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002394 _MEDIASUBTYPE_DVB_SUBTITLES
+[515](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023a4 _MEDIASUBTYPE_DVCS
+[516](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023b4 _MEDIASUBTYPE_DVSD
+[517](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023c4 _MEDIASUBTYPE_DssAudio
+[518](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023d4 _MEDIASUBTYPE_DssVideo
+[519](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023e4 _MEDIASUBTYPE_DtvCcData
+[520](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000023f4 _MEDIASUBTYPE_H264
+[521](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002404 _MEDIASUBTYPE_IA44
+[522](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002414 _MEDIASUBTYPE_IEEE_FLOAT
+[523](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002424 _MEDIASUBTYPE_IF09
+[524](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002434 _MEDIASUBTYPE_IJPG
+[525](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002444 _MEDIASUBTYPE_IMC1
+[526](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002454 _MEDIASUBTYPE_IMC2
+[527](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002464 _MEDIASUBTYPE_IMC3
+[528](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002474 _MEDIASUBTYPE_IMC4
+[529](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002484 _MEDIASUBTYPE_ISDB_CAPTIONS
+[530](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002494 _MEDIASUBTYPE_ISDB_SUPERIMPOSE
+[531](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024a4 _MEDIASUBTYPE_IYUV
+[532](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024b4 _MEDIASUBTYPE_Line21_BytePair
+[533](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024c4 _MEDIASUBTYPE_Line21_GOPPacket
+[534](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024d4 _MEDIASUBTYPE_Line21_VBIRawData
+[535](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024e4 _MEDIASUBTYPE_MDVF
+[536](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000024f4 _MEDIASUBTYPE_MJPG
+[537](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002504 _MEDIASUBTYPE_MPEG1Audio
+[538](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002514 _MEDIASUBTYPE_MPEG1AudioPayload
+[539](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002524 _MEDIASUBTYPE_MPEG1Packet
+[540](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002534 _MEDIASUBTYPE_MPEG1Payload
+[541](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002544 _MEDIASUBTYPE_MPEG1System
+[542](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002554 _MEDIASUBTYPE_MPEG1Video
+[543](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002564 _MEDIASUBTYPE_MPEG1VideoCD
+[544](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002574 _MEDIASUBTYPE_NV11
+[545](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002584 _MEDIASUBTYPE_NV12
+[546](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002594 _MEDIASUBTYPE_NV24
+[547](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025a4 _MEDIASUBTYPE_None
+[548](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025b4 _MEDIASUBTYPE_Overlay
+[549](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025c4 _MEDIASUBTYPE_P010
+[550](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025d4 _MEDIASUBTYPE_P016
+[551](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025e4 _MEDIASUBTYPE_P208
+[552](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000025f4 _MEDIASUBTYPE_P210
+[553](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002604 _MEDIASUBTYPE_P216
+[554](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002614 _MEDIASUBTYPE_P408
+[555](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002624 _MEDIASUBTYPE_PCM
+[556](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002634 _MEDIASUBTYPE_PCMAudio_Obsolete
+[557](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002644 _MEDIASUBTYPE_Plum
+[558](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002654 _MEDIASUBTYPE_QTJpeg
+[559](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002664 _MEDIASUBTYPE_QTMovie
+[560](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002674 _MEDIASUBTYPE_QTRle
+[561](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002684 _MEDIASUBTYPE_QTRpza
+[562](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002694 _MEDIASUBTYPE_QTSmc
+[563](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026a4 _MEDIASUBTYPE_RAW_SPORT
+[564](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026b4 _MEDIASUBTYPE_RGB1
+[565](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026c4 _MEDIASUBTYPE_RGB16_D3D_DX7_RT
+[566](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026d4 _MEDIASUBTYPE_RGB16_D3D_DX9_RT
+[567](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026e4 _MEDIASUBTYPE_RGB24
+[568](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000026f4 _MEDIASUBTYPE_RGB32
+[569](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002704 _MEDIASUBTYPE_RGB32_D3D_DX7_RT
+[570](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002714 _MEDIASUBTYPE_RGB32_D3D_DX9_RT
+[571](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002724 _MEDIASUBTYPE_RGB4
+[572](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002734 _MEDIASUBTYPE_RGB555
+[573](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002744 _MEDIASUBTYPE_RGB565
+[574](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002754 _MEDIASUBTYPE_RGB8
+[575](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002764 _MEDIASUBTYPE_S340
+[576](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002774 _MEDIASUBTYPE_S342
+[577](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002784 _MEDIASUBTYPE_SPDIF_TAG_241h
+[578](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002794 _MEDIASUBTYPE_TELETEXT
+[579](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027a4 _MEDIASUBTYPE_TVMJ
+[580](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027b4 _MEDIASUBTYPE_UYVY
+[581](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027c4 _MEDIASUBTYPE_VBI
+[582](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027d4 _MEDIASUBTYPE_VPS
+[583](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027e4 _MEDIASUBTYPE_VPVBI
+[584](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000027f4 _MEDIASUBTYPE_VPVideo
+[585](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002804 _MEDIASUBTYPE_WAKE
+[586](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002814 _MEDIASUBTYPE_WAVE
+[587](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002824 _MEDIASUBTYPE_WSS
+[588](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002834 _MEDIASUBTYPE_XDS
+[589](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002844 _MEDIASUBTYPE_Y210
+[590](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002854 _MEDIASUBTYPE_Y211
+[591](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002864 _MEDIASUBTYPE_Y216
+[592](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002874 _MEDIASUBTYPE_Y411
+[593](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002884 _MEDIASUBTYPE_Y41P
+[594](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002894 _MEDIASUBTYPE_YUY2
+[595](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028a4 _MEDIASUBTYPE_YUYV
+[596](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028b4 _MEDIASUBTYPE_YV12
+[597](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028c4 _MEDIASUBTYPE_YVU9
+[598](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028d4 _MEDIASUBTYPE_YVYU
+[599](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028e4 _MEDIASUBTYPE_dv25
+[600](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000028f4 _MEDIASUBTYPE_dv50
+[601](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002904 _MEDIASUBTYPE_dvh1
+[602](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002914 _MEDIASUBTYPE_dvhd
+[603](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002924 _MEDIASUBTYPE_dvsd
+[604](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002934 _MEDIASUBTYPE_dvsl
+[605](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002944 _MEDIATYPE_AUXLine21Data
+[606](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002954 _MEDIATYPE_AUXTeletextPage
+[607](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002964 _MEDIATYPE_AnalogAudio
+[608](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002974 _MEDIATYPE_AnalogVideo
+[609](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002984 _MEDIATYPE_Audio
+[610](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002994 _MEDIATYPE_CC_CONTAINER
+[611](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029a4 _MEDIATYPE_DTVCCData
+[612](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029b4 _MEDIATYPE_File
+[613](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029c4 _MEDIATYPE_Interleaved
+[614](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029d4 _MEDIATYPE_LMRT
+[615](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029e4 _MEDIATYPE_MPEG1SystemStream
+[616](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000029f4 _MEDIATYPE_MSTVCaption
+[617](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a04 _MEDIATYPE_Midi
+[618](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a14 _MEDIATYPE_ScriptCommand
+[619](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a24 _MEDIATYPE_Stream
+[620](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a34 _MEDIATYPE_Text
+[621](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a44 _MEDIATYPE_Timecode
+[622](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a54 _MEDIATYPE_URL_STREAM
+[623](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a64 _MEDIATYPE_VBI
+[624](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a74 _MEDIATYPE_Video
+[625](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a84 _PIN_CATEGORY_ANALOGVIDEOIN
+[626](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002a94 _PIN_CATEGORY_CAPTURE
+[627](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002aa4 _PIN_CATEGORY_CC
+[628](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ab4 _PIN_CATEGORY_EDS
+[629](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ac4 _PIN_CATEGORY_NABTS
+[630](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ad4 _PIN_CATEGORY_PREVIEW
+[631](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ae4 _PIN_CATEGORY_STILL
+[632](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002af4 _PIN_CATEGORY_TELETEXT
+[633](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b04 _PIN_CATEGORY_TIMECODE
+[634](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b14 _PIN_CATEGORY_VBI
+[635](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b24 _PIN_CATEGORY_VIDEOPORT
+[636](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b34 _PIN_CATEGORY_VIDEOPORT_VBI
+[637](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b44 _TIME_FORMAT_BYTE
+[638](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b54 _TIME_FORMAT_FIELD
+[639](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b84 _TIME_FORMAT_NONE
+[640](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002b94 _TIME_FORMAT_SAMPLE
+[641](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ba4 _UUID_UdriTagTables
+[642](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002bb4 _UUID_WMDRMTagTables
+[643](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002bc4 _AM_INTERFACESETID_Standard
+[644](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002bd4 _AM_KSCATEGORY_AUDIO
+[645](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002be4 _AM_KSCATEGORY_CAPTURE
+[646](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002bf4 _AM_KSCATEGORY_CROSSBAR
+[647](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c04 _AM_KSCATEGORY_DATACOMPRESSOR
+[648](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c14 _AM_KSCATEGORY_RENDER
+[649](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c24 _AM_KSCATEGORY_SPLITTER
+[650](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c34 _AM_KSCATEGORY_TVAUDIO
+[651](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c44 _AM_KSCATEGORY_TVTUNER
+[652](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c54 _AM_KSCATEGORY_VBICODEC
+[653](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c64 _AM_KSCATEGORY_VBICODEC_MI
+[654](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c74 _AM_KSCATEGORY_VIDEO
+[655](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c84 _AM_KSPROPSETID_AC3
+[656](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002c94 _AM_KSPROPSETID_CopyProt
+[657](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ca4 _AM_KSPROPSETID_DVD_RateChange
+[658](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002cb4 _AM_KSPROPSETID_DvdKaraoke
+[659](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002cc4 _AM_KSPROPSETID_DvdSubPic
+[660](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002cd4 _AM_KSPROPSETID_FrameStep
+[661](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ce4 _AM_KSPROPSETID_MPEG4_MediaType_Attributes
+[662](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002cf4 _AM_KSPROPSETID_TSRateChange
+[663](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d04 _FORMAT_DVD_LPCMAudio
+[664](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d14 _FORMAT_DolbyAC3
+[665](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d24 _FORMAT_Image
+[666](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d34 _FORMAT_JPEGImage
+[667](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d44 _FORMAT_MPEG2Audio
+[668](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d54 _FORMAT_MPEG2Video
+[669](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d64 _FORMAT_MPEG2_VIDEO
+[670](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d74 _FORMAT_UVCH264Video
+[671](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d84 _FORMAT_VIDEOINFO2
+[672](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002d94 _IID_IKsDataTypeHandler
+[673](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002da4 _IID_IKsInterfaceHandler
+[674](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002db4 _IID_IKsPin
+[675](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002dc4 _IID_IKsPinFactory
+[676](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002dd4 _MEDIASUBTYPE_ATSC_SI
+[677](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002de4 _MEDIASUBTYPE_DOLBY_AC3
+[678](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002df4 _MEDIASUBTYPE_DTS
+[679](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e04 _MEDIASUBTYPE_DVB_SI
+[680](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e14 _MEDIASUBTYPE_DVD_LPCM_AUDIO
+[681](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e24 _MEDIASUBTYPE_DVD_NAVIGATION_DSI
+[682](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e34 _MEDIASUBTYPE_DVD_NAVIGATION_PCI
+[683](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e44 _MEDIASUBTYPE_DVD_NAVIGATION_PROVIDER
+[684](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e54 _MEDIASUBTYPE_DVD_SUBPICTURE
+[685](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e64 _MEDIASUBTYPE_ISDB_SI
+[686](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e74 _MEDIASUBTYPE_MPEG2DATA
+[687](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e84 _MEDIASUBTYPE_MPEG2_AUDIO
+[688](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002e94 _MEDIASUBTYPE_MPEG2_PBDA_TRANSPORT_PROCESSED
+[689](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ea4 _MEDIASUBTYPE_MPEG2_PBDA_TRANSPORT_RAW
+[690](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002eb4 _MEDIASUBTYPE_MPEG2_PROGRAM
+[691](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ec4 _MEDIASUBTYPE_MPEG2_TRANSPORT
+[692](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ed4 _MEDIASUBTYPE_MPEG2_TRANSPORT_STRIDE
+[693](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ee4 _MEDIASUBTYPE_MPEG2_UDCR_TRANSPORT
+[694](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ef4 _MEDIASUBTYPE_MPEG2_VERSIONED_TABLES
+[695](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f04 _MEDIASUBTYPE_MPEG2_VIDEO
+[696](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f14 _MEDIASUBTYPE_MPEG2_WMDRM_TRANSPORT
+[697](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f24 _MEDIASUBTYPE_SDDS
+[698](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f34 _MEDIASUBTYPE_TIF_SI
+[699](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f44 _MEDIATYPE_DVD_ENCRYPTED_PACK
+[700](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f54 _MEDIATYPE_DVD_NAVIGATION
+[701](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f64 _MEDIATYPE_MPEG2_PACK
+[702](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f74 _MEDIATYPE_MPEG2_PES
+[703](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f84 _MEDIATYPE_MPEG2_SECTIONS
+[704](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002f94 _IID_ICreateDevEnum
+[705](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002fa4 _IID_IPin
+[706](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002fb4 _IID_IEnumPins
+[707](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002fc4 _IID_IEnumMediaTypes
+[708](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002fd4 _IID_IFilterGraph
+[709](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002fe4 _IID_IEnumFilters
+[710](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00002ff4 _IID_IMediaFilter
+[711](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003004 _IID_IBaseFilter
+[712](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003014 _IID_IReferenceClock
+[713](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003024 _IID_IMediaSample
+[714](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003034 _IID_IMediaSample2
+[715](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003044 _IID_IMemAllocator
+[716](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003054 _IID_IMemAllocatorCallbackTemp
+[717](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003064 _IID_IMemAllocatorNotifyCallbackTemp
+[718](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003074 _IID_IMemInputPin
+[719](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003084 _IID_IAMovieSetup
+[720](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030a4 _IID_IAMStreamSelect
+[721](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030b4 _IID_IEnumRegFilters
+[722](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030c4 _IID_IFilterMapper
+[723](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030d4 _IID_IFilterMapper2
+[724](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030e4 _IID_IFilterMapper3
+[725](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000030f4 _IID_IQualityControl
+[726](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003104 _IID_IOverlayNotify
+[727](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003114 _IID_IOverlayNotify2
+[728](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003124 _IID_IOverlay
+[729](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003134 _IID_IMediaEventSink
+[730](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003144 _IID_IFileSourceFilter
+[731](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003154 _IID_IFileSinkFilter
+[732](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003164 _IID_IFileSinkFilter2
+[733](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003184 _IID_ICaptureGraphBuilder
+[734](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003194 _IID_IAMCopyCaptureFileProgress
+[735](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031a4 _IID_ICaptureGraphBuilder2
+[736](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031b4 _IID_IConfigAviMux
+[737](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031c4 _IID_IConfigInterleaving
+[738](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031d4 _IID_IAMClockSlave
+[739](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031e4 _IID_IAMCertifiedOutputProtection
+[740](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000031f4 _IID_IFilterGraph2
+[741](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003204 _IID_IStreamBuilder
+[742](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003214 _IID_IAMStreamConfig
+[743](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003224 _IID_IAMVideoProcAmp
+[744](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003234 _IID_IAsyncReader
+[745](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003244 _IID_IGraphVersion
+[746](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003254 _IID_IResourceConsumer
+[747](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003264 _IID_IResourceManager
+[748](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003274 _IID_IAMStreamControl
+[749](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003284 _IID_IKsPropertySet
+[750](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003294 _IID_IMediaPropertyBag
+[751](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032a4 _IID_IPersistMediaPropertyBag
+[752](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032b4 _IID_ISeekingPassThru
+[753](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032c4 _IID_IAMFilterMiscFlags
+[754](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032d4 _IID_IAMGraphBuilderCallback
+[755](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032e4 _IID_IAMVfwCaptureDialogs
+[756](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000032f4 _IID_IAMCameraControl
+[757](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003304 _IID_IAMVideoControl
+[758](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003314 _IID_IAMBufferNegotiation
+[759](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003324 _IID_IAMDroppedFrames
+[760](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003334 _IID_IAMLatency
+[761](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003344 _IID_IAMPushSource
+[762](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003354 _IID_IAMVideoCompression
+[763](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003364 _IID_IAMCrossbar
+[764](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003374 _IID_IAMTunerNotification
+[765](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003384 _IID_IAMTuner
+[766](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003394 _IID_IAMTVTuner
+[767](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033a4 _IID_IVideoFrameStep
+[768](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033b4 _IID_IPinConnection
+[769](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033c4 _IID_IPinFlowControl
+[770](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033d4 _IID_IGraphConfig
+[771](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033e4 _IID_IGraphConfigCallback
+[772](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000033f4 _IID_IFilterChain
+[773](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003404 _CLSID_DirectDraw
+[774](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003414 _CLSID_DirectDraw7
+[775](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003424 _CLSID_DirectDrawClipper
+[776](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003434 _IID_IDirectDraw
+[777](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003444 _IID_IDirectDraw2
+[778](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003454 _IID_IDirectDraw3
+[779](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003464 _IID_IDirectDraw4
+[780](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003474 _IID_IDirectDraw7
+[781](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003484 _IID_IDirectDrawSurface
+[782](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003494 _IID_IDirectDrawSurface2
+[783](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034a4 _IID_IDirectDrawSurface3
+[784](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034b4 _IID_IDirectDrawSurface4
+[785](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034c4 _IID_IDirectDrawSurface7
+[786](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034d4 _IID_IDirectDrawPalette
+[787](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034e4 _IID_IDirectDrawClipper
+[788](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000034f4 _IID_IDirectDrawColorControl
+[789](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003504 _IID_IDirectDrawGammaControl
+[790](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003514 _IID_IVMRImagePresenter
+[791](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003524 _IID_IVMRSurfaceAllocator
+[792](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003534 _IID_IVMRSurfaceAllocatorNotify
+[793](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003544 _IID_IVMRWindowlessControl
+[794](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003554 _IID_IVMRMixerControl
+[795](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003564 _IID_IVMRMonitorConfig
+[796](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003574 _IID_IVMRFilterConfig
+[797](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003584 _IID_IVMRAspectRatioControl
+[798](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003594 _IID_IVMRDeinterlaceControl
+[799](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035a4 _IID_IVMRMixerBitmap
+[800](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035b4 _IID_IVMRImageCompositor
+[801](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035c4 _IID_IVMRVideoStreamControl
+[802](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035d4 _IID_IVMRImagePresenterConfig
+[803](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035e4 _IID_IVMRImagePresenterExclModeConfig
+[804](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000035f4 _IID_IVPManager
+[805](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003604 _IID_IDvdControl
+[806](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003614 _IID_IDvdInfo
+[807](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003624 _IID_IDvdCmd
+[808](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003634 _IID_IDvdState
+[809](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003644 _IID_IDvdControl2
+[810](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003654 _IID_IDvdInfo2
+[811](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003664 _IID_IDvdGraphBuilder
+[812](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003674 _LIBID_QuartzTypeLib
+[813](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036c4 _IID_IBasicVideo2
+[814](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036e4 _IID_IMediaEventEx
+[815](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000036f4 _IID_IMediaPosition
+[816](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003704 _MSPID_PrimaryVideo
+[817](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003714 _MSPID_PrimaryAudio
+[818](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003724 _IID_IMultiMediaStream
+[819](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003734 _IID_IMediaStream
+[820](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003744 _IID_IStreamSample
+[821](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003754 _IID_IDirectDrawMediaStream
+[822](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003764 _IID_IDirectDrawStreamSample
+[823](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003774 _IID_IAudioMediaStream
+[824](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003784 _IID_IAudioStreamSample
+[825](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003794 _IID_IMemoryData
+[826](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037a4 _IID_IAudioData
+[827](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037b4 _IID_IDirectShowStream
+[828](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037c4 _IID_IAMMultiMediaStream
+[829](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037d4 _IID_IAMMediaStream
+[830](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037e4 _IID_IMediaStreamFilter
+[831](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000037f4 _IID_IDirectDrawMediaSampleAllocator
+[832](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003804 _IID_IDirectDrawMediaSample
+[833](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003814 _IID_IAMMediaTypeStream
+[834](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003824 _IID_IAMMediaTypeSample
+[835](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003834 _CLSID_AMMultiMediaStream
+[836](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003844 _CLSID_AMDirectDrawStream
+[837](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003854 _CLSID_AMAudioStream
+[838](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003864 _CLSID_AMAudioData
+[839](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003874 _CLSID_AMMediaTypeStream
+[840](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003884 _CLSID_MediaStreamFilter
+[841](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003894 _IID_ISampleGrabberCB
+[842](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038a4 _IID_ISampleGrabber
+[843](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038b4 _CLSID_SampleGrabber
+[844](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038c4 _IID_IMediaDet
+[845](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038d4 _CLSID_MediaDet
+[846](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038e4 _IID_IMediaLocator
+[847](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000038f4 _IID_IPropertySetter
+[848](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003904 _IID_IAMErrorLog
+[849](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003914 _IID_IAMSetErrorLog
+[850](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003924 _IID_IAMTimeline
+[851](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003934 _CLSID_AMTimeline
+[852](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003944 _IID_IAMTimelineGroup
+[853](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003954 _IID_IAMTimelineObj
+[854](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003964 _IID_IAMTimelineSrc
+[855](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003974 _IID_IVMRImagePresenter9
+[856](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003984 _IID_IVMRSurfaceAllocator9
+[857](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003994 _IID_IVMRSurfaceAllocatorEx9
+[858](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039a4 _IID_IVMRSurfaceAllocatorNotify9
+[859](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039b4 _IID_IVMRWindowlessControl9
+[860](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039c4 _IID_IVMRMixerControl9
+[861](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039d4 _IID_IVMRMixerBitmap9
+[862](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039e4 _IID_IVMRSurface9
+[863](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x000039f4 _IID_IVMRImagePresenterConfig9
+[864](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a04 _IID_IVMRVideoStreamControl9
+[865](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a14 _IID_IVMRFilterConfig9
+[866](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a24 _IID_IVMRAspectRatioControl9
+[867](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a34 _IID_IVMRMonitorConfig9
+[868](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a44 _IID_IVMRDeinterlaceControl9
+[869](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a54 _IID_IVMRImageCompositor9
+[870](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a64 _IID_IAMVideoAccelerator
+[871](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a74 _IID_IAMVideoAcceleratorNotify
+[872](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003370 _fallback__wine_dbg_strdup
+[873](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003410 _fallback__wine_dbg_output
+[874](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003470 ___wine_dbg_get_channel_flags
+[875](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000034d0 _fallback__wine_dbg_get_channel_flags
+[876](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x000038f0 _fallback__wine_dbg_header
+[877](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003c00 _sprintf
+[878](sec  1)(fl 0x00)(ty   20)(scl   3) (nx 0) 0x00003c30 _snprintf
+[879](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003a94 ??_C@_0BC@PMPNKBKA@__wine_dbg_strdup?$AA@
+[880](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003aa6 ??_C@_0BC@KDIIHEND@__wine_dbg_output?$AA@
+[881](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003ab8 ??_C@_0BN@IOPJBLMP@__wine_dbg_get_channel_flags?$AA@
+[882](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003ad5 ??_C@_0BC@FIPOJEAK@__wine_dbg_header?$AA@
+[883](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003ae8 ??_C@_1BE@GJOFHIHD@?$AAn?$AAt?$AAd?$AAl?$AAl?$AA?4?$AAd?$AAl?$AAl?$AA?$AA@
+[884](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003afc ??_C@_09PPCAAPIJ@WINEDEBUG?$AA@
+[885](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b06 ??_C@_02BEIMNFAD@?$CL?9?$AA@
+[886](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b09 ??_C@_03NFKEKGGK@all?$AA@
+[887](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b0d ??_C@_05PCLMOIMF@fixme?$AA@
+[888](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b13 ??_C@_03JIDPIAJI@err?$AA@
+[889](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b17 ??_C@_04FNLOFOEM@warn?$AA@
+[890](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b1c ??_C@_05IMBNNINJ@trace?$AA@
+[891](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b22 ??_C@_09INBMIBID@?$CF3u?4?$CF06u?3?$AA@
+[892](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b2c ??_C@_09LKMCHBLB@?$CF3u?4?$CF03u?3?$AA@
+[893](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b36 ??_C@_05LIHPPKDI@?$CF04x?3?$AA@
+[894](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003b3c ??_C@_09MHFPILGM@?$CFs?3?$CFs?3?$CFs?5?$AA@
+[895](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000068 _p__wine_dbg_strdup
+[896](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e40 __imp__GetModuleHandleW@4
+[897](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e44 __imp__GetProcAddress@8
+[898](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003dfc __imp___strdup
+[899](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000f8 _fallback__wine_dbg_strdup.pos
+[900](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000078 _fallback__wine_dbg_strdup.list
+[901](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e00 __imp__free
+[902](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000006c _p__wine_dbg_output
+[903](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e24 __imp__strlen
+[904](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x000000fc _partial_line_tid
+[905](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003df4 __imp____acrt_iob_func
+[906](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e04 __imp__fwrite
+[907](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000070 _p__wine_dbg_get_channel_flags
+[908](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000028 _nb_debug_options
+[909](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e08 __imp__getenv
+[910](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e14 __imp__strchr
+[911](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002c _default_flags
+[912](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e20 __imp__strcspn
+[913](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e18 __imp__strcmp
+[914](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000100 _debug_options
+[915](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000104 _options_size
+[916](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e54 __imp__HeapReAlloc@16
+[917](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003ec7 _memmove
+[918](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e10 
+[919](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e1c __imp__strcpy
+[920](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000074 _p__wine_dbg_header
+[921](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000002d ___wine_dbch_microsecs
+[922](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000003d ___wine_dbch_timestamp
+[923](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e48 __imp__GetTickCount@0
+[924](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00000108 _fallback__wine_dbg_header.frequency
+[925](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e60 __imp__QueryPerformanceFrequency@4
+[926](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e5c __imp__QueryPerformanceCounter@4
+[927](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003efe __allrem
+[928](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e7c 
+[929](sec  3)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x0000004d ___wine_dbch_pid
+[930](sec  2)(fl 0x00)(ty    0)(scl   3) (nx 0) 0x00003a84 _debug_classes
+[931](sec  2)(fl 0x00)(ty    0)(scl   2) (nx 0) 0x00003e84 __imp___vsnprintf
+[932](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x00003c70 _DllMainCRTStartup@12
+
+

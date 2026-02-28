@@ -1,4 +1,4 @@
-# GameNative v0.7.2 Runtime Transfer Matrix (for Aero.so mainline)
+# GameNative v0.7.2 Runtime Transfer Matrix (for Ae.solator mainline)
 
 - Generated (UTC): `2026-02-25 14:35:19`
 - Source APK: `/home/mikhail/gamenative-v0.7.2.apk`
@@ -20,7 +20,7 @@
 
 ## Transfer Decisions
 
-| Module | Decision | Methods | Edge events | Target in Aero.so | Existing anchor |
+| Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |
 | --- | --- | ---: | ---: | --- | --- |
 | `Box64/FEX translator config` | `port_contract` | 213 | 1073 | Translator preset/profile contract + runtime-profile migration rules | `ci/winlator/patches/0030,0037,0039,0040,0043` |
 | `Launch pipeline orchestration` | `adapt_urc` | 630 | 1298 | URC launch preflight + deterministic env submit + forensic reasons | `XServerDisplayActivity + GuestProgramLauncherComponent (0044 queue)` |

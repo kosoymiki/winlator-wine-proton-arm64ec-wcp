@@ -8,6 +8,17 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_FINAL_STAGE_FETCH:=0}"
 : "${WLT_FINAL_STAGE_SCOPE:=focused}"
 : "${WLT_FINAL_STAGE_RUN_URC:=0}"
+: "${WLT_FINAL_STAGE_RUN_CONTENTS_QA:=1}"
+: "${WLT_FINAL_STAGE_RUN_PATCH_BASE:=1}"
+: "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED:=0}"
+: "${WLT_FINAL_STAGE_PATCH_BASE_SOURCE_DIRS:=${ROOT_DIR}/work/winlator-ludashi/src,/tmp/winlator-ludashi-src}"
+: "${WLT_FINAL_STAGE_PATCH_BASE_PROFILE:=standard}"
+: "${WLT_FINAL_STAGE_PATCH_BASE_PHASE:=harvard_followup}"
+: "${WLT_FINAL_STAGE_RUN_WCP_PARITY:=1}"
+: "${WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY:=0}"
+: "${WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING:=0}"
+: "${WLT_FINAL_STAGE_WCP_PARITY_PAIRS_FILE:=${ROOT_DIR}/ci/validation/wcp-parity-pairs.tsv}"
+: "${WLT_FINAL_STAGE_WCP_PARITY_LABELS:=}"
 : "${WLT_FINAL_STAGE_RUN_HARVEST:=1}"
 : "${WLT_FINAL_STAGE_HARVEST_PROFILE:=core}"
 : "${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO:=24}"
@@ -21,7 +32,21 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${WLT_FINAL_STAGE_RUN_SNAPSHOT:=1}"
 : "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE:=0}"
 : "${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE:=0}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA:=1}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY:=1}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY:=0}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING:=0}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_PAIRS_FILE:=${ROOT_DIR}/ci/validation/wcp-parity-pairs.tsv}"
+: "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_LABELS:=}"
 : "${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE:=capture-only}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA:=1}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED:=0}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY:=1}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED:=0}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY:=0}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING:=0}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_PAIRS_FILE:=${ROOT_DIR}/ci/validation/wcp-parity-pairs.tsv}"
+: "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_LABELS:=}"
 : "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN:=1}"
 : "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE:=core}"
 : "${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO:=12}"
@@ -37,6 +62,13 @@ fail() { printf '[final-stage][error] %s\n' "$*" >&2; exit 1; }
 [[ "${WLT_FINAL_STAGE_FETCH}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_FETCH must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_SCOPE}" =~ ^(focused|tree)$ ]] || fail "WLT_FINAL_STAGE_SCOPE must be focused or tree"
 [[ "${WLT_FINAL_STAGE_RUN_URC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_URC must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RUN_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_CONTENTS_QA must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RUN_PATCH_BASE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_PATCH_BASE must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_PATCH_BASE_REQUIRED must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_PATCH_BASE_PROFILE}" =~ ^(standard|wide|single)$ ]] || fail "WLT_FINAL_STAGE_PATCH_BASE_PROFILE must be standard, wide or single"
+[[ "${WLT_FINAL_STAGE_RUN_WCP_PARITY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_WCP_PARITY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RUN_HARVEST}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_HARVEST must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_SKIP_NO_SYNC must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_HARVEST_AUTO_FOCUS_SYNC must be 0 or 1"
@@ -47,7 +79,17 @@ fail() { printf '[final-stage][error] %s\n' "$*" >&2; exit 1; }
 [[ "${WLT_FINAL_STAGE_RUN_SNAPSHOT}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_SNAPSHOT must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE}" =~ ^(strict|capture-only)$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE must be strict or capture-only"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY must be 0 or 1"
+[[ "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}" =~ ^[01]$ ]] || fail "WLT_FINAL_STAGE_RUN_COMMIT_SCAN must be 0 or 1"
 [[ "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}" =~ ^(core|all|custom)$ ]] || fail "WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE must be core, all or custom"
 [[ "${WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO}" =~ ^[0-9]+$ ]] || fail "WLT_FINAL_STAGE_COMMIT_SCAN_COMMITS_PER_REPO must be numeric"
@@ -81,6 +123,38 @@ reflective_rc="$(run_capture reflective-audits \
 
 manifest_rc="$(run_capture gn-manifest \
   python3 "${ROOT_DIR}/ci/gamenative/check-manifest-contract.py")"
+
+contents_qa_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_CONTENTS_QA}" == "1" ]]; then
+  contents_qa_rc="$(run_capture contents-qa \
+    python3 "${ROOT_DIR}/ci/validation/check-contents-qa-contract.py" \
+      --root "${ROOT_DIR}" \
+      --output "${WLT_FINAL_STAGE_OUT_DIR}/contents-qa.md")"
+fi
+
+patch_base_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_PATCH_BASE}" == "1" ]]; then
+  patch_base_rc="$(run_capture patch-base-contract \
+    env \
+      WLT_PATCH_BASE_CONTRACT_OUT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/patch-base-contract" \
+      WLT_PATCH_BASE_CONTRACT_SOURCE_DIRS="${WLT_FINAL_STAGE_PATCH_BASE_SOURCE_DIRS}" \
+      WLT_PATCH_BASE_CONTRACT_REQUIRED="${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED}" \
+      WLT_PATCH_BASE_CONTRACT_PROFILE="${WLT_FINAL_STAGE_PATCH_BASE_PROFILE}" \
+      WLT_PATCH_BASE_CONTRACT_PHASE="${WLT_FINAL_STAGE_PATCH_BASE_PHASE}" \
+      bash "${ROOT_DIR}/ci/validation/check-patch-base-contract.sh")"
+fi
+
+wcp_parity_rc=0
+if [[ "${WLT_FINAL_STAGE_RUN_WCP_PARITY}" == "1" ]]; then
+  wcp_parity_rc="$(run_capture wcp-parity \
+    env \
+      WLT_WCP_PARITY_OUT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/wcp-parity" \
+      WLT_WCP_PARITY_PAIRS_FILE="${WLT_FINAL_STAGE_WCP_PARITY_PAIRS_FILE}" \
+      WLT_WCP_PARITY_REQUIRE_ANY="${WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY}" \
+      WLT_WCP_PARITY_FAIL_ON_MISSING="${WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING}" \
+      WLT_WCP_PARITY_LABELS="${WLT_FINAL_STAGE_WCP_PARITY_LABELS}" \
+      bash "${ROOT_DIR}/ci/validation/run-wcp-parity-suite.sh")"
+fi
 
 urc_rc=0
 if [[ "${WLT_FINAL_STAGE_RUN_URC}" == "1" ]]; then
@@ -150,6 +224,12 @@ if [[ "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}" == "1" ]]; then
       WLT_RELEASE_PREP_OUT_DIR="${WLT_FINAL_STAGE_OUT_DIR}/release-prep" \
       WLT_RELEASE_PREP_REQUIRE_SOURCE="${WLT_FINAL_STAGE_RELEASE_PREP_REQUIRE_SOURCE}" \
       WLT_RELEASE_PREP_RUN_PATCH_BASE="${WLT_FINAL_STAGE_RELEASE_PREP_RUN_PATCH_BASE}" \
+      WLT_RELEASE_PREP_RUN_CONTENTS_QA="${WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA}" \
+      WLT_RELEASE_PREP_RUN_WCP_PARITY="${WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY}" \
+      WLT_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY}" \
+      WLT_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING}" \
+      WLT_RELEASE_PREP_WCP_PARITY_PAIRS_FILE="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_PAIRS_FILE}" \
+      WLT_RELEASE_PREP_WCP_PARITY_LABELS="${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_LABELS}" \
       WLT_RELEASE_PREP_RUN_URC="${WLT_FINAL_STAGE_RUN_URC}" \
       WLT_RELEASE_PREP_INTAKE_SCOPE="${WLT_FINAL_STAGE_SCOPE}" \
       WLT_RELEASE_PREP_REQUIRED_LOW_MARKERS="${WLT_FINAL_STAGE_REQUIRED_LOW_MARKERS}" \
@@ -176,6 +256,14 @@ if [[ "${WLT_FINAL_STAGE_RUN_SNAPSHOT}" == "1" ]]; then
       WLT_SNAPSHOT_FAIL_MODE="${WLT_FINAL_STAGE_SNAPSHOT_FAIL_MODE}" \
       WLT_CAPTURE_ONLINE_INTAKE=1 \
       WLT_CAPTURE_URC="${WLT_FINAL_STAGE_RUN_URC}" \
+      WLT_CAPTURE_CONTENTS_QA="${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA}" \
+      WLT_CONTENTS_QA_REQUIRED="${WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED}" \
+      WLT_CAPTURE_WCP_PARITY="${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY}" \
+      WLT_WCP_PARITY_REQUIRED="${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED}" \
+      WLT_WCP_PARITY_REQUIRE_ANY="${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY}" \
+      WLT_WCP_PARITY_FAIL_ON_MISSING="${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING}" \
+      WLT_WCP_PARITY_PAIRS_FILE="${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_PAIRS_FILE}" \
+      WLT_WCP_PARITY_LABELS="${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_LABELS}" \
       WLT_ONLINE_INTAKE_REQUIRED=0 \
       WLT_ONLINE_INTAKE_USE_HIGH_CYCLE=1 \
       WLT_ONLINE_INTAKE_FETCH="${WLT_FINAL_STAGE_FETCH}" \
@@ -246,6 +334,17 @@ fi
   printf 'fetch=%s\n' "${WLT_FINAL_STAGE_FETCH}"
   printf 'scope=%s\n' "${WLT_FINAL_STAGE_SCOPE}"
   printf 'run_urc=%s\n' "${WLT_FINAL_STAGE_RUN_URC}"
+  printf 'run_contents_qa=%s\n' "${WLT_FINAL_STAGE_RUN_CONTENTS_QA}"
+  printf 'run_patch_base=%s\n' "${WLT_FINAL_STAGE_RUN_PATCH_BASE}"
+  printf 'patch_base_required=%s\n' "${WLT_FINAL_STAGE_PATCH_BASE_REQUIRED}"
+  printf 'patch_base_source_dirs=%s\n' "${WLT_FINAL_STAGE_PATCH_BASE_SOURCE_DIRS}"
+  printf 'patch_base_profile=%s\n' "${WLT_FINAL_STAGE_PATCH_BASE_PROFILE}"
+  printf 'patch_base_phase=%s\n' "${WLT_FINAL_STAGE_PATCH_BASE_PHASE}"
+  printf 'run_wcp_parity=%s\n' "${WLT_FINAL_STAGE_RUN_WCP_PARITY}"
+  printf 'wcp_parity_require_any=%s\n' "${WLT_FINAL_STAGE_WCP_PARITY_REQUIRE_ANY}"
+  printf 'wcp_parity_fail_on_missing=%s\n' "${WLT_FINAL_STAGE_WCP_PARITY_FAIL_ON_MISSING}"
+  printf 'wcp_parity_pairs_file=%s\n' "${WLT_FINAL_STAGE_WCP_PARITY_PAIRS_FILE}"
+  printf 'wcp_parity_labels=%s\n' "${WLT_FINAL_STAGE_WCP_PARITY_LABELS}"
   printf 'run_harvest=%s\n' "${WLT_FINAL_STAGE_RUN_HARVEST}"
   printf 'harvest_profile=%s\n' "${WLT_FINAL_STAGE_HARVEST_PROFILE}"
   printf 'harvest_commits_per_repo=%s\n' "${WLT_FINAL_STAGE_HARVEST_MAX_COMMITS_PER_REPO}"
@@ -257,6 +356,9 @@ fi
   printf 'harvest_fail_on_repo_errors=%s\n' "${WLT_FINAL_STAGE_HARVEST_FAIL_ON_REPO_ERRORS}"
   printf 'reflective_rc=%s\n' "${reflective_rc}"
   printf 'manifest_rc=%s\n' "${manifest_rc}"
+  printf 'contents_qa_rc=%s\n' "${contents_qa_rc}"
+  printf 'patch_base_rc=%s\n' "${patch_base_rc}"
+  printf 'wcp_parity_rc=%s\n' "${wcp_parity_rc}"
   printf 'urc_rc=%s\n' "${urc_rc}"
   printf 'intake_rc=%s\n' "${intake_rc}"
   printf 'high_cycle_rc=%s\n' "${high_cycle_rc}"
@@ -264,6 +366,20 @@ fi
   printf 'release_prep_rc=%s\n' "${release_prep_rc}"
   printf 'snapshot_rc=%s\n' "${snapshot_rc}"
   printf 'run_release_prep=%s\n' "${WLT_FINAL_STAGE_RUN_RELEASE_PREP}"
+  printf 'release_prep_run_contents_qa=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_CONTENTS_QA}"
+  printf 'release_prep_run_wcp_parity=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_RUN_WCP_PARITY}"
+  printf 'release_prep_wcp_parity_require_any=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_REQUIRE_ANY}"
+  printf 'release_prep_wcp_parity_fail_on_missing=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_FAIL_ON_MISSING}"
+  printf 'release_prep_wcp_parity_pairs_file=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_PAIRS_FILE}"
+  printf 'release_prep_wcp_parity_labels=%s\n' "${WLT_FINAL_STAGE_RELEASE_PREP_WCP_PARITY_LABELS}"
+  printf 'snapshot_capture_contents_qa=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_CONTENTS_QA}"
+  printf 'snapshot_contents_qa_required=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_CONTENTS_QA_REQUIRED}"
+  printf 'snapshot_capture_wcp_parity=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_CAPTURE_WCP_PARITY}"
+  printf 'snapshot_wcp_parity_required=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRED}"
+  printf 'snapshot_wcp_parity_require_any=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_REQUIRE_ANY}"
+  printf 'snapshot_wcp_parity_fail_on_missing=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_FAIL_ON_MISSING}"
+  printf 'snapshot_wcp_parity_pairs_file=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_PAIRS_FILE}"
+  printf 'snapshot_wcp_parity_labels=%s\n' "${WLT_FINAL_STAGE_SNAPSHOT_WCP_PARITY_LABELS}"
   printf 'run_snapshot=%s\n' "${WLT_FINAL_STAGE_RUN_SNAPSHOT}"
   printf 'run_commit_scan=%s\n' "${WLT_FINAL_STAGE_RUN_COMMIT_SCAN}"
   printf 'commit_scan_profile=%s\n' "${WLT_FINAL_STAGE_COMMIT_SCAN_PROFILE}"
@@ -275,7 +391,7 @@ fi
 } > "${WLT_FINAL_STAGE_OUT_DIR}/summary.meta"
 
 if [[ "${WLT_FINAL_STAGE_FAIL_MODE}" == "strict" ]]; then
-  if [[ "${reflective_rc}" != "0" || "${manifest_rc}" != "0" || "${urc_rc}" != "0" || "${intake_rc}" != "0" || "${high_cycle_rc}" != "0" || "${commit_scan_rc}" != "0" || "${release_prep_rc}" != "0" || "${snapshot_rc}" != "0" ]]; then
+  if [[ "${reflective_rc}" != "0" || "${manifest_rc}" != "0" || "${contents_qa_rc}" != "0" || "${patch_base_rc}" != "0" || "${wcp_parity_rc}" != "0" || "${urc_rc}" != "0" || "${intake_rc}" != "0" || "${high_cycle_rc}" != "0" || "${commit_scan_rc}" != "0" || "${release_prep_rc}" != "0" || "${snapshot_rc}" != "0" ]]; then
     fail "one or more gates failed (summary: ${WLT_FINAL_STAGE_OUT_DIR}/summary.meta)"
   fi
 fi

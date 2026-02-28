@@ -1,4 +1,4 @@
-# GameHub Runtime Transfer Matrix (for Aero.so mainline)
+# GameHub Runtime Transfer Matrix (for Ae.solator mainline)
 
 - Generated (UTC): `2026-02-25 14:42:24`
 - Source APK: `/home/mikhail/GameHub-Lite-5.3.3-RC2.apk`
@@ -16,7 +16,7 @@
 
 ## Transfer Decisions
 
-| Module | Decision | Methods | Edge events | Target in Aero.so | Existing anchor |
+| Module | Decision | Methods | Edge events | Target in Ae.solator | Existing anchor |
 | --- | --- | ---: | ---: | --- | --- |
 | `Box64/FEX translator config` | `port_contract` | 474 | 1289 | Box64/FEX preset + runtime common profile layers | `ci/winlator/patches/0030,0039,0040` |
 | `Launch pipeline orchestration` | `adapt_urc` | 311 | 2378 | URC launch plan + preflight + telemetry | `XServerDisplayActivity + GuestProgramLauncherComponent` |
